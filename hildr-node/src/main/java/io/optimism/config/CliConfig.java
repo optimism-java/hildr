@@ -16,6 +16,11 @@
 
 package io.optimism.config;
 
+
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * The type Cli config.
  *
@@ -24,4 +29,27 @@ package io.optimism.config;
  * @param l2EngineUrl L2 engine API url.
  * @param jwtSecret L2 engine API jwt secret.
  */
-public record CliConfig(String l1RpcUrl, String l2RpcUrl, String l2EngineUrl, String jwtSecret) {}
+public record CliConfig(String l1RpcUrl, String l2RpcUrl, String l2EngineUrl, String jwtSecret) {
+
+  /**
+   * To configMap.
+   *
+   * @return the map
+   */
+  public Map<String, String> toConfigMap() {
+    Map<String, String> map = new HashMap<>();
+    if (StringUtils.isNotEmpty(l1RpcUrl)) {
+      map.put("config.l1RpcUrl", l1RpcUrl);
+    }
+    if (StringUtils.isNotEmpty(l2RpcUrl)) {
+      map.put("config.l2RpcUrl", l2RpcUrl);
+    }
+    if (StringUtils.isNotEmpty(l2EngineUrl)) {
+      map.put("config.l2EngineUrl", l2EngineUrl);
+    }
+    if (StringUtils.isNotEmpty(jwtSecret)) {
+      map.put("config.jwtSecret", jwtSecret);
+    }
+    return map;
+  }
+}
