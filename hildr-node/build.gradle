@@ -12,6 +12,7 @@ plugins {
 	id "checkstyle"
 	id "jacoco"
 	id "com.diffplug.spotless" version "6.11.0"
+	id "net.ltgt.errorprone" version "3.1.0"
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
 //    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
@@ -44,6 +45,8 @@ dependencies {
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.2'
+
+	errorprone("com.google.errorprone:error_prone_core:2.18.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
