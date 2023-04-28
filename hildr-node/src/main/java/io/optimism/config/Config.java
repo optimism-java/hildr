@@ -89,7 +89,7 @@ public record Config(
       return gestalt.getConfig("config", Config.class);
 
     } catch (GestaltException e) {
-      throw new RuntimeException(e);
+      throw new ConfigLoadException(e);
     }
   }
 }

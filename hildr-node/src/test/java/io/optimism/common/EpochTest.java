@@ -20,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -28,7 +29,7 @@ class EpochTest {
 
   @Test
   @DisplayName("should convert from the deposited transaction calldata")
-  void from() throws IOException {
+  void from() throws IOException, URISyntaxException {
     final String callData =
         "0x015d8eb900000000000000000000000000000000000000000000000000000000008768240000000000000000"
             + "000000000000000000000000000000000000000064443450000000000000000000000000000000000000"
