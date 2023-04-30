@@ -16,6 +16,14 @@
 
 package io.optimism.derive;
 
+
+import io.optimism.common.BlockInfo;
+import io.optimism.common.Epoch;
+import io.optimism.config.Config;
+import io.optimism.l1.L1Info;
+import java.math.BigInteger;
+import java.util.TreeMap;
+
 /**
  * The type State.
  *
@@ -24,8 +32,153 @@ package io.optimism.derive;
  */
 public class State {
 
-  /** Instantiates a new State. */
-  public State() {
-    super();
+  private final TreeMap<String, L1Info> l1Info;
+
+  private final TreeMap<BigInteger, String> l1Hashes;
+
+  private BlockInfo safeHead;
+
+  private Epoch safeEpoch;
+
+  private BigInteger currentEpochNum;
+
+  private final Config config;
+
+  /**
+   * Instantiates a new State.
+   *
+   * @param l1Info the L1 info
+   * @param l1Hashes the L1 hashes
+   * @param safeHead the safe head
+   * @param safeEpoch the safe epoch
+   * @param currentEpochNum the current epoch num
+   * @param config the config
+   */
+  public State(
+      TreeMap<String, L1Info> l1Info,
+      TreeMap<BigInteger, String> l1Hashes,
+      BlockInfo safeHead,
+      Epoch safeEpoch,
+      BigInteger currentEpochNum,
+      Config config) {
+    this.l1Info = l1Info;
+    this.l1Hashes = l1Hashes;
+    this.safeHead = safeHead;
+    this.safeEpoch = safeEpoch;
+    this.currentEpochNum = currentEpochNum;
+    this.config = config;
+  }
+
+  /**
+   * Create state.
+   *
+   * @param finalizedHead the finalized head
+   * @param finalizedEpoch the finalized epoch
+   * @param config the config
+   * @return the state
+   */
+  public static State create(BlockInfo finalizedHead, Epoch finalizedEpoch, Config config) {
+    return new State(
+        new TreeMap<>(), new TreeMap<>(), finalizedHead, finalizedEpoch, BigInteger.ZERO, config);
+  }
+
+  /**
+   * L 1 info l 1 info.
+   *
+   * @param hash the hash
+   * @return the l 1 info
+   */
+  public L1Info l1Info(String hash) {
+    return l1Info.get(hash);
+  }
+
+  /**
+   * L 1 info l 1 info.
+   *
+   * @param number the number
+   * @return the l 1 info
+   */
+  public L1Info l1Info(BigInteger number) {
+    return l1Info.get(l1Hashes.get(number));
+  }
+
+  /**
+   * Epoch epoch.
+   *
+   * @param hash the hash
+   * @return the epoch
+   */
+  public Epoch epoch(String hash) {
+    L1Info l1Info = l1Info(hash);
+    return new Epoch(
+        l1Info.blockInfo().number(), l1Info.blockInfo().hash(), l1Info.blockInfo().timestamp());
+  }
+
+  /**
+   * Epoch epoch.
+   *
+   * @param number the number
+   * @return the epoch
+   */
+  public Epoch epoch(BigInteger number) {
+    L1Info l1Info = l1Info(number);
+    return new Epoch(
+        l1Info.blockInfo().number(), l1Info.blockInfo().hash(), l1Info.blockInfo().timestamp());
+  }
+
+  /**
+   * Is full boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isFull() {
+    return this.currentEpochNum.compareTo(this.safeEpoch.number().add(BigInteger.valueOf(1000L)))
+        > 0;
+  }
+
+  /**
+   * Update l 1 info.
+   *
+   * @param l1Info the l 1 info
+   */
+  public void updateL1Info(L1Info l1Info) {
+    this.currentEpochNum = l1Info.blockInfo().number();
+    this.l1Hashes.put(l1Info.blockInfo().number(), l1Info.blockInfo().hash());
+    this.l1Info.put(l1Info.blockInfo().hash(), l1Info);
+
+    this.prune();
+  }
+
+  /**
+   * Purge.
+   *
+   * @param safeHead the safe head
+   * @param safeEpoch the safe epoch
+   */
+  public void purge(BlockInfo safeHead, Epoch safeEpoch) {
+    this.safeHead = safeHead;
+    this.safeEpoch = safeEpoch;
+    this.l1Info.clear();
+    this.l1Hashes.clear();
+    this.currentEpochNum = BigInteger.ZERO;
+  }
+
+  /**
+   * Update safe head.
+   *
+   * @param safeHead the safe head
+   * @param safeEpoch the safe epoch
+   */
+  public void updateSafeHead(BlockInfo safeHead, Epoch safeEpoch) {
+    this.safeHead = safeHead;
+    this.safeEpoch = safeEpoch;
+  }
+
+  private void prune() {
+    BigInteger pruneUntil = this.safeEpoch.number().subtract(config.chainConfig().seqWindowSize());
+    while (this.l1Hashes.firstKey().compareTo(pruneUntil) < 0) {
+      this.l1Info.remove(this.l1Hashes.firstEntry().getValue());
+      this.l1Hashes.pollFirstEntry();
+    }
   }
 }

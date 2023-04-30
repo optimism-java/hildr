@@ -1,0 +1,151 @@
+/*
+ * Copyright 2023 281165273grape@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+package io.optimism.derive.stages;
+
+
+import com.google.common.collect.AbstractIterator;
+import io.optimism.config.Config;
+import io.optimism.derive.PurgeableIterator;
+import io.optimism.derive.State;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.zip.DataFormatException;
+import java.util.zip.Inflater;
+import org.apache.commons.lang3.ArrayUtils;
+import org.web3j.rlp.RlpDecoder;
+import org.web3j.rlp.RlpList;
+import org.web3j.rlp.RlpString;
+import org.web3j.rlp.RlpType;
+
+/**
+ * The type Batches.
+ *
+ * @param <I> the type parameter
+ * @author grapebaba
+ * @since 0.1.0
+ */
+public class Batches<I extends PurgeableIterator<Channel>> extends AbstractIterator<Batch>
+    implements PurgeableIterator<Batch> {
+
+  private TreeMap<BigInteger, Batch> batches;
+
+  private I channelIterator;
+
+  private ReentrantReadWriteLock stateLock = new ReentrantReadWriteLock();
+
+  private State state;
+
+  private Config config;
+
+  /**
+   * Instantiates a new Batches.
+   *
+   * @param batches the batches
+   * @param channelIterator the channel iterator
+   * @param state the state
+   * @param config the config
+   */
+  public Batches(
+      TreeMap<BigInteger, Batch> batches, I channelIterator, State state, Config config) {
+    this.batches = batches;
+    this.channelIterator = channelIterator;
+    this.state = state;
+    this.config = config;
+  }
+
+  @Override
+  public void purge() {
+    this.channelIterator.purge();
+    this.batches.clear();
+  }
+
+  @Override
+  protected Batch computeNext() {
+    //    if (this.channelIterator.hasNext()) {
+    //      Channel channel = this.channelIterator.next();
+    //      if (channel != null) {
+    //        Batch batch = this.batches.get(channel.getBatchId());
+    //        if (batch == null) {
+    //          batch = Batch.create(channel.getBatchId(), this.state, this.config);
+    //          this.batches.put(channel.getBatchId(), batch);
+    //        }
+    //        batch.addChannel(channel);
+    //        return batch;
+    //      }
+    //    }
+    return null;
+  }
+
+  /**
+   * Decode batches list.
+   *
+   * @param channel the channel
+   * @return the list
+   */
+  public static List<Batch> decodeBatches(Channel channel) {
+    byte[] channelData = decompressZlib(channel.data());
+    List<RlpType> batches = RlpDecoder.decode(channelData).getValues();
+    return batches.stream()
+        .map(
+            rlpType -> {
+              byte[] batchData =
+                  ArrayUtils.subarray(
+                      ((RlpString) rlpType).getBytes(),
+                      1,
+                      ((RlpString) batches.get(0)).getBytes().length);
+              RlpList rlpBatchData = (RlpList) RlpDecoder.decode(batchData).getValues().get(0);
+              return Batch.decode(rlpBatchData, channel.l1InclusionBlock());
+            })
+        .toList();
+  }
+
+  private static byte[] decompressZlib(byte[] data) {
+    try {
+
+      Inflater inflater = new Inflater();
+      inflater.setInput(data);
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+      byte[] buffer = new byte[1024];
+      while (!inflater.finished()) {
+        int count = inflater.inflate(buffer);
+        outputStream.write(buffer, 0, count);
+      }
+      outputStream.close();
+      return outputStream.toByteArray();
+    } catch (IOException | DataFormatException e) {
+      throw new DecompressZlibException(e);
+    }
+  }
+
+  /**
+   * Create batches.
+   *
+   * @param <I> the type parameter
+   * @param channelIterator the channel iterator
+   * @param state the state
+   * @param config the config
+   * @return the batches
+   */
+  public static <I extends PurgeableIterator<Channel>> Batches<I> create(
+      I channelIterator, State state, Config config) {
+    return new Batches<>(new TreeMap<>(), channelIterator, state, config);
+  }
+}
