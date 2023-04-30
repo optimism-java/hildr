@@ -174,6 +174,60 @@ public class State {
     this.safeEpoch = safeEpoch;
   }
 
+  /**
+   * Gets safe head.
+   *
+   * @return the safe head
+   */
+  public BlockInfo getSafeHead() {
+    return safeHead;
+  }
+
+  /**
+   * Sets safe head.
+   *
+   * @param safeHead the safe head
+   */
+  public void setSafeHead(BlockInfo safeHead) {
+    this.safeHead = safeHead;
+  }
+
+  /**
+   * Gets safe epoch.
+   *
+   * @return the safe epoch
+   */
+  public Epoch getSafeEpoch() {
+    return safeEpoch;
+  }
+
+  /**
+   * Sets safe epoch.
+   *
+   * @param safeEpoch the safe epoch
+   */
+  public void setSafeEpoch(Epoch safeEpoch) {
+    this.safeEpoch = safeEpoch;
+  }
+
+  /**
+   * Gets current epoch num.
+   *
+   * @return the current epoch num
+   */
+  public BigInteger getCurrentEpochNum() {
+    return currentEpochNum;
+  }
+
+  /**
+   * Sets current epoch num.
+   *
+   * @param currentEpochNum the current epoch num
+   */
+  public void setCurrentEpochNum(BigInteger currentEpochNum) {
+    this.currentEpochNum = currentEpochNum;
+  }
+
   private void prune() {
     BigInteger pruneUntil = this.safeEpoch.number().subtract(config.chainConfig().seqWindowSize());
     while (this.l1Hashes.firstKey().compareTo(pruneUntil) < 0) {
