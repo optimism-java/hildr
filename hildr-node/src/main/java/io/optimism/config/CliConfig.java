@@ -16,7 +16,6 @@
 
 package io.optimism.config;
 
-
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;

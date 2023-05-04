@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-
 import java.math.BigInteger;
 
 /**
@@ -28,4 +27,18 @@ import java.math.BigInteger;
  * @author grapebaba
  * @since 0.1.0
  */
-public record Channel(BigInteger id, byte[] data, BigInteger l1InclusionBlock) {}
+public record Channel(BigInteger id, byte[] data, BigInteger l1InclusionBlock) {
+
+  /**
+   * From channel.
+   *
+   * @param pendingChannel the pending channel
+   * @return the channel
+   */
+  public static Channel from(PendingChannel pendingChannel) {
+    return new Channel(
+        pendingChannel.getChannelId(),
+        pendingChannel.assemble(),
+        pendingChannel.l1InclusionBlock());
+  }
+}

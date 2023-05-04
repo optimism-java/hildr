@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-
 import java.math.BigInteger;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;

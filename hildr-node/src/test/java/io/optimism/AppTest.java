@@ -24,8 +24,19 @@ import com.fasterxml.jackson.dataformat.toml.TomlMapper;
 import io.optimism.config.CliConfig;
 import org.junit.jupiter.api.Test;
 
+/**
+ * The type AppTest.
+ *
+ * @author grapebaba
+ * @since 0.1.0
+ */
 class AppTest {
 
+  /**
+   * App has greeting.
+   *
+   * @throws JsonProcessingException the json processing exception
+   */
   @Test
   void appHasGreeting() throws JsonProcessingException {
     CliConfig cliConfig = new CliConfig("test", "test", "test", "test");

@@ -11,7 +11,7 @@ plugins {
 	id 'application'
 	id "checkstyle"
 	id "jacoco"
-	id "com.diffplug.spotless" version "6.11.0"
+	id "com.diffplug.spotless" version "6.18.0"
 	id "net.ltgt.errorprone" version "3.1.0"
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
@@ -45,6 +45,7 @@ dependencies {
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.2'
+	implementation 'org.jctools:jctools-core:4.0.1'
 
 	errorprone("com.google.errorprone:error_prone_core:2.18.0")
 }
@@ -93,7 +94,7 @@ jacocoTestCoverageVerification {
 }
 
 checkstyle {
-	toolVersion = '10.3.4'
+	toolVersion = '10.7.0'
 	// default checkstyle config -- specific to your team agreement
 	configFile = project(":").file("config/checkstyle/google_checks.xml")
 	// Google style (idiosyncratic to Google):
@@ -123,7 +124,7 @@ spotless {
 		// don't need to set target, it is inferred from java
 
 		// apply a specific flavor of google-java-format
-		googleJavaFormat()
+		googleJavaFormat('1.17.0')
 		// fix formatting of type annotations
 		formatAnnotations()
 		// make sure every file has the following copyright header.

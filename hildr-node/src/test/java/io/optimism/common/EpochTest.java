@@ -24,9 +24,20 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** Created by IntelliJ IDEA. Author: kaichen Date: 2023/4/25 Time: 09:56 */
+/**
+ * The type EpochTest.
+ *
+ * @author grapebaba
+ * @since 0.1.0
+ */
 class EpochTest {
 
+  /**
+   * From.
+   *
+   * @throws IOException the io exception
+   * @throws URISyntaxException the uri syntax exception
+   */
   @Test
   @DisplayName("should convert from the deposited transaction calldata")
   void from() throws IOException, URISyntaxException {

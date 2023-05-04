@@ -48,13 +48,13 @@ import org.web3j.rlp.RlpType;
 public class Batches<I extends PurgeableIterator<Channel>> extends AbstractIterator<Batch>
     implements PurgeableIterator<Batch> {
 
-  private TreeMap<BigInteger, Batch> batches;
+  private final TreeMap<BigInteger, Batch> batches;
 
-  private I channelIterator;
+  private final I channelIterator;
 
-  private AtomicReference<State> state;
+  private final AtomicReference<State> state;
 
-  private Config config;
+  private final Config config;
 
   /**
    * Instantiates a new Batches.

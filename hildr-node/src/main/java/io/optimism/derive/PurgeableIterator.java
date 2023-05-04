@@ -16,7 +16,6 @@
 
 package io.optimism.derive;
 
-
 import java.util.Iterator;
 
 /**

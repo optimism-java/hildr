@@ -14,33 +14,22 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.common;
-
-import java.math.BigInteger;
-import org.web3j.protocol.core.methods.response.EthBlock.Block;
+package io.optimism.derive.stages;
 
 /**
- * The type BlockInfo.
+ * The type InvalidFrameSizeException.
  *
- * <p>Selected block header info.
- *
- * @param number Block number.
- * @param hash Block hash.
- * @param timestamp Block timestamp.
- * @param parentHash Block parent hash.
  * @author grapebaba
  * @since 0.1.0
  */
-public record BlockInfo(String hash, BigInteger number, String parentHash, BigInteger timestamp) {
+public class InvalidFrameSizeException extends RuntimeException {
 
   /**
-   * From block info.
+   * Instantiates a new Invalid frame size exception.
    *
-   * @param block the block
-   * @return the block info
+   * @param message the message
    */
-  public BlockInfo from(Block block) {
-    return new BlockInfo(
-        block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
+  public InvalidFrameSizeException(String message) {
+    super(message);
   }
 }

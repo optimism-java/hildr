@@ -16,7 +16,6 @@
 
 package io.optimism.common;
 
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;

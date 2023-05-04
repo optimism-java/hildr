@@ -16,7 +16,6 @@
 
 package io.optimism.config;
 
-
 import java.math.BigInteger;
 import org.web3j.utils.Numeric;
 

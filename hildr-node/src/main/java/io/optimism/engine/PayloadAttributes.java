@@ -16,7 +16,6 @@
 
 package io.optimism.engine;
 
-
 import io.optimism.common.Epoch;
 import java.math.BigInteger;
 import java.util.List;
@@ -24,16 +23,16 @@ import java.util.List;
 /**
  * The type PayloadAttributes.
  *
- * <p>L2 extended payload attributes for Optimism. For more details, visit the [Optimism
- * specs](https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#extended-payloadattributesv1).
+ * <p>L2 extended payload attributes for Optimism. For more details, visit the [Optimism specs](<a
+ * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#extended-payloadattributesv1">...</a>).
  *
  * @param timestamp 64 bit value for the timestamp field of the new payload.
  * @param prevRandao 32 byte value for the prevRandao field of the new payload.
  * @param suggestedFeeRecipient 20 bytes suggested value for the feeRecipient field of the new
  *     payload.
  * @param transactions List of transactions to be included in the new payload.
- * @param noTxPool Boolean value indicating whether or not the payload should be built without
- *     including transactions from the txpool.
+ * @param noTxPool Boolean value indicating whether the payload should be built without including
+ *     transactions from the txpool.
  * @param gasLimit 64 bit value for the gasLimit field of the new payload.The gasLimit is optional
  *     w.r.t. compatibility with L1, but required when used as rollup.This field overrides the gas
  *     limit used during block-building.If not specified as rollup, a STATUS_INVALID is returned.

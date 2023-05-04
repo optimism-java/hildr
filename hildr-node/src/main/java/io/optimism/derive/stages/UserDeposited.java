@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-
 import java.math.BigInteger;
 import java.util.List;
 import net.osslabz.evm.abi.definition.AbiDefinition.Entry.Param;

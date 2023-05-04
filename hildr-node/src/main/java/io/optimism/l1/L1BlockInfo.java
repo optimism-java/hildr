@@ -16,7 +16,6 @@
 
 package io.optimism.l1;
 
-
 import java.math.BigInteger;
 
 /**

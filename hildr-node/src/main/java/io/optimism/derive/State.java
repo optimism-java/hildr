@@ -16,7 +16,6 @@
 
 package io.optimism.derive;
 
-
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;

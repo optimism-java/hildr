@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.engine.PayloadAttributes;
 

@@ -14,33 +14,17 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.common;
+package io.optimism.derive.stages;
 
 import java.math.BigInteger;
-import org.web3j.protocol.core.methods.response.EthBlock.Block;
+import java.util.List;
 
 /**
- * The type BlockInfo.
+ * The type BatcherTransactionMessage.
  *
- * <p>Selected block header info.
- *
- * @param number Block number.
- * @param hash Block hash.
- * @param timestamp Block timestamp.
- * @param parentHash Block parent hash.
+ * @param txs the txs
+ * @param l1Origin the L1 origin
  * @author grapebaba
  * @since 0.1.0
  */
-public record BlockInfo(String hash, BigInteger number, String parentHash, BigInteger timestamp) {
-
-  /**
-   * From block info.
-   *
-   * @param block the block
-   * @return the block info
-   */
-  public BlockInfo from(Block block) {
-    return new BlockInfo(
-        block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
-  }
-}
+public record BatcherTransactionMessage(List<byte[]> txs, BigInteger l1Origin) {}
