@@ -19,8 +19,8 @@ package io.optimism.l1;
 import static org.web3j.protocol.core.methods.response.EthBlock.Block;
 import static org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
-import io.optimism.config.SystemConfig;
-import io.optimism.derive.stages.UserDeposited;
+import io.optimism.config.Config.SystemConfig;
+import io.optimism.derive.stages.Attributes.UserDeposited;
 import java.util.List;
 
 /**

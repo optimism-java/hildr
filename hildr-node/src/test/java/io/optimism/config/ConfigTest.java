@@ -17,9 +17,14 @@
 package io.optimism.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.optimism.config.Config.ChainConfig;
+import io.optimism.config.Config.CliConfig;
+import io.optimism.config.Config.SystemConfig;
 import java.math.BigInteger;
 import org.junit.jupiter.api.Test;
+import org.web3j.utils.Numeric;
 
 /**
  * The type ConfigTest.
@@ -71,5 +76,51 @@ class ConfigTest {
     assertEquals(BigInteger.valueOf(600L), config.chainConfig().maxSeqDrift());
     assertEquals(BigInteger.valueOf(1679079600L), config.chainConfig().regolithTime());
     assertEquals(BigInteger.valueOf(2L), config.chainConfig().blockTime());
+  }
+
+  /**
+   * The type ChainConfig test.
+   *
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  static class ChainConfigTest {
+
+    /** Optimism goerli. */
+    @Test
+    void baseGoerli() {
+      ChainConfig chainConfig = ChainConfig.baseGoerli();
+      assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(Long.MAX_VALUE));
+    }
+
+    /** Base goerli. */
+    @Test
+    void optimismGoerli() {
+      ChainConfig chainConfig = ChainConfig.optimismGoerli();
+      assertEquals(chainConfig.regolithTime(), new BigInteger("1679079600"));
+    }
+  }
+
+  /**
+   * The type SystemConfig test.
+   *
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  static class SystemConfigTest {
+
+    /** Batch hash. */
+    @Test
+    void batchHash() {
+      SystemConfig systemConfig =
+          new SystemConfig(
+              "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
+              BigInteger.valueOf(25_000_000L),
+              BigInteger.valueOf(2100),
+              BigInteger.valueOf(1000000));
+
+      assertTrue(
+          systemConfig.batchHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
+    }
   }
 }

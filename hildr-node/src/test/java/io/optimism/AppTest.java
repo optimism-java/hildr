@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
-import io.optimism.config.CliConfig;
+import io.optimism.config.Config.CliConfig;
 import org.junit.jupiter.api.Test;
 
 /**

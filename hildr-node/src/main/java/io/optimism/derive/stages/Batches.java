@@ -16,14 +16,14 @@
 
 package io.optimism.derive.stages;
 
-import static io.optimism.derive.stages.BatchStatus.Undecided;
-
 import com.google.common.collect.AbstractIterator;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
+import io.optimism.derive.stages.Batches.Batch;
+import io.optimism.derive.stages.Channels.Channel;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -33,6 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.web3j.rlp.RlpDecoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
@@ -242,7 +243,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
                 return BatchStatus.Drop;
               }
             } else {
-              return Undecided;
+              return BatchStatus.Undecided;
             }
           }
         } else {
@@ -250,7 +251,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
         }
       }
     } else {
-      return Undecided;
+      return BatchStatus.Undecided;
     }
 
     if (batch.hasInvalidTransactions()) {
@@ -272,5 +273,71 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
   public static <I extends PurgeableIterator<Channel>> Batches<I> create(
       I channelIterator, State state, Config config) {
     return new Batches<>(new TreeMap<>(), channelIterator, state, config);
+  }
+
+  /**
+   * The enum BatchStatus.
+   *
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  public enum BatchStatus {
+    /** Drop batch status. */
+    Drop,
+    /** Accept batch status. */
+    Accept,
+    /** Undecided batch status. */
+    Undecided,
+    /** Future batch status. */
+    Future,
+  }
+
+  /**
+   * The type Batch.
+   *
+   * @param parentHash the parent hash
+   * @param epochNum the epoch num
+   * @param epochHash the epoch hash
+   * @param timestamp the timestamp
+   * @param transactions the transactions
+   * @param l1InclusionBlock L1 inclusion block
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  public record Batch(
+      String parentHash,
+      BigInteger epochNum,
+      String epochHash,
+      BigInteger timestamp,
+      List<String> transactions,
+      BigInteger l1InclusionBlock) {
+
+    /**
+     * Decode batch.
+     *
+     * @param rlp the rlp
+     * @param l1InclusionBlock L1 inclusion block
+     * @return the batch
+     */
+    public static Batch decode(RlpList rlp, BigInteger l1InclusionBlock) {
+      String parentHash = ((RlpString) rlp.getValues().get(0)).asString();
+      BigInteger epochNum = ((RlpString) rlp.getValues().get(1)).asPositiveBigInteger();
+      String epochHash = ((RlpString) rlp.getValues().get(2)).asString();
+      BigInteger timestamp = ((RlpString) rlp.getValues().get(3)).asPositiveBigInteger();
+      List<String> transactions =
+          ((RlpList) rlp.getValues().get(4))
+              .getValues().stream().map(rlpString -> ((RlpString) rlpString).asString()).toList();
+      return new Batch(parentHash, epochNum, epochHash, timestamp, transactions, l1InclusionBlock);
+    }
+
+    /**
+     * Has invalid transactions boolean.
+     *
+     * @return the boolean
+     */
+    public boolean hasInvalidTransactions() {
+      return this.transactions.stream()
+          .anyMatch(s -> StringUtils.isEmpty(s) || StringUtils.startsWithIgnoreCase(s, "0x7E"));
+    }
   }
 }

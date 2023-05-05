@@ -19,6 +19,7 @@ package io.optimism.derive.stages;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import io.optimism.derive.stages.Attributes.UserDeposited;
 import java.math.BigInteger;
 import java.util.List;
 import org.junit.jupiter.api.Test;
