@@ -17,11 +17,14 @@
 package io.optimism.engine;
 
 /**
- * ## ForkchoiceStateV1
+ * the type ForkchoiceState.
  *
  * <p>Note: [ForkchoiceState.safe_block_hash] and [ForkchoiceState.finalized_block_hash]fields are
  * allowed to have 0x0000000000000000000000000000000000000000000000000000000000000000 value unless
  * transition block is finalized.
+ *
+ * @author zhouop0
+ * @since 0.1.0
  */
 public record ForkchoiceState(
     /** 32 byte block hash of the head of the canonical chain */

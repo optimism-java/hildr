@@ -19,7 +19,12 @@ package io.optimism.engine;
 import java.math.BigInteger;
 import java.util.Optional;
 
-/** The result of a fork choice update. */
+/**
+ * The type ForkChoiceUpdate.
+ *
+ * @author zhouop0
+ * @since 0.1.0
+ */
 public record ForkChoiceUpdate(
     /**
      * Payload status. Note: values of the status field in the context of this method are restricted

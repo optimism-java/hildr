@@ -20,7 +20,12 @@ import io.optimism.common.RawTransaction;
 import java.math.BigInteger;
 import java.util.List;
 
-/** ## ExecutionPayload. */
+/**
+ * The type ExecutionPayload.
+ *
+ * @author zhouop0
+ * @since 0.1.0
+ */
 public record ExecutionPayload(
     /** A 32 byte hash of the parent payload. */
     String parentHash,

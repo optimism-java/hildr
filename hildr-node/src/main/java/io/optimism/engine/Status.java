@@ -16,7 +16,12 @@
 
 package io.optimism.engine;
 
-/** ## Status The status of the payload. */
+/**
+ * The type Status.
+ *
+ * @author zhouop0
+ * @since 0.1.0
+ */
 public enum Status {
 
   /** Valid Payload. */

@@ -16,4 +16,10 @@
 
 package io.optimism.engine;
 
+/**
+ * The type PayloadStatus.
+ *
+ * @author zhouop0
+ * @since 0.1.0
+ */
 public record PayloadStatus(Status status, String latestValidHash, String validationError) {}

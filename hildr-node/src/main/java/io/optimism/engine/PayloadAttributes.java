@@ -42,6 +42,9 @@ import java.util.List;
  *     is not expected by the engine and is skipped during serialization and deserialization.
  * @param seqNumber The L2 sequence number of the block. This value is not expected by the engine
  *     and is skipped during serialization and deserialization.
+ *
+ * @author zhouop0
+ * @since 0.1.0
  */
 public record PayloadAttributes(
     BigInteger timestamp,

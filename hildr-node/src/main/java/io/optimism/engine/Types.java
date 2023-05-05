@@ -16,7 +16,12 @@
 
 package io.optimism.engine;
 
-/** ## types. */
+/**
+ * The type Types.
+ *
+ * @author zhouop0
+ * @since 0.1.0
+ */
 public class Types {
   /** The default engine api authentication port. */
   public static final Integer DEFAULT_AUTH_PORT = 8551;
