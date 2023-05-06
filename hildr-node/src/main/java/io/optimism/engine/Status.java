@@ -23,9 +23,14 @@ package io.optimism.engine;
  * @since 0.1.0
  */
 public enum Status {
+  /** Valid status. */
   Valid,
+  /** Invalid status. */
   Invalid,
+  /** Syncing status. */
   Syncing,
+  /** Accepted status. */
   Accepted,
+  /** Invalid block hash status. */
   InvalidBlockHash,
 }

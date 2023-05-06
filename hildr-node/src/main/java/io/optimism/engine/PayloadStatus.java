@@ -19,11 +19,12 @@ package io.optimism.engine;
 /**
  * The type PayloadStatus.
  *
- * @param status          The status of the payload.
- * @param latestValidHash 32 Bytes - the hash of the most recent valid block in the branch defined by payload and its ancestors.
- * @param validationError A message providing additional details on the validation error if the payload is classified as INVALID or INVALID_BLOCK_HASH.
+ * @param status The status of the payload.
+ * @param latestValidHash 32 Bytes - the hash of the most recent valid block in the branch defined
+ *     by payload and its ancestors.
+ * @param validationError A message providing additional details on the validation error if the
+ *     payload is classified as INVALID or INVALID_BLOCK_HASH.
  * @author zhouop0
  * @since 0.1.0
  */
-public record PayloadStatus(Status status, String latestValidHash, String validationError) {
-}
+public record PayloadStatus(Status status, String latestValidHash, String validationError) {}

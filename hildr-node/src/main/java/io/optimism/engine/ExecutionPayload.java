@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @param parentHash A 32 byte hash of the parent payload.
  * @param feeRecipient A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
- * @param stateRoot  A 32 byte state root hash.
+ * @param stateRoot A 32 byte state root hash.
  * @param receiptsRoot A 32 byte receipt root hash.
  * @param logsBloom A 32 byte logs bloom filter.
  * @param prevRandom A 32 byte beacon chain randomness value.
@@ -37,7 +37,6 @@ import java.util.List;
  * @param blockNumber A 64 bit number for the current block index.
  * @param extraData 0 to 32 byte value for extra data.
  * @param transactions An array of transaction objects where each object is a byte list.
- *
  * @author zhouop0
  * @since 0.1.0
  */
@@ -55,5 +54,4 @@ public record ExecutionPayload(
     String extraData,
     BigInteger baseFeePerGas,
     String blockHash,
-    List<RawTransaction> transactions) {
-}
+    List<RawTransaction> transactions) {}

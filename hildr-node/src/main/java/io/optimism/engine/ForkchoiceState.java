@@ -19,15 +19,12 @@ package io.optimism.engine;
 /**
  * the type ForkchoiceState.
  *
- * @param headBlockHash      32 byte block hash of the head of the canonical chain
- * @param safeBlockHash      32 byte "safe" block hash of the canonical chain under certain
- *                           synchrony and honesty assumptions This value MUST be either equal to or an ancestor of headBlockHash
+ * @param headBlockHash 32 byte block hash of the head of the canonical chain
+ * @param safeBlockHash 32 byte "safe" block hash of the canonical chain under certain synchrony and
+ *     honesty assumptions This value MUST be either equal to or an ancestor of headBlockHash
  * @param finalizedBlockHash 32 byte block hash of the most recent finalized block.
  * @author zhouop0
  * @since 0.1.0
  */
 public record ForkchoiceState(
-    String headBlockHash,
-    String safeBlockHash,
-    String finalizedBlockHash) {
-}
+    String headBlockHash, String safeBlockHash, String finalizedBlockHash) {}

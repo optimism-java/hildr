@@ -21,13 +21,10 @@ import java.math.BigInteger;
 /**
  * The type ForkChoiceUpdate.
  *
- * @param payloadStatus Payload status. Note: values of the status field in the context of this method are restricted
- *                      to the following subset: VALID, INVALID, SYNCING.
- * @param payloadId     8 byte identifier of the payload build process or null
+ * @param payloadStatus Payload status. Note: values of the status field in the context of this
+ *     method are restricted to the following subset: VALID, INVALID, SYNCING.
+ * @param payloadId 8 byte identifier of the payload build process or null
  * @author zhouop0
  * @since 0.1.0
  */
-public record ForkChoiceUpdate(
-    PayloadStatus payloadStatus,
-    BigInteger payloadId) {
-}
+public record ForkChoiceUpdate(PayloadStatus payloadStatus, BigInteger payloadId) {}
