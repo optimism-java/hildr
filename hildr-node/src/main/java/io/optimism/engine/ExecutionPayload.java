@@ -23,35 +23,37 @@ import java.util.List;
 /**
  * The type ExecutionPayload.
  *
+ * @param parentHash A 32 byte hash of the parent payload.
+ * @param feeRecipient A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
+ * @param stateRoot  A 32 byte state root hash.
+ * @param receiptsRoot A 32 byte receipt root hash.
+ * @param logsBloom A 32 byte logs bloom filter.
+ * @param prevRandom A 32 byte beacon chain randomness value.
+ * @param blockHash The 32 byte block hash.
+ * @param gasLimit A 64 bit value for the gas limit.
+ * @param gasUsed A 64 bit value for the gas used.
+ * @param timestamp A 64 bit value for the timestamp field of the new payload.
+ * @param baseFeePerGas 256 bits for the base fee per gas.
+ * @param blockNumber A 64 bit number for the current block index.
+ * @param extraData 0 to 32 byte value for extra data.
+ * @param transactions An array of transaction objects where each object is a byte list.
+ *
  * @author zhouop0
  * @since 0.1.0
  */
 public record ExecutionPayload(
-    /** A 32 byte hash of the parent payload. */
     String parentHash,
-    /** A 20 byte hash (aka Address) for the feeRecipient field of the new payload. */
     String feeRecipient,
-    /** A 32 byte state root hash. */
     String stateRoot,
-    /** A 32 byte receipt root hash. */
     String receiptsRoot,
-    /** A 32 byte logs bloom filter. */
     String logsBloom,
-    /** A 32 byte beacon chain randomness value. */
     String prevRandom,
-    /** A 64 bit number for the current block index. */
     BigInteger blockNumber,
-    /** A 64 bit value for the gas limit. */
     BigInteger gasLimit,
-    /** A 64 bit value for the gas used. */
     BigInteger gasUsed,
-    /** A 64 bit value for the timestamp field of the new payload. */
     BigInteger timestamp,
-    /** 0 to 32 byte value for extra data. */
     String extraData,
-    /** 256 bits for the base fee per gas. */
     BigInteger baseFeePerGas,
-    /** The 32 byte block hash. */
     String blockHash,
-    /** An array of transaction objects where each object is a byte list. */
-    List<RawTransaction> transactions) {}
+    List<RawTransaction> transactions) {
+}

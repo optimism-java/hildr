@@ -23,15 +23,9 @@ package io.optimism.engine;
  * @since 0.1.0
  */
 public enum Status {
-
-  /** Valid Payload. */
   Valid,
-  /** Invalid Payload. */
   Invalid,
-  /** Currently syncing. */
   Syncing,
-  /** Payload is accepted. */
   Accepted,
-  /** Payload contains an invalid block hash. */
   InvalidBlockHash,
 }

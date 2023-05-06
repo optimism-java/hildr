@@ -19,20 +19,15 @@ package io.optimism.engine;
 /**
  * the type ForkchoiceState.
  *
- * <p>Note: [ForkchoiceState.safe_block_hash] and [ForkchoiceState.finalized_block_hash]fields are
- * allowed to have 0x0000000000000000000000000000000000000000000000000000000000000000 value unless
- * transition block is finalized.
- *
+ * @param headBlockHash      32 byte block hash of the head of the canonical chain
+ * @param safeBlockHash      32 byte "safe" block hash of the canonical chain under certain
+ *                           synchrony and honesty assumptions This value MUST be either equal to or an ancestor of headBlockHash
+ * @param finalizedBlockHash 32 byte block hash of the most recent finalized block.
  * @author zhouop0
  * @since 0.1.0
  */
 public record ForkchoiceState(
-    /** 32 byte block hash of the head of the canonical chain */
     String headBlockHash,
-    /**
-     * 32 byte "safe" block hash of the canonical chain under certain synchrony and honesty
-     * assumptions This value MUST be either equal to or an ancestor of headBlockHash
-     */
     String safeBlockHash,
-    /** 32 byte block hash of the most recent finalized block */
-    String finalizedBlockHash) {}
+    String finalizedBlockHash) {
+}
