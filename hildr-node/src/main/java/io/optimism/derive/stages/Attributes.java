@@ -16,39 +16,133 @@
 
 package io.optimism.derive.stages;
 
+import com.google.common.collect.AbstractIterator;
+import io.optimism.common.Epoch;
+import io.optimism.config.Config;
+import io.optimism.config.Config.SystemAccounts;
 import io.optimism.derive.PurgeableIterator;
+import io.optimism.derive.State;
+import io.optimism.derive.stages.Batches.Batch;
 import io.optimism.engine.PayloadAttributes;
+import io.optimism.l1.L1Info;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import net.osslabz.evm.abi.definition.AbiDefinition.Entry.Param;
 import net.osslabz.evm.abi.definition.AbiDefinition.Event;
 import net.osslabz.evm.abi.definition.SolidityType;
 import org.apache.commons.lang3.ArrayUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
 import org.web3j.utils.Numeric;
 
 /**
  * The type Attributes.
  *
+ * @param <I> the type parameter
  * @author grapebaba
  * @since 0.1.0
  */
-public class Attributes implements PurgeableIterator<PayloadAttributes> {
+public class Attributes<I extends PurgeableIterator<Batch>>
+    extends AbstractIterator<PayloadAttributes> implements PurgeableIterator<PayloadAttributes> {
 
-  /** Instantiates a new Attributes. */
-  public Attributes() {}
+  private static final Logger LOGGER = LoggerFactory.getLogger(Attributes.class);
+  private I batchIterator;
 
-  @Override
-  public void purge() {}
+  private AtomicReference<State> state;
 
-  @Override
-  public boolean hasNext() {
-    return false;
+  private BigInteger sequenceNumber;
+
+  private String epochHash;
+
+  private Config config;
+
+  /**
+   * Instantiates a new Attributes.
+   *
+   * @param batchIterator the batch iterator
+   * @param state the state
+   * @param config the config
+   */
+  public Attributes(I batchIterator, AtomicReference<State> state, Config config) {
+    this.batchIterator = batchIterator;
+    this.state = state;
+    this.config = config;
+    this.sequenceNumber = BigInteger.ZERO;
+    this.epochHash = this.state.get().getSafeEpoch().hash();
   }
 
   @Override
-  public PayloadAttributes next() {
+  protected PayloadAttributes computeNext() {
+    final Batch batch = this.batchIterator.next();
+    return batch != null ? this.deriveAttributes(batch) : null;
+  }
+
+  private PayloadAttributes deriveAttributes(Batch batch) {
+    LOGGER.trace("attributes derived from block {}", batch.epochNum());
+    LOGGER.trace("batch epoch hash {}", batch.epochHash());
+
+    this.updateSequenceNumber(batch.epochHash());
+
+    State state = this.state.get();
+    L1Info l1Info = state.l1Info(batch.epochHash());
+
+    Epoch epoch = new Epoch(batch.epochNum(), batch.epochHash(), l1Info.blockInfo().timestamp());
+
+    BigInteger timestamp = batch.timestamp();
+    BigInteger l1InclusionBlock = batch.l1InclusionBlock();
+    BigInteger seqNumber = this.sequenceNumber;
+    String prevRandao = l1Info.blockInfo().mixHash();
+    List<String> transactions = this.deriveTransactions(batch, l1Info);
+    String suggestedFeeRecipient = SystemAccounts.defaultSystemAccounts().feeVault();
+    BigInteger gasLimit = l1Info.systemConfig().gasLimit();
+
+    return new PayloadAttributes(
+        timestamp,
+        prevRandao,
+        suggestedFeeRecipient,
+        transactions,
+        true,
+        gasLimit,
+        epoch,
+        l1InclusionBlock,
+        seqNumber);
+  }
+
+  private List<String> deriveTransactions(Batch batch, L1Info l1Info) {
+    List<String> transactions = new ArrayList<>();
+
+    String attributesTx = this.deriveAttributesDeposited(l1Info, batch.timestamp());
+    transactions.add(attributesTx);
+
+    if (this.sequenceNumber.equals(BigInteger.ZERO)) {
+      List<String> userDepositedTxs = this.deriveUserDeposited();
+      transactions.addAll(userDepositedTxs);
+    }
+
+    List<String> rest = batch.transactions();
+    transactions.addAll(rest);
+
+    return transactions;
+  }
+
+  private List<String> deriveUserDeposited() {
     return null;
+  }
+
+  private String deriveAttributesDeposited(L1Info l1Info, BigInteger timestamp) {
+    return null;
+  }
+
+  private void updateSequenceNumber(String s) {}
+
+  @Override
+  public void purge() {
+    this.batchIterator.purge();
+    this.sequenceNumber = BigInteger.ZERO;
+    this.epochHash = this.state.get().getSafeEpoch().hash();
   }
 
   /**
