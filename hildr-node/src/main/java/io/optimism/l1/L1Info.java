@@ -57,8 +57,7 @@ public record L1Info(
       String batchInbox,
       boolean finalized,
       SystemConfig systemConfig) {
-    L1BlockInfo l1BlockInfo =
-        L1BlockInfo.create(
+    L1BlockInfo l1BlockInfo = L1BlockInfo.create(
             block.getNumber(),
             block.getHash(),
             block.getTimestamp(),
