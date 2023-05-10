@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 281165273grape@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.optimism.l1;
 
 import io.optimism.config.Config;
@@ -18,8 +34,9 @@ import org.web3j.tuples.generated.Tuple2;
  * the ChainWatcher class.
  *
  * @author thinkAfCod
- * @since 2023.05
+ * @since 0.1.0
  */
+@SuppressWarnings("UnusedVariable")
 public class ChainWatcher {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ChainWatcher.class);
@@ -36,16 +53,23 @@ public class ChainWatcher {
 
   private ExecutorService executor;
 
+  /**
+   * the ChainWatcher constructor.
+   *
+   * @param l1StartBlock the start block number of l1
+   * @param l2StartBlock the start block number of l2
+   * @param config the global config
+   */
   public ChainWatcher(BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
     this.config = config;
     this.l1StartBlock = l1StartBlock;
     this.l2StartBlock = l2StartBlock;
     this.blockUpdateReceiver = new MpscBlockingConsumerArrayQueue(1000);
-    this.executor = new ThreadPoolExecutor(
-        1, 4, 30,
-        TimeUnit.MINUTES, new LinkedBlockingDeque<>(300));
+    this.executor =
+        new ThreadPoolExecutor(1, 4, 30, TimeUnit.MINUTES, new LinkedBlockingDeque<>(300));
   }
 
+  /** start ChainWatcher. */
   public void start() {
     if (handle != null && !handle.isDone()) {
       handle.cancel(false);
@@ -57,6 +81,12 @@ public class ChainWatcher {
     this.blockUpdateReceiver = tuple.component2();
   }
 
+  /**
+   * restart ChainWatcher with new block number.
+   *
+   * @param l1StartBlock the start block number of l1
+   * @param l2StartBlock the start block number of l2
+   */
   public void restart(BigInteger l1StartBlock, BigInteger l2StartBlock) {
     if (handle != null && !handle.isDone()) {
       handle.cancel(false);
@@ -69,6 +99,7 @@ public class ChainWatcher {
     this.l2StartBlock = l2StartBlock;
   }
 
+  /** stop the ChainWatcher. */
   public void stop() {
     if (handle != null && !handle.isDone()) {
       handle.cancel(false);
@@ -77,24 +108,24 @@ public class ChainWatcher {
 
   private static Tuple2<Future, BlockingQueue<BlockUpdate>> startWatcher(
       final ChainWatcher chainWatcher,
-      BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
+      BigInteger l1StartBlock,
+      BigInteger l2StartBlock,
+      Config config) {
     final BlockingQueue<BlockUpdate> queue = new MpscBlockingConsumerArrayQueue<>(1000);
-    Future future = chainWatcher.executor.submit(() -> {
-      final InnerWatcher watcher = new InnerWatcher(
-          config, queue, l1StartBlock, l2StartBlock);
-      for (; ; ) {
-        LOGGER.debug("fetching L1 data for block {}", watcher.currentBlock);
-        try {
-          watcher.tryIngestBlock();
-        } catch (Exception e) {
-          LOGGER.warn(
-              "failed to fetch data for block {}: {}",
-              watcher.currentBlock,
-              e);
-        }
-      }
-    });
+    Future future =
+        chainWatcher.executor.submit(
+            () -> {
+              final InnerWatcher watcher =
+                  new InnerWatcher(config, queue, l1StartBlock, l2StartBlock);
+              for (; ; ) {
+                LOGGER.debug("fetching L1 data for block {}", watcher.currentBlock);
+                try {
+                  watcher.tryIngestBlock();
+                } catch (Exception e) {
+                  LOGGER.warn("failed to fetch data for block {}: {}", watcher.currentBlock, e);
+                }
+              }
+            });
     return new Tuple2(future, queue);
   }
-
 }

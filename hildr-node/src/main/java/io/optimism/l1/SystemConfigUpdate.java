@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 281165273grape@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.optimism.l1;
 
 import java.math.BigInteger;
@@ -6,10 +22,10 @@ import org.bouncycastle.util.encoders.Hex;
 import org.web3j.protocol.core.methods.response.EthLog;
 
 /**
- * SystemConfigUpdate
+ * SystemConfigUpdate class.
  *
  * @author thinkAfCod
- * @since 2023.05
+ * @since 0.1.0
  */
 public class SystemConfigUpdate {
 
@@ -25,43 +41,89 @@ public class SystemConfigUpdate {
 
   private final SystemConfigUpdateType type;
 
+  /**
+   * the SystemConfigUpdate constructor. type define to SystemConfigUpdateType.BatchSender
+   *
+   * @param address batch sender address
+   */
   public SystemConfigUpdate(String address) {
     this.address = address;
     this.type = SystemConfigUpdateType.BatchSender;
   }
 
-  public SystemConfigUpdate(
-      BigInteger feeOverhead, BigInteger feeScalar) {
+  /**
+   * the SystemConfigUpdate constructor. type define to SystemConfigUpdateType.Fees
+   *
+   * @param feeOverhead overhead fee
+   * @param feeScalar scalar fee
+   */
+  public SystemConfigUpdate(BigInteger feeOverhead, BigInteger feeScalar) {
     this.feeOverhead = feeOverhead;
     this.feeScalar = feeScalar;
     this.type = SystemConfigUpdateType.Fees;
   }
 
+  /**
+   * the SystemConfigUpdate constructor. type define to SystemConfigUpdateType.Gas
+   *
+   * @param gas gas value
+   */
   public SystemConfigUpdate(BigInteger gas) {
     this.gas = gas;
     this.type = SystemConfigUpdateType.Gas;
   }
 
+  /**
+   * get batch sender address.
+   *
+   * @return batch sender address
+   */
   public String getAddress() {
     return address;
   }
 
+  /**
+   * get overhead fee.
+   *
+   * @return overhead fee
+   */
   public BigInteger getFeeOverhead() {
     return feeOverhead;
   }
 
+  /**
+   * get scalar fee.
+   *
+   * @return scalar fee
+   */
   public BigInteger getFeeScalar() {
     return feeScalar;
   }
 
+  /**
+   * get gas.
+   *
+   * @return gas
+   */
   public BigInteger getGas() {
     return gas;
   }
 
+  /**
+   * get system config update type.
+   *
+   * @return the enum of system config update type
+   */
   public SystemConfigUpdateType getType() {
     return type;
   }
 
+  /**
+   * create systemConfigUpdate from EthLog.LogObject.
+   *
+   * @param log EthLog.LogObject
+   * @return a SystemConfigUpdate instance
+   */
   public static SystemConfigUpdate tryFrom(EthLog.LogObject log) {
     byte[] decode = Hex.decode(log.getTopics().get(1));
     BigInteger version = new BigInteger(decode);
