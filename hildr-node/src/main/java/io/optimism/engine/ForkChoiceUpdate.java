@@ -17,14 +17,36 @@
 package io.optimism.engine;
 
 import java.math.BigInteger;
+import org.web3j.protocol.core.Response;
 
 /**
  * The type ForkChoiceUpdate.
  *
- * @param payloadStatus Payload status. Note: values of the status field in the context of this
+ * payloadStatus Payload status. Note: values of the status field in the context of this
  *     method are restricted to the following subset: VALID, INVALID, SYNCING.
- * @param payloadId 8 byte identifier of the payload build process or null
+ * payloadId 8 byte identifier of the payload build process or null
+ *
  * @author zhouop0
  * @since 0.1.0
  */
-public record ForkChoiceUpdate(PayloadStatus payloadStatus, BigInteger payloadId) {}
+public class ForkChoiceUpdate extends Response {
+  private PayloadStatus payloadStatus;
+  private BigInteger payloadId;
+
+  public PayloadStatus getPayloadStatus() {
+    return payloadStatus;
+  }
+
+  public void setPayloadStatus(PayloadStatus payloadStatus) {
+    this.payloadStatus = payloadStatus;
+  }
+
+  public BigInteger getPayloadId() {
+    return payloadId;
+  }
+
+  public void setPayloadId(BigInteger payloadId) {
+    this.payloadId = payloadId;
+  }
+}
+

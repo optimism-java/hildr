@@ -17,6 +17,7 @@
 package io.optimism.engine;
 
 import java.math.BigInteger;
+import org.web3j.protocol.core.Request;
 
 /**
  * The type Engine.
@@ -49,8 +50,8 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1">engine_forkchoiceUpdatedV1</a>
    */
-  ForkChoiceUpdate forkChoiceUpdated(
-      ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes);
+  Request<?, ForkChoiceUpdate> forkChoiceUpdate(ForkchoiceState forkchoiceState,
+                                                PayloadAttributes payloadAttributes);
 
   /**
    * Applies a L2 block to the engine state.
@@ -66,10 +67,10 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_newpayloadv1">engine_newPayloadV1</a>
    */
-  PayloadStatus newPayload(ExecutionPayload executionPayload);
+  Request<?, PayloadStatus> newPayload(ExecutionPayload executionPayload);
 
   /**
-   * Retrieves a payload by ID, prepared by {@link #forkChoiceUpdated} when called with {@code
+   * Retrieves a payload by ID, prepared by {forkChoiceUpdated} when called with {@code
    * payloadAttributes}.
    *
    * <p>Specification method: engine_getPayloadV1 params: - [PayloadId]: DATA, 8 Bytes - Identifier
@@ -83,5 +84,5 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_getpayloadv1">engine_getPayloadV1</a>
    */
-  ExecutionPayload getPayload(BigInteger payloadId);
+  Request<?, ExecutionPayload> getPayload(BigInteger payloadId);
 }
