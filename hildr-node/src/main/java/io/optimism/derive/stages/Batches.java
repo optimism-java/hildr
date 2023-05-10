@@ -66,10 +66,13 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
    * @param config the config
    */
   public Batches(
-      TreeMap<BigInteger, Batch> batches, I channelIterator, State state, Config config) {
+      TreeMap<BigInteger, Batch> batches,
+      I channelIterator,
+      AtomicReference<State> state,
+      Config config) {
     this.batches = batches;
     this.channelIterator = channelIterator;
-    this.state = new AtomicReference<>(state);
+    this.state = state;
     this.config = config;
   }
 
@@ -271,7 +274,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
    * @return the batches
    */
   public static <I extends PurgeableIterator<Channel>> Batches<I> create(
-      I channelIterator, State state, Config config) {
+      I channelIterator, AtomicReference<State> state, Config config) {
     return new Batches<>(new TreeMap<>(), channelIterator, state, config);
   }
 

@@ -16,6 +16,8 @@
 
 package io.optimism.derive.stages;
 
+import com.google.common.collect.AbstractIterator;
+import io.optimism.derive.PurgeableIterator;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -31,7 +33,8 @@ import org.jctools.queues.MpscGrowableArrayQueue;
  * @author grapebaba
  * @since 0.1.0
  */
-public class BatcherTransactions {
+public class BatcherTransactions extends AbstractIterator<BatcherTransactions.BatcherTransaction>
+    implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
 
   private Deque<BatcherTransaction> txs;
 
@@ -54,12 +57,22 @@ public class BatcherTransactions {
             e.txs()
                 .forEach(
                     txData -> {
-                      try {
-                        txs.addLast(BatcherTransaction.create(txData, e.l1Origin()));
-                      } catch (Throwable e1) {
-                        e1.printStackTrace();
-                      }
+                      txs.addLast(BatcherTransaction.create(txData, e.l1Origin()));
                     }));
+  }
+
+  @Override
+  protected BatcherTransaction computeNext() {
+    this.processIncoming();
+    return txs.pollFirst();
+  }
+
+  @Override
+  public void purge() {
+    if (this.txMessagesQueue.poll() != null) {
+      while (this.txMessagesQueue.poll() != null) {}
+    }
+    this.txs.clear();
   }
 
   /**

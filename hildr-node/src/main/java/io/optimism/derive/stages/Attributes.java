@@ -35,7 +35,14 @@ import net.osslabz.evm.abi.definition.SolidityType;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.abi.TypeEncoder;
+import org.web3j.abi.datatypes.Uint;
+import org.web3j.abi.datatypes.generated.Bytes32;
+import org.web3j.crypto.Hash;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
+import org.web3j.rlp.RlpEncoder;
+import org.web3j.rlp.RlpList;
+import org.web3j.rlp.RlpString;
 import org.web3j.utils.Numeric;
 
 /**
@@ -49,15 +56,15 @@ public class Attributes<I extends PurgeableIterator<Batch>>
     extends AbstractIterator<PayloadAttributes> implements PurgeableIterator<PayloadAttributes> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Attributes.class);
-  private I batchIterator;
+  private final I batchIterator;
 
-  private AtomicReference<State> state;
+  private final AtomicReference<State> state;
 
   private BigInteger sequenceNumber;
 
   private String epochHash;
 
-  private Config config;
+  private final Config config;
 
   /**
    * Instantiates a new Attributes.
@@ -129,14 +136,33 @@ public class Attributes<I extends PurgeableIterator<Batch>>
   }
 
   private List<String> deriveUserDeposited() {
-    return null;
+    State state = this.state.get();
+    return state.l1Info(this.epochHash).userDeposits().stream()
+        .map(
+            deposit -> {
+              DepositedTransaction tx = DepositedTransaction.from(deposit);
+              return Numeric.toHexString(RlpEncoder.encode(tx.encode()));
+            })
+        .toList();
   }
 
-  private String deriveAttributesDeposited(L1Info l1Info, BigInteger timestamp) {
-    return null;
+  private String deriveAttributesDeposited(L1Info l1Info, BigInteger batchTimestamp) {
+    BigInteger seq = this.sequenceNumber;
+    AttributesDeposited attributesDeposited =
+        AttributesDeposited.fromBlockInfo(l1Info, seq, batchTimestamp, this.config);
+    DepositedTransaction attributeTx = DepositedTransaction.from(attributesDeposited);
+    return Numeric.toHexString(RlpEncoder.encode(attributeTx.encode()));
   }
 
-  private void updateSequenceNumber(String s) {}
+  private void updateSequenceNumber(String batchEpochHash) {
+    if (this.epochHash.equals(batchEpochHash)) {
+      this.sequenceNumber = this.sequenceNumber.add(BigInteger.ONE);
+    } else {
+      this.sequenceNumber = BigInteger.ZERO;
+    }
+
+    this.epochHash = batchEpochHash;
+  }
 
   @Override
   public void purge() {
@@ -226,6 +252,184 @@ public class Attributes<I extends PurgeableIterator<Batch>>
           log.getBlockNumber(),
           log.getBlockHash(),
           log.getLogIndex());
+    }
+  }
+
+  /**
+   * The type AttributesDeposited.
+   *
+   * @param number the number
+   * @param timestamp the timestamp
+   * @param baseFee the base fee
+   * @param hash the hash
+   * @param sequenceNumber the sequence number
+   * @param batcherHash the batcher hash
+   * @param feeOverhead the fee overhead
+   * @param feeScalar the fee scalar
+   * @param gas the gas
+   * @param isSystemTx the is system tx
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  public record AttributesDeposited(
+      BigInteger number,
+      BigInteger timestamp,
+      BigInteger baseFee,
+      String hash,
+      BigInteger sequenceNumber,
+      String batcherHash,
+      BigInteger feeOverhead,
+      BigInteger feeScalar,
+      BigInteger gas,
+      boolean isSystemTx) {
+
+    /**
+     * From block info attributes deposited.
+     *
+     * @param l1Info the l 1 info
+     * @param sequenceNumber the sequence number
+     * @param batchTimestamp the batch timestamp
+     * @param config the config
+     * @return the attributes deposited
+     */
+    public static AttributesDeposited fromBlockInfo(
+        L1Info l1Info, BigInteger sequenceNumber, BigInteger batchTimestamp, Config config) {
+      boolean isRegolith = batchTimestamp.compareTo(config.chainConfig().regolithTime()) >= 0;
+      boolean isSystemTx = !isRegolith;
+      BigInteger gas =
+          isRegolith ? BigInteger.valueOf(1_000_000L) : BigInteger.valueOf(150_000_000L);
+
+      return new AttributesDeposited(
+          l1Info.blockInfo().number(),
+          l1Info.blockInfo().timestamp(),
+          l1Info.blockInfo().baseFee(),
+          l1Info.blockInfo().hash(),
+          sequenceNumber,
+          l1Info.systemConfig().batcherHash(),
+          l1Info.systemConfig().l1FeeOverhead(),
+          l1Info.systemConfig().l1FeeScalar(),
+          gas,
+          isSystemTx);
+    }
+
+    /**
+     * Encode bytes.
+     *
+     * @return the bytes
+     */
+    public byte[] encode() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("015d8eb9"); // selector
+      sb.append(TypeEncoder.encode(new Uint(this.number)));
+      sb.append(TypeEncoder.encode(new Uint(this.timestamp)));
+      sb.append(TypeEncoder.encode(new Uint(this.baseFee)));
+      sb.append(TypeEncoder.encode(new Bytes32(Numeric.hexStringToByteArray(this.hash))));
+      sb.append(TypeEncoder.encode(new Uint(this.sequenceNumber)));
+      sb.append(TypeEncoder.encode(new Bytes32(Numeric.hexStringToByteArray(this.batcherHash))));
+      sb.append(TypeEncoder.encode(new Uint(this.feeOverhead)));
+      sb.append(TypeEncoder.encode(new Uint(this.feeScalar)));
+
+      return Numeric.hexStringToByteArray(sb.toString());
+    }
+  }
+
+  /**
+   * The type DepositedTransaction.
+   *
+   * @param data the data
+   * @param isSystemTx the is system tx
+   * @param gas the gas
+   * @param value the value
+   * @param mint the mint
+   * @param to the to address
+   * @param from the from address
+   * @param sourceHash the source hash
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  public record DepositedTransaction(
+      String sourceHash,
+      String from,
+      String to,
+      BigInteger mint,
+      BigInteger value,
+      BigInteger gas,
+      boolean isSystemTx,
+      byte[] data) {
+
+    /**
+     * From deposited transaction.
+     *
+     * @param attributesDeposited the attributes deposited
+     * @return the deposited transaction
+     */
+    public static DepositedTransaction from(AttributesDeposited attributesDeposited) {
+      byte[] hash = Numeric.hexStringToByteArray(attributesDeposited.hash);
+      byte[] seq = Numeric.toBytesPadded(attributesDeposited.sequenceNumber, 32);
+      byte[] h = Hash.sha3(ArrayUtils.addAll(hash, seq));
+      byte[] domain = Numeric.toBytesPadded(BigInteger.ONE, 32);
+      byte[] sourceHash = Hash.sha3(ArrayUtils.addAll(domain, h));
+
+      SystemAccounts systemAccounts = SystemAccounts.defaultSystemAccounts();
+      String from = systemAccounts.attributesDepositor();
+      String to = systemAccounts.attributesPreDeploy();
+
+      byte[] data = attributesDeposited.encode();
+
+      return new DepositedTransaction(
+          Numeric.toHexString(sourceHash),
+          from,
+          to,
+          BigInteger.ZERO,
+          BigInteger.ZERO,
+          attributesDeposited.gas,
+          attributesDeposited.isSystemTx,
+          data);
+    }
+
+    /**
+     * From deposited transaction.
+     *
+     * @param userDeposited the user deposited
+     * @return the deposited transaction
+     */
+    public static DepositedTransaction from(UserDeposited userDeposited) {
+      byte[] hash = Numeric.hexStringToByteArray(userDeposited.l1BlockHash);
+      byte[] logIndex = Numeric.toBytesPadded(userDeposited.logIndex, 32);
+      byte[] h = Hash.sha3(ArrayUtils.addAll(hash, logIndex));
+      byte[] domain = Numeric.toBytesPadded(BigInteger.ZERO, 32);
+      byte[] sourceHash = Hash.sha3(ArrayUtils.addAll(domain, h));
+
+      return new DepositedTransaction(
+          Numeric.toHexString(sourceHash),
+          userDeposited.from,
+          userDeposited.isCreation ? userDeposited.to : null,
+          userDeposited.mint,
+          userDeposited.value,
+          userDeposited.gas,
+          false,
+          userDeposited.data);
+    }
+
+    /**
+     * Encode rlp list.
+     *
+     * @return the rlp list
+     */
+    public RlpList encode() {
+      return new RlpList(
+          RlpString.create("7E"),
+          new RlpList(
+              RlpString.create(Numeric.cleanHexPrefix(this.sourceHash)),
+              RlpString.create(Numeric.cleanHexPrefix(this.from)),
+              this.to != null
+                  ? RlpString.create(Numeric.cleanHexPrefix(this.to))
+                  : RlpString.create(""),
+              RlpString.create(this.mint),
+              RlpString.create(this.value),
+              RlpString.create(this.gas),
+              RlpString.create(this.isSystemTx ? 1 : 0),
+              RlpString.create(this.data)));
     }
   }
 }

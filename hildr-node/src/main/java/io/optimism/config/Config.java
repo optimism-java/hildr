@@ -342,7 +342,7 @@ public record Config(
      *
      * @return the string
      */
-    public String batchHash() {
+    public String batcherHash() {
       return Numeric.toHexStringWithPrefixZeroPadded(Numeric.toBigInt(batchSender), 64);
     }
   }

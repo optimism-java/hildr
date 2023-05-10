@@ -120,7 +120,7 @@ class ConfigTest {
               BigInteger.valueOf(1000000));
 
       assertTrue(
-          systemConfig.batchHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
+          systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
     }
   }
 }
