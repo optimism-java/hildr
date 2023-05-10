@@ -1,3 +1,19 @@
+/*
+ * Copyright 2023 281165273grape@gmail.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
 package io.optimism.engine;
 
 import io.jsonwebtoken.Claims;
@@ -8,87 +24,119 @@ import io.jsonwebtoken.security.Keys;
 import java.math.BigInteger;
 import java.security.Key;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import okhttp3.MediaType;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.http.HttpService;
 
 /**
- * The type EngineApi
+ * The type EngineApi.
  *
  * @author zhouxing
  * @since 0.1.0
  */
 public class EngineApi implements Engine {
-  public static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+  /** The forkchoice updated method string. */
   public static final String ENGINE_FORKCHOICE_UPDATED_V1 = "engine_forkchoiceUpdatedV1";
+
+  /** The new payload method string. */
   public static final String ENGINE_NEW_PAYLOAD_V1 = "engine_newPayloadV1";
+
+  /** The get payload method string. */
   public static final String ENGINE_GET_PAYLOAD_V1 = "engine_getPayloadV1";
+
+  /** The default engine api authentication port. */
   public static final Integer DEFAULT_AUTH_PORT = 8851;
-  private final String baseUrl;
-  private final Integer port;
-  private final String jwtSecret;
+
+  /** HttpService web3jService. */
   private final HttpService web3jService;
 
+  /**
+   * Creates an engine api from environment variables.
+   *
+   * @return EngineApi.
+   */
   public EngineApi fromEnv() {
     String baseUrlParm = System.getProperty("ENGINE_API_URL");
     if (StringUtils.isBlank(baseUrlParm)) {
-      throw new RuntimeException("""
-          ENGINE_API_URL environment variable not set.
-          Please set this to the base url of the engine api
-          """);
+      throw new RuntimeException(
+          """
+              ENGINE_API_URL environment variable not set.
+              Please set this to the base url of the engine api
+              """);
     }
     String secretKey = System.getProperty("JWT_SECRET");
     if (StringUtils.isBlank(secretKey)) {
-      throw new RuntimeException("""
-          JWT_SECRET environment variable not set.
-          Please set this to the 256 bit hex-encoded secret key used to authenticate with the engine api.
-          This should be the same as set in the `--auth.secret` flag when executing go-ethereum.
-          """);
+      throw new RuntimeException(
+          """
+              JWT_SECRET environment variable not set.
+              Please set this to the 256 bit hex-encoded secret key
+               used to authenticate with the engine api.
+              This should be the same as set in the `--auth.secret`
+               flag when executing go-ethereum.
+              """);
     }
     String baseUrlFormat = authUrlFromAddr(baseUrlParm, null);
     return new EngineApi(baseUrlFormat, secretKey);
   }
 
+  /**
+   * Creates a new [`EngineApi`] with a base url and secret.
+   *
+   * @param baseUrl baseUrl
+   * @param secretStr secret
+   */
   public EngineApi(final String baseUrl, final String secretStr) {
-    this.jwtSecret = fromHex(secretStr);
-    String[] parts = baseUrl.split(":");
-    port = Integer.valueOf(parts[parts.length - 1]);
-    if (parts.length <= 2) {
-      this.baseUrl = parts[0];
-    } else {
-      this.baseUrl = String.join(":", parts);
-    }
-    Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    String jws = Jwts.builder()
-        .setClaims(generateClaims())
-        .signWith(key).compact();
+    Key key = Keys.hmacShaKeyFor(fromHex(secretStr));
+    String jws =
+        Jwts.builder()
+            .setClaims(generateClaims())
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
     HttpService httpService = new HttpService(baseUrl);
     httpService.addHeader("authorization", String.format("Bearer %1$s", jws));
     this.web3jService = httpService;
   }
 
-  private String fromHex(String secret) {
+  /**
+   * The provided `secret` must be a valid hexadecimal string of length 64.
+   *
+   * @param secret secret
+   * @return byte[]
+   */
+  private byte[] fromHex(String secret) {
     String hex = secret.trim();
     if (hex.length() != 64) {
       throw new RuntimeException("Invalid JWT secret key length");
     }
-    return new String(Hex.decode(hex));
+    return Hex.decode(secret);
   }
 
+  /**
+   * Constructs the base engine api url for the given address.
+   *
+   * @param addr addr
+   * @param portParm port
+   * @return url
+   */
   public static String authUrlFromAddr(String addr, Integer portParm) {
     String stripped = addr.replace("http://", "").replace("https://", "");
     Integer port = portParm == null ? DEFAULT_AUTH_PORT : portParm;
     return String.format("http://%1$s%2$s", stripped, port);
   }
 
+  /**
+   * Generate claims.
+   *
+   * @return Claims
+   */
   public static Claims generateClaims() {
-    long nowSecs = LocalDateTime.now().toEpochSecond(ZoneOffset.of("0"));
+    long nowSecs = LocalDateTime.now(ZoneId.systemDefault()).toEpochSecond(ZoneOffset.of("0"));
     Map<String, Long> map = new HashMap<>();
     map.put("iat", nowSecs);
     map.put("exp", nowSecs + 60);
@@ -96,21 +144,24 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public Request<?, ForkChoiceUpdate> forkChoiceUpdate(ForkchoiceState forkchoiceState,
-                                                       PayloadAttributes payloadAttributes) {
-    return new Request<>(ENGINE_FORKCHOICE_UPDATED_V1,
-        Arrays.asList(forkchoiceState, payloadAttributes), web3jService, ForkChoiceUpdate.class);
+  public Request<?, ForkChoiceUpdate> forkChoiceUpdate(
+      ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
+    return new Request<>(
+        ENGINE_FORKCHOICE_UPDATED_V1,
+        Arrays.asList(forkchoiceState, payloadAttributes),
+        web3jService,
+        ForkChoiceUpdate.class);
   }
 
   @Override
   public Request<?, PayloadStatus> newPayload(ExecutionPayload executionPayload) {
-    return new Request<>(ENGINE_NEW_PAYLOAD_V1,
-        Arrays.asList(executionPayload), web3jService, PayloadStatus.class);
+    return new Request<>(
+        ENGINE_NEW_PAYLOAD_V1, Arrays.asList(executionPayload), web3jService, PayloadStatus.class);
   }
 
   @Override
   public Request<?, ExecutionPayload> getPayload(BigInteger payloadId) {
-    return new Request<>(ENGINE_GET_PAYLOAD_V1,
-        Arrays.asList(payloadId), web3jService, ExecutionPayload.class);
+    return new Request<>(
+        ENGINE_GET_PAYLOAD_V1, Arrays.asList(payloadId), web3jService, ExecutionPayload.class);
   }
 }
