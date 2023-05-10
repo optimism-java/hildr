@@ -22,9 +22,9 @@ import org.web3j.protocol.core.Response;
 /**
  * The type ForkChoiceUpdate.
  *
- * payloadStatus Payload status. Note: values of the status field in the context of this
- *     method are restricted to the following subset: VALID, INVALID, SYNCING.
- * payloadId 8 byte identifier of the payload build process or null
+ * <p>payloadStatus Payload status. Note: values of the status field in the context of this method
+ * are restricted to the following subset: VALID, INVALID, SYNCING. payloadId 8 byte identifier of
+ * the payload build process or null
  *
  * @author zhouop0
  * @since 0.1.0
@@ -33,20 +33,42 @@ public class ForkChoiceUpdate extends Response {
   private PayloadStatus payloadStatus;
   private BigInteger payloadId;
 
+  /** ForkChoiceUpdate constructor. */
+  public ForkChoiceUpdate() {}
+
+  /**
+   * payloadStatus get method.
+   *
+   * @return payloadStatus.
+   */
   public PayloadStatus getPayloadStatus() {
     return payloadStatus;
   }
 
+  /**
+   * payloadStatus set method.
+   *
+   * @param payloadStatus payloadStatus.
+   */
   public void setPayloadStatus(PayloadStatus payloadStatus) {
     this.payloadStatus = payloadStatus;
   }
 
+  /**
+   * payloadId get method.
+   *
+   * @return payloadId.
+   */
   public BigInteger getPayloadId() {
     return payloadId;
   }
 
+  /**
+   * payloadId set method.
+   *
+   * @param payloadId payloadId.
+   */
   public void setPayloadId(BigInteger payloadId) {
     this.payloadId = payloadId;
   }
 }
-
