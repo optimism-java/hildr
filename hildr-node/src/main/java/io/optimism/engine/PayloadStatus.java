@@ -16,15 +16,45 @@
 
 package io.optimism.engine;
 
+import org.web3j.protocol.core.Response;
+
 /**
  * The type PayloadStatus.
  *
- * @param status The status of the payload.
- * @param latestValidHash 32 Bytes - the hash of the most recent valid block in the branch defined
+ * status The status of the payload.
+ * latestValidHash 32 Bytes - the hash of the most recent valid block in the branch defined
  *     by payload and its ancestors.
- * @param validationError A message providing additional details on the validation error if the
+ * validationError A message providing additional details on the validation error if the
  *     payload is classified as INVALID or INVALID_BLOCK_HASH.
  * @author zhouop0
  * @since 0.1.0
  */
-public record PayloadStatus(Status status, String latestValidHash, String validationError) {}
+public class PayloadStatus extends Response {
+  private Status status;
+  private String latestValidHash;
+  private String validationError;
+
+  public Status getStatus() {
+    return status;
+  }
+
+  public void setStatus(Status status) {
+    this.status = status;
+  }
+
+  public String getLatestValidHash() {
+    return latestValidHash;
+  }
+
+  public void setLatestValidHash(String latestValidHash) {
+    this.latestValidHash = latestValidHash;
+  }
+
+  public String getValidationError() {
+    return validationError;
+  }
+
+  public void setValidationError(String validationError) {
+    this.validationError = validationError;
+  }
+}
