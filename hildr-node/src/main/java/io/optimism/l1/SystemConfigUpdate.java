@@ -27,95 +27,96 @@ import org.web3j.protocol.core.methods.response.EthLog;
  * @author thinkAfCod
  * @since 0.1.0
  */
-public class SystemConfigUpdate {
+public abstract class SystemConfigUpdate {
 
   private static final String ERROR_MSG = "invalid system config update";
 
-  private String address;
+  /** not public constructor. */
+  private SystemConfigUpdate() {}
 
-  private BigInteger feeOverhead;
+  /** update batch sender. */
+  public static final class BatchSender extends SystemConfigUpdate {
 
-  private BigInteger feeScalar;
+    private final String address;
 
-  private BigInteger gas;
+    /**
+     * the BatchSender constructor.
+     *
+     * @param address batch sender address
+     */
+    public BatchSender(String address) {
+      this.address = address;
+    }
 
-  private final SystemConfigUpdateType type;
-
-  /**
-   * the SystemConfigUpdate constructor. type define to SystemConfigUpdateType.BatchSender
-   *
-   * @param address batch sender address
-   */
-  public SystemConfigUpdate(String address) {
-    this.address = address;
-    this.type = SystemConfigUpdateType.BatchSender;
+    /**
+     * get batch sender.
+     *
+     * @return batch sender
+     */
+    public String getAddress() {
+      return address;
+    }
   }
 
-  /**
-   * the SystemConfigUpdate constructor. type define to SystemConfigUpdateType.Fees
-   *
-   * @param feeOverhead overhead fee
-   * @param feeScalar scalar fee
-   */
-  public SystemConfigUpdate(BigInteger feeOverhead, BigInteger feeScalar) {
-    this.feeOverhead = feeOverhead;
-    this.feeScalar = feeScalar;
-    this.type = SystemConfigUpdateType.Fees;
+  /** update fee. */
+  public static final class Fees extends SystemConfigUpdate {
+
+    private final BigInteger feeOverhead;
+
+    private final BigInteger feeScalar;
+
+    /**
+     * Fees constructor.
+     *
+     * @param feeOverhead overhead fee
+     * @param feeScalar scalar fee
+     */
+    public Fees(BigInteger feeOverhead, BigInteger feeScalar) {
+      this.feeOverhead = feeOverhead;
+      this.feeScalar = feeScalar;
+    }
+
+    /**
+     * get fee of overhead.
+     *
+     * @return fee of overhead
+     */
+    public BigInteger getFeeOverhead() {
+      return feeOverhead;
+    }
+
+    /**
+     * get fee of scalar.
+     *
+     * @return fee of scalar
+     */
+    public BigInteger getFeeScalar() {
+      return feeScalar;
+    }
   }
 
-  /**
-   * the SystemConfigUpdate constructor. type define to SystemConfigUpdateType.Gas
-   *
-   * @param gas gas value
-   */
-  public SystemConfigUpdate(BigInteger gas) {
-    this.gas = gas;
-    this.type = SystemConfigUpdateType.Gas;
-  }
+  /** update gas. */
+  public static final class Gas extends SystemConfigUpdate {
 
-  /**
-   * get batch sender address.
-   *
-   * @return batch sender address
-   */
-  public String getAddress() {
-    return address;
-  }
+    private final BigInteger gas;
 
-  /**
-   * get overhead fee.
-   *
-   * @return overhead fee
-   */
-  public BigInteger getFeeOverhead() {
-    return feeOverhead;
-  }
+    /**
+     * the Gas constructor.
+     *
+     * @param gas gas value
+     */
+    public Gas(BigInteger gas) {
+      this.gas = gas;
+    }
 
-  /**
-   * get scalar fee.
-   *
-   * @return scalar fee
-   */
-  public BigInteger getFeeScalar() {
-    return feeScalar;
-  }
-
-  /**
-   * get gas.
-   *
-   * @return gas
-   */
-  public BigInteger getGas() {
-    return gas;
-  }
-
-  /**
-   * get system config update type.
-   *
-   * @return the enum of system config update type
-   */
-  public SystemConfigUpdateType getType() {
-    return type;
+    /**
+     * get fee of gas.
+     *
+     * @return fee of gas
+     */
+    public BigInteger getGas() {
+      return gas;
+    }
   }
 
   /**
@@ -137,19 +138,19 @@ public class SystemConfigUpdate {
     if (BigInteger.ZERO.compareTo(updateType) == 0) {
       byte[] data = Hex.decode(log.getData());
       byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
-      return new SystemConfigUpdate(Hex.toHexString(addrBytes));
+      return new BatchSender(Hex.toHexString(addrBytes));
     } else if (BigInteger.ONE.compareTo(updateType) == 0) {
       byte[] data = Hex.decode(log.getData());
       byte[] feeOverheadBytes = Arrays.copyOfRange(data, 64, 96);
       byte[] feeScalarBytes = Arrays.copyOfRange(data, 96, 128);
       BigInteger feeOverhead = new BigInteger(feeOverheadBytes);
       BigInteger feeScalar = new BigInteger(feeScalarBytes);
-      return new SystemConfigUpdate(feeOverhead, feeScalar);
+      return new Fees(feeOverhead, feeScalar);
     } else if (BigInteger.TWO.compareTo(updateType) == 0) {
       byte[] data = Hex.decode(log.getData());
       byte[] gasBytes = Arrays.copyOfRange(data, 64, 96);
       BigInteger gas = new BigInteger(gasBytes);
-      return new SystemConfigUpdate(gas);
+      return new Gas(gas);
     } else {
       throw new IllegalStateException(ERROR_MSG);
     }

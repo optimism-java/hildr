@@ -27,6 +27,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import okhttp3.OkHttpClient;
 import org.bouncycastle.util.encoders.Hex;
@@ -42,11 +45,11 @@ import org.web3j.abi.datatypes.generated.Uint8;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
-import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.tuples.generated.Tuple2;
 
 /**
  * the InnerWatcher class.
@@ -68,7 +71,6 @@ public class InnerWatcher {
                   new TypeReference<Uint8>() {},
                   new TypeReference<Bytes>() {})));
 
-  // (address,address,uint256,bytes)
   private static final String TRANSACTION_DEPOSITED_TOPIC =
       EventEncoder.encode(
           new Event(
@@ -115,7 +117,7 @@ public class InnerWatcher {
    * Next system config if it exists and the L1 block number it activates BigInteger,
    * Config.SystemConfig.
    */
-  private Object[] systemConfigUpdate;
+  private volatile Tuple2<BigInteger, Config.SystemConfig> systemConfigUpdate;
 
   /**
    * create a InnerWatcher instance.
@@ -125,25 +127,24 @@ public class InnerWatcher {
    * @param l1StartBlock the start block number of l1
    * @param l2StartBlock the start block number of l2
    * @throws IOException thrown if failed to get block
+   * @throws ExecutionException thrown if CompletableFuture execute failed
+   * @throws InterruptedException thrown if thread be interrupted
    */
   public InnerWatcher(
       Config config,
       BlockingQueue<BlockUpdate> queue,
       BigInteger l1StartBlock,
       BigInteger l2StartBlock)
-      throws IOException {
+      throws IOException, ExecutionException, InterruptedException {
     this.provider = createClient(config.l1RpcUrl());
 
     if (l2StartBlock.equals(config.chainConfig().l2Genesis().number())) {
       this.systemConfig = config.chainConfig().systemConfig();
     } else {
       Web3j l2Client = createClient(config.l2RpcUrl());
-
-      EthBlock block =
-          l2Client
-              .ethGetBlockByNumber(
-                  DefaultBlockParameter.valueOf(l2StartBlock.subtract(BigInteger.ONE)), true)
-              .send();
+      CompletableFuture<EthBlock> l2Future =
+          this.getBlock(l2Client, l2StartBlock.subtract(BigInteger.ONE));
+      EthBlock block = l2Future.get();
       EthBlock.TransactionObject tx =
           (EthBlock.TransactionObject) block.getBlock().getTransactions().get(0).get();
       final byte[] input = Hex.decode(tx.getInput());
@@ -156,7 +157,7 @@ public class InnerWatcher {
       final BigInteger l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
 
       // 获取l1_fee_scalar
-      BigInteger l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
+      final BigInteger l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
       this.systemConfig =
           new Config.SystemConfig(
               batchSender, block.getBlock().getGasLimit(), l1FeeOverhead, l1FeeScalar);
@@ -170,116 +171,128 @@ public class InnerWatcher {
     this.finalizedBlock = BigInteger.ZERO;
     this.unfinalizedBlocks = new ArrayList<>();
     this.deposits = new HashMap<>();
-    this.systemConfigUpdate = new Object[] {l1StartBlock, null};
+    this.systemConfigUpdate = new Tuple2<>(l1StartBlock, null);
   }
 
   /**
    * try ingest block.
    *
-   * @throws InterruptedException thrown if interrupted by other thread
-   * @throws IOException thrown if failed to get user deposits
+   * @throws IOException thrown if failed to get data on chain
+   * @throws ExecutionException thrown if CompletableFuture execute failed
+   * @throws InterruptedException thrown if thread be interrupted
    */
-  public void tryIngestBlock() throws InterruptedException, IOException {
+  public void tryIngestBlock() throws IOException, InterruptedException, ExecutionException {
     if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
-      BigInteger finalizedBlock = this.getFinalized();
+      BigInteger finalizedBlock = this.getFinalized().get();
       this.finalizedBlock = finalizedBlock;
-      this.blockUpdateSender.add(
-          BlockUpdate.create(BlockUpdateType.FinalityUpdate, finalizedBlock));
+      this.blockUpdateSender.add(new BlockUpdate.FinalityUpdate(finalizedBlock));
       this.unfinalizedBlocks =
           this.unfinalizedBlocks.stream()
               .filter(blockInfo -> blockInfo.number().compareTo(this.finalizedBlock) > 0)
               .collect(Collectors.toList());
     }
+    CompletableFuture<BigInteger> updateHeadFuture = null;
     if (this.currentBlock.compareTo(this.headBlock) > 0) {
-      this.headBlock = this.getHead();
+      updateHeadFuture =
+          this.getHead()
+              .thenApply(
+                  head -> {
+                    this.headBlock = head;
+                    return head;
+                  });
     }
 
     if (this.currentBlock.compareTo(this.headBlock) <= 0) {
-      this.updateSystemConfig();
+      Function<BigInteger, Void> fn =
+          n -> {
+            try {
+              this.updateSystemConfig();
 
-      EthBlock blockResp = this.getBlock(this.currentBlock);
-      List<Attributes.UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
-      boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
-      L1Info l1Info =
-          L1Info.create(
-              blockResp.getBlock(),
-              userDeposits,
-              config.chainConfig().batchInbox(),
-              finalized,
-              this.systemConfig);
+              EthBlock blockResp = this.getBlock(this.provider, this.currentBlock).get();
+              List<Attributes.UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
+              boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
+              L1Info l1Info =
+                  L1Info.create(
+                      blockResp.getBlock(),
+                      userDeposits,
+                      config.chainConfig().batchInbox(),
+                      finalized,
+                      this.systemConfig);
 
-      if (l1Info.blockInfo().number().compareTo(this.finalizedBlock) >= 0) {
-        BlockInfo blockInfo =
-            new BlockInfo(
-                l1Info.blockInfo().hash(),
-                l1Info.blockInfo().number(),
-                blockResp.getBlock().getParentHash(),
-                l1Info.blockInfo().timestamp());
-        this.unfinalizedBlocks.add(blockInfo);
+              if (l1Info.blockInfo().number().compareTo(this.finalizedBlock) >= 0) {
+                BlockInfo blockInfo =
+                    new BlockInfo(
+                        l1Info.blockInfo().hash(),
+                        l1Info.blockInfo().number(),
+                        blockResp.getBlock().getParentHash(),
+                        l1Info.blockInfo().timestamp());
+                this.unfinalizedBlocks.add(blockInfo);
+              }
+
+              BlockUpdate update =
+                  this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
+              this.blockUpdateSender.offer(update);
+              this.currentBlock = this.currentBlock.add(BigInteger.ONE);
+            } catch (ExecutionException | InterruptedException e) {
+              LOGGER.error("", e);
+            }
+            return null;
+          };
+      if (updateHeadFuture != null) {
+        var unused = updateHeadFuture.thenApply(fn);
       }
-
-      BlockUpdate update =
-          this.checkReorg()
-              ? BlockUpdate.create(BlockUpdateType.Reorg, null)
-              : BlockUpdate.create(BlockUpdateType.NewBlock, l1Info);
-      this.blockUpdateSender.offer(update);
-      this.currentBlock = this.currentBlock.add(BigInteger.ONE);
     } else {
       lock.wait(250);
     }
   }
 
-  private void updateSystemConfig() throws IOException {
-    BigInteger preLastUpdateBlock = (BigInteger) this.systemConfigUpdate[0];
+  private void updateSystemConfig() throws ExecutionException, InterruptedException {
+    BigInteger preLastUpdateBlock = this.systemConfigUpdate.component1();
     if (preLastUpdateBlock.compareTo(this.currentBlock) < 0) {
       BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(1000L));
 
-      EthFilter filter =
-          new EthFilter(
-                  DefaultBlockParameter.valueOf(preLastUpdateBlock.add(BigInteger.ONE)),
-                  DefaultBlockParameter.valueOf(toBlock),
-                  this.config.chainConfig().systemConfigContract())
-              .addSingleTopic(CONFIG_UPDATE_TOPIC);
-
-      Request<?, EthLog> ethLogRequest = this.provider.ethGetLogs(filter);
-      EthLog updates = ethLogRequest.send();
+      CompletableFuture<EthLog> logFuture =
+          this.getLog(
+              preLastUpdateBlock.add(BigInteger.ONE),
+              toBlock,
+              this.config.chainConfig().systemConfigContract(),
+              CONFIG_UPDATE_TOPIC);
+      EthLog updates = logFuture.get();
       EthLog.LogResult update = updates.getLogs().iterator().next();
 
       BigInteger updateBlock = ((EthLog.LogObject) update).getBlockNumber();
       SystemConfigUpdate configUpdate = SystemConfigUpdate.tryFrom((EthLog.LogObject) update);
-      if (updateBlock != null) {
-        Config.SystemConfig updateSystemConfig = null;
-        if (SystemConfigUpdateType.BatchSender.equals(configUpdate.getType())) {
-          updateSystemConfig =
-              new Config.SystemConfig(
-                  configUpdate.getAddress(),
-                  this.systemConfig.gasLimit(),
-                  this.systemConfig.l1FeeOverhead(),
-                  this.systemConfig.l1FeeScalar());
-        } else if (SystemConfigUpdateType.Fees.equals(configUpdate.getType())) {
-          updateSystemConfig =
-              new Config.SystemConfig(
-                  this.systemConfig.batchSender(),
-                  this.systemConfig.gasLimit(),
-                  configUpdate.getFeeOverhead(),
-                  configUpdate.getFeeScalar());
-        } else if (SystemConfigUpdateType.Gas.equals(configUpdate.getType())) {
-          updateSystemConfig =
-              new Config.SystemConfig(
-                  this.systemConfig.batchSender(),
-                  configUpdate.getGas(),
-                  this.systemConfig.l1FeeOverhead(),
-                  this.systemConfig.l1FeeScalar());
-        }
-        this.systemConfigUpdate[0] = updateBlock;
-        this.systemConfigUpdate[1] = updateSystemConfig;
-      } else {
-        this.systemConfigUpdate[0] = toBlock;
-        this.systemConfigUpdate[1] = null;
+      if (updateBlock == null) {
+        this.systemConfigUpdate = new Tuple2<>(toBlock, null);
+        return;
       }
+      Config.SystemConfig updateSystemConfig = null;
+      if (configUpdate instanceof SystemConfigUpdate.BatchSender) {
+        updateSystemConfig =
+            new Config.SystemConfig(
+                ((SystemConfigUpdate.BatchSender) configUpdate).getAddress(),
+                this.systemConfig.gasLimit(),
+                this.systemConfig.l1FeeOverhead(),
+                this.systemConfig.l1FeeScalar());
+      } else if (configUpdate instanceof SystemConfigUpdate.Fees) {
+        updateSystemConfig =
+            new Config.SystemConfig(
+                this.systemConfig.batchSender(),
+                this.systemConfig.gasLimit(),
+                ((SystemConfigUpdate.Fees) configUpdate).getFeeOverhead(),
+                ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar());
+      } else if (configUpdate instanceof SystemConfigUpdate.Gas) {
+        updateSystemConfig =
+            new Config.SystemConfig(
+                this.systemConfig.batchSender(),
+                ((SystemConfigUpdate.Gas) configUpdate).getGas(),
+                this.systemConfig.l1FeeOverhead(),
+                this.systemConfig.l1FeeScalar());
+      }
+      this.systemConfigUpdate = new Tuple2<>(updateBlock, updateSystemConfig);
     }
-    BigInteger lastUpdateBlock = (BigInteger) this.systemConfigUpdate[0];
-    Config.SystemConfig nextConfig = (Config.SystemConfig) this.systemConfigUpdate[0];
+    BigInteger lastUpdateBlock = this.systemConfigUpdate.component1();
+    Config.SystemConfig nextConfig = this.systemConfigUpdate.component2();
     if (lastUpdateBlock.compareTo(currentBlock) == 0 && nextConfig != null) {
       LOGGER.info("system config updated");
       LOGGER.debug("{}", nextConfig);
@@ -297,39 +310,97 @@ public class InnerWatcher {
     return false;
   }
 
-  private BigInteger getFinalized() throws IOException {
-    EthBlock latestEthBlock =
-        this.provider.ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, false).send();
-    return latestEthBlock.getBlock().getNumber();
+  private CompletableFuture<BigInteger> getFinalized() {
+    final CompletableFuture<BigInteger> future = new CompletableFuture<>();
+    var unused =
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                EthBlock latestEthBlock =
+                    this.provider
+                        .ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, false)
+                        .send();
+                future.complete(latestEthBlock.getBlock().getNumber());
+              } catch (Exception e) {
+                future.completeExceptionally(e);
+              }
+            });
+    return future;
   }
 
-  private BigInteger getHead() throws IOException {
-    EthBlock latestEthBlock =
-        this.provider.ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false).send();
-    return latestEthBlock.getBlock().getNumber();
+  private CompletableFuture<BigInteger> getHead() {
+    final CompletableFuture<BigInteger> future = new CompletableFuture<>();
+    var unused =
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                EthBlock latestEthBlock =
+                    this.provider
+                        .ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false)
+                        .send();
+                future.complete(latestEthBlock.getBlock().getNumber());
+              } catch (Exception e) {
+                future.completeExceptionally(e);
+              }
+            });
+    return future;
   }
 
-  private EthBlock getBlock(BigInteger blockNum) throws IOException {
-    EthBlock latestEthBlock =
-        this.provider.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true).send();
-    return latestEthBlock;
+  private CompletableFuture<EthBlock> getBlock(final Web3j client, final BigInteger blockNum) {
+    final CompletableFuture<EthBlock> future = new CompletableFuture<>();
+    var unused =
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                EthBlock block =
+                    client
+                        .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
+                        .send();
+                future.complete(block);
+              } catch (Exception e) {
+                future.completeExceptionally(e);
+              }
+            });
+    return future;
   }
 
-  private List<Attributes.UserDeposited> getDeposits(BigInteger blockNum) throws IOException {
-    List<Attributes.UserDeposited> removed = this.deposits.remove(blockNum);
+  private CompletableFuture<EthLog> getLog(
+      BigInteger fromBlock, BigInteger toBlock, String contract, String topic) {
+    final EthFilter ethFilter =
+        new EthFilter(
+                DefaultBlockParameter.valueOf(fromBlock),
+                DefaultBlockParameter.valueOf(toBlock),
+                contract)
+            .addSingleTopic(topic);
+    final CompletableFuture<EthLog> future = new CompletableFuture<>();
+    var unused =
+        CompletableFuture.runAsync(
+            () -> {
+              try {
+                EthLog ethLogRequest = this.provider.ethGetLogs(ethFilter).send();
+                future.complete(ethLogRequest);
+              } catch (Exception e) {
+                future.completeExceptionally(e);
+              }
+            });
+    return future;
+  }
+
+  private List<Attributes.UserDeposited> getDeposits(BigInteger blockNum)
+      throws ExecutionException, InterruptedException {
+    final List<Attributes.UserDeposited> removed = this.deposits.remove(blockNum);
     if (removed != null) {
       return removed;
     }
     final BigInteger endBlock = this.headBlock.min(blockNum.add(BigInteger.valueOf(1000L)));
 
-    EthFilter ethFilter =
-        new EthFilter(
-                DefaultBlockParameter.valueOf(blockNum),
-                DefaultBlockParameter.valueOf(endBlock),
-                this.config.chainConfig().depositContract())
-            .addSingleTopic(TRANSACTION_DEPOSITED_TOPIC);
-    Request<?, EthLog> ethLogRequest = this.provider.ethGetLogs(ethFilter);
-    EthLog result = ethLogRequest.send();
+    final CompletableFuture<EthLog> logFuture =
+        this.getLog(
+            blockNum,
+            endBlock,
+            this.config.chainConfig().depositContract(),
+            TRANSACTION_DEPOSITED_TOPIC);
+    final EthLog result = logFuture.get();
     List<Attributes.UserDeposited> depositLogs =
         result.getLogs().stream()
             .map(
