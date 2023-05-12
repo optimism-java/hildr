@@ -29,7 +29,7 @@ public abstract class BlockUpdate {
   /** not public constructor. */
   private BlockUpdate() {}
 
-  /** update new Block */
+  /** update new Block. */
   public static class NewBlock extends BlockUpdate {
 
     private L1Info l1Info;

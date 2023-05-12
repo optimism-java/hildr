@@ -22,7 +22,8 @@ import java.math.BigInteger;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.jctools.queues.MpscBlockingConsumerArrayQueue;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ import org.web3j.tuples.generated.Tuple2;
  * @author thinkAfCod
  * @since 0.1.0
  */
-@SuppressWarnings("UnusedVariable")
+@SuppressWarnings({"UnusedVariable", "preview"})
 public class ChainWatcher {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(ChainWatcher.class);
@@ -50,6 +51,8 @@ public class ChainWatcher {
 
   private Queue<BlockUpdate> blockUpdateReceiver;
 
+  private ExecutorService executor;
+
   /**
    * the ChainWatcher constructor.
    *
@@ -62,6 +65,7 @@ public class ChainWatcher {
     this.l1StartBlock = l1StartBlock;
     this.l2StartBlock = l2StartBlock;
     this.blockUpdateReceiver = new MpscBlockingConsumerArrayQueue<>(1000);
+    this.executor = Executors.newVirtualThreadPerTaskExecutor();
   }
 
   /** start ChainWatcher. */
@@ -71,7 +75,7 @@ public class ChainWatcher {
     }
 
     Tuple2<CompletableFuture<Void>, BlockingQueue<BlockUpdate>> tuple =
-        startWatcher(this.l1StartBlock, this.l2StartBlock, this.config);
+        startWatcher(this.executor, this.l1StartBlock, this.l2StartBlock, this.config);
     this.handle = tuple.component1();
     this.blockUpdateReceiver = tuple.component2();
   }
@@ -87,7 +91,7 @@ public class ChainWatcher {
       handle.cancel(true);
     }
     Tuple2<CompletableFuture<Void>, BlockingQueue<BlockUpdate>> tuple =
-        startWatcher(l1StartBlock, l2StartBlock, this.config);
+        startWatcher(this.executor, l1StartBlock, l2StartBlock, this.config);
     this.handle = tuple.component1();
     this.blockUpdateReceiver = tuple.component2();
     this.l1StartBlock = l1StartBlock;
@@ -99,17 +103,18 @@ public class ChainWatcher {
     if (handle != null && !handle.isDone()) {
       handle.cancel(true);
     }
+    var unused = executor.shutdownNow();
   }
 
   private static Tuple2<CompletableFuture<Void>, BlockingQueue<BlockUpdate>> startWatcher(
-      BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
+      ExecutorService executor, BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
     final BlockingQueue<BlockUpdate> queue = new MpscBlockingConsumerArrayQueue<>(1000);
     CompletableFuture<Void> future =
         CompletableFuture.runAsync(
             () -> {
               try {
                 final InnerWatcher watcher =
-                    new InnerWatcher(config, queue, l1StartBlock, l2StartBlock);
+                    new InnerWatcher(config, queue, l1StartBlock, l2StartBlock, executor);
                 while (!Thread.currentThread().isInterrupted()) {
                   LOGGER.debug("fetching L1 data for block {}", watcher.currentBlock);
                   try {
@@ -119,14 +124,11 @@ public class ChainWatcher {
                   }
                 }
                 LOGGER.debug("thread has been interrupted");
-              } catch (IOException e) {
-                LOGGER.error("failed to fetch data");
-              } catch (InterruptedException e) {
-                LOGGER.error("thread has been interrupted", e);
-              } catch (ExecutionException e) {
-                LOGGER.error("execution exception", e);
+              } catch (Exception e) {
+                throw new RuntimeException(e);
               }
-            });
+            },
+            executor);
     return new Tuple2<>(future, queue);
   }
 }
