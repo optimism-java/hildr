@@ -149,27 +149,36 @@ public class EngineApi implements Engine {
   @Override
   public Future<ForkChoiceUpdate> forkChoiceUpdate(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
-    Request<?, ForkChoiceUpdate> r = new Request<>(
-        ENGINE_FORKCHOICE_UPDATED_V1,
-        Arrays.asList(forkchoiceState, payloadAttributes),
-        web3jService,
-        ForkChoiceUpdate.class);
+    Request<?, ForkChoiceUpdate> r =
+        new Request<>(
+            ENGINE_FORKCHOICE_UPDATED_V1,
+            Arrays.asList(forkchoiceState, payloadAttributes),
+            web3jService,
+            ForkChoiceUpdate.class);
     RequestWrapper<?, ForkChoiceUpdate> requestWrapper = new RequestWrapper<>(r);
     return requestWrapper.sendVtAsync();
   }
 
   @Override
   public Future<PayloadStatus> newPayload(ExecutionPayload executionPayload) {
-    Request<?, PayloadStatus> r = new Request<>(
-        ENGINE_NEW_PAYLOAD_V1, Collections.singletonList(executionPayload), web3jService, PayloadStatus.class);
+    Request<?, PayloadStatus> r =
+        new Request<>(
+            ENGINE_NEW_PAYLOAD_V1,
+            Collections.singletonList(executionPayload),
+            web3jService,
+            PayloadStatus.class);
     RequestWrapper<?, PayloadStatus> requestWrapper = new RequestWrapper<>(r);
     return requestWrapper.sendVtAsync();
   }
 
   @Override
   public Future<ExecutionPayload> getPayload(BigInteger payloadId) {
-    Request<?, ExecutionPayload> r = new Request<>(
-        ENGINE_GET_PAYLOAD_V1, Collections.singletonList(payloadId), web3jService, ExecutionPayload.class);
+    Request<?, ExecutionPayload> r =
+        new Request<>(
+            ENGINE_GET_PAYLOAD_V1,
+            Collections.singletonList(payloadId),
+            web3jService,
+            ExecutionPayload.class);
     RequestWrapper<?, ExecutionPayload> requestWrapper = new RequestWrapper<>(r);
     return requestWrapper.sendVtAsync();
   }

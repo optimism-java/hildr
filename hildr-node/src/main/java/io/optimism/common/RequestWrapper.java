@@ -24,17 +24,30 @@ import org.web3j.protocol.core.Response;
 /**
  * The type RequestWrapper.
  *
+ * @param <S> params type.
+ * @param <T> response type.
  * @author zhouxing
  * @since 0.1.0
  */
 public class RequestWrapper<S, T extends Response> {
 
+  /** org.web3j.protocol.core.Request */
   private Request<S, T> request;
 
+  /**
+   * constructor.
+   *
+   * @param request org.web3j.protocol.core.Request.
+   */
   public RequestWrapper(Request<S, T> request) {
     this.request = request;
   }
 
+  /**
+   * sent request by virtual thread.
+   *
+   * @return Future
+   */
   public Future<T> sendVtAsync() {
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       return executor.submit(() -> request.send());

@@ -18,7 +18,6 @@ package io.optimism.engine;
 
 import java.math.BigInteger;
 import java.util.concurrent.Future;
-import org.web3j.protocol.core.Request;
 
 /**
  * The type Engine.
