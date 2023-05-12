@@ -16,6 +16,7 @@
 
 package io.optimism.common;
 
+import io.optimism.engine.ExecutionPayload;
 import java.math.BigInteger;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
@@ -39,8 +40,22 @@ public record BlockInfo(String hash, BigInteger number, String parentHash, BigIn
    * @param block the block
    * @return the block info
    */
-  public BlockInfo from(Block block) {
+  public static BlockInfo from(Block block) {
     return new BlockInfo(
         block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
+  }
+
+  /**
+   * From block info.
+   *
+   * @param payload the payload
+   * @return the block info
+   */
+  public static BlockInfo from(ExecutionPayload payload) {
+    return new BlockInfo(
+        payload.getBlockHash(),
+        payload.getBlockNumber(),
+        payload.getParentHash(),
+        payload.getTimestamp());
   }
 }

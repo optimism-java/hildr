@@ -31,7 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.web3j.protocol.core.Request;
@@ -44,6 +44,7 @@ import org.web3j.protocol.http.HttpService;
  * @since 0.1.0
  */
 public class EngineApi implements Engine {
+
   /** The forkchoice updated method string. */
   public static final String ENGINE_FORKCHOICE_UPDATED_V1 = "engine_forkchoiceUpdatedV1";
 
@@ -147,7 +148,7 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public Future<ForkChoiceUpdate> forkChoiceUpdate(
+  public CompletableFuture<ForkChoiceUpdate> forkChoiceUpdate(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
     Request<?, ForkChoiceUpdate> r =
         new Request<>(
@@ -160,7 +161,7 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public Future<PayloadStatus> newPayload(ExecutionPayload executionPayload) {
+  public CompletableFuture<PayloadStatus> newPayload(ExecutionPayload executionPayload) {
     Request<?, PayloadStatus> r =
         new Request<>(
             ENGINE_NEW_PAYLOAD_V1,
@@ -172,7 +173,7 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public Future<ExecutionPayload> getPayload(BigInteger payloadId) {
+  public CompletableFuture<ExecutionPayload> getPayload(BigInteger payloadId) {
     Request<?, ExecutionPayload> r =
         new Request<>(
             ENGINE_GET_PAYLOAD_V1,

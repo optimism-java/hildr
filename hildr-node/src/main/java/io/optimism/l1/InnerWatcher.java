@@ -159,7 +159,7 @@ public class InnerWatcher {
       BigInteger l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
       this.systemConfig =
           new Config.SystemConfig(
-              batchSender, l1FeeOverhead, l1FeeScalar, block.getBlock().getGasLimit());
+              batchSender, block.getBlock().getGasLimit(), l1FeeOverhead, l1FeeScalar);
       l2Client.shutdown();
     }
 

@@ -16,8 +16,9 @@
 
 package io.optimism.common;
 
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.Response;
 
@@ -48,9 +49,18 @@ public class RequestWrapper<S, T extends Response> {
    *
    * @return Future
    */
-  public Future<T> sendVtAsync() {
+  @SuppressWarnings("preview")
+  public CompletableFuture<T> sendVtAsync() {
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      return executor.submit(() -> request.send());
+      return CompletableFuture.supplyAsync(
+          () -> {
+            try {
+              return request.send();
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          },
+          executor);
     }
   }
 }
