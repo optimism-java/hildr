@@ -21,14 +21,17 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 import io.jsonwebtoken.security.Keys;
+import io.optimism.common.RequestWrapper;
 import java.math.BigInteger;
 import java.security.Key;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Future;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.web3j.protocol.core.Request;
@@ -144,24 +147,30 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public Request<?, ForkChoiceUpdate> forkChoiceUpdate(
+  public Future<ForkChoiceUpdate> forkChoiceUpdate(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
-    return new Request<>(
+    Request<?, ForkChoiceUpdate> r = new Request<>(
         ENGINE_FORKCHOICE_UPDATED_V1,
         Arrays.asList(forkchoiceState, payloadAttributes),
         web3jService,
         ForkChoiceUpdate.class);
+    RequestWrapper<?, ForkChoiceUpdate> requestWrapper = new RequestWrapper<>(r);
+    return requestWrapper.sendVtAsync();
   }
 
   @Override
-  public Request<?, PayloadStatus> newPayload(ExecutionPayload executionPayload) {
-    return new Request<>(
-        ENGINE_NEW_PAYLOAD_V1, Arrays.asList(executionPayload), web3jService, PayloadStatus.class);
+  public Future<PayloadStatus> newPayload(ExecutionPayload executionPayload) {
+    Request<?, PayloadStatus> r = new Request<>(
+        ENGINE_NEW_PAYLOAD_V1, Collections.singletonList(executionPayload), web3jService, PayloadStatus.class);
+    RequestWrapper<?, PayloadStatus> requestWrapper = new RequestWrapper<>(r);
+    return requestWrapper.sendVtAsync();
   }
 
   @Override
-  public Request<?, ExecutionPayload> getPayload(BigInteger payloadId) {
-    return new Request<>(
-        ENGINE_GET_PAYLOAD_V1, Arrays.asList(payloadId), web3jService, ExecutionPayload.class);
+  public Future<ExecutionPayload> getPayload(BigInteger payloadId) {
+    Request<?, ExecutionPayload> r = new Request<>(
+        ENGINE_GET_PAYLOAD_V1, Collections.singletonList(payloadId), web3jService, ExecutionPayload.class);
+    RequestWrapper<?, ExecutionPayload> requestWrapper = new RequestWrapper<>(r);
+    return requestWrapper.sendVtAsync();
   }
 }
