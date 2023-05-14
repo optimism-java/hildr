@@ -17,24 +17,18 @@
 package io.optimism.engine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import io.optimism.common.Epoch;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -75,6 +69,27 @@ public class EngineTest {
     return ow.writeValueAsString(forkChoiceUpdate);
   }
 
+  String initPayloadStatusResp() throws JsonProcessingException {
+    PayloadStatus payloadStatus = new PayloadStatus();
+    payloadStatus.setStatus(Status.Accepted);
+    payloadStatus.setLatestValidHash("12312321");
+    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    return ow.writeValueAsString(payloadStatus);
+  }
+
+  ExecutionPayload initExecutionPayload() {
+    ExecutionPayload executionPayload = new ExecutionPayload();
+    executionPayload.setBlockHash("sdfasdf12312312");
+    executionPayload.setBlockNumber(new BigInteger("1234"));
+    executionPayload.setParentHash("sdvkem39441fd132131");
+    return executionPayload;
+  }
+
+  String initExecutionPayloadJson() throws JsonProcessingException {
+    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    return ow.writeValueAsString(initExecutionPayload());
+  }
+
   @Test
   void testForkChoiceUpdate()
       throws JsonProcessingException, InterruptedException, ExecutionException {
@@ -99,5 +114,29 @@ public class EngineTest {
     ForkChoiceUpdate forkChoiceUpdate = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initForkChoiceUpdateResp(), ow.writeValueAsString(forkChoiceUpdate));
+  }
+
+  @Test
+  void testNewPayload() throws JsonProcessingException, ExecutionException, InterruptedException {
+    String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
+    assertEquals("http://127.0.0.1:8851", baseUrl);
+    server.enqueue(new MockResponse().setBody(initPayloadStatusResp()));
+    EngineApi engineApi = new EngineApi(baseUrl, SECRET);
+    CompletableFuture<PayloadStatus> future = engineApi.newPayload(initExecutionPayload());
+    PayloadStatus payloadStatus = future.get();
+    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    assertEquals(initPayloadStatusResp(), ow.writeValueAsString(payloadStatus));
+  }
+
+  @Test
+  void testGetPayload() throws JsonProcessingException, ExecutionException, InterruptedException {
+    String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
+    assertEquals("http://127.0.0.1:8851", baseUrl);
+    server.enqueue(new MockResponse().setBody(initExecutionPayloadJson()));
+    EngineApi engineApi = new EngineApi(baseUrl, SECRET);
+    CompletableFuture<ExecutionPayload> future = engineApi.getPayload(new BigInteger("123"));
+    ExecutionPayload executionPayload = future.get();
+    ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
+    assertEquals(initExecutionPayloadJson(), ow.writeValueAsString(executionPayload));
   }
 }
