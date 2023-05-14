@@ -113,7 +113,7 @@ public class EngineApi implements Engine {
    * @param secret secret
    * @return byte[]
    */
-  private byte[] fromHex(String secret) {
+  public static byte[] fromHex(String secret) {
     String hex = secret.trim();
     if (hex.length() != 64) {
       throw new RuntimeException("Invalid JWT secret key length");
@@ -131,7 +131,7 @@ public class EngineApi implements Engine {
   public static String authUrlFromAddr(String addr, Integer portParm) {
     String stripped = addr.replace("http://", "").replace("https://", "");
     Integer port = portParm == null ? DEFAULT_AUTH_PORT : portParm;
-    return String.format("http://%1$s%2$s", stripped, port);
+    return String.format("http://%1$s:%2$s", stripped, port);
   }
 
   /**
@@ -140,7 +140,7 @@ public class EngineApi implements Engine {
    * @return Claims
    */
   public static Claims generateClaims() {
-    long nowSecs = LocalDateTime.now(ZoneId.systemDefault()).toEpochSecond(ZoneOffset.of("0"));
+    long nowSecs = LocalDateTime.now(ZoneId.systemDefault()).toEpochSecond(ZoneOffset.of("+8"));
     Map<String, Long> map = new HashMap<>();
     map.put("iat", nowSecs);
     map.put("exp", nowSecs + 60);

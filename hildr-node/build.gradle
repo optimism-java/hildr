@@ -59,6 +59,8 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	errorprone("com.google.errorprone:error_prone_core:2.18.0")
+
+	testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
@@ -167,7 +169,8 @@ tasks.withType(Test).configureEach {
 	jvmArgumentProviders << ({
 		[
 				"-Djunit.platform.reporting.open.xml.enabled=true",
-				"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}"
+				"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}",
+				"--enable-preview"
 		]
 	} as CommandLineArgumentProvider)
 }
