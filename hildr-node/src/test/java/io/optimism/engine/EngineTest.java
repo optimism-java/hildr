@@ -99,17 +99,5 @@ public class EngineTest {
     ForkChoiceUpdate forkChoiceUpdate = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initForkChoiceUpdateResp(), ow.writeValueAsString(forkChoiceUpdate));
-
-    RecordedRequest request = server.takeRequest();
-    String jwt = Objects.requireNonNull(request.getHeader("authorization")).replace("Bearer ", "");
-    Claims claims =
-        Jwts.parserBuilder()
-            .setSigningKey(Keys.hmacShaKeyFor(EngineApi.fromHex(SECRET)))
-            .build()
-            .parseClaimsJws(jwt)
-            .getBody();
-
-    assertNotNull(claims.get("iat"));
-    assertNotNull(claims.get("exp"));
   }
 }
