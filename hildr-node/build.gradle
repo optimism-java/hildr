@@ -33,6 +33,11 @@ compileJava {
 	options.compilerArgs << '-Xlint:preview'
 }
 
+compileTestJava {
+	options.compilerArgs << '--enable-preview'
+	options.compilerArgs << '-Xlint:preview'
+}
+
 dependencies {
 	// Use JUnit Jupiter for testing.
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
@@ -60,6 +65,7 @@ dependencies {
 
 	errorprone("com.google.errorprone:error_prone_core:2.18.0")
 
+	testImplementation 'org.mockito:mockito-junit-jupiter:2.19.0'
 	testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
 }
 

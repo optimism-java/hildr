@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.function.Supplier;
 import org.jctools.queues.MpscBlockingConsumerArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -106,29 +107,41 @@ public class ChainWatcher {
     var unused = executor.shutdownNow();
   }
 
-  private static Tuple2<CompletableFuture<Void>, BlockingQueue<BlockUpdate>> startWatcher(
+  static Tuple2<CompletableFuture<Void>, BlockingQueue<BlockUpdate>> startWatcher(
       ExecutorService executor, BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
     final BlockingQueue<BlockUpdate> queue = new MpscBlockingConsumerArrayQueue<>(1000);
+
     CompletableFuture<Void> future =
         CompletableFuture.runAsync(
-            () -> {
-              try {
-                final InnerWatcher watcher =
-                    new InnerWatcher(config, queue, l1StartBlock, l2StartBlock, executor);
-                while (!Thread.currentThread().isInterrupted()) {
-                  LOGGER.debug("fetching L1 data for block {}", watcher.currentBlock);
+            watcherTask(
+                executor,
+                () -> {
                   try {
-                    watcher.tryIngestBlock();
-                  } catch (IOException e) {
-                    LOGGER.warn("failed to fetch data for block {}: {}", watcher.currentBlock, e);
+                    return new InnerWatcher(config, queue, l1StartBlock, l2StartBlock, executor);
+                  } catch (Exception e) {
+                    throw new RuntimeException(e);
                   }
-                }
-                LOGGER.debug("thread has been interrupted");
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            },
+                }),
             executor);
     return new Tuple2<>(future, queue);
+  }
+
+  static Runnable watcherTask(ExecutorService executor, Supplier<InnerWatcher> watcherSupplier) {
+    return () -> {
+      try {
+        InnerWatcher watcher = watcherSupplier.get();
+        while (!Thread.currentThread().isInterrupted()) {
+          LOGGER.debug("fetching L1 data for block {}", watcher.currentBlock);
+          try {
+            watcher.tryIngestBlock();
+          } catch (IOException e) {
+            LOGGER.warn("failed to fetch data for block {}: {}", watcher.currentBlock, e);
+          }
+        }
+        LOGGER.debug("thread has been interrupted");
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 }
