@@ -16,18 +16,30 @@
 
 package io.optimism.engine;
 
-import java.math.BigInteger;
+import org.web3j.protocol.core.Response;
 
 /**
- * the type EngineApiResponse.
+ * The type OpEthExecutionPayload.
  *
- * @param jsonrpc JSON RPC version.
- * @param id Request ID.
- * @param error JSON RPC error payload.
- * @param result JSON RPC payload.
- * @param <T> SON RPC payload type.
- * @author zhouop0
+ * @author grapebaba
  * @since 0.1.0
  */
-public record EngineApiResponse<T>(
-    String jsonrpc, BigInteger id, T result, EngineApiErrorPayload error) {}
+public class OpEthExecutionPayload extends Response<ExecutionPayload> {
+
+  /** Instantiates a new Op eth execution payload. */
+  public OpEthExecutionPayload() {}
+
+  /**
+   * Gets execution payload.
+   *
+   * @return the execution payload
+   */
+  public ExecutionPayload getExecutionPayload() {
+    return getResult();
+  }
+
+  @Override
+  public void setResult(ExecutionPayload result) {
+    super.setResult(result);
+  }
+}

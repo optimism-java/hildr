@@ -16,21 +16,26 @@
 
 package io.optimism.engine;
 
-/**
- * The type Status.
- *
- * @author zhouop0
- * @since 0.1.0
- */
-public enum Status {
-  /** Valid status. */
-  Valid,
-  /** Invalid status. */
-  Invalid,
-  /** Syncing status. */
-  Syncing,
-  /** Accepted status. */
-  Accepted,
-  /** Invalid block hash status. */
-  InvalidBlockHash,
+import io.optimism.engine.ExecutionPayload.PayloadStatus;
+import org.web3j.protocol.core.Response;
+
+/** The type OpEthPayloadStatus. */
+public class OpEthPayloadStatus extends Response<PayloadStatus> {
+
+  /** Instantiates a new Op eth payload status. */
+  public OpEthPayloadStatus() {}
+
+  /**
+   * Gets payload status.
+   *
+   * @return the payload status
+   */
+  public PayloadStatus getPayloadStatus() {
+    return getResult();
+  }
+
+  @Override
+  public void setResult(PayloadStatus result) {
+    super.setResult(result);
+  }
 }

@@ -22,10 +22,11 @@ import io.optimism.config.Config;
 import io.optimism.engine.Engine;
 import io.optimism.engine.EngineApi;
 import io.optimism.engine.ExecutionPayload;
+import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate;
-import io.optimism.engine.ForkchoiceState;
-import io.optimism.engine.PayloadAttributes;
-import io.optimism.engine.Status;
+import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
+import io.optimism.engine.OpEthExecutionPayload;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
@@ -204,11 +205,15 @@ public class EngineDriver<E extends Engine> {
         .forkChoiceUpdate(forkchoiceState, null)
         .thenAccept(
             forkChoiceUpdate -> {
-              if (forkChoiceUpdate.getPayloadStatus().getStatus() != Status.Valid) {
+              if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
+                  != Status.Valid) {
                 throw new RuntimeException(
                     String.format(
                         "could not accept new forkchoice: %s",
-                        forkChoiceUpdate.getPayloadStatus().getValidationError()));
+                        forkChoiceUpdate
+                            .getForkChoiceUpdate()
+                            .payloadStatus()
+                            .getValidationError()));
               }
             });
   }
@@ -218,28 +223,29 @@ public class EngineDriver<E extends Engine> {
         .newPayload(payload)
         .thenAccept(
             payloadStatus -> {
-              if (payloadStatus.getStatus() != Status.Valid
-                  && payloadStatus.getStatus() != Status.Accepted) {
+              if (payloadStatus.getPayloadStatus().getStatus() != Status.Valid
+                  && payloadStatus.getPayloadStatus().getStatus() != Status.Accepted) {
                 throw new RuntimeException("invalid execution payload");
               }
             });
   }
 
-  private CompletableFuture<ExecutionPayload> buildPayload(PayloadAttributes attributes) {
+  private CompletableFuture<OpEthExecutionPayload> buildPayload(PayloadAttributes attributes) {
     ForkchoiceState forkchoiceState = createForkchoiceState();
+
     return this.engine
         .forkChoiceUpdate(forkchoiceState, attributes)
         .thenCompose(
-            (Function<ForkChoiceUpdate, CompletableFuture<ExecutionPayload>>)
-                forkChoiceUpdate -> {
-                  if (forkChoiceUpdate.getPayloadStatus().getStatus() != Status.Valid) {
-                    throw new RuntimeException("invalid payload attributes");
-                  }
-                  if (forkChoiceUpdate.getPayloadId() == null) {
-                    throw new RuntimeException("invalid payload attributes");
-                  }
-                  return engine.getPayload(forkChoiceUpdate.getPayloadId());
-                });
+            opEthForkChoiceUpdate -> {
+              ForkChoiceUpdate forkChoiceUpdate = opEthForkChoiceUpdate.getForkChoiceUpdate();
+              if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
+                throw new RuntimeException("invalid payload attributes");
+              }
+              if (forkChoiceUpdate.payloadId() == null) {
+                throw new RuntimeException("invalid payload attributes");
+              }
+              return engine.getPayload(forkChoiceUpdate.payloadId());
+            });
   }
 
   private CompletableFuture<Void> skipAttributes(PayloadAttributes attributes, EthBlock block) {
@@ -253,14 +259,15 @@ public class EngineDriver<E extends Engine> {
     Epoch newEpoch = attributes.epoch();
     return this.buildPayload(attributes)
         .thenCompose(
-            (Function<ExecutionPayload, CompletableFuture<Void>>)
-                executionPayload -> {
+            (Function<OpEthExecutionPayload, CompletableFuture<Void>>)
+                opEthExecutionPayload -> {
+                  ExecutionPayload executionPayload = opEthExecutionPayload.getExecutionPayload();
                   BlockInfo newHead =
                       new BlockInfo(
-                          executionPayload.getBlockHash(),
-                          executionPayload.getBlockNumber(),
-                          executionPayload.getParentHash(),
-                          executionPayload.getTimestamp());
+                          executionPayload.blockHash(),
+                          executionPayload.blockNumber(),
+                          executionPayload.parentHash(),
+                          executionPayload.timestamp());
 
                   updateSafeHead(newHead, newEpoch, false);
                   return CompletableFuture.allOf(pushPayload(executionPayload), updateForkchoice());

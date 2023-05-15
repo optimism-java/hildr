@@ -53,9 +53,6 @@ public record BlockInfo(String hash, BigInteger number, String parentHash, BigIn
    */
   public static BlockInfo from(ExecutionPayload payload) {
     return new BlockInfo(
-        payload.getBlockHash(),
-        payload.getBlockNumber(),
-        payload.getParentHash(),
-        payload.getTimestamp());
+        payload.blockHash(), payload.blockNumber(), payload.parentHash(), payload.timestamp());
   }
 }

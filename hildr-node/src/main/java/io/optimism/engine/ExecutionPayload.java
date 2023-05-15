@@ -16,294 +16,202 @@
 
 package io.optimism.engine;
 
-import io.optimism.common.RawTransaction;
+import io.optimism.common.Epoch;
 import java.math.BigInteger;
 import java.util.List;
-import org.web3j.protocol.core.Response;
+import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
 /**
  * The type ExecutionPayload.
  *
- * <p>parentHash A 32 byte hash of the parent payload. feeRecipient A 20 byte hash (aka Address) for
- * the feeRecipient field of the new payload. stateRoot A 32 byte state root hash. receiptsRoot A 32
- * byte receipt root hash. logsBloom A 32 byte logs bloom filter. prevRandom A 32 byte beacon chain
- * randomness value. blockHash The 32 byte block hash. gasLimit A 64 bit value for the gas limit.
- * gasUsed A 64 bit value for the gas used. timestamp A 64 bit value for the timestamp field of the
- * new payload. baseFeePerGas 256 bits for the base fee per gas. blockNumber A 64 bit number for the
- * current block index. extraData 0 to 32 byte value for extra data. transactions An array of
- * transaction objects where each object is a byte list.
- *
- * @author zhouop0
+ * @param parentHash A 32 byte hash of the parent payload.
+ * @param feeRecipient A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
+ * @param stateRoot A 32 byte state root hash.
+ * @param receiptsRoot A 32 byte receipt root hash.
+ * @param logsBloom A 32 byte logs bloom filter.
+ * @param prevRandom A 32 byte beacon chain randomness value.
+ * @param blockNumber A 64-bit number for the current block index.
+ * @param gasLimit A 64-bit value for the gas limit.
+ * @param gasUsed A 64-bit value for the gas used.
+ * @param timestamp A 64-bit value for the timestamp field of the new payload.
+ * @param extraData 0 to 32 byte value for extra data.
+ * @param baseFeePerGas 256 bits for the base fee per gas.
+ * @param blockHash The 32 byte block hash.
+ * @param transactions An array of transaction objects where each object is a byte list.
+ * @author grapebaba
  * @since 0.1.0
  */
-public class ExecutionPayload extends Response {
-  private String parentHash;
-  private String feeRecipient;
-  private String stateRoot;
-  private String receiptsRoot;
-  private String logsBloom;
-  private String prevRandom;
-  private BigInteger blockNumber;
-  private BigInteger gasLimit;
-  private BigInteger gasUsed;
-  private BigInteger timestamp;
-  private String extraData;
-  private BigInteger baseFeePerGas;
-  private String blockHash;
-  private List<RawTransaction> transactions;
-
-  /** ExecutionPayload contractor. */
-  public ExecutionPayload() {}
+public record ExecutionPayload(
+    String parentHash,
+    String feeRecipient,
+    String stateRoot,
+    String receiptsRoot,
+    String logsBloom,
+    String prevRandom,
+    BigInteger blockNumber,
+    BigInteger gasLimit,
+    BigInteger gasUsed,
+    BigInteger timestamp,
+    String extraData,
+    BigInteger baseFeePerGas,
+    String blockHash,
+    List<String> transactions) {
 
   /**
-   * parentHash get method.
+   * From execution payload.
    *
-   * @return parentHash.
+   * @param block the block
+   * @return the execution payload
    */
-  public String getParentHash() {
-    return parentHash;
+  public static ExecutionPayload from(EthBlock.Block block) {
+    List<String> encodedTxs =
+        block.getTransactions().stream().map(tx -> ((TransactionObject) tx).getInput()).toList();
+
+    return new ExecutionPayload(
+        block.getParentHash(),
+        block.getAuthor(),
+        block.getStateRoot(),
+        block.getReceiptsRoot(),
+        block.getLogsBloom(),
+        block.getMixHash(),
+        block.getNumber(),
+        block.getGasLimit(),
+        block.getGasUsed(),
+        block.getTimestamp(),
+        block.getExtraData(),
+        block.getBaseFeePerGas(),
+        block.getHash(),
+        encodedTxs);
   }
 
   /**
-   * parentHash set method.
+   * The type PayloadAttributes.
    *
-   * @param parentHash parentHash.
+   * <p>L2 extended payload attributes for Optimism. For more details, visit the [Optimism specs](<a
+   * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#extended-payloadattributesv1">...</a>).
+   *
+   * @param timestamp 64 bit value for the timestamp field of the new payload.
+   * @param prevRandao 32 byte value for the prevRandao field of the new payload.
+   * @param suggestedFeeRecipient 20 bytes suggested value for the feeRecipient field of the new
+   *     payload.
+   * @param transactions List of transactions to be included in the new payload.
+   * @param noTxPool Boolean value indicating whether the payload should be built without including
+   *     transactions from the txpool.
+   * @param gasLimit 64 bit value for the gasLimit field of the new payload.The gasLimit is optional
+   *     w.r.t. compatibility with L1, but required when used as rollup.This field overrides the gas
+   *     limit used during block-building.If not specified as rollup, a STATUS_INVALID is returned.
+   * @param epoch The batch epoch number from derivation. This value is not expected by the engine
+   *     is skipped during serialization and deserialization.
+   * @param l1InclusionBlock The L1 block number when this batch was first fully derived. This value
+   *     is not expected by the engine and is skipped during serialization and deserialization.
+   * @param seqNumber The L2 sequence number of the block. This value is not expected by the engine
+   *     and is skipped during serialization and deserialization.
+   * @author zhouop0
+   * @since 0.1.0
    */
-  public void setParentHash(String parentHash) {
-    this.parentHash = parentHash;
+  public record PayloadAttributes(
+      BigInteger timestamp,
+      String prevRandao,
+      String suggestedFeeRecipient,
+      List<String> transactions,
+      boolean noTxPool,
+      BigInteger gasLimit,
+      Epoch epoch,
+      BigInteger l1InclusionBlock,
+      BigInteger seqNumber) {}
+
+  /**
+   * The type Status.
+   *
+   * @author zhouop0
+   * @since 0.1.0
+   */
+  public enum Status {
+    /** Valid status. */
+    Valid,
+    /** Invalid status. */
+    Invalid,
+    /** Syncing status. */
+    Syncing,
+    /** Accepted status. */
+    Accepted,
+    /** Invalid block hash status. */
+    InvalidBlockHash,
   }
 
   /**
-   * feeRecipient get method.
+   * The type PayloadStatus.
    *
-   * @return feeRecipient.
+   * <p>status The status of the payload. latestValidHash 32 Bytes - the hash of the most recent
+   * valid block in the branch defined by payload and its ancestors. validationError A message
+   * providing additional details on the validation error if the payload is classified as INVALID or
+   * INVALID_BLOCK_HASH.
+   *
+   * @author zhouop0
+   * @since 0.1.0
    */
-  public String getFeeRecipient() {
-    return feeRecipient;
-  }
+  public static class PayloadStatus {
 
-  /**
-   * feeRecipient set method.
-   *
-   * @param feeRecipient feeRecipient.
-   */
-  public void setFeeRecipient(String feeRecipient) {
-    this.feeRecipient = feeRecipient;
-  }
+    private Status status;
+    private String latestValidHash;
+    private String validationError;
 
-  /**
-   * stateRoot get method.
-   *
-   * @return stateRoot.
-   */
-  public String getStateRoot() {
-    return stateRoot;
-  }
+    /** PayloadStatus constructor. */
+    public PayloadStatus() {}
 
-  /**
-   * stateRoot set method.
-   *
-   * @param stateRoot stateRoot.
-   */
-  public void setStateRoot(String stateRoot) {
-    this.stateRoot = stateRoot;
-  }
+    /**
+     * status get method.
+     *
+     * @return status. status
+     */
+    public Status getStatus() {
+      return status;
+    }
 
-  /**
-   * receiptsRoot get method.
-   *
-   * @return receiptsRoot.
-   */
-  public String getReceiptsRoot() {
-    return receiptsRoot;
-  }
+    /**
+     * status set method.
+     *
+     * @param status status.
+     */
+    public void setStatus(Status status) {
+      this.status = status;
+    }
 
-  /**
-   * receiptsRoot set method.
-   *
-   * @param receiptsRoot receiptsRoot.
-   */
-  public void setReceiptsRoot(String receiptsRoot) {
-    this.receiptsRoot = receiptsRoot;
-  }
+    /**
+     * latestValidHash get method.
+     *
+     * @return latestValidHash. latest valid hash
+     */
+    public String getLatestValidHash() {
+      return latestValidHash;
+    }
 
-  /**
-   * prevRandom get method.
-   *
-   * @return prevRandom.
-   */
-  public String getLogsBloom() {
-    return logsBloom;
-  }
+    /**
+     * latestValidHash set method.
+     *
+     * @param latestValidHash latestValidHash.
+     */
+    public void setLatestValidHash(String latestValidHash) {
+      this.latestValidHash = latestValidHash;
+    }
 
-  /**
-   * prevRandom set method.
-   *
-   * @param logsBloom prevRandom.
-   */
-  public void setLogsBloom(String logsBloom) {
-    this.logsBloom = logsBloom;
-  }
+    /**
+     * validationError get method.
+     *
+     * @return validationError. validation error
+     */
+    public String getValidationError() {
+      return validationError;
+    }
 
-  /**
-   * prevRandom get method.
-   *
-   * @return prevRandom.
-   */
-  public String getPrevRandom() {
-    return prevRandom;
-  }
-
-  /**
-   * prevRandom set method.
-   *
-   * @param prevRandom prevRandom.
-   */
-  public void setPrevRandom(String prevRandom) {
-    this.prevRandom = prevRandom;
-  }
-
-  /**
-   * blockNumber get method.
-   *
-   * @return blockNumber.
-   */
-  public BigInteger getBlockNumber() {
-    return blockNumber;
-  }
-
-  /**
-   * blockNumber set method.
-   *
-   * @param blockNumber blockNumber.
-   */
-  public void setBlockNumber(BigInteger blockNumber) {
-    this.blockNumber = blockNumber;
-  }
-
-  /**
-   * gasLimit get method.
-   *
-   * @return gasLimit.
-   */
-  public BigInteger getGasLimit() {
-    return gasLimit;
-  }
-
-  /**
-   * gasLimit set method.
-   *
-   * @param gasLimit gasLimit.
-   */
-  public void setGasLimit(BigInteger gasLimit) {
-    this.gasLimit = gasLimit;
-  }
-
-  /**
-   * gasUsed get method.
-   *
-   * @return gasUsed.
-   */
-  public BigInteger getGasUsed() {
-    return gasUsed;
-  }
-
-  /**
-   * gasUsed set method.
-   *
-   * @param gasUsed gasUsed.
-   */
-  public void setGasUsed(BigInteger gasUsed) {
-    this.gasUsed = gasUsed;
-  }
-
-  /**
-   * timestamp get method.
-   *
-   * @return timestamp.
-   */
-  public BigInteger getTimestamp() {
-    return timestamp;
-  }
-
-  /**
-   * timestamp set method.
-   *
-   * @param timestamp timestamp.
-   */
-  public void setTimestamp(BigInteger timestamp) {
-    this.timestamp = timestamp;
-  }
-
-  /**
-   * extraData get method.
-   *
-   * @return extraData.
-   */
-  public String getExtraData() {
-    return extraData;
-  }
-
-  /**
-   * extraData set method.
-   *
-   * @param extraData extraData.
-   */
-  public void setExtraData(String extraData) {
-    this.extraData = extraData;
-  }
-
-  /**
-   * baseFeePerGas get method.
-   *
-   * @return baseFeePerGas.
-   */
-  public BigInteger getBaseFeePerGas() {
-    return baseFeePerGas;
-  }
-
-  /**
-   * baseFeePerGas set method.
-   *
-   * @param baseFeePerGas baseFeePerGas.
-   */
-  public void setBaseFeePerGas(BigInteger baseFeePerGas) {
-    this.baseFeePerGas = baseFeePerGas;
-  }
-
-  /**
-   * blockHash get method.
-   *
-   * @return blockHash.
-   */
-  public String getBlockHash() {
-    return blockHash;
-  }
-
-  /**
-   * blockHash set method.
-   *
-   * @param blockHash blockHash
-   */
-  public void setBlockHash(String blockHash) {
-    this.blockHash = blockHash;
-  }
-
-  /**
-   * transactions get method.
-   *
-   * @return transactions
-   */
-  public List<RawTransaction> getTransactions() {
-    return transactions;
-  }
-
-  /**
-   * transactions set method.
-   *
-   * @param transactions transactions.
-   */
-  public void setTransactions(List<RawTransaction> transactions) {
-    this.transactions = transactions;
+    /**
+     * validationError set method.
+     *
+     * @param validationError validationError.
+     */
+    public void setValidationError(String validationError) {
+      this.validationError = validationError;
+    }
   }
 }

@@ -23,7 +23,7 @@ import io.optimism.config.Config.SystemAccounts;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.derive.stages.Batches.Batch;
-import io.optimism.engine.PayloadAttributes;
+import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
 import java.math.BigInteger;
 import java.util.ArrayList;

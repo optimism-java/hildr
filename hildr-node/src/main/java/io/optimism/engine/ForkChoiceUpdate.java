@@ -16,8 +16,8 @@
 
 package io.optimism.engine;
 
+import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import java.math.BigInteger;
-import org.web3j.protocol.core.Response;
 
 /**
  * The type ForkChoiceUpdate.
@@ -26,49 +26,23 @@ import org.web3j.protocol.core.Response;
  * are restricted to the following subset: VALID, INVALID, SYNCING. payloadId 8 byte identifier of
  * the payload build process or null
  *
+ * @param payloadStatus Payload status. Note: values of the status field in the context of this
+ * @param payloadId 8 byte identifier of the payload build process or null
  * @author zhouop0
  * @since 0.1.0
  */
-public class ForkChoiceUpdate extends Response {
-  private PayloadStatus payloadStatus;
-  private BigInteger payloadId;
-
-  /** ForkChoiceUpdate constructor. */
-  public ForkChoiceUpdate() {}
+public record ForkChoiceUpdate(PayloadStatus payloadStatus, BigInteger payloadId) {
 
   /**
-   * payloadStatus get method.
+   * the type ForkchoiceState.
    *
-   * @return payloadStatus.
+   * @param headBlockHash 32 byte block hash of the head of the canonical chain
+   * @param safeBlockHash 32 byte "safe" block hash of the canonical chain under certain synchrony
+   *     and honesty assumptions This value MUST be either equal to or an ancestor of headBlockHash
+   * @param finalizedBlockHash 32 byte block hash of the most recent finalized block.
+   * @author zhouop0
+   * @since 0.1.0
    */
-  public PayloadStatus getPayloadStatus() {
-    return payloadStatus;
-  }
-
-  /**
-   * payloadStatus set method.
-   *
-   * @param payloadStatus payloadStatus.
-   */
-  public void setPayloadStatus(PayloadStatus payloadStatus) {
-    this.payloadStatus = payloadStatus;
-  }
-
-  /**
-   * payloadId get method.
-   *
-   * @return payloadId.
-   */
-  public BigInteger getPayloadId() {
-    return payloadId;
-  }
-
-  /**
-   * payloadId set method.
-   *
-   * @param payloadId payloadId.
-   */
-  public void setPayloadId(BigInteger payloadId) {
-    this.payloadId = payloadId;
-  }
+  public record ForkchoiceState(
+      String headBlockHash, String safeBlockHash, String finalizedBlockHash) {}
 }

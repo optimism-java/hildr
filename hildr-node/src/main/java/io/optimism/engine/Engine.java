@@ -16,6 +16,8 @@
 
 package io.optimism.engine;
 
+import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.math.BigInteger;
 import java.util.concurrent.CompletableFuture;
 
@@ -50,7 +52,7 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1">engine_forkchoiceUpdatedV1</a>
    */
-  CompletableFuture<ForkChoiceUpdate> forkChoiceUpdate(
+  CompletableFuture<OpEthForkChoiceUpdate> forkChoiceUpdate(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes);
 
   /**
@@ -67,7 +69,7 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_newpayloadv1">engine_newPayloadV1</a>
    */
-  CompletableFuture<PayloadStatus> newPayload(ExecutionPayload executionPayload);
+  CompletableFuture<OpEthPayloadStatus> newPayload(ExecutionPayload executionPayload);
 
   /**
    * Retrieves a payload by ID, prepared by {forkChoiceUpdated} when called with {@code
@@ -84,5 +86,5 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_getpayloadv1">engine_getPayloadV1</a>
    */
-  CompletableFuture<ExecutionPayload> getPayload(BigInteger payloadId);
+  CompletableFuture<OpEthExecutionPayload> getPayload(BigInteger payloadId);
 }

@@ -26,21 +26,22 @@ import org.web3j.protocol.core.Response;
  * The type RequestWrapper.
  *
  * @param <S> params type.
- * @param <T> response type.
+ * @param <T> result type.
+ * @param <R> response type.
  * @author zhouxing
  * @since 0.1.0
  */
-public class RequestWrapper<S, T extends Response> {
+public class RequestWrapper<S, T, R extends Response<T>> {
 
   /** org.web3j.protocol.core.Request */
-  private Request<S, T> request;
+  private Request<S, R> request;
 
   /**
    * constructor.
    *
    * @param request org.web3j.protocol.core.Request.
    */
-  public RequestWrapper(Request<S, T> request) {
+  public RequestWrapper(Request<S, R> request) {
     this.request = request;
   }
 
@@ -50,7 +51,7 @@ public class RequestWrapper<S, T extends Response> {
    * @return Future
    */
   @SuppressWarnings("preview")
-  public CompletableFuture<T> sendVtAsync() {
+  public CompletableFuture<R> sendVtAsync() {
     try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
       return CompletableFuture.supplyAsync(
           () -> {

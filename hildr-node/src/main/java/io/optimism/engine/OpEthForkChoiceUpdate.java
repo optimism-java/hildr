@@ -16,15 +16,25 @@
 
 package io.optimism.engine;
 
-import java.math.BigInteger;
+import org.web3j.protocol.core.Response;
 
-/**
- * the type EngineApiErrorPayload.
- *
- * @param code The error code.
- * @param message The error message.
- * @param data The error data.
- * @author zhouop0
- * @since 0.1.0
- */
-public record EngineApiErrorPayload(BigInteger code, String message, String data) {}
+/** The type Op eth fork choice update. */
+public class OpEthForkChoiceUpdate extends Response<ForkChoiceUpdate> {
+
+  /** Instantiates a new Op eth fork choice update. */
+  public OpEthForkChoiceUpdate() {}
+
+  /**
+   * Gets fork choice update.
+   *
+   * @return the fork choice update
+   */
+  public ForkChoiceUpdate getForkChoiceUpdate() {
+    return getResult();
+  }
+
+  @Override
+  public void setResult(ForkChoiceUpdate result) {
+    super.setResult(result);
+  }
+}

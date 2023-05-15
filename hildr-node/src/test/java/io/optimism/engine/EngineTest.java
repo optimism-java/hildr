@@ -22,6 +22,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import io.optimism.common.Epoch;
+import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.engine.ExecutionPayload.PayloadStatus;
+import io.optimism.engine.ExecutionPayload.Status;
+import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
@@ -59,35 +63,50 @@ public class EngineTest {
   }
 
   String initForkChoiceUpdateResp() throws JsonProcessingException {
-    ForkChoiceUpdate forkChoiceUpdate = new ForkChoiceUpdate();
-    forkChoiceUpdate.setPayloadId(new BigInteger("1"));
     PayloadStatus payloadStatus = new PayloadStatus();
     payloadStatus.setStatus(Status.Accepted);
     payloadStatus.setLatestValidHash("asdfadfsdfadsfasdf");
     payloadStatus.setValidationError("");
+    ForkChoiceUpdate forkChoiceUpdate = new ForkChoiceUpdate(payloadStatus, new BigInteger("1"));
+    OpEthForkChoiceUpdate opEthForkChoiceUpdate = new OpEthForkChoiceUpdate();
+    opEthForkChoiceUpdate.setResult(forkChoiceUpdate);
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-    return ow.writeValueAsString(forkChoiceUpdate);
+    return ow.writeValueAsString(opEthForkChoiceUpdate);
   }
 
   String initPayloadStatusResp() throws JsonProcessingException {
     PayloadStatus payloadStatus = new PayloadStatus();
     payloadStatus.setStatus(Status.Accepted);
     payloadStatus.setLatestValidHash("12312321");
+    OpEthPayloadStatus opEthPayloadStatus = new OpEthPayloadStatus();
+    opEthPayloadStatus.setResult(payloadStatus);
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-    return ow.writeValueAsString(payloadStatus);
+    return ow.writeValueAsString(opEthPayloadStatus);
   }
 
   ExecutionPayload initExecutionPayload() {
-    ExecutionPayload executionPayload = new ExecutionPayload();
-    executionPayload.setBlockHash("sdfasdf12312312");
-    executionPayload.setBlockNumber(new BigInteger("1234"));
-    executionPayload.setParentHash("sdvkem39441fd132131");
-    return executionPayload;
+    return new ExecutionPayload(
+        "sdvkem39441fd132131",
+        "123123",
+        "123123",
+        "123123",
+        "123123",
+        "123123",
+        new BigInteger("1234"),
+        new BigInteger("123123"),
+        new BigInteger("123123"),
+        new BigInteger("123123"),
+        "123123",
+        new BigInteger("123123"),
+        "sdfasdf12312312",
+        List.of(""));
   }
 
   String initExecutionPayloadJson() throws JsonProcessingException {
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
-    return ow.writeValueAsString(initExecutionPayload());
+    OpEthExecutionPayload opEthExecutionPayload = new OpEthExecutionPayload();
+    opEthExecutionPayload.setResult(initExecutionPayload());
+    return ow.writeValueAsString(opEthExecutionPayload);
   }
 
   @Test
@@ -109,9 +128,9 @@ public class EngineTest {
             new Epoch(new BigInteger("12"), "123", new BigInteger("1233145")),
             new BigInteger("1334"),
             new BigInteger("321"));
-    CompletableFuture<ForkChoiceUpdate> future =
+    CompletableFuture<OpEthForkChoiceUpdate> future =
         engineApi.forkChoiceUpdate(forkchoiceState, payloadAttributes);
-    ForkChoiceUpdate forkChoiceUpdate = future.get();
+    OpEthForkChoiceUpdate forkChoiceUpdate = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initForkChoiceUpdateResp(), ow.writeValueAsString(forkChoiceUpdate));
   }
@@ -122,8 +141,8 @@ public class EngineTest {
     assertEquals("http://127.0.0.1:8851", baseUrl);
     server.enqueue(new MockResponse().setBody(initPayloadStatusResp()));
     EngineApi engineApi = new EngineApi(baseUrl, SECRET);
-    CompletableFuture<PayloadStatus> future = engineApi.newPayload(initExecutionPayload());
-    PayloadStatus payloadStatus = future.get();
+    CompletableFuture<OpEthPayloadStatus> future = engineApi.newPayload(initExecutionPayload());
+    OpEthPayloadStatus payloadStatus = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initPayloadStatusResp(), ow.writeValueAsString(payloadStatus));
   }
@@ -134,8 +153,8 @@ public class EngineTest {
     assertEquals("http://127.0.0.1:8851", baseUrl);
     server.enqueue(new MockResponse().setBody(initExecutionPayloadJson()));
     EngineApi engineApi = new EngineApi(baseUrl, SECRET);
-    CompletableFuture<ExecutionPayload> future = engineApi.getPayload(new BigInteger("123"));
-    ExecutionPayload executionPayload = future.get();
+    CompletableFuture<OpEthExecutionPayload> future = engineApi.getPayload(new BigInteger("123"));
+    OpEthExecutionPayload executionPayload = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initExecutionPayloadJson(), ow.writeValueAsString(executionPayload));
   }

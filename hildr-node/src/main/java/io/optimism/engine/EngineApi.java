@@ -22,6 +22,9 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.DefaultClaims;
 import io.jsonwebtoken.security.Keys;
 import io.optimism.common.RequestWrapper;
+import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.engine.ExecutionPayload.PayloadStatus;
+import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.math.BigInteger;
 import java.security.Key;
 import java.time.LocalDateTime;
@@ -33,9 +36,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
-import org.bouncycastle.util.encoders.Hex;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.utils.Numeric;
 
 /**
  * The type EngineApi.
@@ -66,7 +69,7 @@ public class EngineApi implements Engine {
    * @return EngineApi.
    */
   public EngineApi fromEnv() {
-    String baseUrlParm = System.getProperty("ENGINE_API_URL");
+    String baseUrlParm = System.getenv("ENGINE_API_URL");
     if (StringUtils.isBlank(baseUrlParm)) {
       throw new RuntimeException(
           """
@@ -74,7 +77,7 @@ public class EngineApi implements Engine {
               Please set this to the base url of the engine api
               """);
     }
-    String secretKey = System.getProperty("JWT_SECRET");
+    String secretKey = System.getenv("JWT_SECRET");
     if (StringUtils.isBlank(secretKey)) {
       throw new RuntimeException(
           """
@@ -96,7 +99,7 @@ public class EngineApi implements Engine {
    * @param secretStr secret
    */
   public EngineApi(final String baseUrl, final String secretStr) {
-    Key key = Keys.hmacShaKeyFor(fromHex(secretStr));
+    Key key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
     String jws =
         Jwts.builder()
             .setClaims(generateClaims())
@@ -105,20 +108,6 @@ public class EngineApi implements Engine {
     HttpService httpService = new HttpService(baseUrl);
     httpService.addHeader("authorization", String.format("Bearer %1$s", jws));
     this.web3jService = httpService;
-  }
-
-  /**
-   * The provided `secret` must be a valid hexadecimal string of length 64.
-   *
-   * @param secret secret
-   * @return byte[]
-   */
-  public static byte[] fromHex(String secret) {
-    String hex = secret.trim();
-    if (hex.length() != 64) {
-      throw new RuntimeException("Invalid JWT secret key length");
-    }
-    return Hex.decode(secret);
   }
 
   /**
@@ -148,39 +137,41 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public CompletableFuture<ForkChoiceUpdate> forkChoiceUpdate(
+  public CompletableFuture<OpEthForkChoiceUpdate> forkChoiceUpdate(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
-    Request<?, ForkChoiceUpdate> r =
+    Request<?, OpEthForkChoiceUpdate> r =
         new Request<>(
             ENGINE_FORKCHOICE_UPDATED_V1,
             Arrays.asList(forkchoiceState, payloadAttributes),
             web3jService,
-            ForkChoiceUpdate.class);
-    RequestWrapper<?, ForkChoiceUpdate> requestWrapper = new RequestWrapper<>(r);
+            OpEthForkChoiceUpdate.class);
+    RequestWrapper<?, ForkChoiceUpdate, OpEthForkChoiceUpdate> requestWrapper =
+        new RequestWrapper<>(r);
     return requestWrapper.sendVtAsync();
   }
 
   @Override
-  public CompletableFuture<PayloadStatus> newPayload(ExecutionPayload executionPayload) {
-    Request<?, PayloadStatus> r =
+  public CompletableFuture<OpEthPayloadStatus> newPayload(ExecutionPayload executionPayload) {
+    Request<?, OpEthPayloadStatus> r =
         new Request<>(
             ENGINE_NEW_PAYLOAD_V1,
             Collections.singletonList(executionPayload),
             web3jService,
-            PayloadStatus.class);
-    RequestWrapper<?, PayloadStatus> requestWrapper = new RequestWrapper<>(r);
+            OpEthPayloadStatus.class);
+    RequestWrapper<?, PayloadStatus, OpEthPayloadStatus> requestWrapper = new RequestWrapper<>(r);
     return requestWrapper.sendVtAsync();
   }
 
   @Override
-  public CompletableFuture<ExecutionPayload> getPayload(BigInteger payloadId) {
-    Request<?, ExecutionPayload> r =
+  public CompletableFuture<OpEthExecutionPayload> getPayload(BigInteger payloadId) {
+    Request<?, OpEthExecutionPayload> r =
         new Request<>(
             ENGINE_GET_PAYLOAD_V1,
             Collections.singletonList(payloadId),
             web3jService,
-            ExecutionPayload.class);
-    RequestWrapper<?, ExecutionPayload> requestWrapper = new RequestWrapper<>(r);
+            OpEthExecutionPayload.class);
+    RequestWrapper<?, ExecutionPayload, OpEthExecutionPayload> requestWrapper =
+        new RequestWrapper<>(r);
     return requestWrapper.sendVtAsync();
   }
 }
