@@ -27,6 +27,7 @@ import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import okhttp3.Interceptor;
+import okhttp3.Protocol;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -73,8 +74,12 @@ public class RetryRateLimitInterceptor implements Interceptor {
     try {
       return this.retryer.call(
           () -> {
-            if (this.rateLimiter.tryAcquire()) {
-              return new Response.Builder().request(chain.request()).code(429).build();
+            if (!this.rateLimiter.tryAcquire()) {
+              return new Response.Builder()
+                  .request(chain.request())
+                  .protocol(Protocol.HTTP_1_1)
+                  .code(429)
+                  .build();
             }
             return chain.proceed(chain.request());
           });

@@ -21,7 +21,6 @@ import io.optimism.config.Config;
 import io.optimism.derive.stages.Attributes;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -151,11 +150,10 @@ public class InnerWatcher {
       EthBlock block = l2Future.get();
       EthBlock.TransactionObject tx =
           (EthBlock.TransactionObject) block.getBlock().getTransactions().get(0).get();
-      final byte[] input = Hex.decode(tx.getInput());
+      final byte[] input = Hex.decode(tx.getInput().substring(2));
 
       // 获取batch_sender
-      final String batchSender =
-          new String(Arrays.copyOfRange(input, 176, 196), StandardCharsets.UTF_8);
+      final String batchSender = "0x" + Hex.toHexString(Arrays.copyOfRange(input, 176, 196));
       var l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
       var l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
       var gasLimit = block.getBlock().getGasLimit();
@@ -185,7 +183,7 @@ public class InnerWatcher {
     if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
       BigInteger finalizedBlock = this.getFinalized().get();
       this.finalizedBlock = finalizedBlock;
-      this.blockUpdateSender.add(new BlockUpdate.FinalityUpdate(finalizedBlock));
+      this.blockUpdateSender.offer(new BlockUpdate.FinalityUpdate(finalizedBlock));
       this.unfinalizedBlocks =
           this.unfinalizedBlocks.stream()
               .filter(blockInfo -> blockInfo.number().compareTo(this.finalizedBlock) > 0)
@@ -395,9 +393,7 @@ public class InnerWatcher {
                 })
             .collect(Collectors.toList());
 
-    for (BigInteger i = new BigInteger(blockNum.toString());
-        i.compareTo(endBlock) < 0;
-        i = i.add(BigInteger.ONE)) {
+    for (BigInteger i = blockNum; i.compareTo(endBlock) < 0; i = i.add(BigInteger.ONE)) {
       final BigInteger num = i;
       final List<Attributes.UserDeposited> collect =
           depositLogs.stream()

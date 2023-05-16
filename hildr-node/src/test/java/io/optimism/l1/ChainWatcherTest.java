@@ -27,11 +27,12 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.web3j.tuples.generated.Tuple2;
 
 /**
+ * test case of ChainWatcher.
+ *
  * @author thinkAfCod
  * @since 2023.05
  */

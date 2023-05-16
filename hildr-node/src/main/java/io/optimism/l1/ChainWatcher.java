@@ -134,7 +134,7 @@ public class ChainWatcher {
           LOGGER.debug("fetching L1 data for block {}", watcher.currentBlock);
           try {
             watcher.tryIngestBlock();
-          } catch (IOException e) {
+          } catch (IOException | RuntimeException e) {
             LOGGER.warn("failed to fetch data for block {}: {}", watcher.currentBlock, e);
           }
         }
