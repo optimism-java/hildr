@@ -16,10 +16,8 @@
 
 package io.optimism.engine;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.impl.DefaultClaims;
 import io.jsonwebtoken.security.Keys;
 import io.optimism.common.RequestWrapper;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
@@ -27,13 +25,10 @@ import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.math.BigInteger;
 import java.security.Key;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.web3j.protocol.core.Request;
@@ -63,10 +58,12 @@ public class EngineApi implements Engine {
   /** HttpService web3jService. */
   private final HttpService web3jService;
 
+  private final Key key;
+
   /**
    * Creates an engine api from environment variables.
    *
-   * @return EngineApi.
+   * @return EngineApi. engine api
    */
   public EngineApi fromEnv() {
     String baseUrlParm = System.getenv("ENGINE_API_URL");
@@ -99,15 +96,8 @@ public class EngineApi implements Engine {
    * @param secretStr secret
    */
   public EngineApi(final String baseUrl, final String secretStr) {
-    Key key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
-    String jws =
-        Jwts.builder()
-            .setClaims(generateClaims())
-            .signWith(key, SignatureAlgorithm.HS256)
-            .compact();
-    HttpService httpService = new HttpService(baseUrl);
-    httpService.addHeader("authorization", String.format("Bearer %1$s", jws));
-    this.web3jService = httpService;
+    this.key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
+    this.web3jService = new HttpService(baseUrl);
   }
 
   /**
@@ -115,7 +105,7 @@ public class EngineApi implements Engine {
    *
    * @param addr addr
    * @param portParm port
-   * @return url
+   * @return url string
    */
   public static String authUrlFromAddr(String addr, Integer portParm) {
     String stripped = addr.replace("http://", "").replace("https://", "");
@@ -124,21 +114,26 @@ public class EngineApi implements Engine {
   }
 
   /**
-   * Generate claims.
+   * Generate jws string.
    *
-   * @return Claims
+   * @param key the key
+   * @return the string
    */
-  public static Claims generateClaims() {
-    long nowSecs = LocalDateTime.now(ZoneId.systemDefault()).toEpochSecond(ZoneOffset.of("+8"));
-    Map<String, Long> map = new HashMap<>();
-    map.put("iat", nowSecs);
-    map.put("exp", nowSecs + 60);
-    return new DefaultClaims(map);
+  protected static String generateJws(Key key) {
+    Instant now = Instant.now();
+    Date nowDate = Date.from(now);
+    Date expirationDate = Date.from(now.plusSeconds(60));
+    return Jwts.builder()
+        .setIssuedAt(nowDate)
+        .setExpiration(expirationDate)
+        .signWith(key, SignatureAlgorithm.HS256)
+        .compact();
   }
 
   @Override
   public CompletableFuture<OpEthForkChoiceUpdate> forkChoiceUpdate(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
+    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthForkChoiceUpdate> r =
         new Request<>(
             ENGINE_FORKCHOICE_UPDATED_V1,
@@ -152,6 +147,7 @@ public class EngineApi implements Engine {
 
   @Override
   public CompletableFuture<OpEthPayloadStatus> newPayload(ExecutionPayload executionPayload) {
+    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthPayloadStatus> r =
         new Request<>(
             ENGINE_NEW_PAYLOAD_V1,
@@ -164,6 +160,7 @@ public class EngineApi implements Engine {
 
   @Override
   public CompletableFuture<OpEthExecutionPayload> getPayload(BigInteger payloadId) {
+    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthExecutionPayload> r =
         new Request<>(
             ENGINE_GET_PAYLOAD_V1,

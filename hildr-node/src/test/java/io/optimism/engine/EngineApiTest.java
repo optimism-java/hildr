@@ -21,6 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import io.optimism.common.Epoch;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ExecutionPayload.PayloadStatus;
@@ -28,6 +32,7 @@ import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.security.Key;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -35,15 +40,17 @@ import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.web3j.utils.Numeric;
 
 /**
- * The type EngineTest.
+ * The type EngineApiTest.
  *
  * @author zhouxing
  * @since 0.1.0
  */
-public class EngineTest {
+public class EngineApiTest {
 
   public static final String AUTH_ADDR = "127.0.0.1";
   public static final String SECRET =
@@ -157,5 +164,24 @@ public class EngineTest {
     OpEthExecutionPayload executionPayload = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initExecutionPayloadJson(), ow.writeValueAsString(executionPayload));
+  }
+
+  @Test
+  @DisplayName("test jwt token")
+  void testJwts() {
+    Key key =
+        Keys.hmacShaKeyFor(
+            Numeric.hexStringToByteArray(
+                "f79ae5046bc11c9927afe911db7143c51a806c4a537cc08e0d37140b0192f430"));
+    String jws = EngineApi.generateJws(key);
+
+    Jws<Claims> jwt = Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(jws);
+    System.out.println(jwt);
+    assertEquals(jwt.getHeader().getAlgorithm(), "HS256");
+
+    assertEquals(
+        jwt.getBody().getExpiration().toInstant().getEpochSecond()
+            - jwt.getBody().getIssuedAt().toInstant().getEpochSecond(),
+        60L);
   }
 }
