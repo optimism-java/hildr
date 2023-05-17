@@ -55,6 +55,7 @@ public abstract class BlockUpdate {
 
   /** update finalized Block. */
   public static class FinalityUpdate extends BlockUpdate {
+
     private BigInteger finalizedBlock;
 
     /**

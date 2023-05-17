@@ -21,6 +21,7 @@ import static org.web3j.protocol.core.methods.response.EthBlock.TransactionObjec
 
 import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes.UserDeposited;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -79,5 +80,35 @@ public record L1Info(
                     && batchInbox.equals(((TransactionObject) transactionResult).getTo()))
         .map(transactionResult -> ((TransactionObject) transactionResult).getInput())
         .toList();
+  }
+
+  /**
+   * The type L1BlockInfo.
+   *
+   * @param number L1 block number
+   * @param hash L1 block hash
+   * @param timestamp L1 block timestamp
+   * @param baseFee L1 base fee per gas
+   * @param mixHash L1 mix hash (prevrandao)
+   * @author grapebaba
+   * @since 0.1.0
+   */
+  public record L1BlockInfo(
+      BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
+
+    /**
+     * Create L1BlockInfo.
+     *
+     * @param number the number
+     * @param hash the hash
+     * @param timestamp the timestamp
+     * @param baseFee the base fee
+     * @param mixHash the mix hash
+     * @return the l 1 block info
+     */
+    public static L1BlockInfo create(
+        BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
+      return new L1BlockInfo(number, hash, timestamp, baseFee, mixHash);
+    }
   }
 }

@@ -105,7 +105,7 @@ public class InnerWatcherTest {
     ExecutorService executor = Executors.newSingleThreadExecutor();
     var queue = new MpscBlockingConsumerArrayQueue<BlockUpdate>(1000);
     var watcher = this.createWatcher(null, queue, executor);
-    watcher.tryIngestBlock();
+    watcher.tryIngestBlock().get();
     assertTrue(queue.size() != 0);
   }
 }

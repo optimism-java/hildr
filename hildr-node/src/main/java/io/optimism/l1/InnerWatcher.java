@@ -16,11 +16,15 @@
 
 package io.optimism.l1;
 
+import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
+import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes;
-import java.io.IOException;
+import io.optimism.derive.stages.Attributes.UserDeposited;
+import io.optimism.l1.BlockUpdate.FinalityUpdate;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,10 +32,11 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import okhttp3.OkHttpClient;
-import org.bouncycastle.util.encoders.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
@@ -47,8 +52,11 @@ import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.request.EthFilter;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog;
+import org.web3j.protocol.core.methods.response.EthLog.LogObject;
+import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tuples.generated.Tuple2;
+import org.web3j.utils.Numeric;
 
 /**
  * the InnerWatcher class.
@@ -57,7 +65,7 @@ import org.web3j.tuples.generated.Tuple2;
  * @since 0.1.0
  */
 @SuppressWarnings("WaitNotInLoop")
-public class InnerWatcher {
+public class InnerWatcher extends AbstractExecutionThreadService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(InnerWatcher.class);
 
@@ -80,17 +88,16 @@ public class InnerWatcher {
                   new TypeReference<Uint256>() {},
                   new TypeReference<Bytes>() {})));
 
-  private final Object lock = new Object();
   private final ExecutorService executor;
 
   /** Global Config. */
-  private Config config;
+  private final Config config;
 
   /** Ethers http provider for L1. */
-  private Web3j provider;
+  private final Web3j provider;
 
   /** Channel to send block updates. */
-  private BlockingQueue<BlockUpdate> blockUpdateSender;
+  private final BlockingQueue<BlockUpdate> blockUpdateQueue;
 
   /** Most recent ingested block. */
   BigInteger currentBlock;
@@ -108,7 +115,7 @@ public class InnerWatcher {
    * Mapping from block number to user deposits. Past block deposits are removed as they are no
    * longer needed.
    */
-  private HashMap<BigInteger, List<Attributes.UserDeposited>> deposits;
+  private final HashMap<BigInteger, List<Attributes.UserDeposited>> deposits;
 
   /** Current system config value. */
   private Config.SystemConfig systemConfig;
@@ -127,17 +134,13 @@ public class InnerWatcher {
    * @param l1StartBlock the start block number of l1
    * @param l2StartBlock the start block number of l2
    * @param executor the executor for async request
-   * @throws IOException thrown if failed to get block
-   * @throws ExecutionException thrown if CompletableFuture execute failed
-   * @throws InterruptedException thrown if thread be interrupted
    */
   public InnerWatcher(
       Config config,
       BlockingQueue<BlockUpdate> queue,
       BigInteger l1StartBlock,
       BigInteger l2StartBlock,
-      ExecutorService executor)
-      throws IOException, ExecutionException, InterruptedException {
+      ExecutorService executor) {
     this.executor = executor;
     this.provider = createClient(config.l1RpcUrl());
 
@@ -147,13 +150,17 @@ public class InnerWatcher {
       Web3j l2Client = createClient(config.l2RpcUrl());
       CompletableFuture<EthBlock> l2Future =
           this.getBlock(l2Client, l2StartBlock.subtract(BigInteger.ONE));
-      EthBlock block = l2Future.get();
+      EthBlock block;
+      try {
+        block = l2Future.get();
+      } catch (InterruptedException | ExecutionException e) {
+        throw new RuntimeException(e);
+      }
       EthBlock.TransactionObject tx =
           (EthBlock.TransactionObject) block.getBlock().getTransactions().get(0).get();
-      final byte[] input = Hex.decode(tx.getInput().substring(2));
+      final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
 
-      // 获取batch_sender
-      final String batchSender = "0x" + Hex.toHexString(Arrays.copyOfRange(input, 176, 196));
+      final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
       var l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
       var l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
       var gasLimit = block.getBlock().getGasLimit();
@@ -163,7 +170,7 @@ public class InnerWatcher {
     }
 
     this.config = config;
-    this.blockUpdateSender = queue;
+    this.blockUpdateQueue = queue;
     this.currentBlock = l1StartBlock;
     this.headBlock = BigInteger.ZERO;
     this.finalizedBlock = BigInteger.ZERO;
@@ -175,67 +182,106 @@ public class InnerWatcher {
   /**
    * try ingest block.
    *
-   * @throws IOException thrown if failed to get data on chain
-   * @throws ExecutionException thrown if CompletableFuture execute failed
-   * @throws InterruptedException thrown if thread be interrupted
+   * @return the completable future
    */
-  public void tryIngestBlock() throws IOException, InterruptedException, ExecutionException {
+  public CompletableFuture<Void> tryIngestBlock() {
+    CompletableFuture<Void> res = new CompletableFuture<>();
     if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
-      BigInteger finalizedBlock = this.getFinalized().get();
-      this.finalizedBlock = finalizedBlock;
-      this.blockUpdateSender.offer(new BlockUpdate.FinalityUpdate(finalizedBlock));
-      this.unfinalizedBlocks =
-          this.unfinalizedBlocks.stream()
-              .filter(blockInfo -> blockInfo.number().compareTo(this.finalizedBlock) > 0)
-              .collect(Collectors.toList());
+      res =
+          res.thenCompose(
+              (Function<Void, CompletableFuture<Void>>)
+                  unused ->
+                      InnerWatcher.this
+                          .getFinalized()
+                          .thenAccept(
+                              finalizedBlock -> {
+                                InnerWatcher.this.finalizedBlock = finalizedBlock;
+                                try {
+                                  InnerWatcher.this.blockUpdateQueue.put(
+                                      new FinalityUpdate(finalizedBlock));
+                                } catch (InterruptedException e) {
+                                  throw new RuntimeException(e);
+                                }
+                                InnerWatcher.this.unfinalizedBlocks =
+                                    InnerWatcher.this.unfinalizedBlocks.stream()
+                                        .takeWhile(
+                                            blockInfo ->
+                                                blockInfo
+                                                        .number()
+                                                        .compareTo(InnerWatcher.this.finalizedBlock)
+                                                    > 0)
+                                        .toList();
+                              }));
     }
     if (this.currentBlock.compareTo(this.headBlock) > 0) {
-      this.headBlock = this.getHead().get();
+      res =
+          res.thenCompose(
+              (Function<Void, CompletableFuture<Void>>)
+                  unused ->
+                      InnerWatcher.this
+                          .getHead()
+                          .thenAccept(head -> InnerWatcher.this.headBlock = head));
     }
 
     if (this.currentBlock.compareTo(this.headBlock) <= 0) {
-      updateSystemConfigWithNewestLog();
+      return res.thenCompose(
+          (Function<Void, CompletableFuture<Void>>) unused -> updateSystemConfigWithNewestLog());
     } else {
-      lock.wait(250);
+      return res.thenAccept(
+          unused -> {
+            try {
+              Thread.sleep(Duration.ofMillis(250L));
+            } catch (InterruptedException e) {
+              throw new RuntimeException(e);
+            }
+          });
     }
   }
 
-  private void updateSystemConfigWithNewestLog() {
-    try {
-      this.updateSystemConfig();
+  private CompletableFuture<Void> updateSystemConfigWithNewestLog() {
+    CompletableFuture<Void> updateSysConfFuture = this.updateSystemConfig();
+    CompletableFuture<EthBlock> blockRespFuture = this.getBlock(this.provider, this.currentBlock);
+    CompletableFuture<List<Attributes.UserDeposited>> userDepositsFuture =
+        this.getDeposits(this.currentBlock);
 
-      EthBlock blockResp = this.getBlock(this.provider, this.currentBlock).get();
-      List<Attributes.UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
-      boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
-      L1Info l1Info =
-          L1Info.create(
-              blockResp.getBlock(),
-              userDeposits,
-              config.chainConfig().batchInbox(),
-              finalized,
-              this.systemConfig);
+    return CompletableFuture.allOf(updateSysConfFuture, blockRespFuture, userDepositsFuture)
+        .thenAccept(
+            unused -> {
+              updateSysConfFuture.join();
+              EthBlock blockResp = blockRespFuture.join();
+              List<Attributes.UserDeposited> userDeposits = userDepositsFuture.join();
+              boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
+              L1Info l1Info =
+                  L1Info.create(
+                      blockResp.getBlock(),
+                      userDeposits,
+                      config.chainConfig().batchInbox(),
+                      finalized,
+                      this.systemConfig);
 
-      if (l1Info.blockInfo().number().compareTo(this.finalizedBlock) >= 0) {
-        BlockInfo blockInfo =
-            new BlockInfo(
-                l1Info.blockInfo().hash(),
-                l1Info.blockInfo().number(),
-                blockResp.getBlock().getParentHash(),
-                l1Info.blockInfo().timestamp());
-        this.unfinalizedBlocks.add(blockInfo);
-      }
+              if (l1Info.blockInfo().number().compareTo(this.finalizedBlock) >= 0) {
+                BlockInfo blockInfo =
+                    new BlockInfo(
+                        l1Info.blockInfo().hash(),
+                        l1Info.blockInfo().number(),
+                        blockResp.getBlock().getParentHash(),
+                        l1Info.blockInfo().timestamp());
+                this.unfinalizedBlocks.add(blockInfo);
+              }
 
-      BlockUpdate update =
-          this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
-      this.blockUpdateSender.offer(update);
-      this.currentBlock = this.currentBlock.add(BigInteger.ONE);
-    } catch (ExecutionException | InterruptedException e) {
-      LOGGER.error("", e);
-      throw new RuntimeException(e);
-    }
+              BlockUpdate update =
+                  this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
+              try {
+                this.blockUpdateQueue.put(update);
+              } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+              }
+              this.currentBlock = this.currentBlock.add(BigInteger.ONE);
+            });
   }
 
-  private void updateSystemConfig() throws ExecutionException, InterruptedException {
+  private CompletableFuture<Void> updateSystemConfig() {
+    CompletableFuture<Void> res = new CompletableFuture<>();
     BigInteger preLastUpdateBlock = this.systemConfigUpdate.component1();
     if (preLastUpdateBlock.compareTo(this.currentBlock) < 0) {
       BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(1000L));
@@ -246,25 +292,37 @@ public class InnerWatcher {
               toBlock,
               this.config.chainConfig().systemConfigContract(),
               CONFIG_UPDATE_TOPIC);
-      EthLog updates = logFuture.get();
-      EthLog.LogResult update = updates.getLogs().iterator().next();
 
-      BigInteger updateBlock = ((EthLog.LogObject) update).getBlockNumber();
-      SystemConfigUpdate configUpdate = SystemConfigUpdate.tryFrom((EthLog.LogObject) update);
-      if (updateBlock == null) {
-        this.systemConfigUpdate = new Tuple2<>(toBlock, null);
-      } else {
-        Config.SystemConfig updateSystemConfig = parseSystemConfigUpdate(configUpdate);
-        this.systemConfigUpdate = new Tuple2<>(updateBlock, updateSystemConfig);
-      }
+      res =
+          res.thenCompose(
+              (Function<Void, CompletableFuture<Void>>)
+                  unused ->
+                      logFuture.thenAccept(
+                          updates -> {
+                            LogResult<?> update = updates.getLogs().iterator().next();
+                            BigInteger updateBlock = ((LogObject) update).getBlockNumber();
+                            SystemConfigUpdate configUpdate =
+                                SystemConfigUpdate.tryFrom((LogObject) update);
+                            if (updateBlock == null) {
+                              InnerWatcher.this.systemConfigUpdate = new Tuple2<>(toBlock, null);
+                            } else {
+                              SystemConfig updateSystemConfig =
+                                  parseSystemConfigUpdate(configUpdate);
+                              InnerWatcher.this.systemConfigUpdate =
+                                  new Tuple2<>(updateBlock, updateSystemConfig);
+                            }
+                          }));
     }
-    BigInteger lastUpdateBlock = this.systemConfigUpdate.component1();
-    Config.SystemConfig nextConfig = this.systemConfigUpdate.component2();
-    if (lastUpdateBlock.compareTo(currentBlock) == 0 && nextConfig != null) {
-      LOGGER.info("system config updated");
-      LOGGER.debug("{}", nextConfig);
-      this.systemConfig = nextConfig;
-    }
+    return res.thenAccept(
+        unused -> {
+          BigInteger lastUpdateBlock = InnerWatcher.this.systemConfigUpdate.component1();
+          SystemConfig nextConfig = InnerWatcher.this.systemConfigUpdate.component2();
+          if (lastUpdateBlock.compareTo(currentBlock) == 0 && nextConfig != null) {
+            LOGGER.info("system config updated");
+            LOGGER.debug("{}", nextConfig);
+            InnerWatcher.this.systemConfig = nextConfig;
+          }
+        });
   }
 
   private Config.SystemConfig parseSystemConfigUpdate(SystemConfigUpdate configUpdate) {
@@ -362,14 +420,14 @@ public class InnerWatcher {
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
-        });
+        },
+        this.executor);
   }
 
-  private List<Attributes.UserDeposited> getDeposits(BigInteger blockNum)
-      throws ExecutionException, InterruptedException {
+  private CompletableFuture<List<Attributes.UserDeposited>> getDeposits(BigInteger blockNum) {
     final List<Attributes.UserDeposited> removed = this.deposits.remove(blockNum);
     if (removed != null) {
-      return removed;
+      return CompletableFuture.completedFuture(removed);
     }
     final BigInteger endBlock = this.headBlock.min(blockNum.add(BigInteger.valueOf(1000L)));
 
@@ -379,34 +437,58 @@ public class InnerWatcher {
             endBlock,
             this.config.chainConfig().depositContract(),
             TRANSACTION_DEPOSITED_TOPIC);
-    final EthLog result = logFuture.get();
-    List<Attributes.UserDeposited> depositLogs =
-        result.getLogs().stream()
-            .map(
-                log -> {
-                  if (log instanceof EthLog.LogObject) {
-                    return Attributes.UserDeposited.fromLog((EthLog.LogObject) log);
-                  } else {
-                    throw new IllegalStateException(
-                        "Unexpected result type: " + log.get() + " required LogObject");
-                  }
-                })
-            .collect(Collectors.toList());
 
-    for (BigInteger i = blockNum; i.compareTo(endBlock) < 0; i = i.add(BigInteger.ONE)) {
-      final BigInteger num = i;
-      final List<Attributes.UserDeposited> collect =
-          depositLogs.stream()
-              .filter(log -> log.l1BlockNum().compareTo(num) == 0)
-              .collect(Collectors.toList());
-      this.deposits.put(num, collect);
-    }
-    return this.deposits.remove(blockNum);
+    return logFuture.thenApply(
+        result -> {
+          List<UserDeposited> depositLogs =
+              result.getLogs().stream()
+                  .map(
+                      log -> {
+                        if (log instanceof LogObject) {
+                          return UserDeposited.fromLog((LogObject) log);
+                        } else {
+                          throw new IllegalStateException(
+                              "Unexpected result type: " + log.get() + " required LogObject");
+                        }
+                      })
+                  .toList();
+
+          for (BigInteger i = blockNum; i.compareTo(endBlock) < 0; i = i.add(BigInteger.ONE)) {
+            final BigInteger num = i;
+            final List<UserDeposited> collect =
+                depositLogs.stream()
+                    .filter(log -> log.l1BlockNum().compareTo(num) == 0)
+                    .collect(Collectors.toList());
+            InnerWatcher.this.deposits.put(num, collect);
+          }
+          return InnerWatcher.this.deposits.remove(blockNum);
+        });
   }
 
   private Web3j createClient(String url) {
     OkHttpClient okHttpClient =
         new OkHttpClient.Builder().addInterceptor(new RetryRateLimitInterceptor()).build();
     return Web3j.build(new HttpService(url, okHttpClient));
+  }
+
+  @Override
+  protected void run() {
+    while (isRunning()) {
+      LOGGER.debug("fetching L1 data for block {}", currentBlock);
+      CompletableFuture<Void> res = tryIngestBlock();
+      try {
+        res.get();
+      } catch (ExecutionException e) {
+        LOGGER.error("error while fetching L1 data for block {}", currentBlock);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  @Override
+  protected Executor executor() {
+    return this.executor;
   }
 }
