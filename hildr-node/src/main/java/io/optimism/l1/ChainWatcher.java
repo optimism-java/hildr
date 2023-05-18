@@ -31,8 +31,9 @@ import org.jctools.queues.MpscGrowableArrayQueue;
 @SuppressWarnings({"UnusedVariable", "preview"})
 public class ChainWatcher {
 
-  private MessagePassingQueue<BlockUpdate> blockUpdateQueue;
-  private final InnerWatcher innerWatcher;
+  private volatile MessagePassingQueue<BlockUpdate> blockUpdateQueue;
+  private volatile InnerWatcher innerWatcher;
+  private final Config config;
 
   /**
    * Gets block update queue.
@@ -51,10 +52,11 @@ public class ChainWatcher {
    * @param config the global config
    */
   public ChainWatcher(BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
+    this.config = config;
     this.blockUpdateQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
     this.innerWatcher =
         new InnerWatcher(
-            config,
+            this.config,
             this.blockUpdateQueue,
             l1StartBlock,
             l2StartBlock,
@@ -75,8 +77,19 @@ public class ChainWatcher {
   /**
    * Restart.
    *
-   * @param number the number
-   * @param number1 the number 1
+   * @param l1StartBlock new l1 start block number
+   * @param l2StartBlock new l2 start block number
    */
-  public void restart(BigInteger number, BigInteger number1) {}
+  public void restart(BigInteger l1StartBlock, BigInteger l2StartBlock) {
+    this.stop();
+    this.blockUpdateQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
+    this.innerWatcher =
+        new InnerWatcher(
+            this.config,
+            this.blockUpdateQueue,
+            l1StartBlock,
+            l2StartBlock,
+            Executors.newVirtualThreadPerTaskExecutor());
+    this.start();
+  }
 }
