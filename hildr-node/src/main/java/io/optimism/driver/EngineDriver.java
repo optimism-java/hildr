@@ -85,6 +85,60 @@ public class EngineDriver<E extends Engine> {
   }
 
   /**
+   * Gets block time.
+   *
+   * @return the block time
+   */
+  public BigInteger getBlockTime() {
+    return blockTime;
+  }
+
+  /**
+   * Gets unsafe head.
+   *
+   * @return the unsafe head
+   */
+  public BlockInfo getUnsafeHead() {
+    return unsafeHead;
+  }
+
+  /**
+   * Gets safe head.
+   *
+   * @return the safe head
+   */
+  public BlockInfo getSafeHead() {
+    return safeHead;
+  }
+
+  /**
+   * Gets safe epoch.
+   *
+   * @return the safe epoch
+   */
+  public Epoch getSafeEpoch() {
+    return safeEpoch;
+  }
+
+  /**
+   * Gets finalized head.
+   *
+   * @return the finalized head
+   */
+  public BlockInfo getFinalizedHead() {
+    return finalizedHead;
+  }
+
+  /**
+   * Gets finalized epoch.
+   *
+   * @return the finalized epoch
+   */
+  public Epoch getFinalizedEpoch() {
+    return finalizedEpoch;
+  }
+
+  /**
    * Handle attributes completable future.
    *
    * @param attributes the attributes

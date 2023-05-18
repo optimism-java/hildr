@@ -23,12 +23,14 @@ import io.optimism.derive.Pipeline;
 import io.optimism.derive.State;
 import io.optimism.engine.Engine;
 import io.optimism.engine.ExecutionPayload;
+import io.optimism.l1.BlockUpdate;
 import io.optimism.l1.ChainWatcher;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jctools.queues.MessagePassingQueue;
+import org.web3j.utils.Numeric;
 
 /**
  * The type Driver.
@@ -58,12 +60,63 @@ public class Driver<E extends Engine> {
   /** Instantiates a new Driver. */
   public Driver() {}
 
+  @SuppressWarnings("preview")
   private CompletableFuture<Void> handleNextBlockUpdate() {
+    CompletableFuture<Void> res = CompletableFuture.completedFuture(null);
     boolean isStateFull = this.state.get().isFull();
     if (isStateFull) {
-      return CompletableFuture.completedFuture(null);
+      return res;
     }
-    return null;
+    BlockUpdate next = this.chainWatcher.getBlockUpdateQueue().poll();
+    if (next == null) {
+      return res;
+    }
+
+    switch (next) {
+      case BlockUpdate.NewBlock newBlock -> {
+        return res.thenAccept(
+            unused -> {
+              BigInteger num = newBlock.get().blockInfo().number();
+              Driver.this.pipeline.pushBatcherTransactions(
+                  newBlock.get().batcherTransactions().stream()
+                      .map(Numeric::hexStringToByteArray)
+                      .toList(),
+                  num);
+              Driver.this.state.getAndUpdate(
+                  state -> {
+                    state.updateL1Info(((BlockUpdate.NewBlock) next).get());
+                    return state;
+                  });
+            });
+      }
+      case BlockUpdate.Reorg ignored -> {
+        return res.thenAccept(
+            unused -> {
+              Driver.this.unfinalizedBlocks.clear();
+              Driver.this.chainWatcher.restart(
+                  Driver.this.engineDriver.getFinalizedEpoch().number(),
+                  Driver.this.engineDriver.getFinalizedHead().number());
+              Driver.this.state.getAndUpdate(
+                  state -> {
+                    state.purge(
+                        Driver.this.engineDriver.getFinalizedHead(),
+                        Driver.this.engineDriver.getFinalizedEpoch());
+                    return state;
+                  });
+              Driver.this.pipeline.purge();
+              Driver.this.engineDriver.reorg();
+            });
+      }
+      case BlockUpdate.FinalityUpdate finalityUpdate -> {
+        return res.thenAccept(
+            unused -> {
+              Driver.this.finalizedL1BlockNumber = finalityUpdate.get();
+            });
+      }
+      default -> {
+        return res;
+      }
+    }
   }
 
   private void updateFinalized() {

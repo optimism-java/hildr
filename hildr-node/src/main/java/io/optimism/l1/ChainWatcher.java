@@ -35,6 +35,15 @@ public class ChainWatcher {
   private final InnerWatcher innerWatcher;
 
   /**
+   * Gets block update queue.
+   *
+   * @return the block update queue
+   */
+  public MessagePassingQueue<BlockUpdate> getBlockUpdateQueue() {
+    return blockUpdateQueue;
+  }
+
+  /**
    * the ChainWatcher constructor.
    *
    * @param l1StartBlock the start block number of l1
@@ -62,4 +71,12 @@ public class ChainWatcher {
     innerWatcher.stopAsync();
     innerWatcher.awaitTerminated();
   }
+
+  /**
+   * Restart.
+   *
+   * @param number the number
+   * @param number1 the number 1
+   */
+  public void restart(BigInteger number, BigInteger number1) {}
 }

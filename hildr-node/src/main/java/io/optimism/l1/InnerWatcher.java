@@ -185,7 +185,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
    * @return the completable future
    */
   public CompletableFuture<Void> tryIngestBlock() {
-    CompletableFuture<Void> res = new CompletableFuture<>();
+    CompletableFuture<Void> res = CompletableFuture.completedFuture(null);
     if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
       res =
           res.thenCompose(
@@ -286,37 +286,34 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   }
 
   private CompletableFuture<Void> updateSystemConfig() {
-    CompletableFuture<Void> res = new CompletableFuture<>();
+    CompletableFuture<Void> res = CompletableFuture.completedFuture(null);
     BigInteger preLastUpdateBlock = this.systemConfigUpdate.component1();
     if (preLastUpdateBlock.compareTo(this.currentBlock) < 0) {
       BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(1000L));
 
-      CompletableFuture<EthLog> logFuture =
-          this.getLog(
-              preLastUpdateBlock.add(BigInteger.ONE),
-              toBlock,
-              this.config.chainConfig().systemConfigContract(),
-              CONFIG_UPDATE_TOPIC);
-
       res =
           res.thenCompose(
-              (Function<Void, CompletableFuture<Void>>)
-                  unused ->
-                      logFuture.thenAccept(
-                          updates -> {
-                            LogResult<?> update = updates.getLogs().iterator().next();
-                            BigInteger updateBlock = ((LogObject) update).getBlockNumber();
-                            SystemConfigUpdate configUpdate =
-                                SystemConfigUpdate.tryFrom((LogObject) update);
-                            if (updateBlock == null) {
-                              InnerWatcher.this.systemConfigUpdate = new Tuple2<>(toBlock, null);
-                            } else {
-                              SystemConfig updateSystemConfig =
-                                  parseSystemConfigUpdate(configUpdate);
-                              InnerWatcher.this.systemConfigUpdate =
-                                  new Tuple2<>(updateBlock, updateSystemConfig);
-                            }
-                          }));
+                  (Function<Void, CompletableFuture<EthLog>>)
+                      unused ->
+                          InnerWatcher.this.getLog(
+                              preLastUpdateBlock.add(BigInteger.ONE),
+                              toBlock,
+                              InnerWatcher.this.config.chainConfig().systemConfigContract(),
+                              CONFIG_UPDATE_TOPIC))
+              .thenAccept(
+                  updates -> {
+                    LogResult<?> update = updates.getLogs().iterator().next();
+                    BigInteger updateBlock = ((LogObject) update).getBlockNumber();
+                    SystemConfigUpdate configUpdate =
+                        SystemConfigUpdate.tryFrom((LogObject) update);
+                    if (updateBlock == null) {
+                      InnerWatcher.this.systemConfigUpdate = new Tuple2<>(toBlock, null);
+                    } else {
+                      SystemConfig updateSystemConfig = parseSystemConfigUpdate(configUpdate);
+                      InnerWatcher.this.systemConfigUpdate =
+                          new Tuple2<>(updateBlock, updateSystemConfig);
+                    }
+                  });
     }
     return res.thenAccept(
         unused -> {
