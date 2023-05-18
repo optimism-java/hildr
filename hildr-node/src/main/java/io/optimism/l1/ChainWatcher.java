@@ -19,7 +19,8 @@ package io.optimism.l1;
 import io.optimism.config.Config;
 import java.math.BigInteger;
 import java.util.concurrent.Executors;
-import org.jctools.queues.MpscBlockingConsumerArrayQueue;
+import org.jctools.queues.MessagePassingQueue;
+import org.jctools.queues.MpscGrowableArrayQueue;
 
 /**
  * the ChainWatcher class.
@@ -30,6 +31,7 @@ import org.jctools.queues.MpscBlockingConsumerArrayQueue;
 @SuppressWarnings({"UnusedVariable", "preview"})
 public class ChainWatcher {
 
+  private MessagePassingQueue<BlockUpdate> blockUpdateQueue;
   private final InnerWatcher innerWatcher;
 
   /**
@@ -40,10 +42,11 @@ public class ChainWatcher {
    * @param config the global config
    */
   public ChainWatcher(BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
+    this.blockUpdateQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
     this.innerWatcher =
         new InnerWatcher(
             config,
-            new MpscBlockingConsumerArrayQueue<>(1000),
+            this.blockUpdateQueue,
             l1StartBlock,
             l2StartBlock,
             Executors.newVirtualThreadPerTaskExecutor());

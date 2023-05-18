@@ -25,7 +25,7 @@ import java.util.Deque;
 import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.jctools.queues.MpscGrowableArrayQueue;
+import org.jctools.queues.MessagePassingQueue;
 
 /**
  * The type BatcherTransactions.
@@ -38,14 +38,14 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
 
   private Deque<BatcherTransaction> txs;
 
-  private MpscGrowableArrayQueue<BatcherTransactionMessage> txMessagesQueue;
+  private MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;
 
   /**
    * Instantiates a new Batcher transactions.
    *
    * @param txMessagesQueue the tx messages queue
    */
-  public BatcherTransactions(MpscGrowableArrayQueue<BatcherTransactionMessage> txMessagesQueue) {
+  public BatcherTransactions(MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue) {
     txs = new ArrayDeque<>();
     this.txMessagesQueue = txMessagesQueue;
   }

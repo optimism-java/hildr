@@ -22,10 +22,10 @@ import io.optimism.config.Config;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Map;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscBlockingConsumerArrayQueue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -75,8 +75,7 @@ public class InnerWatcherTest {
   }
 
   InnerWatcher createWatcher(
-      BigInteger l2StartBlock, BlockingQueue<BlockUpdate> queue, ExecutorService executor)
-      throws IOException, ExecutionException, InterruptedException {
+      BigInteger l2StartBlock, MessagePassingQueue<BlockUpdate> queue, ExecutorService executor) {
     var watcherl2StartBlock = l2StartBlock;
     if (l2StartBlock == null) {
       watcherl2StartBlock = config.chainConfig().l2Genesis().number();
@@ -86,7 +85,7 @@ public class InnerWatcherTest {
   }
 
   @Test
-  void testCreateInnerWatcher() throws IOException, ExecutionException, InterruptedException {
+  void testCreateInnerWatcher() {
     if (!isConfiguredApiKeyEnv) {
       return;
     }

@@ -27,6 +27,7 @@ import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
 
 /**
@@ -38,7 +39,7 @@ import org.jctools.queues.MpscGrowableArrayQueue;
 public class Pipeline extends AbstractIterator<PayloadAttributes>
     implements PurgeableIterator<PayloadAttributes> {
 
-  private MpscGrowableArrayQueue<BatcherTransactionMessage> batcherTransactionQueue;
+  private MessagePassingQueue<BatcherTransactionMessage> batcherTransactionQueue;
 
   private Attributes<?> attributes;
 
@@ -51,7 +52,7 @@ public class Pipeline extends AbstractIterator<PayloadAttributes>
    * @param config the config
    */
   public Pipeline(AtomicReference<State> state, Config config) {
-    batcherTransactionQueue = new MpscGrowableArrayQueue<>(1024);
+    batcherTransactionQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
     BatcherTransactions batcherTransactions = new BatcherTransactions(batcherTransactionQueue);
     Channels<BatcherTransactions> channels = Channels.create(batcherTransactions, config);
     Batches<Channels<BatcherTransactions>> batches = Batches.create(channels, state, config);

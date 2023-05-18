@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -37,6 +36,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import okhttp3.OkHttpClient;
+import org.jctools.queues.MessagePassingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
@@ -97,7 +97,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   private final Web3j provider;
 
   /** Channel to send block updates. */
-  private final BlockingQueue<BlockUpdate> blockUpdateQueue;
+  private final MessagePassingQueue<BlockUpdate> blockUpdateQueue;
 
   /** Most recent ingested block. */
   BigInteger currentBlock;
@@ -137,7 +137,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
    */
   public InnerWatcher(
       Config config,
-      BlockingQueue<BlockUpdate> queue,
+      MessagePassingQueue<BlockUpdate> queue,
       BigInteger l1StartBlock,
       BigInteger l2StartBlock,
       ExecutorService executor) {
@@ -196,15 +196,19 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                           .thenAccept(
                               finalizedBlock -> {
                                 InnerWatcher.this.finalizedBlock = finalizedBlock;
-                                try {
-                                  InnerWatcher.this.blockUpdateQueue.put(
-                                      new FinalityUpdate(finalizedBlock));
-                                } catch (InterruptedException e) {
-                                  throw new RuntimeException(e);
+
+                                while (true) {
+                                  boolean isOffered =
+                                      InnerWatcher.this.blockUpdateQueue.relaxedOffer(
+                                          new FinalityUpdate(finalizedBlock));
+                                  if (isOffered) {
+                                    break;
+                                  }
                                 }
+
                                 InnerWatcher.this.unfinalizedBlocks =
                                     InnerWatcher.this.unfinalizedBlocks.stream()
-                                        .takeWhile(
+                                        .filter(
                                             blockInfo ->
                                                 blockInfo
                                                         .number()
@@ -271,10 +275,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
               BlockUpdate update =
                   this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
-              try {
-                this.blockUpdateQueue.put(update);
-              } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+              while (true) {
+                boolean isOffered = this.blockUpdateQueue.relaxedOffer(update);
+                if (isOffered) {
+                  break;
+                }
               }
               this.currentBlock = this.currentBlock.add(BigInteger.ONE);
             });
