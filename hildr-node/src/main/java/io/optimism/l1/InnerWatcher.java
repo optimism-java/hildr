@@ -147,26 +147,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     if (l2StartBlock.equals(config.chainConfig().l2Genesis().number())) {
       this.systemConfig = config.chainConfig().systemConfig();
     } else {
-      Web3j l2Client = createClient(config.l2RpcUrl());
-      CompletableFuture<EthBlock> l2Future =
-          this.getBlock(l2Client, l2StartBlock.subtract(BigInteger.ONE));
-      EthBlock block;
-      try {
-        block = l2Future.get();
-      } catch (InterruptedException | ExecutionException e) {
-        throw new RuntimeException(e);
-      }
-      EthBlock.TransactionObject tx =
-          (EthBlock.TransactionObject) block.getBlock().getTransactions().get(0).get();
-      final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
-
-      final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
-      var l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
-      var l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
-      var gasLimit = block.getBlock().getGasLimit();
-      this.systemConfig =
-          new Config.SystemConfig(batchSender, gasLimit, l1FeeOverhead, l1FeeScalar);
-      l2Client.shutdown();
+      this.getMetadataFromL2(l2StartBlock);
     }
 
     this.config = config;
@@ -179,6 +160,29 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     this.systemConfigUpdate = new Tuple2<>(l1StartBlock, null);
   }
 
+  private void getMetadataFromL2(BigInteger l2StartBlock) {
+    Web3j l2Client = createClient(config.l2RpcUrl());
+    CompletableFuture<EthBlock> l2Future =
+        this.getBlock(l2Client, l2StartBlock.subtract(BigInteger.ONE));
+    EthBlock block;
+    try {
+      block = l2Future.get();
+    } catch (InterruptedException | ExecutionException e) {
+      l2Client.shutdown();
+      throw new RuntimeException(e);
+    }
+    EthBlock.TransactionObject tx =
+        (EthBlock.TransactionObject) block.getBlock().getTransactions().get(0).get();
+    final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
+
+    final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
+    var l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
+    var l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
+    var gasLimit = block.getBlock().getGasLimit();
+    this.systemConfig = new Config.SystemConfig(batchSender, gasLimit, l1FeeOverhead, l1FeeScalar);
+    l2Client.shutdown();
+  }
+
   /**
    * try ingest block.
    *
@@ -186,60 +190,52 @@ public class InnerWatcher extends AbstractExecutionThreadService {
    */
   public CompletableFuture<Void> tryIngestBlock() {
     CompletableFuture<Void> res = CompletableFuture.completedFuture(null);
-    if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
-      res =
-          res.thenCompose(
-              (Function<Void, CompletableFuture<Void>>)
-                  unused ->
-                      InnerWatcher.this
-                          .getFinalized()
-                          .thenAccept(
-                              finalizedBlock -> {
-                                InnerWatcher.this.finalizedBlock = finalizedBlock;
-
-                                while (true) {
-                                  boolean isOffered =
-                                      InnerWatcher.this.blockUpdateQueue.relaxedOffer(
-                                          new FinalityUpdate(finalizedBlock));
-                                  if (isOffered) {
-                                    break;
-                                  }
-                                }
-
-                                InnerWatcher.this.unfinalizedBlocks =
-                                    InnerWatcher.this.unfinalizedBlocks.stream()
-                                        .filter(
-                                            blockInfo ->
-                                                blockInfo
-                                                        .number()
-                                                        .compareTo(InnerWatcher.this.finalizedBlock)
-                                                    > 0)
-                                        .toList();
-                              }));
-    }
-    if (this.currentBlock.compareTo(this.headBlock) > 0) {
-      res =
-          res.thenCompose(
-              (Function<Void, CompletableFuture<Void>>)
-                  unused ->
-                      InnerWatcher.this
-                          .getHead()
-                          .thenAccept(head -> InnerWatcher.this.headBlock = head));
-    }
-
-    if (this.currentBlock.compareTo(this.headBlock) <= 0) {
-      return res.thenCompose(
-          (Function<Void, CompletableFuture<Void>>) unused -> updateSystemConfigWithNewestLog());
-    } else {
-      return res.thenAccept(
-          unused -> {
-            try {
-              Thread.sleep(Duration.ofMillis(250L));
-            } catch (InterruptedException e) {
-              throw new RuntimeException(e);
-            }
-          });
-    }
+    return res.thenCompose(
+            unused -> {
+              if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
+                return InnerWatcher.this
+                    .getFinalized()
+                    .thenAccept(
+                        finalizedBlock -> {
+                          InnerWatcher.this.finalizedBlock = finalizedBlock;
+                          InnerWatcher.this.putBlockUpdate(new FinalityUpdate(finalizedBlock));
+                          InnerWatcher.this.unfinalizedBlocks =
+                              InnerWatcher.this.unfinalizedBlocks.stream()
+                                  .filter(
+                                      blockInfo ->
+                                          blockInfo
+                                                  .number()
+                                                  .compareTo(InnerWatcher.this.finalizedBlock)
+                                              > 0)
+                                  .toList();
+                        });
+              }
+              return CompletableFuture.completedFuture(null);
+            })
+        .thenCompose(
+            (Function<Void, CompletableFuture<Void>>)
+                unused -> {
+                  if (this.currentBlock.compareTo(this.headBlock) > 0) {
+                    return InnerWatcher.this
+                        .getHead()
+                        .thenAccept(head -> InnerWatcher.this.headBlock = head);
+                  }
+                  return CompletableFuture.completedFuture(null);
+                })
+        .thenCompose(
+            (Function<Void, CompletableFuture<Void>>)
+                unused -> {
+                  if (this.currentBlock.compareTo(this.headBlock) <= 0) {
+                    return updateSystemConfigWithNewestLog();
+                  } else {
+                    try {
+                      Thread.sleep(Duration.ofMillis(250L));
+                    } catch (InterruptedException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                  return CompletableFuture.completedFuture(null);
+                });
   }
 
   private CompletableFuture<Void> updateSystemConfigWithNewestLog() {
@@ -275,14 +271,18 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
               BlockUpdate update =
                   this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
-              while (true) {
-                boolean isOffered = this.blockUpdateQueue.relaxedOffer(update);
-                if (isOffered) {
-                  break;
-                }
-              }
+              this.putBlockUpdate(update);
               this.currentBlock = this.currentBlock.add(BigInteger.ONE);
             });
+  }
+
+  private void putBlockUpdate(final BlockUpdate update) {
+    while (true) {
+      boolean isOffered = this.blockUpdateQueue.relaxedOffer(update);
+      if (isOffered) {
+        break;
+      }
+    }
   }
 
   private CompletableFuture<Void> updateSystemConfig() {
@@ -492,5 +492,10 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   @Override
   protected Executor executor() {
     return this.executor;
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    var unused = this.executor.shutdownNow();
   }
 }

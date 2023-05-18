@@ -16,10 +16,9 @@
 
 package io.optimism.l1;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.optimism.config.Config;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -27,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscBlockingConsumerArrayQueue;
+import org.jctools.queues.MpscGrowableArrayQueue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -89,7 +89,7 @@ public class InnerWatcherTest {
     if (!isConfiguredApiKeyEnv) {
       return;
     }
-    var queue = new MpscBlockingConsumerArrayQueue<BlockUpdate>(1000);
+    var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
     var unused = this.createWatcher(null, queue, executor);
     unused =
         this.createWatcher(
@@ -97,14 +97,14 @@ public class InnerWatcherTest {
   }
 
   @Test
-  void testTryIngestBlock() throws IOException, ExecutionException, InterruptedException {
+  void testTryIngestBlock() throws ExecutionException, InterruptedException {
     if (!isConfiguredApiKeyEnv) {
       return;
     }
     ExecutorService executor = Executors.newSingleThreadExecutor();
-    var queue = new MpscBlockingConsumerArrayQueue<BlockUpdate>(1000);
+    var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
     var watcher = this.createWatcher(null, queue, executor);
     watcher.tryIngestBlock().get();
-    assertTrue(queue.size() != 0);
+    assertEquals(2, queue.size());
   }
 }
