@@ -31,11 +31,13 @@ repositories {
 compileJava {
 	options.compilerArgs << '--enable-preview'
 	options.compilerArgs << '-Xlint:preview'
+	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 compileTestJava {
 	options.compilerArgs << '--enable-preview'
 	options.compilerArgs << '-Xlint:preview'
+	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 dependencies {
@@ -195,4 +197,5 @@ javadoc {
 	}
 	options.addBooleanOption('-enable-preview', true)
 	options.addStringOption('-release', '20')
+	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }

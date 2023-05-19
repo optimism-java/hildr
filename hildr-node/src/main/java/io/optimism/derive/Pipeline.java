@@ -75,7 +75,11 @@ public class Pipeline extends AbstractIterator<PayloadAttributes>
    * @param l1origin the l 1 origin
    */
   public void pushBatcherTransactions(List<byte[]> txs, BigInteger l1origin) {
-    this.batcherTransactionQueue.relaxedOffer(new BatcherTransactionMessage(txs, l1origin));
+    while (true) {
+      if (this.batcherTransactionQueue.offer(new BatcherTransactionMessage(txs, l1origin))) {
+        break;
+      }
+    }
   }
 
   /**

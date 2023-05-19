@@ -23,16 +23,18 @@ import io.optimism.engine.Engine;
 import io.optimism.engine.EngineApi;
 import io.optimism.engine.ExecutionPayload;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthExecutionPayload;
+import io.optimism.engine.OpEthForkChoiceUpdate;
+import io.optimism.engine.OpEthPayloadStatus;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.function.Function;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import jdk.incubator.concurrent.StructuredTaskScope;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
@@ -142,34 +144,35 @@ public class EngineDriver<E extends Engine> {
    * Handle attributes completable future.
    *
    * @param attributes the attributes
-   * @return the completable future
+   * @throws ExecutionException the execution exception
+   * @throws InterruptedException the interrupted exception
    */
-  public CompletableFuture<Void> handleAttributes(PayloadAttributes attributes) {
-    return this.blockAt(attributes.timestamp())
-        .thenCompose(
-            block -> {
-              if (block == null) {
-                return processAttributes(attributes);
-              } else {
-                if (this.shouldSkip(block, attributes)) {
-                  return skipAttributes(attributes, block);
-                } else {
-                  this.unsafeHead = this.safeHead;
-                  return processAttributes(attributes);
-                }
-              }
-            });
+  public void handleAttributes(PayloadAttributes attributes)
+      throws ExecutionException, InterruptedException {
+    EthBlock block = this.blockAt(attributes.timestamp());
+    if (block == null) {
+      processAttributes(attributes);
+    } else {
+      if (this.shouldSkip(block, attributes)) {
+        skipAttributes(attributes, block);
+      } else {
+        this.unsafeHead = this.safeHead;
+        processAttributes(attributes);
+      }
+    }
   }
 
   /**
    * Handle unsafe payload completable future.
    *
    * @param payload the payload
-   * @return the completable future
+   * @throws ExecutionException the execution exception
+   * @throws InterruptedException the interrupted exception
    */
-  public CompletableFuture<Void> handleUnsafePayload(ExecutionPayload payload) {
+  public void handleUnsafePayload(ExecutionPayload payload)
+      throws ExecutionException, InterruptedException {
     this.unsafeHead = BlockInfo.from(payload);
-    return CompletableFuture.allOf(this.pushPayload(payload), this.updateForkchoice());
+    pushPayloadAndUpdateForkchoice(payload);
   }
 
   /**
@@ -194,13 +197,16 @@ public class EngineDriver<E extends Engine> {
    * Engine ready completable future.
    *
    * @return the completable future
+   * @throws InterruptedException the interrupted exception
    */
-  public CompletableFuture<Boolean> engineReady() {
+  public boolean engineReady() throws InterruptedException {
     ForkchoiceState forkchoiceState = createForkchoiceState();
-    return this.engine
-        .forkChoiceUpdate(forkchoiceState, null)
-        .thenApply(Objects::nonNull)
-        .exceptionally(throwable -> false);
+
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+      scope.join();
+      return scope.exception().isEmpty();
+    }
   }
 
   @SuppressWarnings("preview")
@@ -218,22 +224,23 @@ public class EngineDriver<E extends Engine> {
   }
 
   @SuppressWarnings("preview")
-  private CompletableFuture<EthBlock> blockAt(BigInteger timestamp) {
+  private EthBlock blockAt(BigInteger timestamp) throws InterruptedException, ExecutionException {
     BigInteger timeDiff = timestamp.subtract(this.finalizedHead.timestamp());
     BigInteger blocks = timeDiff.divide(this.blockTime);
     BigInteger blockNumber = this.finalizedHead.number().add(blocks);
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      return CompletableFuture.supplyAsync(
-          () -> {
-            try {
-              return web3j
-                  .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), false)
-                  .send();
-            } catch (Exception e) {
-              throw new RuntimeException(e);
-            }
-          },
-          executor);
+
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<EthBlock> ethBlockFuture =
+          scope.fork(
+              () ->
+                  web3j
+                      .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), false)
+                      .send());
+
+      scope.join();
+      scope.throwIfFailed();
+
+      return ethBlockFuture.resultNow();
     }
   }
 
@@ -252,79 +259,125 @@ public class EngineDriver<E extends Engine> {
     }
   }
 
-  private CompletableFuture<Void> updateForkchoice() {
+  private void updateForkchoice() throws InterruptedException, ExecutionException {
     ForkchoiceState forkchoiceState = createForkchoiceState();
 
-    return this.engine
-        .forkChoiceUpdate(forkchoiceState, null)
-        .thenAccept(
-            forkChoiceUpdate -> {
-              if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
-                  != Status.Valid) {
-                throw new RuntimeException(
-                    String.format(
-                        "could not accept new forkchoice: %s",
-                        forkChoiceUpdate
-                            .getForkChoiceUpdate()
-                            .payloadStatus()
-                            .getValidationError()));
-              }
-            });
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
+          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+
+      scope.join();
+      scope.throwIfFailed();
+      ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
+
+      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
+        throw new RuntimeException(
+            String.format(
+                "could not accept new forkchoice: %s",
+                forkChoiceUpdate.payloadStatus().getValidationError()));
+      }
+    }
   }
 
-  private CompletableFuture<Void> pushPayload(ExecutionPayload payload) {
-    return this.engine
-        .newPayload(payload)
-        .thenAccept(
-            payloadStatus -> {
-              if (payloadStatus.getPayloadStatus().getStatus() != Status.Valid
-                  && payloadStatus.getPayloadStatus().getStatus() != Status.Accepted) {
-                throw new RuntimeException("invalid execution payload");
-              }
-            });
+  private void pushPayload(ExecutionPayload payload)
+      throws InterruptedException, ExecutionException {
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<OpEthPayloadStatus> payloadStatusFuture =
+          scope.fork(() -> EngineDriver.this.engine.newPayload(payload));
+
+      scope.join();
+      scope.throwIfFailed();
+      PayloadStatus payloadStatus = payloadStatusFuture.resultNow().getPayloadStatus();
+
+      if (payloadStatus.getStatus() != Status.Valid
+          && payloadStatus.getStatus() != Status.Accepted) {
+        throw new RuntimeException("invalid execution payload");
+      }
+    }
   }
 
-  private CompletableFuture<OpEthExecutionPayload> buildPayload(PayloadAttributes attributes) {
+  private void pushPayloadAndUpdateForkchoice(ExecutionPayload payload)
+      throws InterruptedException, ExecutionException {
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      ForkchoiceState forkchoiceState = createForkchoiceState();
+      Future<OpEthPayloadStatus> payloadStatusFuture =
+          scope.fork(() -> EngineDriver.this.engine.newPayload(payload));
+
+      Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
+          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+
+      scope.join();
+      scope.throwIfFailed();
+      PayloadStatus payloadStatus = payloadStatusFuture.resultNow().getPayloadStatus();
+      ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
+
+      if (payloadStatus.getStatus() != Status.Valid
+          && payloadStatus.getStatus() != Status.Accepted) {
+        throw new RuntimeException("invalid execution payload");
+      }
+
+      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
+        throw new RuntimeException(
+            String.format(
+                "could not accept new forkchoice: %s",
+                forkChoiceUpdate.payloadStatus().getValidationError()));
+      }
+    }
+  }
+
+  private OpEthExecutionPayload buildPayload(PayloadAttributes attributes)
+      throws InterruptedException, ExecutionException {
     ForkchoiceState forkchoiceState = createForkchoiceState();
 
-    return this.engine
-        .forkChoiceUpdate(forkchoiceState, attributes)
-        .thenCompose(
-            opEthForkChoiceUpdate -> {
-              ForkChoiceUpdate forkChoiceUpdate = opEthForkChoiceUpdate.getForkChoiceUpdate();
-              if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
-                throw new RuntimeException("invalid payload attributes");
-              }
-              if (forkChoiceUpdate.payloadId() == null) {
-                throw new RuntimeException("invalid payload attributes");
-              }
-              return engine.getPayload(forkChoiceUpdate.payloadId());
-            });
+    ForkChoiceUpdate forkChoiceUpdate;
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
+          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, attributes));
+
+      scope.join();
+      scope.throwIfFailed();
+      forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
+      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
+        throw new RuntimeException("invalid payload attributes");
+      }
+
+      if (forkChoiceUpdate.payloadId() == null) {
+        throw new RuntimeException("invalid payload attributes");
+      }
+
+      try (var scope1 = new StructuredTaskScope.ShutdownOnFailure()) {
+        Future<OpEthExecutionPayload> payloadFuture =
+            scope1.fork(() -> EngineDriver.this.engine.getPayload(forkChoiceUpdate.payloadId()));
+
+        scope1.join();
+        scope1.throwIfFailed();
+        return payloadFuture.get();
+      }
+    }
   }
 
-  private CompletableFuture<Void> skipAttributes(PayloadAttributes attributes, EthBlock block) {
+  private void skipAttributes(PayloadAttributes attributes, EthBlock block)
+      throws ExecutionException, InterruptedException {
     Epoch newEpoch = attributes.epoch();
     BlockInfo newHead = BlockInfo.from(block.getBlock());
     this.updateSafeHead(newHead, newEpoch, false);
-    return this.updateForkchoice();
+    this.updateForkchoice();
   }
 
-  private CompletableFuture<Void> processAttributes(PayloadAttributes attributes) {
+  private void processAttributes(PayloadAttributes attributes)
+      throws ExecutionException, InterruptedException {
     Epoch newEpoch = attributes.epoch();
-    return this.buildPayload(attributes)
-        .thenCompose(
-            (Function<OpEthExecutionPayload, CompletableFuture<Void>>)
-                opEthExecutionPayload -> {
-                  ExecutionPayload executionPayload = opEthExecutionPayload.getExecutionPayload();
-                  BlockInfo newHead =
-                      new BlockInfo(
-                          executionPayload.blockHash(),
-                          executionPayload.blockNumber(),
-                          executionPayload.parentHash(),
-                          executionPayload.timestamp());
+    OpEthExecutionPayload opEthExecutionPayload = this.buildPayload(attributes);
+    ExecutionPayload executionPayload = opEthExecutionPayload.getExecutionPayload();
+    BlockInfo newHead =
+        new BlockInfo(
+            executionPayload.blockHash(),
+            executionPayload.blockNumber(),
+            executionPayload.parentHash(),
+            executionPayload.timestamp());
 
-                  updateSafeHead(newHead, newEpoch, false);
-                  return CompletableFuture.allOf(pushPayload(executionPayload), updateForkchoice());
-                });
+    updateSafeHead(newHead, newEpoch, false);
+
+    pushPayloadAndUpdateForkchoice(executionPayload);
   }
 }

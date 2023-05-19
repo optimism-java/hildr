@@ -34,8 +34,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterAll;
@@ -117,8 +115,7 @@ public class EngineApiTest {
   }
 
   @Test
-  void testForkChoiceUpdate()
-      throws JsonProcessingException, InterruptedException, ExecutionException {
+  void testForkChoiceUpdate() throws IOException {
     String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
     assertEquals("http://127.0.0.1:8851", baseUrl);
     server.enqueue(new MockResponse().setBody(initForkChoiceUpdateResp()));
@@ -135,33 +132,31 @@ public class EngineApiTest {
             new Epoch(new BigInteger("12"), "123", new BigInteger("1233145")),
             new BigInteger("1334"),
             new BigInteger("321"));
-    CompletableFuture<OpEthForkChoiceUpdate> future =
+
+    OpEthForkChoiceUpdate forkChoiceUpdate =
         engineApi.forkChoiceUpdate(forkchoiceState, payloadAttributes);
-    OpEthForkChoiceUpdate forkChoiceUpdate = future.get();
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initForkChoiceUpdateResp(), ow.writeValueAsString(forkChoiceUpdate));
   }
 
   @Test
-  void testNewPayload() throws JsonProcessingException, ExecutionException, InterruptedException {
+  void testNewPayload() throws IOException {
     String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
     assertEquals("http://127.0.0.1:8851", baseUrl);
     server.enqueue(new MockResponse().setBody(initPayloadStatusResp()));
     EngineApi engineApi = new EngineApi(baseUrl, SECRET);
-    CompletableFuture<OpEthPayloadStatus> future = engineApi.newPayload(initExecutionPayload());
-    OpEthPayloadStatus payloadStatus = future.get();
+    OpEthPayloadStatus payloadStatus = engineApi.newPayload(initExecutionPayload());
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initPayloadStatusResp(), ow.writeValueAsString(payloadStatus));
   }
 
   @Test
-  void testGetPayload() throws JsonProcessingException, ExecutionException, InterruptedException {
+  void testGetPayload() throws IOException {
     String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
     assertEquals("http://127.0.0.1:8851", baseUrl);
     server.enqueue(new MockResponse().setBody(initExecutionPayloadJson()));
     EngineApi engineApi = new EngineApi(baseUrl, SECRET);
-    CompletableFuture<OpEthExecutionPayload> future = engineApi.getPayload(new BigInteger("123"));
-    OpEthExecutionPayload executionPayload = future.get();
+    OpEthExecutionPayload executionPayload = engineApi.getPayload(new BigInteger("123"));
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initExecutionPayloadJson(), ow.writeValueAsString(executionPayload));
   }

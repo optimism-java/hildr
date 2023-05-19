@@ -19,17 +19,15 @@ package io.optimism.engine;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import io.optimism.common.RequestWrapper;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
-import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
-import java.util.concurrent.CompletableFuture;
 import org.apache.commons.lang3.StringUtils;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.http.HttpService;
@@ -131,8 +129,8 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public CompletableFuture<OpEthForkChoiceUpdate> forkChoiceUpdate(
-      ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) {
+  public OpEthForkChoiceUpdate forkChoiceUpdate(
+      ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) throws IOException {
     web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthForkChoiceUpdate> r =
         new Request<>(
@@ -140,13 +138,11 @@ public class EngineApi implements Engine {
             Arrays.asList(forkchoiceState, payloadAttributes),
             web3jService,
             OpEthForkChoiceUpdate.class);
-    RequestWrapper<?, ForkChoiceUpdate, OpEthForkChoiceUpdate> requestWrapper =
-        new RequestWrapper<>(r);
-    return requestWrapper.sendVtAsync();
+    return r.send();
   }
 
   @Override
-  public CompletableFuture<OpEthPayloadStatus> newPayload(ExecutionPayload executionPayload) {
+  public OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException {
     web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthPayloadStatus> r =
         new Request<>(
@@ -154,12 +150,11 @@ public class EngineApi implements Engine {
             Collections.singletonList(executionPayload),
             web3jService,
             OpEthPayloadStatus.class);
-    RequestWrapper<?, PayloadStatus, OpEthPayloadStatus> requestWrapper = new RequestWrapper<>(r);
-    return requestWrapper.sendVtAsync();
+    return r.send();
   }
 
   @Override
-  public CompletableFuture<OpEthExecutionPayload> getPayload(BigInteger payloadId) {
+  public OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException {
     web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthExecutionPayload> r =
         new Request<>(
@@ -167,8 +162,6 @@ public class EngineApi implements Engine {
             Collections.singletonList(payloadId),
             web3jService,
             OpEthExecutionPayload.class);
-    RequestWrapper<?, ExecutionPayload, OpEthExecutionPayload> requestWrapper =
-        new RequestWrapper<>(r);
-    return requestWrapper.sendVtAsync();
+    return r.send();
   }
 }
