@@ -28,6 +28,7 @@ import io.optimism.engine.ExecutionPayload;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.BlockUpdate;
 import io.optimism.l1.ChainWatcher;
+import io.optimism.telemetry.InnerMetrics;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
@@ -104,8 +105,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private void checkShutdown() {
     if (shutdownFlag) {
-      this.stopAsync();
-      this.awaitTerminated();
+      stop();
     }
   }
 
@@ -140,9 +140,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       scope.join();
       scope.throwIfFailed();
     }
+
+    this.updateFinalized();
+    this.updateMetrics();
   }
 
   private void advanceSafeHead() throws ExecutionException, InterruptedException {
+    this.handleNextBlockUpdate();
     this.updateStateHead();
 
     while (this.pipeline.hasNext()) {
@@ -286,8 +290,11 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             .toList();
   }
 
-  // TODO: add metrics
-  private void updateMetrics() {}
+  private void updateMetrics() {
+    InnerMetrics.setFinalizedHead(this.engineDriver.getFinalizedHead().number());
+    InnerMetrics.setSafeHead(this.engineDriver.getSafeHead().number());
+    InnerMetrics.setSynced(this.unfinalizedBlocks.isEmpty() ? BigInteger.ZERO : BigInteger.ONE);
+  }
 
   private record UnfinalizedBlock(
       BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {}
