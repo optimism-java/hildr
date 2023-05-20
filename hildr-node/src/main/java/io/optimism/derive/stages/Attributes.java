@@ -72,12 +72,14 @@ public class Attributes<I extends PurgeableIterator<Batch>>
    * @param batchIterator the batch iterator
    * @param state the state
    * @param config the config
+   * @param sequenceNumber the sequence number
    */
-  public Attributes(I batchIterator, AtomicReference<State> state, Config config) {
+  public Attributes(
+      I batchIterator, AtomicReference<State> state, Config config, BigInteger sequenceNumber) {
     this.batchIterator = batchIterator;
     this.state = state;
     this.config = config;
-    this.sequenceNumber = BigInteger.ZERO;
+    this.sequenceNumber = sequenceNumber;
     this.epochHash = this.state.get().getSafeEpoch().hash();
   }
 

@@ -50,13 +50,14 @@ public class Pipeline extends AbstractIterator<PayloadAttributes>
    *
    * @param state the state
    * @param config the config
+   * @param sequenceNumber the sequence number
    */
-  public Pipeline(AtomicReference<State> state, Config config) {
+  public Pipeline(AtomicReference<State> state, Config config, BigInteger sequenceNumber) {
     batcherTransactionQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
     BatcherTransactions batcherTransactions = new BatcherTransactions(batcherTransactionQueue);
     Channels<BatcherTransactions> channels = Channels.create(batcherTransactions, config);
     Batches<Channels<BatcherTransactions>> batches = Batches.create(channels, state, config);
-    attributes = new Attributes<>(batches, state, config);
+    attributes = new Attributes<>(batches, state, config, sequenceNumber);
   }
 
   @Override

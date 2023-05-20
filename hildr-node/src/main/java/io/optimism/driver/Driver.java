@@ -17,13 +17,16 @@
 package io.optimism.driver;
 
 import static java.lang.Thread.sleep;
+import static org.web3j.protocol.core.DefaultBlockParameterName.FINALIZED;
 
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
+import io.optimism.config.Config;
 import io.optimism.derive.Pipeline;
 import io.optimism.engine.Engine;
+import io.optimism.engine.EngineApi;
 import io.optimism.engine.ExecutionPayload;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.BlockUpdate;
@@ -36,9 +39,16 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
+import org.jctools.queues.MpscGrowableArrayQueue;
+import org.slf4j.Logger;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.http.HttpService;
 import org.web3j.utils.Numeric;
 
 /**
@@ -50,6 +60,7 @@ import org.web3j.utils.Numeric;
  */
 public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
+  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(Driver.class);
   private Pipeline pipeline;
 
   private EngineDriver<E> engineDriver;
@@ -69,8 +80,86 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
   private volatile boolean shutdownFlag;
   private Executor executor;
 
-  /** Instantiates a new Driver. */
-  public Driver() {}
+  /**
+   * Instantiates a new Driver.
+   *
+   * @param pipeline the pipeline
+   * @param state the state
+   * @param chainWatcher the chain watcher
+   * @param unsafeBlockQueue the unsafe block queue
+   * @param engineDriver the engine driver
+   */
+  public Driver(
+      EngineDriver<E> engineDriver,
+      Pipeline pipeline,
+      AtomicReference<io.optimism.derive.State> state,
+      ChainWatcher chainWatcher,
+      MessagePassingQueue<ExecutionPayload> unsafeBlockQueue) {
+    this.engineDriver = engineDriver;
+    this.pipeline = pipeline;
+    this.state = state;
+    this.chainWatcher = chainWatcher;
+    this.unsafeBlockQueue = unsafeBlockQueue;
+    this.executor = Executors.newVirtualThreadPerTaskExecutor();
+  }
+
+  /**
+   * From driver.
+   *
+   * @param config the config
+   * @return the driver
+   * @throws InterruptedException the interrupted exception
+   * @throws ExecutionException the execution exception
+   */
+  public static Driver<EngineApi> from(Config config)
+      throws InterruptedException, ExecutionException {
+    Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
+
+    EthBlock finalizedBlock;
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<EthBlock> finalizedBlockFuture =
+          scope.fork(() -> provider.ethGetBlockByNumber(FINALIZED, true).send());
+      scope.join();
+      scope.throwIfFailed();
+
+      finalizedBlock = finalizedBlockFuture.resultNow();
+    }
+
+    HeadInfo head;
+    if (finalizedBlock == null) {
+      LOGGER.warn("could not get head info. Falling back to the genesis head.");
+      head =
+          new HeadInfo(
+              config.chainConfig().l2Genesis(),
+              config.chainConfig().l1StartEpoch(),
+              BigInteger.ZERO);
+    } else {
+      head = HeadInfo.from(finalizedBlock.getBlock());
+    }
+
+    BlockInfo finalizedHead = head.l2BlockInfo();
+    Epoch finalizedEpoch = head.l1Epoch();
+    BigInteger finalizedSeq = head.sequenceNumber();
+
+    LOGGER.info("starting from head: {}", finalizedHead.hash());
+
+    ChainWatcher watcher =
+        new ChainWatcher(finalizedEpoch.number(), finalizedHead.number(), config);
+
+    AtomicReference<io.optimism.derive.State> state =
+        new AtomicReference<>(
+            io.optimism.derive.State.create(finalizedHead, finalizedEpoch, config));
+
+    EngineDriver<EngineApi> engineDriver =
+        new EngineDriver<>(finalizedHead, finalizedEpoch, provider, config);
+
+    Pipeline pipeline = new Pipeline(state, config, finalizedSeq);
+
+    // TODO: RPC SERVER
+    MpscGrowableArrayQueue<ExecutionPayload> unsafeBlockQueue =
+        new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
+    return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue);
+  }
 
   @Override
   protected void run() {

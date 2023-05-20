@@ -18,9 +18,7 @@ package io.optimism.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -32,15 +30,10 @@ import org.junit.jupiter.api.Test;
  */
 class EpochTest {
 
-  /**
-   * From.
-   *
-   * @throws IOException the io exception
-   * @throws URISyntaxException the uri syntax exception
-   */
+  /** From. */
   @Test
   @DisplayName("should convert from the deposited transaction calldata")
-  void from() throws IOException, URISyntaxException {
+  void from() {
     final String callData =
         "0x015d8eb900000000000000000000000000000000000000000000000000000000008768240000000000000000"
             + "000000000000000000000000000000000000000064443450000000000000000000000000000000000000"
@@ -55,7 +48,8 @@ class EpochTest {
     final BigInteger expectedBlockNumber = BigInteger.valueOf(8874020L);
     final BigInteger expectedTimestamp = BigInteger.valueOf(1682191440L);
 
-    final Epoch epoch = Epoch.from(callData);
+    final AttributesDepositedCall call = AttributesDepositedCall.from(callData);
+    final Epoch epoch = Epoch.from(call);
 
     assertEquals(expectedHash, epoch.hash());
     assertEquals(expectedBlockNumber, epoch.number());

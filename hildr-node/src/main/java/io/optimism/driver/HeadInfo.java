@@ -16,8 +16,10 @@
 
 package io.optimism.driver;
 
+import io.optimism.common.AttributesDepositedCall;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
+import java.math.BigInteger;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
@@ -26,10 +28,11 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
  *
  * @param l2BlockInfo the L2 block info
  * @param l1Epoch the L1 epoch
+ * @param sequenceNumber the sequence number
  * @author grapebaba
  * @since 0.1.0
  */
-public record HeadInfo(BlockInfo l2BlockInfo, Epoch l1Epoch) {
+public record HeadInfo(BlockInfo l2BlockInfo, Epoch l1Epoch, BigInteger sequenceNumber) {
 
   /**
    * From head info.
@@ -41,8 +44,10 @@ public record HeadInfo(BlockInfo l2BlockInfo, Epoch l1Epoch) {
     BlockInfo blockInfo = BlockInfo.from(block);
 
     String txCallData = ((TransactionObject) block.getTransactions().get(0)).getInput();
-    Epoch epoch = Epoch.from(txCallData);
 
-    return new HeadInfo(blockInfo, epoch);
+    AttributesDepositedCall call = AttributesDepositedCall.from(txCallData);
+    Epoch epoch = Epoch.from(call);
+
+    return new HeadInfo(blockInfo, epoch, call.sequenceNumber());
   }
 }
