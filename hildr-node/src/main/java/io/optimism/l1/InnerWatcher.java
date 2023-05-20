@@ -141,6 +141,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
       ExecutorService executor) {
     this.executor = executor;
     this.provider = createClient(config.l1RpcUrl());
+    this.config = config;
 
     if (l2StartBlock.equals(config.chainConfig().l2Genesis().number())) {
       this.systemConfig = config.chainConfig().systemConfig();
@@ -148,7 +149,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
       this.getMetadataFromL2(l2StartBlock);
     }
 
-    this.config = config;
     this.blockUpdateQueue = queue;
     this.currentBlock = l1StartBlock;
     this.headBlock = BigInteger.ZERO;
