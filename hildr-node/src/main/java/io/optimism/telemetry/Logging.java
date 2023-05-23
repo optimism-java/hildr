@@ -35,6 +35,7 @@ import java.util.Collections;
  * @author thinkAfCod
  * @since 2023.05
  */
+@SuppressWarnings("ImmutableEnumChecker")
 public enum Logging {
 
   /** Logging single instance. */
