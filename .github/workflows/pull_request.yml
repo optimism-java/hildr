@@ -2,12 +2,10 @@ name: hildr check
 
 on:
   pull_request:
-  push:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    environment: pull_request_job
     steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 20
