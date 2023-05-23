@@ -14,38 +14,24 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism;
+package io.optimism.cli.typeconverter;
 
-import io.optimism.cli.Cli;
+import io.optimism.config.Config;
 import picocli.CommandLine;
 
 /**
- * The type Hildr.
+ * enum SyncMode type converter, used for picocli parse args.
  *
- * @author grapebaba
- * @since 0.1.0
+ * @author thinkAfCod
+ * @since 2023.05
  */
-public class Hildr {
+public class SyncModeConverter implements CommandLine.ITypeConverter<Config.SyncMode> {
 
-  /** Instantiates a new Hildr. */
-  public Hildr() {}
+  /** the SyncModeConverter constructor. */
+  public SyncModeConverter() {}
 
-  /**
-   * Gets greeting.
-   *
-   * @return the greeting
-   */
-  public String getGreeting() {
-    return "Hello World!";
-  }
-
-  /**
-   * The entry point of application.
-   *
-   * @param args the input arguments
-   */
-  public static void main(String[] args) {
-    int exitCode = new CommandLine(new Cli()).execute(args);
-    System.exit(exitCode);
+  @Override
+  public Config.SyncMode convert(String value) throws Exception {
+    return Config.SyncMode.from(value);
   }
 }

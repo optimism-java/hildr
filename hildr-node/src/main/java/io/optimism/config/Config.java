@@ -317,7 +317,7 @@ public record Config(
      * @param value the value
      * @return the sync mode
      */
-    static SyncMode from(String value) {
+    public static SyncMode from(String value) {
       return switch (value) {
         case "fast" -> Fast;
         case "challenge" -> Challenge;

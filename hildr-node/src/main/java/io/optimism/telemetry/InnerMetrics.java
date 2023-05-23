@@ -25,7 +25,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.nio.charset.Charset;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -41,6 +43,7 @@ public class InnerMetrics {
   private static AtomicReference<BigInteger> SYNCED;
   private static PrometheusMeterRegistry registry;
   private static HttpServer httpServer;
+  private static Future<?> serverFuture;
 
   static {
     FINALIZED_HEAD = new AtomicReference<>();
@@ -77,12 +80,13 @@ public class InnerMetrics {
           "/prometheus",
           httpExchange -> {
             String response = registry.scrape();
-            httpExchange.sendResponseHeaders(200, response.getBytes().length);
+            httpExchange.sendResponseHeaders(
+                200, response.getBytes(Charset.defaultCharset()).length);
             try (OutputStream os = httpExchange.getResponseBody()) {
-              os.write(response.getBytes());
+              os.write(response.getBytes(Charset.defaultCharset()));
             }
           });
-      executor.submit(httpServer::start);
+      serverFuture = executor.submit(httpServer::start);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -90,6 +94,9 @@ public class InnerMetrics {
 
   /** stop the http server. */
   public static void stop() {
+    if (serverFuture != null) {
+      serverFuture.cancel(true);
+    }
     if (httpServer != null) {
       httpServer.stop(5);
     }
