@@ -66,6 +66,27 @@ dependencies {
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
+	implementation platform('io.micrometer:micrometer-tracing-bom:1.1.1')
+	implementation 'io.micrometer:micrometer-tracing'
+	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+
+	// Log4j
+	implementation(platform("org.apache.logging.log4j:log4j-bom:2.20.0"))
+	implementation 'org.apache.logging.log4j:log4j-api'
+	implementation 'org.apache.logging.log4j:log4j-core'
+	implementation 'org.apache.logging.log4j:log4j-slf4j2-impl'
+
+	implementation platform("io.opentelemetry:opentelemetry-bom-alpha:1.26.0-alpha")
+	implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:1.26.0-alpha")
+	// OpenTelemetry core
+	implementation(platform("io.opentelemetry:opentelemetry-bom:1.26.0"))
+	implementation 'io.opentelemetry:opentelemetry-api'
+	implementation 'io.opentelemetry:opentelemetry-sdk'
+	implementation 'io.opentelemetry:opentelemetry-sdk-logs'
+
+	// OpenTelemetry log4j appenders
+	implementation 'io.opentelemetry.instrumentation:opentelemetry-log4j-context-data-2.17-autoconfigure'
+
 
 	errorprone("com.google.errorprone:error_prone_core:2.18.0")
 
