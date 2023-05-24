@@ -21,6 +21,9 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: Execute Gradle build
+        env:
+          ETH_API_KEY: ${{ secrets.ETH_API_KEY }}
+          OPT_API_KEY: ${{ secrets.OPT_API_KEY }}
         run: ./gradlew build
 
       - name: Generate JaCoCo Badge
