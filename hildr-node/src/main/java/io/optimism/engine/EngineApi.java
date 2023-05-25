@@ -28,8 +28,10 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthChainId;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.utils.Numeric;
 
@@ -163,5 +165,22 @@ public class EngineApi implements Engine {
             web3jService,
             OpEthExecutionPayload.class);
     return r.send();
+  }
+
+  /**
+   * Is available boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isAvailable() {
+    Request<?, EthChainId> r =
+        new Request<>("eth_chainId", List.of(), web3jService, EthChainId.class);
+    EthChainId chainId;
+    try {
+      chainId = r.send();
+    } catch (IOException e) {
+      return false;
+    }
+    return chainId != null;
   }
 }

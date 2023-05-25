@@ -43,6 +43,8 @@ import org.web3j.utils.Numeric;
  * @param l2EngineUrl L2 engine API url.
  * @param jwtSecret L2 engine API jwt secret.
  * @param chainConfig The chain config.
+ * @param rpcPort The rpc port.
+ * @param checkpointSyncUrl The checkpoint sync url.
  * @author grapebaba
  * @since 0.1.0
  */
@@ -51,6 +53,8 @@ public record Config(
     String l2RpcUrl,
     String l2EngineUrl,
     String jwtSecret,
+    String checkpointSyncUrl,
+    Integer rpcPort,
     ChainConfig chainConfig) {
 
   /**
@@ -74,6 +78,8 @@ public record Config(
       defaultProvider.put("config.l2EngineUrl", "http://127.0.0.1:8551");
       defaultProvider.put("config.l1RpcUrl", "");
       defaultProvider.put("config.jwtSecret", "");
+      defaultProvider.put("config.checkpointSyncUrl", "");
+      defaultProvider.put("config.rpcPort", "9545");
       MapConfigSource defaultProviderConfigSource = new MapConfigSource(defaultProvider);
 
       Map<String, String> chainProvider = chainConfig.toConfigMap();
@@ -106,8 +112,16 @@ public record Config(
    * @param l2RpcUrl L2 chain rpc url.
    * @param l2EngineUrl L2 engine API url.
    * @param jwtSecret L2 engine API jwt secret.
+   * @param checkpointSyncUrl The checkpoint sync url.
+   * @param rpcPort The rpc port.
    */
-  public record CliConfig(String l1RpcUrl, String l2RpcUrl, String l2EngineUrl, String jwtSecret) {
+  public record CliConfig(
+      String l1RpcUrl,
+      String l2RpcUrl,
+      String l2EngineUrl,
+      String jwtSecret,
+      String checkpointSyncUrl,
+      Integer rpcPort) {
 
     /**
      * To configMap.
@@ -127,6 +141,12 @@ public record Config(
       }
       if (StringUtils.isNotEmpty(jwtSecret)) {
         map.put("config.jwtSecret", jwtSecret);
+      }
+      if (StringUtils.isNotEmpty(checkpointSyncUrl)) {
+        map.put("config.checkpointSyncUrl", checkpointSyncUrl);
+      }
+      if (rpcPort != null) {
+        map.put("config.rpcPort", rpcPort.toString());
       }
       return map;
     }
@@ -287,13 +307,22 @@ public record Config(
     /** Challenge sync mode. */
     Challenge,
     /** Full sync mode. */
-    Full;
+    Full,
+    /** Checkpoint sync mode. */
+    Checkpoint;
 
+    /**
+     * From sync mode.
+     *
+     * @param value the value
+     * @return the sync mode
+     */
     static SyncMode from(String value) {
       return switch (value) {
         case "fast" -> Fast;
         case "challenge" -> Challenge;
         case "full" -> Full;
+        case "checkpoint" -> Checkpoint;
         default -> throw new RuntimeException("invalid sync mode");
       };
     }

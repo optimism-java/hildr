@@ -203,7 +203,8 @@ public class EngineDriver<E extends Engine> {
     ForkchoiceState forkchoiceState = createForkchoiceState();
 
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-      scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+      var unused =
+          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
       scope.join();
       return scope.exception().isEmpty();
     }

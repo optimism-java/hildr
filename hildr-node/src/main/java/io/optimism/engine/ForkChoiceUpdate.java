@@ -44,5 +44,16 @@ public record ForkChoiceUpdate(PayloadStatus payloadStatus, BigInteger payloadId
    * @since 0.1.0
    */
   public record ForkchoiceState(
-      String headBlockHash, String safeBlockHash, String finalizedBlockHash) {}
+      String headBlockHash, String safeBlockHash, String finalizedBlockHash) {
+
+    /**
+     * From single head forkchoice state.
+     *
+     * @param headBlockHash the head block hash
+     * @return the forkchoice state
+     */
+    public static ForkchoiceState fromSingleHead(String headBlockHash) {
+      return new ForkchoiceState(headBlockHash, headBlockHash, headBlockHash);
+    }
+  }
 }

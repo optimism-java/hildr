@@ -37,12 +37,13 @@ class ConfigTest {
   /** Create. */
   @Test
   void create() {
-    CliConfig cliConfig = new CliConfig(null, null, null, "testjwt");
+    CliConfig cliConfig = new CliConfig(null, null, null, "testjwt", null, null);
     Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
     assertEquals("http://127.0.0.1:8545", config.l2RpcUrl());
     assertEquals("http://127.0.0.1:8551", config.l2EngineUrl());
     assertEquals("", config.l1RpcUrl());
     assertEquals("testjwt", config.jwtSecret());
+    assertEquals(9545, config.rpcPort());
     assertEquals(
         "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
         config.chainConfig().l1StartEpoch().hash());

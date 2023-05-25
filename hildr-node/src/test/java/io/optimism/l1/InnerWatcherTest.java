@@ -69,7 +69,8 @@ public class InnerWatcherTest {
     }
     var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
     var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
-    Config.CliConfig cliConfig = new Config.CliConfig(l1RpcUrl, l2RpcUrl, null, "testjwt");
+    Config.CliConfig cliConfig =
+        new Config.CliConfig(l1RpcUrl, l2RpcUrl, null, "testjwt", null, null);
     return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
   }
 

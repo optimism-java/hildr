@@ -17,15 +17,15 @@
 package io.optimism;
 
 /**
- * The type App.
+ * The type Hildr.
  *
  * @author grapebaba
  * @since 0.1.0
  */
-public class App {
+public class Hildr {
 
-  /** Instantiates a new App. */
-  public App() {}
+  /** Instantiates a new Hildr. */
+  public Hildr() {}
 
   /**
    * Gets greeting.
@@ -42,6 +42,6 @@ public class App {
    * @param args the input arguments
    */
   public static void main(String[] args) {
-    System.out.println(new App().getGreeting());
+    System.out.println(new Hildr().getGreeting());
   }
 }

@@ -33,19 +33,19 @@ import org.junit.jupiter.api.Test;
 class AppTest {
 
   /**
-   * App has greeting.
+   * Hildr has greeting.
    *
    * @throws JsonProcessingException the json processing exception
    */
   @Test
   void appHasGreeting() throws JsonProcessingException {
-    CliConfig cliConfig = new CliConfig("test", "test", "test", "test");
+    CliConfig cliConfig = new CliConfig("test", "test", "test", "test", null, null);
     TomlMapper mapper = new TomlMapper();
     String cliConfigStr = mapper.writerFor(CliConfig.class).writeValueAsString(cliConfig);
 
     CliConfig cliConfig1 = mapper.readerFor(CliConfig.class).readValue(cliConfigStr);
     assertEquals("test", cliConfig1.jwtSecret());
-    App classUnderTest = new App();
+    Hildr classUnderTest = new Hildr();
     assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
   }
 }

@@ -89,6 +89,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    * @param unsafeBlockQueue the unsafe block queue
    * @param engineDriver the engine driver
    */
+  @SuppressWarnings("preview")
   public Driver(
       EngineDriver<E> engineDriver,
       Pipeline pipeline,
@@ -210,24 +211,29 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
   }
 
+  @SuppressWarnings("VariableDeclarationUsageDistance")
   private void advance() throws InterruptedException, ExecutionException {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-      scope.fork(
-          (Callable<Void>)
-              () -> {
-                Driver.this.advanceSafeHead();
-                return null;
-              });
+      var voidFuture =
+          scope.fork(
+              (Callable<Void>)
+                  () -> {
+                    Driver.this.advanceSafeHead();
+                    return null;
+                  });
 
-      scope.fork(
-          (Callable<Void>)
-              () -> {
-                Driver.this.advanceUnsafeHead();
-                return null;
-              });
+      var voidFuture1 =
+          scope.fork(
+              (Callable<Void>)
+                  () -> {
+                    Driver.this.advanceUnsafeHead();
+                    return null;
+                  });
 
       scope.join();
       scope.throwIfFailed();
+      voidFuture.resultNow();
+      voidFuture1.resultNow();
     }
 
     this.updateFinalized();
@@ -359,22 +365,25 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             this.unfinalizedBlocks.stream()
                 .filter(
                     unfinalizedBlock ->
-                        unfinalizedBlock.l1InclusionBlock.compareTo(
-                                    Driver.this.finalizedL1BlockNumber)
+                        unfinalizedBlock
+                                    .l1InclusionBlock()
+                                    .compareTo(Driver.this.finalizedL1BlockNumber)
                                 <= 0
-                            && unfinalizedBlock.seqNumber.compareTo(BigInteger.ZERO) == 0)
+                            && unfinalizedBlock.seqNumber().compareTo(BigInteger.ZERO) == 0)
                 .toList(),
             null);
 
     if (newFinalized != null) {
-      this.engineDriver.updateFinalized(newFinalized.head, newFinalized.epoch);
+      this.engineDriver.updateFinalized(newFinalized.head(), newFinalized.epoch());
     }
 
     this.unfinalizedBlocks =
         this.unfinalizedBlocks.stream()
             .filter(
                 unfinalizedBlock ->
-                    unfinalizedBlock.l1InclusionBlock.compareTo(Driver.this.finalizedL1BlockNumber)
+                    unfinalizedBlock
+                            .l1InclusionBlock()
+                            .compareTo(Driver.this.finalizedL1BlockNumber)
                         > 0)
             .toList();
   }
@@ -385,6 +394,14 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     InnerMetrics.setSynced(this.unfinalizedBlocks.isEmpty() ? BigInteger.ZERO : BigInteger.ONE);
   }
 
-  private record UnfinalizedBlock(
+  /**
+   * The type Unfinalized block.
+   *
+   * @param head the head
+   * @param epoch the epoch
+   * @param l1InclusionBlock the L1 inclusion block
+   * @param seqNumber the seq number
+   */
+  protected record UnfinalizedBlock(
       BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {}
 }
