@@ -224,3 +224,16 @@ javadoc {
 	options.addStringOption('-release', '20')
 	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
+
+
+
+jar {
+	manifest {
+		attributes "Main-Class": "io.optimism.Hildr"
+	}
+
+	duplicatesStrategy = DuplicatesStrategy.WARN
+	from {
+		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+}

@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Logging trace use example.
+ *
  * @author thinkAfCod
  * @since 2023.05
  */
@@ -59,7 +61,9 @@ public class LoggingExampleTest {
     }
     for (Thread thread : threads) {
       try {
-        if (thread != null) thread.join();
+        if (thread != null) {
+          thread.join();
+        }
       } catch (InterruptedException e) {
         throw new RuntimeException(e);
       }
