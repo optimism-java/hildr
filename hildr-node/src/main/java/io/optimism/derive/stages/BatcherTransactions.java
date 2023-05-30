@@ -17,7 +17,9 @@
 package io.optimism.derive.stages;
 
 import com.google.common.collect.AbstractIterator;
+import io.micrometer.tracing.Span;
 import io.optimism.derive.PurgeableIterator;
+import io.optimism.telemetry.Logging;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -26,6 +28,9 @@ import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jctools.queues.MessagePassingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.web3j.utils.Numeric;
 
 /**
  * The type BatcherTransactions.
@@ -35,6 +40,8 @@ import org.jctools.queues.MessagePassingQueue;
  */
 public class BatcherTransactions extends AbstractIterator<BatcherTransactions.BatcherTransaction>
     implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
+
+  private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
 
   private Deque<BatcherTransaction> txs;
 
@@ -52,13 +59,27 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
 
   /** Process incoming. */
   public void processIncoming() {
-    txMessagesQueue.drain(
-        e ->
-            e.txs()
-                .forEach(
-                    txData -> {
-                      txs.addLast(BatcherTransaction.create(txData, e.l1Origin()));
-                    }));
+    BatcherTransactionMessage m;
+    while ((m = txMessagesQueue.poll()) != null) {
+      BatcherTransactionMessage curr = m;
+      curr.txs()
+          .forEach(
+              txData -> {
+                Span span =
+                    Logging.INSTANCE
+                        .getTracer()
+                        .nextSpan()
+                        .name("decode-batcher-transaction")
+                        .start();
+                try (var ignored = Logging.INSTANCE.getTracer().withSpan(span)) {
+                  txs.addLast(BatcherTransaction.create(txData, curr.l1Origin()));
+                } catch (Throwable throwable) {
+                  LOGGER.warn("dropping invalid batcher transaction", throwable);
+                } finally {
+                  span.end();
+                }
+              });
+    }
   }
 
   @Override
@@ -69,9 +90,9 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
 
   @Override
   public void purge() {
-    if (this.txMessagesQueue.poll() != null) {
-      while (this.txMessagesQueue.poll() != null) {}
-    }
+
+    while (this.txMessagesQueue.poll() != null) {}
+
     this.txs.clear();
   }
 
@@ -95,9 +116,6 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
     public static BatcherTransaction create(byte[] data, BigInteger l1Origin) {
       final byte version = data[0];
       final byte[] framesData = ArrayUtils.subarray(data, 1, data.length);
-      if (framesData.length == 0) {
-        throw new RuntimeException("no frame data");
-      }
 
       int offset = 0;
       List<Frame> frames = new ArrayList<>();
@@ -157,11 +175,12 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
       if (frameDataMessage.length < 23) {
         throw new InvalidFrameSizeException("invalid frame size");
       }
-      final BigInteger channelId = new BigInteger(ArrayUtils.subarray(frameDataMessage, 0, 16));
+
+      final BigInteger channelId = Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 0, 16));
       final int frameNumber =
-          new BigInteger(ArrayUtils.subarray(frameDataMessage, 16, 18)).intValue();
+          Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 16, 18)).intValue();
       final int frameDataLen =
-          new BigInteger(ArrayUtils.subarray(frameDataMessage, 18, 22)).intValue();
+          Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 18, 22)).intValue();
       final int frameDataEnd = 22 + frameDataLen;
 
       if (frameDataMessage.length < frameDataEnd) {

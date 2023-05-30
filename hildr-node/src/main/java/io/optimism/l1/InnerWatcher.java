@@ -175,7 +175,13 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     var l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
     var l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
     var gasLimit = block.getBlock().getGasLimit();
-    this.systemConfig = new Config.SystemConfig(batchSender, gasLimit, l1FeeOverhead, l1FeeScalar);
+    this.systemConfig =
+        new Config.SystemConfig(
+            batchSender,
+            gasLimit,
+            l1FeeOverhead,
+            l1FeeScalar,
+            config.chainConfig().systemConfig().unsafeBlockSigner());
     l2Client.shutdown();
   }
 
@@ -289,21 +295,24 @@ public class InnerWatcher extends AbstractExecutionThreadService {
               ((SystemConfigUpdate.BatchSender) configUpdate).getAddress(),
               this.systemConfig.gasLimit(),
               this.systemConfig.l1FeeOverhead(),
-              this.systemConfig.l1FeeScalar());
+              this.systemConfig.l1FeeScalar(),
+              this.systemConfig.unsafeBlockSigner());
     } else if (configUpdate instanceof SystemConfigUpdate.Fees) {
       updateSystemConfig =
           new Config.SystemConfig(
               this.systemConfig.batchSender(),
               this.systemConfig.gasLimit(),
               ((SystemConfigUpdate.Fees) configUpdate).getFeeOverhead(),
-              ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar());
+              ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar(),
+              this.systemConfig.unsafeBlockSigner());
     } else if (configUpdate instanceof SystemConfigUpdate.Gas) {
       updateSystemConfig =
           new Config.SystemConfig(
               this.systemConfig.batchSender(),
               ((SystemConfigUpdate.Gas) configUpdate).getGas(),
               this.systemConfig.l1FeeOverhead(),
-              this.systemConfig.l1FeeScalar());
+              this.systemConfig.l1FeeScalar(),
+              this.systemConfig.unsafeBlockSigner());
     }
     return updateSystemConfig;
   }

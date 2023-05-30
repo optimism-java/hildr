@@ -41,8 +41,16 @@ public record BlockInfo(String hash, BigInteger number, String parentHash, BigIn
    * @return the block info
    */
   public static BlockInfo from(Block block) {
-    return new BlockInfo(
-        block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
+    BigInteger number = block.getNumber();
+    if (number == null) {
+      throw new BlockNotIncludedException();
+    }
+
+    String hash = block.getHash();
+    if (hash == null) {
+      throw new BlockNotIncludedException();
+    }
+    return new BlockInfo(hash, number, block.getParentHash(), block.getTimestamp());
   }
 
   /**

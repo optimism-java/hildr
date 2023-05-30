@@ -107,7 +107,7 @@ java {
 
 application {
 	// Define the main class for the application.
-	mainClass = 'io.optimism.App'
+	mainClass = 'io.optimism.Hildr'
 }
 
 test {

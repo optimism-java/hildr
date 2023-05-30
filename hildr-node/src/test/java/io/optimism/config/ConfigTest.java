@@ -23,6 +23,7 @@ import io.optimism.config.Config.ChainConfig;
 import io.optimism.config.Config.CliConfig;
 import io.optimism.config.Config.SystemConfig;
 import java.math.BigInteger;
+import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
 
@@ -38,8 +39,12 @@ class ConfigTest {
   @Test
   void create() {
     CliConfig cliConfig = new CliConfig(null, null, null, "testjwt", null, null);
-    Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
-    assertEquals("http://127.0.0.1:8545", config.l2RpcUrl());
+    Config config =
+        Config.create(
+            Paths.get("src", "test", "resources", "test.toml"),
+            cliConfig,
+            ChainConfig.optimismGoerli());
+    assertEquals("https://example2.com", config.l2RpcUrl());
     assertEquals("http://127.0.0.1:8551", config.l2EngineUrl());
     assertEquals("", config.l1RpcUrl());
     assertEquals("testjwt", config.jwtSecret());
@@ -71,7 +76,7 @@ class ConfigTest {
         "0xAe851f927Ee40dE99aaBb7461C00f9622ab91d60", config.chainConfig().systemConfigContract());
     assertEquals(
         "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a", config.chainConfig().l2Tol1MessagePasser());
-    assertEquals(BigInteger.valueOf(100_000_000L), config.chainConfig().maxChannelSize());
+    assertEquals(BigInteger.valueOf(111_111_111L), config.chainConfig().maxChannelSize());
     assertEquals(BigInteger.valueOf(300L), config.chainConfig().channelTimeout());
     assertEquals(BigInteger.valueOf(3600L), config.chainConfig().seqWindowSize());
     assertEquals(BigInteger.valueOf(600L), config.chainConfig().maxSeqDrift());
@@ -118,7 +123,8 @@ class ConfigTest {
               "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
               BigInteger.valueOf(25_000_000L),
               BigInteger.valueOf(2100),
-              BigInteger.valueOf(1000000));
+              BigInteger.valueOf(1000000),
+              "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7");
 
       assertTrue(
           systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));

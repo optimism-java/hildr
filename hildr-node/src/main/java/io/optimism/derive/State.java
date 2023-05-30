@@ -82,7 +82,7 @@ public class State {
   }
 
   /**
-   * L 1 info l 1 info.
+   * L1 info l1 info.
    *
    * @param hash the hash
    * @return the l 1 info
@@ -92,7 +92,7 @@ public class State {
   }
 
   /**
-   * L 1 info l 1 info.
+   * L1 info l1 info.
    *
    * @param number the number
    * @return the l 1 info

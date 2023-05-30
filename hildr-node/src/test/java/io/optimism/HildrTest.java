@@ -25,12 +25,12 @@ import io.optimism.config.Config.CliConfig;
 import org.junit.jupiter.api.Test;
 
 /**
- * The type AppTest.
+ * The type HildrTest.
  *
  * @author grapebaba
  * @since 0.1.0
  */
-class AppTest {
+class HildrTest {
 
   /**
    * Hildr has greeting.

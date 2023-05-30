@@ -14,13 +14,18 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.common;
+package io.optimism.derive.stages;
 
 /**
- * The type RawTransaction.
+ * The type L1InfoNotFoundException.
  *
- * @param hexTransaction Raw tx hex string.
  * @author grapebaba
  * @since 0.1.0
  */
-public record RawTransaction(String hexTransaction) {}
+public class L1InfoNotFoundException extends RuntimeException {
+
+  /** Instantiates a new L1 info not found exception. */
+  public L1InfoNotFoundException() {
+    super("L1 info not found");
+  }
+}

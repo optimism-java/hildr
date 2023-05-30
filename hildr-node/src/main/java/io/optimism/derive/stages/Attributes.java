@@ -17,6 +17,8 @@
 package io.optimism.derive.stages;
 
 import com.google.common.collect.AbstractIterator;
+import io.micrometer.tracing.Span;
+import io.optimism.common.BlockNotIncludedException;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemAccounts;
@@ -25,6 +27,7 @@ import io.optimism.derive.State;
 import io.optimism.derive.stages.Batches.Batch;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
+import io.optimism.telemetry.Logging;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +59,7 @@ public class Attributes<I extends PurgeableIterator<Batch>>
     extends AbstractIterator<PayloadAttributes> implements PurgeableIterator<PayloadAttributes> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Attributes.class);
+
   private final I batchIterator;
 
   private final AtomicReference<State> state;
@@ -86,12 +90,17 @@ public class Attributes<I extends PurgeableIterator<Batch>>
   @Override
   protected PayloadAttributes computeNext() {
     final Batch batch = this.batchIterator.next();
-    return batch != null ? this.deriveAttributes(batch) : null;
+    Span span = Logging.INSTANCE.getTracer().nextSpan().name("derive-attributes").start();
+    try (var ignored = Logging.INSTANCE.getTracer().withSpan(span)) {
+      return batch != null ? this.deriveAttributes(batch) : null;
+    } finally {
+      span.end();
+    }
   }
 
   private PayloadAttributes deriveAttributes(Batch batch) {
     LOGGER.trace("attributes derived from block {}", batch.epochNum());
-    LOGGER.trace("batch epoch hash {}", batch.epochHash());
+    LOGGER.debug("batch epoch hash {}", batch.epochHash());
 
     this.updateSequenceNumber(batch.epochHash());
 
@@ -139,7 +148,11 @@ public class Attributes<I extends PurgeableIterator<Batch>>
 
   private List<String> deriveUserDeposited() {
     State state = this.state.get();
-    return state.l1Info(this.epochHash).userDeposits().stream()
+    L1Info l1Info = state.l1Info(this.epochHash);
+    if (l1Info == null) {
+      throw new L1InfoNotFoundException();
+    }
+    return l1Info.userDeposits().stream()
         .map(
             deposit -> {
               DepositedTransaction tx = DepositedTransaction.from(deposit);
@@ -242,18 +255,17 @@ public class Attributes<I extends PurgeableIterator<Batch>>
       BigInteger gas = new BigInteger(ArrayUtils.subarray(opaqueData, 64, 72));
       boolean isCreation = opaqueData[72] != (byte) 0;
       byte[] data = ArrayUtils.subarray(opaqueData, 73, opaqueData.length);
+      BigInteger l1BlockNum = log.getBlockNumber();
+      if (l1BlockNum == null) {
+        throw new BlockNotIncludedException();
+      }
+      String l1BlockHash = log.getBlockHash();
+      if (l1BlockHash == null) {
+        throw new BlockNotIncludedException();
+      }
 
       return new UserDeposited(
-          from,
-          to,
-          mint,
-          value,
-          gas,
-          isCreation,
-          data,
-          log.getBlockNumber(),
-          log.getBlockHash(),
-          log.getLogIndex());
+          from, to, mint, value, gas, isCreation, data, l1BlockNum, l1BlockHash, log.getLogIndex());
     }
   }
 
@@ -405,7 +417,7 @@ public class Attributes<I extends PurgeableIterator<Batch>>
       return new DepositedTransaction(
           Numeric.toHexString(sourceHash),
           userDeposited.from,
-          userDeposited.isCreation ? userDeposited.to : null,
+          userDeposited.isCreation ? null : userDeposited.to,
           userDeposited.mint,
           userDeposited.value,
           userDeposited.gas,

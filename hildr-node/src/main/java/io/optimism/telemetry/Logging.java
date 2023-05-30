@@ -43,6 +43,7 @@ public enum Logging {
 
   private final Tracer tracer;
 
+  @SuppressWarnings("AbbreviationAsWordInName")
   Logging() {
     initializeOpenTelemetry();
 

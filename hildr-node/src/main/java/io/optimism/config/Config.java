@@ -31,6 +31,7 @@ import org.github.gestalt.config.exceptions.GestaltException;
 import org.github.gestalt.config.loader.EnvironmentVarsLoader;
 import org.github.gestalt.config.loader.MapConfigLoader;
 import org.github.gestalt.config.loader.PropertyLoader;
+import org.github.gestalt.config.source.FileConfigSource;
 import org.github.gestalt.config.source.MapConfigSource;
 import org.github.gestalt.config.toml.TomlLoader;
 import org.web3j.utils.Numeric;
@@ -87,16 +88,33 @@ public record Config(
 
       Map<String, String> cliProvider = cliConfig.toConfigMap();
       MapConfigSource cliConfigSource = new MapConfigSource(cliProvider);
-      Gestalt gestalt =
-          new GestaltBuilder()
-              .addConfigLoader(environmentVarsLoader)
-              .addConfigLoader(mapConfigLoader)
-              .addConfigLoader(tomlLoader)
-              .addConfigLoader(propertyLoader)
-              .addSource(defaultProviderConfigSource)
-              .addSource(chainConfigSource)
-              .addSource(cliConfigSource)
-              .build();
+
+      Gestalt gestalt;
+      if (configPath != null) {
+        FileConfigSource tomlConfigSource = new FileConfigSource(configPath);
+        gestalt =
+            new GestaltBuilder()
+                .addConfigLoader(environmentVarsLoader)
+                .addConfigLoader(mapConfigLoader)
+                .addConfigLoader(tomlLoader)
+                .addConfigLoader(propertyLoader)
+                .addSource(defaultProviderConfigSource)
+                .addSource(chainConfigSource)
+                .addSource(tomlConfigSource)
+                .addSource(cliConfigSource)
+                .build();
+      } else {
+        gestalt =
+            new GestaltBuilder()
+                .addConfigLoader(environmentVarsLoader)
+                .addConfigLoader(mapConfigLoader)
+                .addConfigLoader(tomlLoader)
+                .addConfigLoader(propertyLoader)
+                .addSource(defaultProviderConfigSource)
+                .addSource(chainConfigSource)
+                .addSource(cliConfigSource)
+                .build();
+      }
       gestalt.loadConfigs();
       return gestalt.getConfig("config", Config.class);
 
@@ -169,11 +187,13 @@ public record Config(
    * @param regolithTime Timestamp of the regolith hardfork.
    * @param blockTime Network blocktime.
    * @param l2Tol1MessagePasser L2 To L1 Message passer address.
+   * @param chainId The chain id.
    * @author grapebaba
    * @since 0.1.0
    */
   public record ChainConfig(
       String network,
+      BigInteger chainId,
       Epoch l1StartEpoch,
       BlockInfo l2Genesis,
       SystemConfig systemConfig,
@@ -196,6 +216,7 @@ public record Config(
     public static ChainConfig optimismGoerli() {
       return new ChainConfig(
           "optimism-goerli",
+          BigInteger.valueOf(420L),
           new Epoch(
               BigInteger.valueOf(8300214L),
               "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
@@ -209,7 +230,8 @@ public record Config(
               "0x7431310e026b69bfc676c0013e12a1a11411eec9",
               BigInteger.valueOf(25_000_000L),
               BigInteger.valueOf(2100),
-              BigInteger.valueOf(1000000)),
+              BigInteger.valueOf(1000000),
+              "0x715b7219D986641DF9eFd9C7Ef01218D528e19ec"),
           "0xff00000000000000000000000000000000000420",
           "0x5b47E1A08Ea6d985D6649300584e6722Ec4B1383",
           "0xAe851f927Ee40dE99aaBb7461C00f9622ab91d60",
@@ -230,6 +252,7 @@ public record Config(
     public static ChainConfig baseGoerli() {
       return new ChainConfig(
           "base-goerli",
+          BigInteger.valueOf(84531L),
           new Epoch(
               BigInteger.valueOf(8410981L),
               "0x73d89754a1e0387b89520d989d3be9c37c1f32495a88faf1ea05c61121ab0d19",
@@ -243,7 +266,8 @@ public record Config(
               "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
               BigInteger.valueOf(25_000_000L),
               BigInteger.valueOf(2100),
-              BigInteger.valueOf(1000000)),
+              BigInteger.valueOf(1000000),
+              "0x32a4e99A72c11E9DD3dC159909a2D7BD86C1Bc51"),
           "0x8453100000000000000000000000000000000000",
           "0xe93c8cd0d409341205a592f8c4ac1a5fe5585cfa",
           "0xb15eea247ece011c68a614e4a77ad648ff495bc1",
@@ -264,6 +288,7 @@ public record Config(
     public Map<String, String> toConfigMap() {
       return Map.ofEntries(
           entry("config.chainConfig.network", this.network),
+          entry("config.chainConfig.chainId", this.chainId.toString()),
           entry("config.chainConfig.l1StartEpoch.number", this.l1StartEpoch.number().toString()),
           entry(
               "config.chainConfig.l1StartEpoch.timestamp",
@@ -282,6 +307,9 @@ public record Config(
           entry(
               "config.chainConfig.systemConfig.l1FeeScalar",
               this.systemConfig.l1FeeScalar().toString()),
+          entry(
+              "config.chainConfig.systemConfig.unsafeBlockSigner",
+              this.systemConfig.unsafeBlockSigner()),
           entry("config.chainConfig.batchInbox", this.batchInbox),
           entry("config.chainConfig.depositContract", this.depositContract),
           entry("config.chainConfig.systemConfigContract", this.systemConfigContract),
@@ -360,11 +388,16 @@ public record Config(
    * @param gasLimit gas limit.
    * @param l1FeeOverhead L1 fee overhead.
    * @param l1FeeScalar L1 fee scalar.
+   * @param unsafeBlockSigner unsafe block signer address.
    * @author grapebaba
    * @since 0.1.0
    */
   public record SystemConfig(
-      String batchSender, BigInteger gasLimit, BigInteger l1FeeOverhead, BigInteger l1FeeScalar) {
+      String batchSender,
+      BigInteger gasLimit,
+      BigInteger l1FeeOverhead,
+      BigInteger l1FeeScalar,
+      String unsafeBlockSigner) {
 
     /**
      * Batch hash string.
