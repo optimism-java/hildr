@@ -21,6 +21,7 @@ import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.l1.L1Info;
 import java.math.BigInteger;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -229,8 +230,12 @@ public class State {
 
   private void prune() {
     BigInteger pruneUntil = this.safeEpoch.number().subtract(config.chainConfig().seqWindowSize());
-    while (this.l1Hashes.firstKey().compareTo(pruneUntil) < 0) {
-      this.l1Info.remove(this.l1Hashes.firstEntry().getValue());
+    Entry<BigInteger, String> blockNumAndHash;
+    while ((blockNumAndHash = this.l1Hashes.firstEntry()) != null) {
+      if (blockNumAndHash.getKey().compareTo(pruneUntil) >= 0) {
+        break;
+      }
+      this.l1Info.remove(blockNumAndHash.getValue());
       this.l1Hashes.pollFirstEntry();
     }
   }

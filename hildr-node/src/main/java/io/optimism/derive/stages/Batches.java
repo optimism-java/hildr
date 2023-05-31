@@ -25,7 +25,6 @@ import io.optimism.derive.State;
 import io.optimism.derive.stages.Batches.Batch;
 import io.optimism.derive.stages.Channels.Channel;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.TreeMap;
@@ -34,10 +33,13 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.rlp.RlpDecoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.utils.Numeric;
 
 /**
  * The type Batches.
@@ -49,6 +51,7 @@ import org.web3j.rlp.RlpType;
 public class Batches<I extends PurgeableIterator<Channel>> extends AbstractIterator<Batch>
     implements PurgeableIterator<Batch> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(Batches.class);
   private final TreeMap<BigInteger, Batch> batches;
 
   private final I channelIterator;
@@ -99,6 +102,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
             this.batches.remove(batch.timestamp());
             break;
           case Drop:
+            LOGGER.warn("dropping invalid batch");
             this.batches.remove(batch.timestamp());
             continue;
           case Future, Undecided:
@@ -140,6 +144,9 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
       }
     }
 
+    if (batch == null) {
+      LOGGER.debug("Failed to decode batch");
+    }
     return batch;
   }
 
@@ -168,7 +175,6 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
 
   private static byte[] decompressZlib(byte[] data) {
     try {
-
       Inflater inflater = new Inflater();
       inflater.setInput(data);
       ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
@@ -177,13 +183,14 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
         int count = inflater.inflate(buffer);
         outputStream.write(buffer, 0, count);
       }
-      outputStream.close();
+
       return outputStream.toByteArray();
-    } catch (IOException | DataFormatException e) {
+    } catch (DataFormatException e) {
       throw new DecompressZlibException(e);
     }
   }
 
+  @SuppressWarnings("WhitespaceAround")
   private BatchStatus batchStatus(Batch batch) {
     State state = this.state.get();
     Epoch epoch = state.getSafeEpoch();
@@ -193,16 +200,18 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
 
     // check timestamp range
     switch (batch.timestamp().compareTo(nextTimestamp)) {
-      case 1:
+      case 1 -> {
         return BatchStatus.Future;
-      case -1:
+      }
+      case -1 -> {
         return BatchStatus.Drop;
-      default:
-        break;
+      }
+      default -> {}
     }
 
     // check that block builds on existing chain
     if (!batch.parentHash().equalsIgnoreCase(head.hash())) {
+      LOGGER.warn("invalid parent hash");
       return BatchStatus.Drop;
     }
 
@@ -212,6 +221,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
             .add(this.config.chainConfig().seqWindowSize())
             .compareTo(batch.l1InclusionBlock())
         < 0) {
+      LOGGER.warn("inclusion window elapsed");
       return BatchStatus.Drop;
     }
 
@@ -222,15 +232,18 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
     } else if (batch.epochNum().compareTo(epoch.number().add(BigInteger.ONE)) == 0) {
       batchOrigin = nextEpoch;
     } else {
+      LOGGER.warn("invalid batch origin epoch number");
       return BatchStatus.Drop;
     }
 
     if (batchOrigin != null) {
       if (!batch.epochHash().equalsIgnoreCase(batchOrigin.hash())) {
+        LOGGER.warn("invalid epoch hash");
         return BatchStatus.Drop;
       }
 
       if (batch.timestamp().compareTo(batchOrigin.timestamp()) < 0) {
+        LOGGER.warn("batch too old");
         return BatchStatus.Drop;
       }
 
@@ -243,6 +256,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
           if (epoch.number().compareTo(batch.epochNum()) == 0) {
             if (nextEpoch != null) {
               if (batch.timestamp().compareTo(nextEpoch.timestamp()) >= 0) {
+                LOGGER.warn("sequencer drift too large");
                 return BatchStatus.Drop;
               }
             } else {
@@ -250,6 +264,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
             }
           }
         } else {
+          LOGGER.warn("sequencer drift too large");
           return BatchStatus.Drop;
         }
       }
@@ -258,6 +273,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
     }
 
     if (batch.hasInvalidTransactions()) {
+      LOGGER.warn("invalid transaction");
       return BatchStatus.Drop;
     }
 
@@ -340,7 +356,12 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
      */
     public boolean hasInvalidTransactions() {
       return this.transactions.stream()
-          .anyMatch(s -> StringUtils.isEmpty(s) || StringUtils.startsWithIgnoreCase(s, "0x7E"));
+          .anyMatch(
+              s ->
+                  StringUtils.isEmpty(s)
+                      || (Numeric.containsHexPrefix("0x")
+                          ? StringUtils.startsWithIgnoreCase(s, "0x7E")
+                          : StringUtils.startsWithIgnoreCase(s, "7E")));
     }
   }
 }
