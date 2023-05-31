@@ -43,15 +43,20 @@ public class LoggingExampleTest {
               () -> {
                 Tracer tracer = Logging.INSTANCE.getTracer();
                 Span span = tracer.nextSpan().name("my-span").start();
+                logger.debug("step 1:parent {} log", logId);
                 try (var unusedScope1 = Logging.INSTANCE.getTracer().withSpan(span)) {
-                  logger.debug("parent {} log", logId);
+                  logger.debug("step 2:parent {} log", logId);
                   Span childSpan = tracer.nextSpan().name("childSpan").start();
-                  try (var unusedBag2 =
-                      tracer.createBaggageInScope("baggage-In-Scope", "value 1")) {
-                    logger.debug("parent {} log", logId);
+                  try (var unusedBag2 = tracer.withSpan(childSpan)) {
+                    logger.debug("step 3:parent {} log", logId);
+                    throw new RuntimeException("test error for span");
+                  } catch (Exception e) {
+                    logger.error("catch a throw in scope", e);
                   } finally {
                     childSpan.end();
                   }
+                } catch (Exception e) {
+                  logger.error("catch a throw", e);
                 } finally {
                   span.end();
                 }
