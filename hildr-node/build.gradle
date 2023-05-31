@@ -104,7 +104,7 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(20)
+		languageVersion = JavaLanguageVersion.of(19)
 	}
 }
 
@@ -224,7 +224,7 @@ javadoc {
 		options.addBooleanOption('html5', true)
 	}
 	options.addBooleanOption('-enable-preview', true)
-	options.addStringOption('-release', '20')
+	options.addStringOption('-release', '19')
 	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
 
