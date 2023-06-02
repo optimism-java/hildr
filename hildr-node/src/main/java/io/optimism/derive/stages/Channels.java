@@ -76,7 +76,12 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>>
     return this.processFrames().orElse(null);
   }
 
-  private void pushFrame(Frame frame) {
+  /**
+   * Push frame.
+   *
+   * @param frame the frame
+   */
+  protected void pushFrame(Frame frame) {
     // Find a pending channel matching on the channel id
     Optional<PendingChannel> existedPc =
         this.pendingChannels.stream()
@@ -103,9 +108,15 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>>
     }
   }
 
-  private Optional<Channel> fetchReadyChannel(BigInteger id) {
+  /**
+   * Fetch ready channel optional.
+   *
+   * @param id the id
+   * @return the optional
+   */
+  protected Optional<Channel> fetchReadyChannel(BigInteger id) {
     return this.pendingChannels.stream()
-        .filter(c -> c.getChannelId().equals(id))
+        .filter(c -> c.getChannelId().equals(id) && c.isComplete())
         .findFirst()
         .map(
             pendingChannel -> {
@@ -150,8 +161,20 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>>
 
   private void prune() {
     while (this.totalSize() > this.maxChannelSize.longValue()) {
-      this.removePendingChannel();
+      Optional<PendingChannel> removed = this.removePendingChannel();
+      if (removed.isEmpty()) {
+        throw new RuntimeException("should have removed a channel");
+      }
     }
+  }
+
+  /**
+   * Gets pending channels.
+   *
+   * @return the pending channels
+   */
+  public List<PendingChannel> getPendingChannels() {
+    return pendingChannels;
   }
 
   /**
@@ -270,8 +293,8 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>>
      */
     public BigInteger l1InclusionBlock() {
       return this.frames.stream()
-          .max(Comparator.comparing(Frame::l1InclusionBlock))
           .map(Frame::l1InclusionBlock)
+          .max(BigInteger::compareTo)
           .orElseThrow();
     }
 
@@ -355,7 +378,7 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>>
       final Integer size = frame.isLastFrame() ? frame.frameNumber() + 1 : null;
       return new PendingChannel(
           frame.channelId(),
-          List.of(frame),
+          Lists.newArrayList(frame),
           size,
           frame.l1InclusionBlock(),
           frame.l1InclusionBlock());

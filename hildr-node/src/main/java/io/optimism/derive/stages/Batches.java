@@ -17,6 +17,7 @@
 package io.optimism.derive.stages;
 
 import com.google.common.collect.AbstractIterator;
+import com.google.common.collect.Lists;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
@@ -138,7 +139,7 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
                   epochRes.number(),
                   epochRes.hash(),
                   nextTimestamp,
-                  List.of(),
+                  Lists.newArrayList(),
                   currentL1Block);
         }
       }
