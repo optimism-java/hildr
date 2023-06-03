@@ -28,7 +28,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import org.jctools.queues.MessagePassingQueue;
-import org.jctools.queues.MpscGrowableArrayQueue;
+import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 
 /**
  * The type Pipeline.
@@ -53,7 +53,9 @@ public class Pipeline extends AbstractIterator<PayloadAttributes>
    * @param sequenceNumber the sequence number
    */
   public Pipeline(AtomicReference<State> state, Config config, BigInteger sequenceNumber) {
-    batcherTransactionQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
+
+    //    batcherTransactionQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
+    batcherTransactionQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
     BatcherTransactions batcherTransactions = new BatcherTransactions(batcherTransactionQueue);
     Channels<BatcherTransactions> channels = Channels.create(batcherTransactions, config);
     Batches<Channels<BatcherTransactions>> batches = Batches.create(channels, state, config);
@@ -76,11 +78,7 @@ public class Pipeline extends AbstractIterator<PayloadAttributes>
    * @param l1origin the l 1 origin
    */
   public void pushBatcherTransactions(List<byte[]> txs, BigInteger l1origin) {
-    while (true) {
-      if (this.batcherTransactionQueue.offer(new BatcherTransactionMessage(txs, l1origin))) {
-        break;
-      }
-    }
+    this.batcherTransactionQueue.offer(new BatcherTransactionMessage(txs, l1origin));
   }
 
   /**

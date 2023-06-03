@@ -43,6 +43,9 @@ public record HeadInfo(BlockInfo l2BlockInfo, Epoch l1Epoch, BigInteger sequence
   public static HeadInfo from(EthBlock.Block block) {
     BlockInfo blockInfo = BlockInfo.from(block);
 
+    if (block.getTransactions().isEmpty()) {
+      throw new L1AttributesDepositedTxNotFoundException();
+    }
     String txCallData = ((TransactionObject) block.getTransactions().get(0)).getInput();
 
     AttributesDepositedCall call = AttributesDepositedCall.from(txCallData);
