@@ -21,10 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertThrowsExactly;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.IOException;
 import java.math.BigInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.http.HttpService;
 
 /**
  * The type HeadInfoTest.
@@ -154,5 +157,26 @@ class HeadInfoTest {
         headInfo.l1Epoch().hash());
     assertEquals(BigInteger.valueOf(8874020L), headInfo.l1Epoch().number());
     assertEquals(BigInteger.valueOf(1682191440L), headInfo.l1Epoch().timestamp());
+  }
+
+  @Test
+  void testHeadInfoFromL2BlockHash() throws IOException {
+    if (System.getenv("L2_TEST_RPC_URL") == null) {
+      return;
+    }
+    String l2RpcUrl = System.getenv("L2_TEST_RPC_URL");
+    Web3j l2Provider = Web3j.build(new HttpService(l2RpcUrl));
+    String l2BlockHash = "0x75d4a658d7b6430c874c5518752a8d90fb1503eccd6ae4cfc97fd4aedeebb939";
+    EthBlock ethBlock = l2Provider.ethGetBlockByHash(l2BlockHash, true).send();
+    HeadInfo headInfo = HeadInfo.from(ethBlock.getBlock());
+
+    assertEquals(BigInteger.valueOf(8428108L), headInfo.l2BlockInfo().number());
+    assertEquals(BigInteger.valueOf(1682284284L), headInfo.l2BlockInfo().timestamp());
+    assertEquals(
+        "0x76ab90dc2afea158bbe14a99f22d5f867b51719378aa37d1a3aa3833ace67cad",
+        headInfo.l1Epoch().hash());
+    assertEquals(BigInteger.valueOf(8879997L), headInfo.l1Epoch().number());
+    assertEquals(BigInteger.valueOf(1682284164L), headInfo.l1Epoch().timestamp());
+    assertEquals(BigInteger.valueOf(4L), headInfo.sequenceNumber());
   }
 }
