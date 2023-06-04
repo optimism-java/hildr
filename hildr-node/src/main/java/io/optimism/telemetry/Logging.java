@@ -41,27 +41,19 @@ public enum Logging {
   /** Logging single instance. */
   INSTANCE;
 
-  private final Tracer tracer;
+  private final Slf4JEventListener slf4JEventListener;
+  private final Slf4JBaggageEventListener slf4JBaggageEventListener;
 
   @SuppressWarnings("AbbreviationAsWordInName")
   Logging() {
     initializeOpenTelemetry();
 
-    final var slf4JEventListener = new Slf4JEventListener();
-    final var slf4JBaggageEventListener = new Slf4JBaggageEventListener(Collections.emptyList());
+    this.slf4JEventListener = new Slf4JEventListener();
+    this.slf4JBaggageEventListener = new Slf4JBaggageEventListener(Collections.emptyList());
+  }
 
-    var otelTracer = GlobalOpenTelemetry.getTracer("global");
-    OtelCurrentTraceContext otelCurrentTraceContext = new OtelCurrentTraceContext();
-    this.tracer =
-        new OtelTracer(
-            otelTracer,
-            otelCurrentTraceContext,
-            event -> {
-              slf4JEventListener.onEvent(event);
-              slf4JBaggageEventListener.onEvent(event);
-            },
-            new OtelBaggageManager(
-                otelCurrentTraceContext, Collections.emptyList(), Collections.emptyList()));
+  public Tracer getTracer() {
+    return this.getTracer(Thread.currentThread().getName());
   }
 
   /**
@@ -69,8 +61,18 @@ public enum Logging {
    *
    * @return Tracer single instance
    */
-  public Tracer getTracer() {
-    return tracer;
+  public Tracer getTracer(String tracerName) {
+    var otelTracer = GlobalOpenTelemetry.getTracer(tracerName);
+    OtelCurrentTraceContext otelCurrentTraceContext = new OtelCurrentTraceContext();
+    return new OtelTracer(
+        otelTracer,
+        otelCurrentTraceContext,
+        event -> {
+          slf4JEventListener.onEvent(event);
+          slf4JBaggageEventListener.onEvent(event);
+        },
+        new OtelBaggageManager(
+            otelCurrentTraceContext, Collections.emptyList(), Collections.emptyList()));
   }
 
   private static void initializeOpenTelemetry() {

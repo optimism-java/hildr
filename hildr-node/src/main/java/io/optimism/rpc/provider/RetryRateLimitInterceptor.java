@@ -14,7 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.l1;
+package io.optimism.rpc.provider;
 
 import com.github.rholder.retry.RetryException;
 import com.github.rholder.retry.Retryer;
@@ -22,6 +22,7 @@ import com.github.rholder.retry.RetryerBuilder;
 import com.github.rholder.retry.StopStrategies;
 import com.github.rholder.retry.WaitStrategies;
 import com.google.common.util.concurrent.RateLimiter;
+import io.optimism.l1.InnerWatcher;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.concurrent.ExecutionException;

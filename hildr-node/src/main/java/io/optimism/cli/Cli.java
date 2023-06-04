@@ -95,7 +95,7 @@ public class Cli implements Runnable {
     var checkpointHash = this.checkpointHash;
     var config = this.toConfig();
 
-    Tracer tracer = Logging.INSTANCE.getTracer();
+    Tracer tracer = Logging.INSTANCE.getTracer("hildr-cli");
     InnerMetrics.start(9200);
 
     Runner runner = Runner.create(config).setSyncMode(syncMode).setCheckpointHash(checkpointHash);
