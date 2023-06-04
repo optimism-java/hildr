@@ -41,10 +41,10 @@ public class LoggingExampleTest {
       Thread thread =
           new Thread(
               () -> {
-                Tracer tracer = Logging.INSTANCE.getTracer();
+                Tracer tracer = Logging.INSTANCE.getTracer("unit-test-case");
                 Span span = tracer.nextSpan().name("my-span").start();
                 logger.info("step 1:parent {} log", logId);
-                try (var unusedScope1 = Logging.INSTANCE.getTracer().withSpan(span)) {
+                try (var unusedScope1 = tracer.withSpan(span)) {
                   logger.info("step 2:parent {} log", logId);
                   Span childSpan = tracer.nextSpan().name("childSpan").start();
                   try (var unusedBag2 = tracer.withSpan(childSpan)) {

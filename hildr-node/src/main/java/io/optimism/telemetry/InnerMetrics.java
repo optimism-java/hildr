@@ -108,7 +108,7 @@ public class InnerMetrics {
    * @param finalizedHead finalized head block
    */
   public static void setFinalizedHead(BigInteger finalizedHead) {
-    FINALIZED_HEAD.compareAndSet(FINALIZED_HEAD.get(), finalizedHead);
+    FINALIZED_HEAD.getAndSet(finalizedHead);
   }
 
   /**
@@ -117,7 +117,7 @@ public class InnerMetrics {
    * @param safeHead safe head block
    */
   public static void setSafeHead(BigInteger safeHead) {
-    SAFE_HEAD.compareAndSet(SAFE_HEAD.get(), safeHead);
+    SAFE_HEAD.getAndSet(safeHead);
   }
 
   /**
@@ -126,6 +126,6 @@ public class InnerMetrics {
    * @param synced synced block count
    */
   public static void setSynced(BigInteger synced) {
-    SYNCED.compareAndSet(SYNCED.get(), synced);
+    SYNCED.getAndSet(synced);
   }
 }

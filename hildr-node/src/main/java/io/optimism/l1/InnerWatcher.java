@@ -26,6 +26,7 @@ import io.optimism.derive.stages.Attributes;
 import io.optimism.derive.stages.Attributes.UserDeposited;
 import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.BlockUpdate.FinalityUpdate;
+import io.optimism.rpc.provider.Web3jProvider;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -36,7 +37,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import okhttp3.OkHttpClient;
 import org.jctools.queues.MessagePassingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +55,6 @@ import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
-import org.web3j.protocol.http.HttpService;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
 
@@ -145,7 +144,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
       BigInteger l2StartBlock,
       ExecutorService executor) {
     this.executor = executor;
-    this.provider = createClient(config.l1RpcUrl());
+    this.provider = Web3jProvider.createClient(config.l1RpcUrl());
     this.config = config;
 
     if (l2StartBlock.equals(config.chainConfig().l2Genesis().number())) {
@@ -164,7 +163,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   }
 
   private void getMetadataFromL2(BigInteger l2StartBlock) {
-    Web3j l2Client = createClient(config.l2RpcUrl());
+    Web3j l2Client = Web3jProvider.createClient(config.l2RpcUrl());
     EthBlock block;
     try {
       block = this.getBlock(l2Client, l2StartBlock.subtract(BigInteger.ONE));
@@ -464,12 +463,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
       throw new DepositsNotFoundException();
     }
     return remv;
-  }
-
-  private Web3j createClient(String url) {
-    OkHttpClient okHttpClient =
-        new OkHttpClient.Builder().addInterceptor(new RetryRateLimitInterceptor()).build();
-    return Web3j.build(new HttpService(url, okHttpClient));
   }
 
   @Override
