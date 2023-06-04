@@ -35,11 +35,13 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import jdk.incubator.concurrent.StructuredTaskScope;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock;
-import org.web3j.protocol.core.methods.response.EthBlock.TransactionHash;
+import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
 /**
  * The type EngineDriver.
@@ -50,6 +52,7 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionHash;
  */
 public class EngineDriver<E extends Engine> {
 
+  private static final Logger LOGGER = LoggerFactory.getLogger(EngineDriver.class);
   private E engine;
 
   private Web3j web3j;
@@ -173,6 +176,7 @@ public class EngineDriver<E extends Engine> {
       throws ExecutionException, InterruptedException {
     this.unsafeHead = BlockInfo.from(payload);
     pushPayloadAndUpdateForkchoice(payload);
+    LOGGER.info("head updated: {} {}", this.unsafeHead.number(), this.unsafeHead.hash());
   }
 
   /**
@@ -203,25 +207,31 @@ public class EngineDriver<E extends Engine> {
     ForkchoiceState forkchoiceState = createForkchoiceState();
 
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-      var unused =
-          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+      var res = scope.fork(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, null));
       scope.join();
-      return scope.exception().isEmpty();
+      return scope.exception().isEmpty() && !res.resultNow().hasError();
     }
   }
 
   @SuppressWarnings("preview")
   private boolean shouldSkip(EthBlock block, PayloadAttributes attributes) {
+    LOGGER.debug(
+        "comparing block at {} with attributes at {}",
+        block.getBlock().getTimestamp(),
+        attributes.timestamp());
+    LOGGER.debug("block: {}", block.getBlock());
+    LOGGER.debug("attributes: {}", attributes);
     List<String> attributesHashes = attributes.transactions().stream().map(Hash::sha3).toList();
+    LOGGER.debug("attribute hashes: {}", attributesHashes);
 
     return block.getBlock().getTransactions().stream()
-            .map(transactionResult -> ((TransactionHash) transactionResult).get())
+            .map(transactionResult -> ((TransactionObject) transactionResult).getHash())
             .toList()
             .equals(attributesHashes)
-        || attributes.timestamp().equals(block.getBlock().getTimestamp())
-        || attributes.prevRandao().equals(block.getBlock().getMixHash())
-        || attributes.suggestedFeeRecipient().equals(block.getBlock().getAuthor())
-        || attributes.gasLimit().equals(block.getBlock().getGasLimit());
+        && attributes.timestamp().equals(block.getBlock().getTimestamp())
+        && attributes.prevRandao().equalsIgnoreCase(block.getBlock().getMixHash())
+        && attributes.suggestedFeeRecipient().equalsIgnoreCase(block.getBlock().getAuthor())
+        && attributes.gasLimit().equals(block.getBlock().getGasLimit());
   }
 
   @SuppressWarnings("preview")
@@ -235,7 +245,7 @@ public class EngineDriver<E extends Engine> {
           scope.fork(
               () ->
                   web3j
-                      .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), false)
+                      .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
                       .send());
 
       scope.join();
@@ -265,14 +275,14 @@ public class EngineDriver<E extends Engine> {
 
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
-          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+          scope.fork(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, null));
 
       scope.join();
       scope.throwIfFailed();
       ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
 
       if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
-        throw new RuntimeException(
+        throw new ForkchoiceUpdateException(
             String.format(
                 "could not accept new forkchoice: %s",
                 forkChoiceUpdate.payloadStatus().getValidationError()));
@@ -292,7 +302,7 @@ public class EngineDriver<E extends Engine> {
 
       if (payloadStatus.getStatus() != Status.Valid
           && payloadStatus.getStatus() != Status.Accepted) {
-        throw new RuntimeException("invalid execution payload");
+        throw new InvalidExecutionPayloadException();
       }
     }
   }
@@ -305,7 +315,7 @@ public class EngineDriver<E extends Engine> {
           scope.fork(() -> EngineDriver.this.engine.newPayload(payload));
 
       Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
-          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, null));
+          scope.fork(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, null));
 
       scope.join();
       scope.throwIfFailed();
@@ -314,11 +324,11 @@ public class EngineDriver<E extends Engine> {
 
       if (payloadStatus.getStatus() != Status.Valid
           && payloadStatus.getStatus() != Status.Accepted) {
-        throw new RuntimeException("invalid execution payload");
+        throw new InvalidExecutionPayloadException();
       }
 
       if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
-        throw new RuntimeException(
+        throw new ForkchoiceUpdateException(
             String.format(
                 "could not accept new forkchoice: %s",
                 forkChoiceUpdate.payloadStatus().getValidationError()));
@@ -333,17 +343,17 @@ public class EngineDriver<E extends Engine> {
     ForkChoiceUpdate forkChoiceUpdate;
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
-          scope.fork(() -> EngineDriver.this.engine.forkChoiceUpdate(forkchoiceState, attributes));
+          scope.fork(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, attributes));
 
       scope.join();
       scope.throwIfFailed();
       forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
       if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
-        throw new RuntimeException("invalid payload attributes");
+        throw new InvalidPayloadAttributesException();
       }
 
       if (forkChoiceUpdate.payloadId() == null) {
-        throw new RuntimeException("invalid payload attributes");
+        throw new PayloadIdNotReturnedException();
       }
 
       try (var scope1 = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -352,7 +362,7 @@ public class EngineDriver<E extends Engine> {
 
         scope1.join();
         scope1.throwIfFailed();
-        return payloadFuture.get();
+        return payloadFuture.resultNow();
       }
     }
   }
@@ -377,7 +387,7 @@ public class EngineDriver<E extends Engine> {
             executionPayload.parentHash(),
             executionPayload.timestamp());
 
-    updateSafeHead(newHead, newEpoch, false);
+    updateSafeHead(newHead, newEpoch, true);
 
     pushPayloadAndUpdateForkchoice(executionPayload);
   }

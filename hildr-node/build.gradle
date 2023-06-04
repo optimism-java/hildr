@@ -28,18 +28,22 @@ repositories {
 	mavenCentral()
 }
 
-compileJava {
+tasks.withType(JavaCompile).configureEach {
 	options.annotationProcessorPath = configurations.annotationProcessor
-	options.compilerArgs << '--enable-preview'
-	options.compilerArgs << '-Xlint:preview'
+	options.compilerArgs += "--enable-preview"
+	options.compilerArgs += "-Xlint:preview"
 	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
 	options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
-compileTestJava {
-	options.compilerArgs << '--enable-preview'
-	options.compilerArgs << '-Xlint:preview'
-	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
+tasks.withType(Test).configureEach {
+	jvmArgs += "--enable-preview"
+	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+}
+
+tasks.withType(JavaExec).configureEach {
+	jvmArgs += "--enable-preview"
+	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 dependencies {
@@ -56,7 +60,7 @@ dependencies {
 	implementation 'com.google.guava:guava:31.1-jre'
 	implementation 'com.github.rholder:guava-retrying:2.0.0'
 
-	implementation ('org.web3j:core:4.9.8') {
+	implementation('org.web3j:core:4.9.8') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')

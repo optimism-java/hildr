@@ -20,9 +20,11 @@ import static java.lang.Thread.sleep;
 import static org.web3j.protocol.core.DefaultBlockParameterName.FINALIZED;
 
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
+import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
 import io.optimism.derive.Pipeline;
 import io.optimism.engine.Engine;
@@ -44,8 +46,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
-import org.jctools.queues.MpscGrowableArrayQueue;
+import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.http.HttpService;
@@ -60,7 +63,7 @@ import org.web3j.utils.Numeric;
  */
 public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
-  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(Driver.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Driver.class);
   private Pipeline pipeline;
 
   private EngineDriver<E> engineDriver;
@@ -77,7 +80,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
 
-  private volatile boolean shutdownFlag;
   private Executor executor;
 
   /**
@@ -101,7 +103,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     this.state = state;
     this.chainWatcher = chainWatcher;
     this.unsafeBlockQueue = unsafeBlockQueue;
+    this.futureUnsafeBlocks = Lists.newArrayList();
+    this.unfinalizedBlocks = Lists.newArrayList();
     this.executor = Executors.newVirtualThreadPerTaskExecutor();
+  }
+
+  public EngineDriver<E> getEngineDriver() {
+    return engineDriver;
   }
 
   /**
@@ -157,8 +165,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     Pipeline pipeline = new Pipeline(state, config, finalizedSeq);
 
     // TODO: RPC SERVER
-    MpscGrowableArrayQueue<ExecutionPayload> unsafeBlockQueue =
-        new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
+    MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue =
+        new MpscUnboundedXaddArrayQueue<>(1024 * 64);
     return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue);
   }
 
@@ -166,13 +174,14 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
   protected void run() {
     while (isRunning()) {
       try {
-        this.checkShutdown();
         this.advance();
       } catch (InterruptedException e) {
+        LOGGER.error("driver run interrupted", e);
         Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
+        throw new HildrServiceExecutionException(e);
       } catch (ExecutionException e) {
-        throw new RuntimeException(e);
+        LOGGER.error("driver run fatal error", e);
+        throw new HildrServiceExecutionException(e);
       }
     }
   }
@@ -182,8 +191,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     try {
       this.awaitEngineReady();
     } catch (InterruptedException e) {
+      LOGGER.error("driver run interrupted", e);
       Thread.currentThread().interrupt();
-      throw new RuntimeException(e);
+      throw new HildrServiceExecutionException(e);
     }
     this.chainWatcher.start();
   }
@@ -193,20 +203,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     return this.executor;
   }
 
-  private void checkShutdown() {
-    if (shutdownFlag) {
-      stop();
-    }
-  }
-
-  private void stop() {
-    this.stopAsync();
-    this.awaitTerminated();
+  @Override
+  protected void shutDown() {
+    this.chainWatcher.stop();
   }
 
   private void awaitEngineReady() throws InterruptedException {
     while (!this.engineDriver.engineReady()) {
-      checkShutdown();
       sleep(Duration.ofSeconds(1));
     }
   }
@@ -248,15 +251,20 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       PayloadAttributes payloadAttributes = this.pipeline.next();
       BigInteger l1InclusionBlock = payloadAttributes.l1InclusionBlock();
       if (l1InclusionBlock == null) {
-        throw new RuntimeException("attributes without inclusion block");
+        throw new InvalidAttributesException("attributes without inclusion block");
       }
 
       BigInteger seqNumber = payloadAttributes.seqNumber();
       if (seqNumber == null) {
-        throw new RuntimeException("attributes without seq number");
+        throw new InvalidAttributesException("attributes without seq number");
       }
 
       Driver.this.engineDriver.handleAttributes(payloadAttributes);
+
+      LOGGER.info(
+          "safe head updated: {} {}",
+          Driver.this.engineDriver.getSafeHead().number(),
+          Driver.this.engineDriver.getSafeHead().hash());
 
       BlockInfo newSafeHead = Driver.this.engineDriver.getSafeHead();
       Epoch newSafeEpoch = Driver.this.engineDriver.getSafeEpoch();
@@ -282,7 +290,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                   BigInteger unsafeBlockNum = payload.blockNumber();
                   BigInteger syncedBlockNum = Driver.this.engineDriver.getUnsafeHead().number();
                   return unsafeBlockNum.compareTo(syncedBlockNum) > 0
-                      && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(256))
+                      && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(256L))
                           < 0;
                 })
             .toList();
@@ -321,12 +329,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     switch (next) {
-      case BlockUpdate.NewBlock newBlock -> {
-        BigInteger num = newBlock.get().blockInfo().number();
+      case BlockUpdate.NewBlock l1info -> {
+        BigInteger num = l1info.get().blockInfo().number();
         Driver.this.pipeline.pushBatcherTransactions(
-            newBlock.get().batcherTransactions().stream()
-                .map(Numeric::hexStringToByteArray)
-                .toList(),
+            l1info.get().batcherTransactions().stream().map(Numeric::hexStringToByteArray).toList(),
             num);
 
         Driver.this.state.getAndUpdate(
@@ -336,6 +342,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             });
       }
       case BlockUpdate.Reorg ignored -> {
+        LOGGER.warn("reorg detected, purging pipeline");
         Driver.this.unfinalizedBlocks.clear();
 
         Driver.this.chainWatcher.restart(
@@ -353,9 +360,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         Driver.this.pipeline.purge();
         Driver.this.engineDriver.reorg();
       }
-      case BlockUpdate.FinalityUpdate finalityUpdate -> Driver.this.finalizedL1BlockNumber =
-          finalityUpdate.get();
-      default -> throw new RuntimeException("unknown block update type");
+      case BlockUpdate.FinalityUpdate num -> Driver.this.finalizedL1BlockNumber = num.get();
+      default -> throw new IllegalArgumentException("unknown block update type");
     }
   }
 
@@ -392,6 +398,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     InnerMetrics.setFinalizedHead(this.engineDriver.getFinalizedHead().number());
     InnerMetrics.setSafeHead(this.engineDriver.getSafeHead().number());
     InnerMetrics.setSynced(this.unfinalizedBlocks.isEmpty() ? BigInteger.ZERO : BigInteger.ONE);
+  }
+
+  private boolean synced() {
+    return !this.unfinalizedBlocks.isEmpty();
   }
 
   /**

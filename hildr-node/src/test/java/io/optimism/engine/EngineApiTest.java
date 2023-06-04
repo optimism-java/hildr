@@ -134,7 +134,7 @@ public class EngineApiTest {
             new BigInteger("321"));
 
     OpEthForkChoiceUpdate forkChoiceUpdate =
-        engineApi.forkChoiceUpdate(forkchoiceState, payloadAttributes);
+        engineApi.forkchoiceUpdated(forkchoiceState, payloadAttributes);
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initForkChoiceUpdateResp(), ow.writeValueAsString(forkChoiceUpdate));
   }

@@ -229,7 +229,7 @@ public class Runner extends AbstractExecutionThreadService {
           scope.fork(() -> engineApi.newPayload(checkpointPayload));
 
       Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
-          scope.fork(() -> engineApi.forkChoiceUpdate(forkchoiceState, null));
+          scope.fork(() -> engineApi.forkchoiceUpdated(forkchoiceState, null));
 
       scope.join();
       scope.throwIfFailed();

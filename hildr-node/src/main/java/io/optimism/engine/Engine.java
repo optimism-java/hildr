@@ -53,7 +53,7 @@ public interface Engine {
    * @see <a
    *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1">engine_forkchoiceUpdatedV1</a>
    */
-  OpEthForkChoiceUpdate forkChoiceUpdate(
+  OpEthForkChoiceUpdate forkchoiceUpdated(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) throws IOException;
 
   /**

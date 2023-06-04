@@ -131,7 +131,7 @@ public class EngineApi implements Engine {
   }
 
   @Override
-  public OpEthForkChoiceUpdate forkChoiceUpdate(
+  public OpEthForkChoiceUpdate forkchoiceUpdated(
       ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) throws IOException {
     web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, OpEthForkChoiceUpdate> r =
