@@ -66,7 +66,7 @@ dependencies {
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.14.2'
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.15.2'
 	implementation 'org.jctools:jctools-core:4.0.1'
 
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'

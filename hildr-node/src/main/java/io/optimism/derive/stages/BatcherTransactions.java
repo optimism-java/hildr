@@ -17,9 +17,7 @@
 package io.optimism.derive.stages;
 
 import com.google.common.collect.AbstractIterator;
-import io.micrometer.tracing.Span;
 import io.optimism.derive.PurgeableIterator;
-import io.optimism.telemetry.Logging;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -62,23 +60,7 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
     BatcherTransactionMessage m;
     while ((m = txMessagesQueue.poll()) != null) {
       BatcherTransactionMessage curr = m;
-      curr.txs()
-          .forEach(
-              txData -> {
-                Span span =
-                    Logging.INSTANCE
-                        .getTracer()
-                        .nextSpan()
-                        .name("decode-batcher-transaction")
-                        .start();
-                try (var ignored = Logging.INSTANCE.getTracer().withSpan(span)) {
-                  txs.addLast(BatcherTransaction.create(txData, curr.l1Origin()));
-                } catch (Throwable throwable) {
-                  LOGGER.warn("dropping invalid batcher transaction", throwable);
-                } finally {
-                  span.end();
-                }
-              });
+      curr.txs().forEach(txData -> txs.addLast(BatcherTransaction.create(txData, curr.l1Origin())));
     }
   }
 

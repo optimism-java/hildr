@@ -17,7 +17,6 @@
 package io.optimism.derive.stages;
 
 import com.google.common.collect.AbstractIterator;
-import io.micrometer.tracing.Span;
 import io.optimism.common.BlockNotIncludedException;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
@@ -27,7 +26,6 @@ import io.optimism.derive.State;
 import io.optimism.derive.stages.Batches.Batch;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
-import io.optimism.telemetry.Logging;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,12 +88,7 @@ public class Attributes<I extends PurgeableIterator<Batch>>
   @Override
   protected PayloadAttributes computeNext() {
     final Batch batch = this.batchIterator.next();
-    Span span = Logging.INSTANCE.getTracer().nextSpan().name("derive-attributes").start();
-    try (var ignored = Logging.INSTANCE.getTracer().withSpan(span)) {
-      return batch != null ? this.deriveAttributes(batch) : null;
-    } finally {
-      span.end();
-    }
+    return batch != null ? this.deriveAttributes(batch) : null;
   }
 
   private PayloadAttributes deriveAttributes(Batch batch) {
