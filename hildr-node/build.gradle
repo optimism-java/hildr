@@ -66,12 +66,20 @@ dependencies {
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
-	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml:2.15.2'
+
+	implementation 'com.fasterxml.jackson:jackson-bom:2.15.2'
+	implementation 'com.fasterxml.jackson.core:jackson-core'
+	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml'
 	implementation 'org.jctools:jctools-core:4.0.1'
 
 	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
 	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+
+	//jsonrpc
+	implementation('io.vertx:vertx-auth-jwt:4.4.2')
+	implementation('io.vertx:vertx-core:4.4.2')
+	implementation('io.vertx:vertx-web:4.4.2')
 
 	implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
 	implementation platform('io.micrometer:micrometer-tracing-bom:1.1.1')
@@ -239,5 +247,61 @@ jar {
 	duplicatesStrategy = DuplicatesStrategy.WARN
 	from {
 		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+	} {
+		exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
 	}
+}
+
+task buildBinary {
+	dependsOn jar
+	def buildBinaryDir = "build/binary"
+	def out = new ByteArrayOutputStream()
+	doFirst {
+		new File(buildBinaryDir).mkdirs()
+		copy {
+			from "build/libs/${project.name}-${project.version}.jar"
+			into buildBinaryDir
+			rename "${project.name}-${project.version}.jar", "${project.name}.jar"
+		}
+	}
+	doLast {
+		exec {
+			workingDir buildBinaryDir
+			executable "sh"
+			args "-c", "native-image -jar ${project.name}.jar --initialize-at-build-time=ch.qos.logback,org.slf4j,io.opentelemetry ${project.name}"
+			standardOutput out
+		}
+	}
+	println(out.toString())
+}
+
+task buildDocker {
+	dependsOn jar
+	def buildImageDir = "build/docker"
+	def out = new ByteArrayOutputStream()
+	doFirst {
+		new File(buildImageDir).mkdirs()
+		copy {
+			from "../docker/start-hildr-node.sh"
+			into buildImageDir
+		}
+		copy {
+			from "../docker/Dockerfile"
+			into buildImageDir
+		}
+		copy {
+			from "build/libs/${project.name}-${project.version}.jar"
+			into buildImageDir
+			rename "${project.name}-${project.version}.jar", "${project.name}.jar"
+		}
+	}
+	doLast {
+		exec {
+			workingDir buildImageDir
+			executable "sh"
+			args "-c", "docker build --platform=linux/amd64 -t optimism-java/${project.name}:latest ."
+			standardOutput out
+		}
+	}
+	println(out.toString())
 }
