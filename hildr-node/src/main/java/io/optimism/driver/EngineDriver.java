@@ -89,6 +89,11 @@ public class EngineDriver<E extends Engine> {
     this.blockTime = config.chainConfig().blockTime();
   }
 
+  /** Stop. */
+  public void stop() {
+    this.web3j.shutdown();
+  }
+
   /**
    * Gets block time.
    *
@@ -302,7 +307,7 @@ public class EngineDriver<E extends Engine> {
 
       if (payloadStatus.getStatus() != Status.Valid
           && payloadStatus.getStatus() != Status.Accepted) {
-        throw new InvalidExecutionPayloadException();
+        throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
       }
     }
   }
@@ -324,7 +329,7 @@ public class EngineDriver<E extends Engine> {
 
       if (payloadStatus.getStatus() != Status.Valid
           && payloadStatus.getStatus() != Status.Accepted) {
-        throw new InvalidExecutionPayloadException();
+        throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
       }
 
       if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {

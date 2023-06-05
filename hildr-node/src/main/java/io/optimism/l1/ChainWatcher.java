@@ -28,7 +28,7 @@ import org.jctools.queues.MpscGrowableArrayQueue;
  * @author thinkAfCod
  * @since 0.1.0
  */
-@SuppressWarnings({"UnusedVariable", "preview"})
+@SuppressWarnings({"UnusedVariable"})
 public class ChainWatcher {
 
   private volatile MessagePassingQueue<BlockUpdate> blockUpdateQueue;
@@ -70,8 +70,7 @@ public class ChainWatcher {
 
   /** stop the ChainWatcher. */
   public void stop() {
-    innerWatcher.stopAsync();
-    innerWatcher.awaitTerminated();
+    innerWatcher.stopAsync().awaitTerminated();
   }
 
   /**

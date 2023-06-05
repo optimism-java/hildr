@@ -14,22 +14,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.driver;
+package io.optimism.runner;
 
 /**
- * The type ForkchoiceUpdateException.
+ * The type SyncUrlMissingException.
  *
  * @author grapebaba
  * @since 0.1.0
  */
-public class ForkchoiceUpdateException extends RuntimeException {
+public class SyncUrlMissingException extends RuntimeException {
+
+  /** Instantiates a new Sync url missing exception. */
+  public SyncUrlMissingException() {
+    super("Sync url missing");
+  }
 
   /**
-   * Instantiates a new Forkchoice update exception.
+   * Instantiates a new Sync url missing exception.
    *
    * @param message the message
    */
-  public ForkchoiceUpdateException(String message) {
+  public SyncUrlMissingException(String message) {
     super(message);
   }
 }

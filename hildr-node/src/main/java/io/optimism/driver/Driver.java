@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
@@ -80,16 +81,16 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
 
-  private Executor executor;
+  private ExecutorService executor;
 
   /**
    * Instantiates a new Driver.
    *
+   * @param engineDriver the engine driver
    * @param pipeline the pipeline
    * @param state the state
    * @param chainWatcher the chain watcher
    * @param unsafeBlockQueue the unsafe block queue
-   * @param engineDriver the engine driver
    */
   @SuppressWarnings("preview")
   public Driver(
@@ -108,6 +109,11 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     this.executor = Executors.newVirtualThreadPerTaskExecutor();
   }
 
+  /**
+   * Gets engine driver.
+   *
+   * @return the engine driver
+   */
   public EngineDriver<E> getEngineDriver() {
     return engineDriver;
   }
@@ -167,6 +173,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     // TODO: RPC SERVER
     MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue =
         new MpscUnboundedXaddArrayQueue<>(1024 * 64);
+    provider.shutdown();
     return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue);
   }
 
@@ -206,6 +213,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() {
     this.chainWatcher.stop();
+    this.executor.shutdown();
+    this.engineDriver.stop();
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    shutDown();
   }
 
   private void awaitEngineReady() throws InterruptedException {

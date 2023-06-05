@@ -28,4 +28,13 @@ public class BlockNotIncludedException extends RuntimeException {
   public BlockNotIncludedException() {
     super("block not included");
   }
+
+  /**
+   * Instantiates a new Block not included exception.
+   *
+   * @param message the message
+   */
+  public BlockNotIncludedException(String message) {
+    super(message);
+  }
 }

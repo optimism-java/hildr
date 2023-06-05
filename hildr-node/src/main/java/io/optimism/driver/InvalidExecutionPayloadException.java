@@ -28,4 +28,13 @@ public class InvalidExecutionPayloadException extends RuntimeException {
   public InvalidExecutionPayloadException() {
     super("invalid execution payload");
   }
+
+  /**
+   * Instantiates a new Invalid execution payload exception.
+   *
+   * @param message the message
+   */
+  public InvalidExecutionPayloadException(String message) {
+    super(message);
+  }
 }

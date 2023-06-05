@@ -14,22 +14,18 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.driver;
+package io.optimism.l1;
 
 /**
- * The type ForkchoiceUpdateException.
+ * The type BlockIsPreLondonException.
  *
  * @author grapebaba
  * @since 0.1.0
  */
-public class ForkchoiceUpdateException extends RuntimeException {
+public class BlockIsPreLondonException extends RuntimeException {
 
-  /**
-   * Instantiates a new Forkchoice update exception.
-   *
-   * @param message the message
-   */
-  public ForkchoiceUpdateException(String message) {
-    super(message);
+  /** Instantiates a new Block is pre london exception. */
+  public BlockIsPreLondonException() {
+    super("block is pre london");
   }
 }

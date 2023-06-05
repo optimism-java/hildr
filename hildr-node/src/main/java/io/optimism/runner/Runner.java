@@ -17,10 +17,13 @@
 package io.optimism.runner;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import io.optimism.common.BlockNotIncludedException;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SyncMode;
 import io.optimism.config.Config.SystemAccounts;
 import io.optimism.driver.Driver;
+import io.optimism.driver.ForkchoiceUpdateException;
+import io.optimism.driver.InvalidExecutionPayloadException;
 import io.optimism.engine.EngineApi;
 import io.optimism.engine.ExecutionPayload;
 import io.optimism.engine.ExecutionPayload.Status;
@@ -30,13 +33,13 @@ import io.optimism.engine.OpEthPayloadStatus;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.BooleanResponse;
@@ -49,6 +52,7 @@ import org.web3j.utils.Numeric;
 /** The type Runner. */
 public class Runner extends AbstractExecutionThreadService {
 
+  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(Runner.class);
   private static final String TRUSTED_PEER_ENODE =
       "enode://e85ba0beec172b17f53b373b0ab72238754259aa39f1ae5290e3244e0120882f4cf95acd203661a27"
           + "c8618b27ca014d4e193266cb3feae43655ed55358eedb06@3.86.143.120:30303?discport=21693";
@@ -57,6 +61,8 @@ public class Runner extends AbstractExecutionThreadService {
   private SyncMode syncMode;
 
   private String checkpointHash;
+
+  private Driver<EngineApi> driver;
 
   /**
    * Instantiates a new Runner.
@@ -69,6 +75,14 @@ public class Runner extends AbstractExecutionThreadService {
     this.config = config;
     this.syncMode = syncMode;
     this.checkpointHash = checkpointHash;
+    try {
+      this.driver = Driver.from(this.config);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new DriverInitException(e);
+    } catch (ExecutionException e) {
+      throw new DriverInitException(e);
+    }
   }
 
   /**
@@ -95,37 +109,24 @@ public class Runner extends AbstractExecutionThreadService {
 
   /** Fast sync. */
   public void fastSync() {
+    LOGGER.error("fast sync is not implemented yet");
     throw new UnsupportedOperationException("fast sync is not implemented yet");
   }
 
   /** Challenge sync. */
   public void challengeSync() {
+    LOGGER.error("challenge sync is not implemented yet");
     throw new UnsupportedOperationException("challenge sync is not implemented yet");
   }
 
-  /**
-   * Full sync.
-   *
-   * @throws ExecutionException the execution exception
-   * @throws InterruptedException the interrupted exception
-   */
-  public void fullSync() throws ExecutionException, InterruptedException {
+  /** Full sync. */
+  public void fullSync() {
+    LOGGER.info("starting full sync");
     waitDriverRunning();
   }
 
-  private void waitDriverRunning() throws InterruptedException, ExecutionException {
-    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-      var voidFuture =
-          scope.fork(
-              (Callable<Void>)
-                  () -> {
-                    Runner.this.startDriver();
-                    return null;
-                  });
-      scope.join();
-      scope.throwIfFailed();
-      voidFuture.resultNow();
-    }
+  private void waitDriverRunning() {
+    this.startDriver();
   }
 
   /**
@@ -137,7 +138,8 @@ public class Runner extends AbstractExecutionThreadService {
   public void checkpointSync() throws ExecutionException, InterruptedException {
     Web3j l2Provider = Web3j.build(new HttpService(this.config.l2RpcUrl()));
     if (StringUtils.isEmpty(this.config.checkpointSyncUrl())) {
-      throw new RuntimeException("a checkpoint sync rpc url is required for checkpoint sync");
+      throw new SyncUrlMissingException(
+          "a checkpoint sync rpc url is required for checkpoint sync");
     }
     Web3j checkpointSyncUrl = Web3j.build(new HttpService(this.config.checkpointSyncUrl()));
 
@@ -147,10 +149,16 @@ public class Runner extends AbstractExecutionThreadService {
           isEpochBoundary(this.checkpointHash, checkpointSyncUrl);
       if (isEpochBoundary.component1()) {
         checkpointBlock = isEpochBoundary.component2();
+        if (checkpointBlock == null) {
+          LOGGER.error("could not get checkpoint block");
+          throw new BlockNotIncludedException("could not get checkpoint block");
+        }
       } else {
-        this.stopAsync().awaitTerminated();
+        LOGGER.error("could not get checkpoint block");
+        throw new BlockNotIncludedException("could not get checkpoint block");
       }
     } else {
+      LOGGER.info("finding the latest epoch boundary to use as checkpoint");
       BigInteger blockNumber;
       try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
         Future<BigInteger> blockNumberFuture =
@@ -176,9 +184,13 @@ public class Runner extends AbstractExecutionThreadService {
     }
 
     if (checkpointBlock == null) {
-      throw new RuntimeException("could not find checkpoint block");
+      throw new BlockNotIncludedException("could not find checkpoint block");
     }
     String checkpointHash = checkpointBlock.getBlock().getHash();
+    if (StringUtils.isEmpty(checkpointHash)) {
+      throw new BlockNotIncludedException("block hash is missing");
+    }
+    LOGGER.info("found checkpoint block {}", checkpointHash);
     EngineApi engineApi = new EngineApi(this.config.l2EngineUrl(), this.config.jwtSecret());
     while (isRunning()) {
       boolean isAvailable;
@@ -196,21 +208,24 @@ public class Runner extends AbstractExecutionThreadService {
       }
     }
 
+    EthBlock l2CheckpointBlock;
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<EthBlock> l2CheckpointBlockFuture =
           scope.fork(() -> l2Provider.ethGetBlockByHash(checkpointHash, true).send());
 
       scope.join();
       scope.throwIfFailed();
-      EthBlock l2CheckpointBlock = l2CheckpointBlockFuture.resultNow();
-      if (l2CheckpointBlock != null) {
-        this.startDriver();
-        return;
-      }
+      l2CheckpointBlock = l2CheckpointBlockFuture.resultNow();
+    }
+    if (l2CheckpointBlock != null) {
+      LOGGER.warn("finalized head is above the checkpoint block");
+      this.startDriver();
+      return;
     }
 
     // this is a temporary fix to allow execution layer peering to work
     // TODO: use a list of whitelisted bootnodes instead
+    LOGGER.info("adding trusted peer to the execution layer");
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<BooleanResponse> isPeerAddedFuture =
           scope.fork(() -> l2Provider.adminAddPeer(TRUSTED_PEER_ENODE).send());
@@ -218,7 +233,7 @@ public class Runner extends AbstractExecutionThreadService {
       scope.throwIfFailed();
       BooleanResponse isPeerAdded = isPeerAddedFuture.resultNow();
       if (!isPeerAdded.success()) {
-        throw new RuntimeException("could not add peer");
+        throw new TrustedPeerAddedException("could not add peer");
       }
     }
 
@@ -238,16 +253,19 @@ public class Runner extends AbstractExecutionThreadService {
 
       if (payloadStatus.getPayloadStatus().getStatus() == Status.Invalid
           || payloadStatus.getPayloadStatus().getStatus() == Status.InvalidBlockHash) {
-        throw new RuntimeException("the provided checkpoint payload is invalid");
+        LOGGER.error("the provided checkpoint payload is invalid, exiting");
+        throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
       }
 
       if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus() == Status.Invalid
           || forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
               == Status.InvalidBlockHash) {
-        throw new RuntimeException("could not accept forkchoice, exiting");
+        LOGGER.error("could not accept forkchoice, exiting");
+        throw new ForkchoiceUpdateException("could not accept forkchoice, exiting");
       }
     }
 
+    LOGGER.info("syncing execution client to the checkpoint block...");
     while (isRunning()) {
       BigInteger blockNumber;
       try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -265,12 +283,12 @@ public class Runner extends AbstractExecutionThreadService {
       }
     }
 
+    LOGGER.info("execution client successfully synced to the checkpoint block");
     waitDriverRunning();
   }
 
-  private void startDriver() throws ExecutionException, InterruptedException {
-    Driver<EngineApi> driver = Driver.from(this.config);
-    driver.startAsync().awaitRunning();
+  private void startDriver() {
+    driver.startAsync().awaitTerminated();
   }
 
   private Tuple2<Boolean, EthBlock> isEpochBoundary(String blockHash, Web3j checkpointSyncUrl)
@@ -283,7 +301,7 @@ public class Runner extends AbstractExecutionThreadService {
       scope.throwIfFailed();
       block = blockFuture.get();
       if (block == null) {
-        throw new RuntimeException("could not find block from checkpoint sync url");
+        throw new BlockNotIncludedException("could not find block from checkpoint sync url");
       }
     }
 
@@ -321,7 +339,7 @@ public class Runner extends AbstractExecutionThreadService {
                     .findFirst()
                     .orElseThrow(
                         () ->
-                            new RuntimeException(
+                            new TransactionNotFoundException(
                                 "could not find setL1BlockValues tx in the epoch boundary"
                                     + " search")))
             .getInput();
@@ -352,5 +370,15 @@ public class Runner extends AbstractExecutionThreadService {
       case Checkpoint -> this.checkpointSync();
       default -> throw new RuntimeException("unknown sync mode");
     }
+  }
+
+  @Override
+  protected void shutDown() {
+    driver.stopAsync().awaitTerminated();
+  }
+
+  @Override
+  protected void triggerShutdown() {
+    shutDown();
   }
 }

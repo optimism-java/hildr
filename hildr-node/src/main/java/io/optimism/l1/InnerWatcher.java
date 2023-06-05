@@ -18,10 +18,13 @@ package io.optimism.l1;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockInfo;
+import io.optimism.common.BlockNotIncludedException;
+import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes;
 import io.optimism.derive.stages.Attributes.UserDeposited;
+import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.BlockUpdate.FinalityUpdate;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -164,16 +167,22 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     try {
       block = this.getBlock(l2Client, l2StartBlock.subtract(BigInteger.ONE));
     } catch (InterruptedException | ExecutionException e) {
+      if (e instanceof InterruptedException) {
+        Thread.currentThread().interrupt();
+      }
       l2Client.shutdown();
-      throw new RuntimeException(e);
+      throw new HildrServiceExecutionException(e);
+    }
+    if (block.getBlock().getTransactions().isEmpty()) {
+      throw new L1AttributesDepositedTxNotFoundException();
     }
     EthBlock.TransactionObject tx =
         (EthBlock.TransactionObject) block.getBlock().getTransactions().get(0).get();
     final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
 
     final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
-    var l1FeeOverhead = new BigInteger(Arrays.copyOfRange(input, 196, 228));
-    var l1FeeScalar = new BigInteger(Arrays.copyOfRange(input, 228, 260));
+    var l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, 196, 228));
+    var l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, 228, 260));
     var gasLimit = block.getBlock().getGasLimit();
     this.systemConfig =
         new Config.SystemConfig(
@@ -212,7 +221,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
       try {
         Thread.sleep(Duration.ofMillis(250L));
       } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+        Thread.currentThread().interrupt();
+        throw new HildrServiceExecutionException(e);
       }
     }
   }
@@ -249,7 +259,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
   private void putBlockUpdate(final BlockUpdate update) {
     while (true) {
-      boolean isOffered = this.blockUpdateQueue.relaxedOffer(update);
+      boolean isOffered = this.blockUpdateQueue.offer(update);
       if (isOffered) {
         break;
       }
@@ -313,6 +323,14 @@ public class InnerWatcher extends AbstractExecutionThreadService {
               this.systemConfig.l1FeeOverhead(),
               this.systemConfig.l1FeeScalar(),
               this.systemConfig.unsafeBlockSigner());
+    } else if (configUpdate instanceof SystemConfigUpdate.UnsafeBlockSigner) {
+      updateSystemConfig =
+          new Config.SystemConfig(
+              this.systemConfig.batchSender(),
+              this.systemConfig.gasLimit(),
+              this.systemConfig.l1FeeOverhead(),
+              this.systemConfig.l1FeeScalar(),
+              ((SystemConfigUpdate.UnsafeBlockSigner) configUpdate).getAddress());
     }
     return updateSystemConfig;
   }
@@ -322,59 +340,69 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     if (size >= 2) {
       BlockInfo last = this.unfinalizedBlocks.get(size - 1);
       BlockInfo parent = this.unfinalizedBlocks.get(size - 2);
-      return !last.parentHash().equals(parent.hash());
+      return !last.parentHash().equalsIgnoreCase(parent.hash());
     }
     return false;
   }
 
   private BigInteger getFinalized() throws ExecutionException, InterruptedException {
-    return this.executor
-        .submit(
-            () -> {
-              try {
-                EthBlock block =
-                    this.provider
-                        .ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, false)
-                        .send();
-                return block.getBlock().getNumber();
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            })
-        .get();
+    EthBlock.Block finalizedBlock =
+        this.executor
+            .submit(
+                () -> {
+                  EthBlock block =
+                      this.provider
+                          .ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, false)
+                          .send();
+                  return block.getBlock();
+                })
+            .get();
+    if (finalizedBlock == null) {
+      throw new BlockNotIncludedException();
+    }
+    if (finalizedBlock.getNumber() == null) {
+      throw new BlockNotIncludedException();
+    }
+
+    return finalizedBlock.getNumber();
   }
 
   private BigInteger getHead() throws ExecutionException, InterruptedException {
-    return this.executor
-        .submit(
-            () -> {
-              try {
-                EthBlock block =
-                    this.provider
-                        .ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false)
-                        .send();
-                return block.getBlock().getNumber();
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            })
-        .get();
+    EthBlock.Block headBlock =
+        this.executor
+            .submit(
+                () -> {
+                  EthBlock block =
+                      this.provider
+                          .ethGetBlockByNumber(DefaultBlockParameterName.LATEST, false)
+                          .send();
+                  return block.getBlock();
+                })
+            .get();
+    if (headBlock == null) {
+      throw new BlockNotIncludedException();
+    }
+    if (headBlock.getNumber() == null) {
+      throw new BlockNotIncludedException();
+    }
+
+    return headBlock.getNumber();
   }
 
   private EthBlock getBlock(final Web3j client, final BigInteger blockNum)
       throws ExecutionException, InterruptedException {
-    return this.executor
-        .submit(
-            () -> {
-              try {
-                return client
-                    .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
-                    .send();
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            })
-        .get();
+    EthBlock block =
+        this.executor
+            .submit(
+                () ->
+                    client
+                        .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
+                        .send())
+            .get();
+    if (block == null) {
+      throw new BlockNotIncludedException();
+    }
+    return block;
   }
 
   private EthLog getLog(BigInteger fromBlock, BigInteger toBlock, String contract, String topic)
@@ -386,16 +414,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 contract)
             .addSingleTopic(topic);
 
-    return this.executor
-        .submit(
-            () -> {
-              try {
-                return this.provider.ethGetLogs(ethFilter).send();
-              } catch (Exception e) {
-                throw new RuntimeException(e);
-              }
-            })
-        .get();
+    return this.executor.submit(() -> this.provider.ethGetLogs(ethFilter).send()).get();
   }
 
   private List<Attributes.UserDeposited> getDeposits(BigInteger blockNum)
@@ -426,7 +445,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 })
             .toList();
 
-    for (BigInteger i = blockNum; i.compareTo(endBlock) < 0; i = i.add(BigInteger.ONE)) {
+    for (BigInteger i = blockNum; i.compareTo(endBlock) <= 0; i = i.add(BigInteger.ONE)) {
       final BigInteger num = i;
       final List<UserDeposited> collect =
           depositLogs.stream()
@@ -434,7 +453,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
               .collect(Collectors.toList());
       InnerWatcher.this.deposits.put(num, collect);
     }
-    return InnerWatcher.this.deposits.remove(blockNum);
+    var remv = InnerWatcher.this.deposits.remove(blockNum);
+    if (remv == null) {
+      throw new DepositsNotFoundException();
+    }
+    return remv;
   }
 
   private Web3j createClient(String url) {
@@ -453,7 +476,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         LOGGER.error("error while fetching L1 data for block {}", currentBlock);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new RuntimeException(e);
+        throw new HildrServiceExecutionException(e);
       }
     }
   }
@@ -464,7 +487,13 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   }
 
   @Override
+  protected void shutDown() {
+    this.executor.shutdown();
+    this.provider.shutdown();
+  }
+
+  @Override
   protected void triggerShutdown() {
-    var unused = this.executor.shutdownNow();
+    shutDown();
   }
 }

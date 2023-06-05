@@ -14,22 +14,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.driver;
+package io.optimism.runner;
 
 /**
- * The type ForkchoiceUpdateException.
+ * The type TransactionNotFoundException.
  *
  * @author grapebaba
  * @since 0.1.0
  */
-public class ForkchoiceUpdateException extends RuntimeException {
+public class TransactionNotFoundException extends RuntimeException {
+
+  /** Instantiates a new Transaction not found exception. */
+  public TransactionNotFoundException() {
+    super("Transaction not found");
+  }
 
   /**
-   * Instantiates a new Forkchoice update exception.
+   * Instantiates a new Transaction not found exception.
    *
    * @param message the message
    */
-  public ForkchoiceUpdateException(String message) {
+  public TransactionNotFoundException(String message) {
     super(message);
   }
 }

@@ -19,6 +19,7 @@ package io.optimism.l1;
 import static org.web3j.protocol.core.methods.response.EthBlock.Block;
 import static org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
+import io.optimism.common.BlockNotIncludedException;
 import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes.UserDeposited;
 import java.math.BigInteger;
@@ -58,13 +59,24 @@ public record L1Info(
       String batchInbox,
       boolean finalized,
       SystemConfig systemConfig) {
+    BigInteger blockNumber = block.getNumber();
+    if (blockNumber == null) {
+      throw new BlockNotIncludedException();
+    }
+    String blockHash = block.getHash();
+    if (blockHash == null) {
+      throw new BlockNotIncludedException();
+    }
+    String mixHash = block.getMixHash();
+    if (mixHash == null) {
+      throw new BlockNotIncludedException();
+    }
+    BigInteger baseFeePerGas = block.getBaseFeePerGas();
+    if (baseFeePerGas == null) {
+      throw new BlockIsPreLondonException();
+    }
     L1BlockInfo l1BlockInfo =
-        L1BlockInfo.create(
-            block.getNumber(),
-            block.getHash(),
-            block.getTimestamp(),
-            block.getBaseFeePerGas(),
-            block.getMixHash());
+        L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, mixHash);
     List<String> batcherTransactions =
         createBatcherTransactions(block, systemConfig.batchSender(), batchInbox);
 
@@ -76,8 +88,8 @@ public record L1Info(
     return block.getTransactions().stream()
         .filter(
             transactionResult ->
-                batchSender.equals(((TransactionObject) transactionResult).getFrom())
-                    && batchInbox.equals(((TransactionObject) transactionResult).getTo()))
+                batchSender.equalsIgnoreCase(((TransactionObject) transactionResult).getFrom())
+                    && batchInbox.equalsIgnoreCase(((TransactionObject) transactionResult).getTo()))
         .map(transactionResult -> ((TransactionObject) transactionResult).getInput())
         .toList();
   }

@@ -18,8 +18,8 @@ package io.optimism.l1;
 
 import java.math.BigInteger;
 import java.util.Arrays;
-import org.bouncycastle.util.encoders.Hex;
 import org.web3j.protocol.core.methods.response.EthLog;
+import org.web3j.utils.Numeric;
 
 /**
  * SystemConfigUpdate class.
@@ -28,8 +28,6 @@ import org.web3j.protocol.core.methods.response.EthLog;
  * @since 0.1.0
  */
 public abstract class SystemConfigUpdate {
-
-  private static final String ERROR_MSG = "invalid system config update";
 
   /** not public constructor. */
   private SystemConfigUpdate() {}
@@ -119,6 +117,30 @@ public abstract class SystemConfigUpdate {
     }
   }
 
+  /** The type Unsafe block signer. */
+  public static final class UnsafeBlockSigner extends SystemConfigUpdate {
+
+    private final String address;
+
+    /**
+     * the UnsafeBlockSigner constructor.
+     *
+     * @param address batch sender address
+     */
+    public UnsafeBlockSigner(String address) {
+      this.address = address;
+    }
+
+    /**
+     * get UnsafeBlockSigner.
+     *
+     * @return UnsafeBlockSigner
+     */
+    public String getAddress() {
+      return address;
+    }
+  }
+
   /**
    * create systemConfigUpdate from EthLog.LogObject.
    *
@@ -126,33 +148,58 @@ public abstract class SystemConfigUpdate {
    * @return a SystemConfigUpdate instance
    */
   public static SystemConfigUpdate tryFrom(EthLog.LogObject log) {
-    byte[] decode = Hex.decode(log.getTopics().get(1));
-    BigInteger version = new BigInteger(decode);
+    if (log.getTopics().get(1) == null) {
+      throw new InvalidSystemConfigUpdateException();
+    }
+    byte[] decodeVersion = Numeric.hexStringToByteArray(log.getTopics().get(1));
+    BigInteger version = Numeric.toBigInt(decodeVersion);
 
     if (version.compareTo(BigInteger.ZERO) != 0) {
-      throw new IllegalStateException(ERROR_MSG);
+      throw new InvalidSystemConfigUpdateException();
     }
 
-    byte[] decodeUpdateType = Hex.decode(log.getTopics().get(2));
-    BigInteger updateType = new BigInteger(decodeUpdateType);
+    if (log.getTopics().get(2) == null) {
+      throw new InvalidSystemConfigUpdateException();
+    }
+    byte[] decodeUpdateType = Numeric.hexStringToByteArray(log.getTopics().get(2));
+    BigInteger updateType = Numeric.toBigInt(decodeUpdateType);
     if (BigInteger.ZERO.compareTo(updateType) == 0) {
-      byte[] data = Hex.decode(log.getData());
+      byte[] data = Numeric.hexStringToByteArray(log.getData());
       byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
-      return new BatchSender(Hex.toHexString(addrBytes));
+      if (addrBytes.length != 20) {
+        throw new InvalidSystemConfigUpdateException();
+      }
+      return new BatchSender(Numeric.toHexString(addrBytes));
     } else if (BigInteger.ONE.compareTo(updateType) == 0) {
-      byte[] data = Hex.decode(log.getData());
+      byte[] data = Numeric.hexStringToByteArray(log.getData());
       byte[] feeOverheadBytes = Arrays.copyOfRange(data, 64, 96);
+      if (feeOverheadBytes.length != 32) {
+        throw new InvalidSystemConfigUpdateException();
+      }
       byte[] feeScalarBytes = Arrays.copyOfRange(data, 96, 128);
-      BigInteger feeOverhead = new BigInteger(feeOverheadBytes);
-      BigInteger feeScalar = new BigInteger(feeScalarBytes);
+      if (feeScalarBytes.length != 32) {
+        throw new InvalidSystemConfigUpdateException();
+      }
+      BigInteger feeOverhead = Numeric.toBigInt(feeOverheadBytes);
+      BigInteger feeScalar = Numeric.toBigInt(feeScalarBytes);
       return new Fees(feeOverhead, feeScalar);
     } else if (BigInteger.TWO.compareTo(updateType) == 0) {
-      byte[] data = Hex.decode(log.getData());
+      byte[] data = Numeric.hexStringToByteArray(log.getData());
       byte[] gasBytes = Arrays.copyOfRange(data, 64, 96);
-      BigInteger gas = new BigInteger(gasBytes);
+      if (gasBytes.length != 32) {
+        throw new InvalidSystemConfigUpdateException();
+      }
+      BigInteger gas = Numeric.toBigInt(gasBytes);
       return new Gas(gas);
+    } else if (BigInteger.valueOf(3L).compareTo(updateType) == 0) {
+      byte[] data = Numeric.hexStringToByteArray(log.getData());
+      byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
+      if (addrBytes.length != 20) {
+        throw new InvalidSystemConfigUpdateException();
+      }
+      return new UnsafeBlockSigner(Numeric.toHexString(addrBytes));
     } else {
-      throw new IllegalStateException(ERROR_MSG);
+      throw new InvalidSystemConfigUpdateException();
     }
   }
 }

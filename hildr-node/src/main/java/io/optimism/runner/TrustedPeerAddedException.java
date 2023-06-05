@@ -14,22 +14,27 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.driver;
+package io.optimism.runner;
 
 /**
- * The type ForkchoiceUpdateException.
+ * The type TrustedPeerAddedException.
  *
  * @author grapebaba
  * @since 0.1.0
  */
-public class ForkchoiceUpdateException extends RuntimeException {
+public class TrustedPeerAddedException extends RuntimeException {
+
+  /** Instantiates a new Trusted peer added exception. */
+  public TrustedPeerAddedException() {
+    super("Trusted peer added");
+  }
 
   /**
-   * Instantiates a new Forkchoice update exception.
+   * Instantiates a new Trusted peer added exception.
    *
    * @param message the message
    */
-  public ForkchoiceUpdateException(String message) {
+  public TrustedPeerAddedException(String message) {
     super(message);
   }
 }

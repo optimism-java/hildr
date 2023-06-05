@@ -18,6 +18,7 @@ package io.optimism.cli;
 
 import io.micrometer.tracing.Tracer;
 import io.optimism.cli.typeconverter.SyncModeConverter;
+import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
 import io.optimism.runner.Runner;
 import io.optimism.telemetry.InnerMetrics;
@@ -37,7 +38,7 @@ import picocli.CommandLine.Option;
 @Command(name = "hildr", mixinStandardHelpOptions = true, description = "")
 public class Cli implements Runnable {
 
-  private static final Logger logger = LoggerFactory.getLogger(Cli.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
   @Option(names = "--network", description = "network type, support: optimism-goerli, base-goerli")
   String network;
@@ -98,12 +99,21 @@ public class Cli implements Runnable {
     InnerMetrics.start(9200);
 
     Runner runner = Runner.create(config).setSyncMode(syncMode).setCheckpointHash(checkpointHash);
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  LOGGER.info("hildr: shutdown");
+                  runner.stopAsync().awaitTerminated();
+                }));
     var span = tracer.nextSpan().name("start-runner").start();
     try (var unused = tracer.withSpan(span)) {
       runner.startAsync().awaitTerminated();
     } catch (Exception e) {
-      logger.error("hildr: ", e);
-      throw new RuntimeException(e);
+      LOGGER.error("hildr: ", e);
+      throw new HildrServiceExecutionException(e);
+    } finally {
+      span.end();
     }
   }
 
@@ -117,7 +127,7 @@ public class Cli implements Runnable {
       throw new RuntimeException("network not recognized");
     }
 
-    var configPath = Paths.get(System.getProperty("user.home"), ".magi/magi.toml");
+    var configPath = Paths.get(System.getProperty("user.home"), ".hildr/hildr.toml");
     var cliConfig = from(Cli.this);
     return Config.create(configPath, cliConfig, chain);
   }

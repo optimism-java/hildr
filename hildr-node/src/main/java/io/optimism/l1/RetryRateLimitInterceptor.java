@@ -59,12 +59,11 @@ public class RetryRateLimitInterceptor implements Interceptor {
             .withWaitStrategy(WaitStrategies.randomWait(3, TimeUnit.SECONDS))
             .withStopStrategy(StopStrategies.stopAfterAttempt(10))
             .retryIfResult(
-                res -> {
-                  return res != null
-                      && (res.code() == 429
-                          || res.message().contains(HEADER_NOT_FOUND)
-                          || res.message().contains(RATE_LIMIT_MSG));
-                })
+                res ->
+                    res != null
+                        && (res.code() == 429
+                            || res.message().contains(HEADER_NOT_FOUND)
+                            || res.message().contains(RATE_LIMIT_MSG)))
             .retryIfException(e -> e instanceof IOException)
             .build();
   }
