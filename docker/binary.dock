@@ -26,8 +26,8 @@ RUN export PATH=$JAVA_HOME/bin:$PATH
 
 WORKDIR /usr/local/bin
 COPY . .
-ENV HILDR_JAR /usr/local/bin/hildr-node.jar
-ENV HILDR_MAIN_CLASS io.optimism.Hildr
+
+RUN chmod 0755 hildr-node && export PATH=/usr/local/bin:$PATH
 
 
 

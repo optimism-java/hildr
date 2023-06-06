@@ -192,7 +192,7 @@ spotless {
 		// make sure every file has the following copyright header.
 		// optionally, Spotless can set copyright years by digging
 		// through git history (see "license" section below)
-		licenseHeaderFile project(":").file("config/spotless/java.license")
+//		licenseHeaderFile project(":").file("config/spotless/java.license")
 		importOrder()
 
 		removeUnusedImports()
@@ -268,7 +268,7 @@ task buildBinary {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --initialize-at-build-time=ch.qos.logback,org.slf4j,io.opentelemetry ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --static --initialize-at-build-time=ch.qos.logback,org.slf4j,io.opentelemetry,java.io ${project.name}"
 			standardOutput out
 		}
 	}
@@ -281,10 +281,6 @@ task buildDocker {
 	def out = new ByteArrayOutputStream()
 	doFirst {
 		new File(buildImageDir).mkdirs()
-		copy {
-			from "../docker/start-hildr-node.sh"
-			into buildImageDir
-		}
 		copy {
 			from "../docker/Dockerfile"
 			into buildImageDir
@@ -304,4 +300,32 @@ task buildDocker {
 		}
 	}
 	println(out.toString())
+}
+
+task buildNativeDocker {
+	dependsOn buildBinary
+	def buildImageDir = "build/docker"
+	def out = new ByteArrayOutputStream()
+	doFirst {
+		new File(buildImageDir).mkdirs()
+		copy {
+			from "../docker/binary.dock"
+			into buildImageDir
+		}
+		copy {
+			from "build/binary/"
+			into buildImageDir
+			include "${project.name}"
+		}
+	}
+	doLast {
+		exec {
+			workingDir buildImageDir
+			executable "sh"
+			args "-c", "docker build --platform=linux/amd64 -f binary.dock -t optimism-java/${project.name}:latest ."
+			standardOutput out
+		}
+	}
+	println(out.toString())
+
 }

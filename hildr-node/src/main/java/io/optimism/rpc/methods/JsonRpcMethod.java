@@ -19,8 +19,7 @@ import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
 
 /**
- * jsonrpc handle method interface.
- * base on besu
+ * jsonrpc handle method interface. base on besu
  *
  * @author thinkAfCod
  * @since 2023.06
