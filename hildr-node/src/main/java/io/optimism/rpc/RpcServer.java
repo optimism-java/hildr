@@ -37,6 +37,7 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import io.vertx.ext.web.handler.BodyHandler;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -98,6 +99,7 @@ public class RpcServer {
     var router = Router.router(this.vertx);
     router
         .route()
+        .handler(BodyHandler.create())
         .handler(
             context -> {
               Tracer tracer = Logging.INSTANCE.getTracer("jsonrpc-server");
@@ -116,7 +118,7 @@ public class RpcServer {
     mainRoute.handler(
         JsonRpcExecutorHandler.handler(
             new LoggedJsonRpcProcessor(new BaseJsonRpcProcessor()), methods));
-    return null;
+    return router;
   }
 
   private Handler<HttpConnection> connectionHandler() {

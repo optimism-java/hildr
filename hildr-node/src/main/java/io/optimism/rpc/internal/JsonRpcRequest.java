@@ -103,7 +103,7 @@ public class JsonRpcRequest {
   }
 
   @JsonSetter("id")
-  protected void setId(final JsonRpcRequestId id) {
+  public void setId(final JsonRpcRequestId id) {
     // If an id is explicitly set, it is not a notification
     isNotification = false;
     this.id = id;
