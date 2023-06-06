@@ -71,32 +71,13 @@ public class OutputAtBlock implements JsonRpcMethod {
   public JsonRpcResponse response(JsonRpcRequestContext context) {
     final BigInteger blockNumber = new BigInteger(context.getParameter(0, String.class), 10);
 
-    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-      Future<EthBlock> ethBlockFuture =
-          scope.fork(
-              () ->
-                  client
-                      .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
-                      .send());
-      Future<EthGetProof> ehtGetProofFuture =
-          scope.fork(
-              () -> {
-                return new Request<>(
-                        ETH_GET_PROOF,
-                        Arrays.asList(
-                            this.l2ToL1MessagePasser,
-                            Collections.<String>emptyList(),
-                            DefaultBlockParameter.valueOf(blockNumber)),
-                        this.service,
-                        EthGetProof.class)
-                    .send();
-              });
-      scope.join();
-      scope.throwIfFailed();
-      EthBlock.Block block = ethBlockFuture.resultNow().getBlock();
-      String stateRoot = block.getStateRoot();
+    try {
+      EthBlock.Block block = this.getBlock(blockNumber);
 
-      EthGetProof.Proof stateProof = ehtGetProofFuture.resultNow().getProof();
+      final String blockHash = block.getHash();
+      EthGetProof.Proof stateProof = this.getProof(blockHash);
+
+      String stateRoot = block.getStateRoot();
       String withdrawalStorageRoot = stateProof.getStorageHash();
       var outputRoot = computeL2OutputRoot(block, withdrawalStorageRoot);
       var version = new byte[32];
@@ -124,5 +105,40 @@ public class OutputAtBlock implements JsonRpcMethod {
 
     byte[] hash = digest.digest(digestBytes);
     return Numeric.toHexString(hash);
+  }
+
+  private EthBlock.Block getBlock(final BigInteger blockNumber)
+      throws InterruptedException, ExecutionException {
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<EthBlock> ethBlockFuture =
+          scope.fork(
+              () ->
+                  client
+                      .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
+                      .send());
+      scope.join();
+      scope.throwIfFailed();
+      return ethBlockFuture.resultNow().getBlock();
+    }
+  }
+
+  private EthGetProof.Proof getProof(String blockHash)
+      throws InterruptedException, ExecutionException {
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<EthGetProof> ehtGetProofFuture =
+          scope.fork(
+              () -> {
+                return new Request<>(
+                        ETH_GET_PROOF,
+                        Arrays.asList(
+                            this.l2ToL1MessagePasser, Collections.<String>emptyList(), blockHash),
+                        this.service,
+                        EthGetProof.class)
+                    .send();
+              });
+      scope.join();
+      scope.throwIfFailed();
+      return ehtGetProofFuture.resultNow().getProof();
+    }
   }
 }

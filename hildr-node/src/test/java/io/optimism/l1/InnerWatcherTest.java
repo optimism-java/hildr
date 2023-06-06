@@ -18,9 +18,9 @@ package io.optimism.l1;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.optimism.TestConstants;
 import io.optimism.config.Config;
 import java.math.BigInteger;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -38,40 +38,19 @@ import org.junit.jupiter.api.Test;
  */
 public class InnerWatcherTest {
 
-  private static final String ETH_API_ENV = "ETH_API_KEY";
-  private static final String OPT_API_ENV = "OPT_API_KEY";
-
-  static String l1RpcUrlFormat = "https://eth-goerli.g.alchemy.com/v2/%s";
-  static String l2RpcUrlFormat = "https://opt-goerli.g.alchemy.com/v2/%s";
-
-  private static boolean isConfiguredApiKeyEnv = false;
-
   private static Config config;
 
   private static ExecutorService executor;
 
   @BeforeAll
   static void setUp() {
-    config = createConfig();
+    config = TestConstants.createConfig();
     executor = Executors.newSingleThreadExecutor();
   }
 
   @AfterAll
   static void tearDown() {
     executor.shutdownNow();
-  }
-
-  static Config createConfig() {
-    Map<String, String> envs = System.getenv();
-    isConfiguredApiKeyEnv = envs.containsKey(ETH_API_ENV) && envs.containsKey(OPT_API_ENV);
-    if (!isConfiguredApiKeyEnv) {
-      return null;
-    }
-    var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
-    var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
-    Config.CliConfig cliConfig =
-        new Config.CliConfig(l1RpcUrl, l2RpcUrl, null, "testjwt", null, null);
-    return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
   }
 
   InnerWatcher createWatcher(
@@ -86,7 +65,7 @@ public class InnerWatcherTest {
 
   @Test
   void testCreateInnerWatcher() {
-    if (!isConfiguredApiKeyEnv) {
+    if (!TestConstants.isConfiguredApiKeyEnv) {
       return;
     }
     var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
@@ -98,7 +77,7 @@ public class InnerWatcherTest {
 
   @Test
   void testTryIngestBlock() throws ExecutionException, InterruptedException {
-    if (!isConfiguredApiKeyEnv) {
+    if (!TestConstants.isConfiguredApiKeyEnv) {
       return;
     }
     ExecutorService executor = Executors.newSingleThreadExecutor();
