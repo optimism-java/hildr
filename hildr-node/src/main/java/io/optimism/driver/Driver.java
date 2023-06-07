@@ -194,7 +194,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
   protected void run() {
     while (isRunning() && !isShutdownTriggered.get()) {
       try {
-        LOGGER.debug("advance driver");
         this.advance();
       } catch (InterruptedException e) {
         LOGGER.error("driver run interrupted", e);
