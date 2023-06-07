@@ -16,8 +16,6 @@
 
 package io.optimism.derive;
 
-import java.util.Iterator;
-
 /**
  * The interface PurgeableIterator is an iterator that can purge itself.
  *
@@ -25,8 +23,15 @@ import java.util.Iterator;
  * @author grapebaba
  * @since 0.1.0
  */
-public interface PurgeableIterator<E> extends Iterator<E> {
+public interface PurgeableIterator<E> {
 
   /** Purge. */
   void purge();
+
+  /**
+   * Next e.
+   *
+   * @return the e
+   */
+  E next();
 }

@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 import io.optimism.config.Config;
 import io.optimism.derive.PurgeableIterator;
@@ -38,7 +37,7 @@ import org.apache.commons.lang3.ArrayUtils;
  * @since 0.1.0
  */
 public class Channels<I extends PurgeableIterator<BatcherTransaction>>
-    extends AbstractIterator<Channel> implements PurgeableIterator<Channel> {
+    implements PurgeableIterator<Channel> {
 
   private final I batcherTxIterator;
 
@@ -72,7 +71,7 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>>
   }
 
   @Override
-  protected Channel computeNext() {
+  public Channel next() {
     return this.processFrames().orElse(null);
   }
 

@@ -44,7 +44,9 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
@@ -65,9 +67,9 @@ import org.web3j.utils.Numeric;
 public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Driver.class);
-  private Pipeline pipeline;
+  private final Pipeline pipeline;
 
-  private EngineDriver<E> engineDriver;
+  private final EngineDriver<E> engineDriver;
 
   private List<UnfinalizedBlock> unfinalizedBlocks;
 
@@ -75,13 +77,15 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private List<ExecutionPayload> futureUnsafeBlocks;
 
-  private AtomicReference<io.optimism.derive.State> state;
+  private final AtomicReference<io.optimism.derive.State> state;
 
-  private ChainWatcher chainWatcher;
+  private final ChainWatcher chainWatcher;
 
-  private MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
+  private final MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
 
-  private ExecutorService executor;
+  private final ExecutorService executor;
+
+  private final AtomicBoolean isShutdownTriggered = new AtomicBoolean(false);
 
   /**
    * Instantiates a new Driver.
@@ -149,7 +153,16 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
               config.chainConfig().l1StartEpoch(),
               BigInteger.ZERO);
     } else {
-      head = HeadInfo.from(finalizedBlock.getBlock());
+      try {
+        head = HeadInfo.from(finalizedBlock.getBlock());
+      } catch (Throwable throwable) {
+        LOGGER.warn("could not get head info. Falling back to the genesis head.");
+        head =
+            new HeadInfo(
+                config.chainConfig().l2Genesis(),
+                config.chainConfig().l1StartEpoch(),
+                BigInteger.ZERO);
+      }
     }
 
     BlockInfo finalizedHead = head.l2BlockInfo();
@@ -179,8 +192,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   @Override
   protected void run() {
-    while (isRunning()) {
+    while (isRunning() && !isShutdownTriggered.get()) {
       try {
+        LOGGER.debug("advance driver");
         this.advance();
       } catch (InterruptedException e) {
         LOGGER.error("driver run interrupted", e);
@@ -219,7 +233,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    shutDown();
+    this.isShutdownTriggered.compareAndExchange(false, true);
   }
 
   private void awaitEngineReady() throws InterruptedException {
@@ -239,20 +253,23 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                     return null;
                   });
 
-      var voidFuture1 =
+      scope.join();
+      scope.throwIfFailed();
+      voidFuture.resultNow();
+    }
+
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+      var voidFuture =
           scope.fork(
               (Callable<Void>)
                   () -> {
                     Driver.this.advanceUnsafeHead();
                     return null;
                   });
-
       scope.join();
       scope.throwIfFailed();
       voidFuture.resultNow();
-      voidFuture1.resultNow();
     }
-
     this.updateFinalized();
     this.updateMetrics();
   }
@@ -261,8 +278,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     this.handleNextBlockUpdate();
     this.updateStateHead();
 
-    while (this.pipeline.hasNext()) {
-      PayloadAttributes payloadAttributes = this.pipeline.next();
+    for (PayloadAttributes payloadAttributes = this.pipeline.next();
+        payloadAttributes != null;
+        payloadAttributes = this.pipeline.next()) {
       BigInteger l1InclusionBlock = payloadAttributes.l1InclusionBlock();
       if (l1InclusionBlock == null) {
         throw new InvalidAttributesException("attributes without inclusion block");
@@ -307,7 +325,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                       && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(256L))
                           < 0;
                 })
-            .toList();
+            .collect(Collectors.toList());
 
     Optional<ExecutionPayload> nextUnsafePayload =
         Iterables.tryFind(
@@ -346,7 +364,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       case BlockUpdate.NewBlock l1info -> {
         BigInteger num = l1info.get().blockInfo().number();
         Driver.this.pipeline.pushBatcherTransactions(
-            l1info.get().batcherTransactions().stream().map(Numeric::hexStringToByteArray).toList(),
+            l1info.get().batcherTransactions().stream()
+                .map(Numeric::hexStringToByteArray)
+                .collect(Collectors.toList()),
             num);
 
         Driver.this.state.getAndUpdate(
@@ -390,7 +410,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                                     .compareTo(Driver.this.finalizedL1BlockNumber)
                                 <= 0
                             && unfinalizedBlock.seqNumber().compareTo(BigInteger.ZERO) == 0)
-                .toList(),
+                .collect(Collectors.toList()),
             null);
 
     if (newFinalized != null) {
@@ -405,7 +425,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                             .l1InclusionBlock()
                             .compareTo(Driver.this.finalizedL1BlockNumber)
                         > 0)
-            .toList();
+            .collect(Collectors.toList());
   }
 
   private void updateMetrics() {

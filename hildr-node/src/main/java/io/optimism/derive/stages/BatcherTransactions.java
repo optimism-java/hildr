@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-import com.google.common.collect.AbstractIterator;
 import io.optimism.derive.PurgeableIterator;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
@@ -36,7 +35,7 @@ import org.web3j.utils.Numeric;
  * @author grapebaba
  * @since 0.1.0
  */
-public class BatcherTransactions extends AbstractIterator<BatcherTransactions.BatcherTransaction>
+public class BatcherTransactions
     implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
@@ -65,7 +64,7 @@ public class BatcherTransactions extends AbstractIterator<BatcherTransactions.Ba
   }
 
   @Override
-  protected BatcherTransaction computeNext() {
+  public BatcherTransaction next() {
     this.processIncoming();
     return txs.pollFirst();
   }

@@ -18,6 +18,7 @@ package io.optimism.engine;
 
 import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import java.math.BigInteger;
+import org.web3j.utils.Numeric;
 
 /**
  * The type ForkChoiceUpdate.
@@ -32,6 +33,25 @@ import java.math.BigInteger;
  * @since 0.1.0
  */
 public record ForkChoiceUpdate(PayloadStatus payloadStatus, BigInteger payloadId) {
+
+  /**
+   * The type Fork choice update res.
+   *
+   * @param payloadStatus Payload status. Note: values of the status field in the context of this
+   * @param payloadId 8 byte identifier of the payload build process or null
+   */
+  public record ForkChoiceUpdateRes(PayloadStatus payloadStatus, String payloadId) {
+
+    /**
+     * To fork choice update fork choice update.
+     *
+     * @return the fork choice update
+     */
+    public ForkChoiceUpdate toForkChoiceUpdate() {
+      return new ForkChoiceUpdate(
+          payloadStatus, payloadId != null ? Numeric.decodeQuantity(payloadId) : null);
+    }
+  }
 
   /**
    * the type ForkchoiceState.

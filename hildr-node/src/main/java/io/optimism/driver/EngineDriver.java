@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -158,7 +159,7 @@ public class EngineDriver<E extends Engine> {
   public void handleAttributes(PayloadAttributes attributes)
       throws ExecutionException, InterruptedException {
     EthBlock block = this.blockAt(attributes.timestamp());
-    if (block == null) {
+    if (block == null || block.getBlock() == null) {
       processAttributes(attributes);
     } else {
       if (this.shouldSkip(block, attributes)) {
@@ -179,8 +180,9 @@ public class EngineDriver<E extends Engine> {
    */
   public void handleUnsafePayload(ExecutionPayload payload)
       throws ExecutionException, InterruptedException {
+    this.pushPayload(payload);
     this.unsafeHead = BlockInfo.from(payload);
-    pushPayloadAndUpdateForkchoice(payload);
+    this.updateForkchoice();
     LOGGER.info("head updated: {} {}", this.unsafeHead.number(), this.unsafeHead.hash());
   }
 
@@ -226,7 +228,8 @@ public class EngineDriver<E extends Engine> {
         attributes.timestamp());
     LOGGER.debug("block: {}", block.getBlock());
     LOGGER.debug("attributes: {}", attributes);
-    List<String> attributesHashes = attributes.transactions().stream().map(Hash::sha3).toList();
+    List<String> attributesHashes =
+        attributes.transactions().stream().map(Hash::sha3).collect(Collectors.toList());
     LOGGER.debug("attribute hashes: {}", attributesHashes);
 
     return block.getBlock().getTransactions().stream()
@@ -286,7 +289,7 @@ public class EngineDriver<E extends Engine> {
       scope.throwIfFailed();
       ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
 
-      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
+      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
         throw new ForkchoiceUpdateException(
             String.format(
                 "could not accept new forkchoice: %s",
@@ -305,38 +308,9 @@ public class EngineDriver<E extends Engine> {
       scope.throwIfFailed();
       PayloadStatus payloadStatus = payloadStatusFuture.resultNow().getPayloadStatus();
 
-      if (payloadStatus.getStatus() != Status.Valid
-          && payloadStatus.getStatus() != Status.Accepted) {
+      if (payloadStatus.getStatus() != Status.VALID
+          && payloadStatus.getStatus() != Status.ACCEPTED) {
         throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
-      }
-    }
-  }
-
-  private void pushPayloadAndUpdateForkchoice(ExecutionPayload payload)
-      throws InterruptedException, ExecutionException {
-    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-      ForkchoiceState forkchoiceState = createForkchoiceState();
-      Future<OpEthPayloadStatus> payloadStatusFuture =
-          scope.fork(() -> EngineDriver.this.engine.newPayload(payload));
-
-      Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
-          scope.fork(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, null));
-
-      scope.join();
-      scope.throwIfFailed();
-      PayloadStatus payloadStatus = payloadStatusFuture.resultNow().getPayloadStatus();
-      ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
-
-      if (payloadStatus.getStatus() != Status.Valid
-          && payloadStatus.getStatus() != Status.Accepted) {
-        throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
-      }
-
-      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
-        throw new ForkchoiceUpdateException(
-            String.format(
-                "could not accept new forkchoice: %s",
-                forkChoiceUpdate.payloadStatus().getValidationError()));
       }
     }
   }
@@ -353,7 +327,7 @@ public class EngineDriver<E extends Engine> {
       scope.join();
       scope.throwIfFailed();
       forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
-      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.Valid) {
+      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
         throw new InvalidPayloadAttributesException();
       }
 
@@ -392,8 +366,8 @@ public class EngineDriver<E extends Engine> {
             executionPayload.parentHash(),
             executionPayload.timestamp());
 
+    this.pushPayload(executionPayload);
     updateSafeHead(newHead, newEpoch, true);
-
-    pushPayloadAndUpdateForkchoice(executionPayload);
+    this.updateForkchoice();
   }
 }

@@ -23,6 +23,7 @@ import io.optimism.l1.L1Info;
 import java.math.BigInteger;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * The type State.
@@ -99,6 +100,10 @@ public class State {
    * @return the l 1 info
    */
   public L1Info l1Info(BigInteger number) {
+    String hash = l1Hashes.get(number);
+    if (StringUtils.isEmpty(hash)) {
+      return null;
+    }
     return l1Info.get(l1Hashes.get(number));
   }
 
@@ -122,6 +127,9 @@ public class State {
    */
   public Epoch epoch(BigInteger number) {
     L1Info l1Info = l1Info(number);
+    if (l1Info == null) {
+      return null;
+    }
     return new Epoch(
         l1Info.blockInfo().number(), l1Info.blockInfo().hash(), l1Info.blockInfo().timestamp());
   }

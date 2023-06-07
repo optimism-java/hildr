@@ -16,6 +16,7 @@
 
 package io.optimism.engine;
 
+import io.optimism.engine.ExecutionPayload.ExecutionPayloadRes;
 import org.web3j.protocol.core.Response;
 
 /**
@@ -24,7 +25,7 @@ import org.web3j.protocol.core.Response;
  * @author grapebaba
  * @since 0.1.0
  */
-public class OpEthExecutionPayload extends Response<ExecutionPayload> {
+public class OpEthExecutionPayload extends Response<ExecutionPayloadRes> {
 
   /** Instantiates a new Op eth execution payload. */
   public OpEthExecutionPayload() {}
@@ -35,11 +36,11 @@ public class OpEthExecutionPayload extends Response<ExecutionPayload> {
    * @return the execution payload
    */
   public ExecutionPayload getExecutionPayload() {
-    return getResult();
+    return getResult().toExecutionPayload();
   }
 
   @Override
-  public void setResult(ExecutionPayload result) {
+  public void setResult(ExecutionPayloadRes result) {
     super.setResult(result);
   }
 }

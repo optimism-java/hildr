@@ -19,8 +19,10 @@ package io.optimism.engine;
 import io.optimism.common.Epoch;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
+import org.web3j.utils.Numeric;
 
 /**
  * The type ExecutionPayload.
@@ -30,7 +32,7 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
  * @param stateRoot A 32 byte state root hash.
  * @param receiptsRoot A 32 byte receipt root hash.
  * @param logsBloom A 32 byte logs bloom filter.
- * @param prevRandom A 32 byte beacon chain randomness value.
+ * @param prevRandao A 32 byte beacon chain randomness value.
  * @param blockNumber A 64-bit number for the current block index.
  * @param gasLimit A 64-bit value for the gas limit.
  * @param gasUsed A 64-bit value for the gas used.
@@ -48,7 +50,7 @@ public record ExecutionPayload(
     String stateRoot,
     String receiptsRoot,
     String logsBloom,
-    String prevRandom,
+    String prevRandao,
     BigInteger blockNumber,
     BigInteger gasLimit,
     BigInteger gasUsed,
@@ -59,6 +61,64 @@ public record ExecutionPayload(
     List<String> transactions) {
 
   /**
+   * The type Execution payload res.
+   *
+   * @param parentHash A 32 byte hash of the parent payload.
+   * @param feeRecipient A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
+   * @param stateRoot A 32 byte state root hash.
+   * @param receiptsRoot A 32 byte receipt root hash.
+   * @param logsBloom A 32 byte logs bloom filter.
+   * @param prevRandao A 32 byte beacon chain randomness value.
+   * @param blockNumber A 64-bit number for the current block index.
+   * @param gasLimit A 64-bit value for the gas limit.
+   * @param gasUsed A 64-bit value for the gas used.
+   * @param timestamp A 64-bit value for the timestamp field of the new payload.
+   * @param extraData 0 to 32 byte value for extra data.
+   * @param baseFeePerGas 256 bits for the base fee per gas.
+   * @param blockHash The 32 byte block hash.
+   * @param transactions An array of transaction objects where each object is a byte list.
+   */
+  public record ExecutionPayloadRes(
+      String parentHash,
+      String feeRecipient,
+      String stateRoot,
+      String receiptsRoot,
+      String logsBloom,
+      String prevRandao,
+      String blockNumber,
+      String gasLimit,
+      String gasUsed,
+      String timestamp,
+      String extraData,
+      String baseFeePerGas,
+      String blockHash,
+      List<String> transactions) {
+
+    /**
+     * To execution payload execution payload.
+     *
+     * @return the execution payload
+     */
+    public ExecutionPayload toExecutionPayload() {
+      return new ExecutionPayload(
+          parentHash,
+          feeRecipient,
+          stateRoot,
+          receiptsRoot,
+          logsBloom,
+          prevRandao,
+          Numeric.decodeQuantity(blockNumber),
+          Numeric.decodeQuantity(gasLimit),
+          Numeric.decodeQuantity(gasUsed),
+          Numeric.decodeQuantity(timestamp),
+          extraData,
+          Numeric.decodeQuantity(baseFeePerGas),
+          blockHash,
+          transactions);
+    }
+  }
+
+  /**
    * From execution payload.
    *
    * @param block the block
@@ -66,7 +126,9 @@ public record ExecutionPayload(
    */
   public static ExecutionPayload from(EthBlock.Block block) {
     List<String> encodedTxs =
-        block.getTransactions().stream().map(tx -> ((TransactionObject) tx).getInput()).toList();
+        block.getTransactions().stream()
+            .map(tx -> ((TransactionObject) tx).getInput())
+            .collect(Collectors.toList());
 
     return new ExecutionPayload(
         block.getParentHash(),
@@ -83,6 +145,63 @@ public record ExecutionPayload(
         block.getBaseFeePerGas(),
         block.getHash(),
         encodedTxs);
+  }
+
+  /**
+   * The type Execution payload req.
+   *
+   * @param parentHash A 32 byte hash of the parent payload.
+   * @param feeRecipient A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
+   * @param stateRoot A 32 byte state root hash.
+   * @param receiptsRoot A 32 byte receipt root hash.
+   * @param logsBloom A 32 byte logs bloom filter.
+   * @param prevRandao A 32 byte beacon chain randomness value.
+   * @param blockNumber A 64-bit number for the current block index.
+   * @param gasLimit A 64-bit value for the gas limit.
+   * @param gasUsed A 64-bit value for the gas used.
+   * @param timestamp A 64-bit value for the timestamp field of the new payload.
+   * @param extraData 0 to 32 byte value for extra data.
+   * @param baseFeePerGas 256 bits for the base fee per gas.
+   * @param blockHash The 32 byte block hash.
+   * @param transactions An array of transaction objects where each object is a byte list.
+   */
+  public record ExecutionPayloadReq(
+      String parentHash,
+      String feeRecipient,
+      String stateRoot,
+      String receiptsRoot,
+      String logsBloom,
+      String prevRandao,
+      String blockNumber,
+      String gasLimit,
+      String gasUsed,
+      String timestamp,
+      String extraData,
+      String baseFeePerGas,
+      String blockHash,
+      List<String> transactions) {}
+
+  /**
+   * To req execution payload req.
+   *
+   * @return the execution payload req
+   */
+  public ExecutionPayloadReq toReq() {
+    return new ExecutionPayloadReq(
+        parentHash,
+        feeRecipient,
+        stateRoot,
+        receiptsRoot,
+        logsBloom,
+        prevRandao,
+        Numeric.toHexStringWithPrefix(blockNumber),
+        Numeric.toHexStringWithPrefix(gasLimit),
+        Numeric.toHexStringWithPrefix(gasUsed),
+        Numeric.toHexStringWithPrefix(timestamp),
+        extraData,
+        Numeric.toHexStringWithPrefix(baseFeePerGas),
+        blockHash,
+        transactions);
   }
 
   /**
@@ -119,7 +238,62 @@ public record ExecutionPayload(
       BigInteger gasLimit,
       Epoch epoch,
       BigInteger l1InclusionBlock,
-      BigInteger seqNumber) {}
+      BigInteger seqNumber) {
+
+    /**
+     * The type Epoch req.
+     *
+     * @param number the number
+     * @param hash the hash
+     * @param timestamp the timestamp
+     */
+    public record EpochReq(String number, String hash, String timestamp) {}
+
+    /**
+     * The type Payload attributes req.
+     *
+     * @param timestamp the timestamp
+     * @param prevRandao the prev randao
+     * @param suggestedFeeRecipient the suggested fee recipient
+     * @param transactions the transactions
+     * @param noTxPool the no tx pool
+     * @param gasLimit the gas limit
+     * @param epoch the epoch
+     * @param l1InclusionBlock the l 1 inclusion block
+     * @param seqNumber the seq number
+     */
+    public record PayloadAttributesReq(
+        String timestamp,
+        String prevRandao,
+        String suggestedFeeRecipient,
+        List<String> transactions,
+        boolean noTxPool,
+        String gasLimit,
+        EpochReq epoch,
+        String l1InclusionBlock,
+        String seqNumber) {}
+
+    /**
+     * To req payload attributes req.
+     *
+     * @return the payload attributes req
+     */
+    public PayloadAttributesReq toReq() {
+      return new PayloadAttributesReq(
+          Numeric.encodeQuantity(timestamp),
+          prevRandao,
+          suggestedFeeRecipient,
+          transactions,
+          noTxPool,
+          Numeric.encodeQuantity(gasLimit),
+          new EpochReq(
+              Numeric.encodeQuantity(epoch.number()),
+              epoch.hash(),
+              Numeric.encodeQuantity(epoch.timestamp())),
+          Numeric.encodeQuantity(l1InclusionBlock),
+          Numeric.encodeQuantity(seqNumber));
+    }
+  }
 
   /**
    * The type Status.
@@ -129,15 +303,15 @@ public record ExecutionPayload(
    */
   public enum Status {
     /** Valid status. */
-    Valid,
+    VALID,
     /** Invalid status. */
-    Invalid,
+    INVALID,
     /** Syncing status. */
-    Syncing,
+    SYNCING,
     /** Accepted status. */
-    Accepted,
+    ACCEPTED,
     /** Invalid block hash status. */
-    InvalidBlockHash,
+    INVALID_BLOCK_HASH,
   }
 
   /**

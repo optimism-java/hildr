@@ -26,9 +26,11 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.optimism.common.Epoch;
+import io.optimism.engine.ExecutionPayload.ExecutionPayloadRes;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import io.optimism.engine.ExecutionPayload.Status;
+import io.optimism.engine.ForkChoiceUpdate.ForkChoiceUpdateRes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -69,19 +71,19 @@ public class EngineApiTest {
 
   String initForkChoiceUpdateResp() throws JsonProcessingException {
     PayloadStatus payloadStatus = new PayloadStatus();
-    payloadStatus.setStatus(Status.Accepted);
+    payloadStatus.setStatus(Status.ACCEPTED);
     payloadStatus.setLatestValidHash("asdfadfsdfadsfasdf");
     payloadStatus.setValidationError("");
-    ForkChoiceUpdate forkChoiceUpdate = new ForkChoiceUpdate(payloadStatus, new BigInteger("1"));
+    ForkChoiceUpdateRes forkChoiceUpdateRes = new ForkChoiceUpdateRes(payloadStatus, "1");
     OpEthForkChoiceUpdate opEthForkChoiceUpdate = new OpEthForkChoiceUpdate();
-    opEthForkChoiceUpdate.setResult(forkChoiceUpdate);
+    opEthForkChoiceUpdate.setResult(forkChoiceUpdateRes);
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     return ow.writeValueAsString(opEthForkChoiceUpdate);
   }
 
   String initPayloadStatusResp() throws JsonProcessingException {
     PayloadStatus payloadStatus = new PayloadStatus();
-    payloadStatus.setStatus(Status.Accepted);
+    payloadStatus.setStatus(Status.ACCEPTED);
     payloadStatus.setLatestValidHash("12312321");
     OpEthPayloadStatus opEthPayloadStatus = new OpEthPayloadStatus();
     opEthPayloadStatus.setResult(payloadStatus);
@@ -89,20 +91,20 @@ public class EngineApiTest {
     return ow.writeValueAsString(opEthPayloadStatus);
   }
 
-  ExecutionPayload initExecutionPayload() {
-    return new ExecutionPayload(
+  ExecutionPayloadRes initExecutionPayload() {
+    return new ExecutionPayloadRes(
         "sdvkem39441fd132131",
         "123123",
         "123123",
         "123123",
         "123123",
         "123123",
-        new BigInteger("1234"),
-        new BigInteger("123123"),
-        new BigInteger("123123"),
-        new BigInteger("123123"),
+        "1234",
         "123123",
-        new BigInteger("123123"),
+        "123123",
+        "123123",
+        "123123",
+        "123123",
         "sdfasdf12312312",
         List.of(""));
   }
@@ -145,7 +147,8 @@ public class EngineApiTest {
     assertEquals("http://127.0.0.1:8851", baseUrl);
     server.enqueue(new MockResponse().setBody(initPayloadStatusResp()));
     EngineApi engineApi = new EngineApi(baseUrl, SECRET);
-    OpEthPayloadStatus payloadStatus = engineApi.newPayload(initExecutionPayload());
+    OpEthPayloadStatus payloadStatus =
+        engineApi.newPayload(initExecutionPayload().toExecutionPayload());
     ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
     assertEquals(initPayloadStatusResp(), ow.writeValueAsString(payloadStatus));
   }

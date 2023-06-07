@@ -137,7 +137,8 @@ public class EngineApi implements Engine {
     Request<?, OpEthForkChoiceUpdate> r =
         new Request<>(
             ENGINE_FORKCHOICE_UPDATED_V1,
-            Arrays.asList(forkchoiceState, payloadAttributes),
+            Arrays.asList(
+                forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
             web3jService,
             OpEthForkChoiceUpdate.class);
     return r.send();
@@ -149,7 +150,7 @@ public class EngineApi implements Engine {
     Request<?, OpEthPayloadStatus> r =
         new Request<>(
             ENGINE_NEW_PAYLOAD_V1,
-            Collections.singletonList(executionPayload),
+            Collections.singletonList(executionPayload != null ? executionPayload.toReq() : null),
             web3jService,
             OpEthPayloadStatus.class);
     return r.send();
@@ -161,7 +162,8 @@ public class EngineApi implements Engine {
     Request<?, OpEthExecutionPayload> r =
         new Request<>(
             ENGINE_GET_PAYLOAD_V1,
-            Collections.singletonList(payloadId),
+            Collections.singletonList(
+                payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
             web3jService,
             OpEthExecutionPayload.class);
     return r.send();
@@ -173,6 +175,7 @@ public class EngineApi implements Engine {
    * @return the boolean
    */
   public boolean isAvailable() {
+    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, EthChainId> r =
         new Request<>("eth_chainId", List.of(), web3jService, EthChainId.class);
     EthChainId chainId;

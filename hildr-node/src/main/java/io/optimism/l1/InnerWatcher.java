@@ -127,6 +127,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
    */
   private volatile Tuple2<BigInteger, Config.SystemConfig> systemConfigUpdate;
 
+  private boolean isShutdownTriggered = false;
+
   /**
    * create a InnerWatcher instance.
    *
@@ -208,7 +210,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
           this.unfinalizedBlocks.stream()
               .filter(
                   blockInfo -> blockInfo.number().compareTo(InnerWatcher.this.finalizedBlock) > 0)
-              .toList();
+              .collect(Collectors.toList());
     }
 
     if (this.currentBlock.compareTo(this.headBlock) > 0) {
@@ -278,14 +280,18 @@ public class InnerWatcher extends AbstractExecutionThreadService {
               InnerWatcher.this.config.chainConfig().systemConfigContract(),
               CONFIG_UPDATE_TOPIC);
 
-      LogResult<?> update = updates.getLogs().iterator().next();
-      BigInteger updateBlock = ((LogObject) update).getBlockNumber();
-      SystemConfigUpdate configUpdate = SystemConfigUpdate.tryFrom((LogObject) update);
-      if (updateBlock == null) {
-        InnerWatcher.this.systemConfigUpdate = new Tuple2<>(toBlock, null);
+      if (updates.getLogs().isEmpty()) {
+        this.systemConfigUpdate = new Tuple2<>(toBlock, null);
       } else {
-        SystemConfig updateSystemConfig = parseSystemConfigUpdate(configUpdate);
-        this.systemConfigUpdate = new Tuple2<>(updateBlock, updateSystemConfig);
+        LogResult<?> update = updates.getLogs().iterator().next();
+        BigInteger updateBlock = ((LogObject) update).getBlockNumber();
+        SystemConfigUpdate configUpdate = SystemConfigUpdate.tryFrom((LogObject) update);
+        if (updateBlock == null) {
+          this.systemConfigUpdate = new Tuple2<>(toBlock, null);
+        } else {
+          SystemConfig updateSystemConfig = parseSystemConfigUpdate(configUpdate);
+          this.systemConfigUpdate = new Tuple2<>(updateBlock, updateSystemConfig);
+        }
       }
     }
     BigInteger lastUpdateBlock = this.systemConfigUpdate.component1();
@@ -443,7 +449,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                         "Unexpected result type: " + log.get() + " required LogObject");
                   }
                 })
-            .toList();
+            .collect(Collectors.toList());
 
     for (BigInteger i = blockNum; i.compareTo(endBlock) <= 0; i = i.add(BigInteger.ONE)) {
       final BigInteger num = i;
@@ -468,7 +474,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
   @Override
   protected void run() {
-    while (isRunning()) {
+    while (isRunning() && !this.isShutdownTriggered) {
       LOGGER.debug("fetching L1 data for block {}", currentBlock);
       try {
         this.tryIngestBlock();
@@ -494,6 +500,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    shutDown();
+    this.isShutdownTriggered = true;
   }
 }

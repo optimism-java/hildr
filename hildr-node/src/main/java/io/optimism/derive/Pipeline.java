@@ -16,7 +16,6 @@
 
 package io.optimism.derive;
 
-import com.google.common.collect.AbstractIterator;
 import io.optimism.config.Config;
 import io.optimism.derive.stages.Attributes;
 import io.optimism.derive.stages.BatcherTransactions;
@@ -36,8 +35,7 @@ import org.jctools.queues.MpscUnboundedXaddArrayQueue;
  * @author grapebaba
  * @since 0.1.0
  */
-public class Pipeline extends AbstractIterator<PayloadAttributes>
-    implements PurgeableIterator<PayloadAttributes> {
+public class Pipeline implements PurgeableIterator<PayloadAttributes> {
 
   private MessagePassingQueue<BatcherTransactionMessage> batcherTransactionQueue;
 
@@ -63,7 +61,7 @@ public class Pipeline extends AbstractIterator<PayloadAttributes>
   }
 
   @Override
-  protected PayloadAttributes computeNext() {
+  public PayloadAttributes next() {
     if (this.pendingAttributes != null) {
       return this.pendingAttributes;
     } else {

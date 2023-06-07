@@ -33,6 +33,7 @@ import io.optimism.engine.OpEthPayloadStatus;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import jdk.incubator.concurrent.StructuredTaskScope;
@@ -62,7 +63,12 @@ public class Runner extends AbstractExecutionThreadService {
 
   private String checkpointHash;
 
+  private EngineApi engineApi;
   private Driver<EngineApi> driver;
+
+  private boolean isShutdownTriggered = false;
+
+  private CountDownLatch latch = new CountDownLatch(1);
 
   /**
    * Instantiates a new Runner.
@@ -75,14 +81,40 @@ public class Runner extends AbstractExecutionThreadService {
     this.config = config;
     this.syncMode = syncMode;
     this.checkpointHash = checkpointHash;
+    this.engineApi = new EngineApi(this.config.l2EngineUrl(), this.config.jwtSecret());
     try {
-      this.driver = Driver.from(this.config);
+      waitReady();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw new DriverInitException(e);
     } catch (ExecutionException e) {
       throw new DriverInitException(e);
     }
+  }
+
+  /**
+   * Wait ready.
+   *
+   * @throws InterruptedException the interrupted exception
+   * @throws ExecutionException the execution exception
+   */
+  public void waitReady() throws InterruptedException, ExecutionException {
+    boolean isAvailable;
+    while (!Thread.interrupted()) {
+      try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+        Future<Boolean> isAvailableFuture = scope.fork(engineApi::isAvailable);
+
+        scope.join();
+        scope.throwIfFailed();
+        isAvailable = isAvailableFuture.resultNow();
+      }
+      if (isAvailable) {
+        break;
+      } else {
+        Thread.sleep(Duration.ofSeconds(3L));
+      }
+    }
+    this.driver = Driver.from(this.config);
   }
 
   /**
@@ -119,13 +151,17 @@ public class Runner extends AbstractExecutionThreadService {
     throw new UnsupportedOperationException("challenge sync is not implemented yet");
   }
 
-  /** Full sync. */
-  public void fullSync() {
+  /**
+   * Full sync.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
+  public void fullSync() throws InterruptedException {
     LOGGER.info("starting full sync");
     waitDriverRunning();
   }
 
-  private void waitDriverRunning() {
+  private void waitDriverRunning() throws InterruptedException {
     this.startDriver();
   }
 
@@ -168,7 +204,7 @@ public class Runner extends AbstractExecutionThreadService {
         blockNumber = blockNumberFuture.get();
       }
 
-      while (true) {
+      while (isRunning() && !this.isShutdownTriggered) {
         Tuple2<Boolean, EthBlock> isEpochBoundary =
             isEpochBoundary(DefaultBlockParameter.valueOf(blockNumber), checkpointSyncUrl);
         if (isEpochBoundary.component1()) {
@@ -176,9 +212,6 @@ public class Runner extends AbstractExecutionThreadService {
           break;
         } else {
           blockNumber = blockNumber.subtract(BigInteger.ONE);
-        }
-        if (!isRunning()) {
-          break;
         }
       }
     }
@@ -191,22 +224,6 @@ public class Runner extends AbstractExecutionThreadService {
       throw new BlockNotIncludedException("block hash is missing");
     }
     LOGGER.info("found checkpoint block {}", checkpointHash);
-    EngineApi engineApi = new EngineApi(this.config.l2EngineUrl(), this.config.jwtSecret());
-    while (isRunning()) {
-      boolean isAvailable;
-      try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-        Future<Boolean> isAvailableFuture = scope.fork(engineApi::isAvailable);
-
-        scope.join();
-        scope.throwIfFailed();
-        isAvailable = isAvailableFuture.resultNow();
-      }
-      if (isAvailable) {
-        break;
-      } else {
-        Thread.sleep(Duration.ofSeconds(3L));
-      }
-    }
 
     EthBlock l2CheckpointBlock;
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -238,35 +255,39 @@ public class Runner extends AbstractExecutionThreadService {
     }
 
     ExecutionPayload checkpointPayload = ExecutionPayload.from(checkpointBlock.getBlock());
-    ForkchoiceState forkchoiceState = ForkchoiceState.fromSingleHead(checkpointHash);
+
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<OpEthPayloadStatus> payloadStatusFuture =
           scope.fork(() -> engineApi.newPayload(checkpointPayload));
+      scope.join();
+      scope.throwIfFailed();
+      OpEthPayloadStatus payloadStatus = payloadStatusFuture.resultNow();
+      if (payloadStatus.getPayloadStatus().getStatus() == Status.INVALID
+          || payloadStatus.getPayloadStatus().getStatus() == Status.INVALID_BLOCK_HASH) {
+        LOGGER.error("the provided checkpoint payload is invalid, exiting");
+        throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
+      }
+    }
 
+    ForkchoiceState forkchoiceState = ForkchoiceState.fromSingleHead(checkpointHash);
+    try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
           scope.fork(() -> engineApi.forkchoiceUpdated(forkchoiceState, null));
 
       scope.join();
       scope.throwIfFailed();
-      OpEthPayloadStatus payloadStatus = payloadStatusFuture.resultNow();
       OpEthForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow();
 
-      if (payloadStatus.getPayloadStatus().getStatus() == Status.Invalid
-          || payloadStatus.getPayloadStatus().getStatus() == Status.InvalidBlockHash) {
-        LOGGER.error("the provided checkpoint payload is invalid, exiting");
-        throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
-      }
-
-      if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus() == Status.Invalid
+      if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus() == Status.INVALID
           || forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
-              == Status.InvalidBlockHash) {
+              == Status.INVALID_BLOCK_HASH) {
         LOGGER.error("could not accept forkchoice, exiting");
         throw new ForkchoiceUpdateException("could not accept forkchoice, exiting");
       }
     }
 
     LOGGER.info("syncing execution client to the checkpoint block...");
-    while (isRunning()) {
+    while (isRunning() && !this.isShutdownTriggered) {
       BigInteger blockNumber;
       try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
         Future<BigInteger> blockNumberFuture =
@@ -287,8 +308,9 @@ public class Runner extends AbstractExecutionThreadService {
     waitDriverRunning();
   }
 
-  private void startDriver() {
-    driver.startAsync().awaitTerminated();
+  private void startDriver() throws InterruptedException {
+    driver.startAsync().awaitRunning();
+    latch.await();
   }
 
   private Tuple2<Boolean, EthBlock> isEpochBoundary(String blockHash, Web3j checkpointSyncUrl)
@@ -379,6 +401,7 @@ public class Runner extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
-    shutDown();
+    this.isShutdownTriggered = true;
+    this.latch.countDown();
   }
 }

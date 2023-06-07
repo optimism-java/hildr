@@ -24,6 +24,7 @@ import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes.UserDeposited;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The type L1Info.
@@ -91,7 +92,7 @@ public record L1Info(
                 batchSender.equalsIgnoreCase(((TransactionObject) transactionResult).getFrom())
                     && batchInbox.equalsIgnoreCase(((TransactionObject) transactionResult).getTo()))
         .map(transactionResult -> ((TransactionObject) transactionResult).getInput())
-        .toList();
+        .collect(Collectors.toList());
   }
 
   /**

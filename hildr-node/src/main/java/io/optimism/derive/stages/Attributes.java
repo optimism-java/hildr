@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-import com.google.common.collect.AbstractIterator;
 import io.optimism.common.BlockNotIncludedException;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
@@ -27,13 +26,16 @@ import io.optimism.derive.stages.Batches.Batch;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import net.osslabz.evm.abi.definition.AbiDefinition.Entry.Param;
 import net.osslabz.evm.abi.definition.AbiDefinition.Event;
 import net.osslabz.evm.abi.definition.SolidityType;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.TypeEncoder;
@@ -44,6 +46,7 @@ import org.web3j.protocol.core.methods.response.EthLog.LogObject;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
+import org.web3j.rlp.RlpType;
 import org.web3j.utils.Numeric;
 
 /**
@@ -54,7 +57,7 @@ import org.web3j.utils.Numeric;
  * @since 0.1.0
  */
 public class Attributes<I extends PurgeableIterator<Batch>>
-    extends AbstractIterator<PayloadAttributes> implements PurgeableIterator<PayloadAttributes> {
+    implements PurgeableIterator<PayloadAttributes> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Attributes.class);
 
@@ -86,13 +89,13 @@ public class Attributes<I extends PurgeableIterator<Batch>>
   }
 
   @Override
-  protected PayloadAttributes computeNext() {
+  public PayloadAttributes next() {
     final Batch batch = this.batchIterator.next();
     return batch != null ? this.deriveAttributes(batch) : null;
   }
 
   private PayloadAttributes deriveAttributes(Batch batch) {
-    LOGGER.trace("attributes derived from block {}", batch.epochNum());
+    LOGGER.debug("attributes derived from block {}", batch.epochNum());
     LOGGER.debug("batch epoch hash {}", batch.epochHash());
 
     this.updateSequenceNumber(batch.epochHash());
@@ -149,9 +152,9 @@ public class Attributes<I extends PurgeableIterator<Batch>>
         .map(
             deposit -> {
               DepositedTransaction tx = DepositedTransaction.from(deposit);
-              return Numeric.toHexString(RlpEncoder.encode(tx.encode()));
+              return Numeric.toHexString(tx.encode());
             })
-        .toList();
+        .collect(Collectors.toList());
   }
 
   private String deriveAttributesDeposited(L1Info l1Info, BigInteger batchTimestamp) {
@@ -159,7 +162,7 @@ public class Attributes<I extends PurgeableIterator<Batch>>
     AttributesDeposited attributesDeposited =
         AttributesDeposited.fromBlockInfo(l1Info, seq, batchTimestamp, this.config);
     DepositedTransaction attributeTx = DepositedTransaction.from(attributesDeposited);
-    return Numeric.toHexString(RlpEncoder.encode(attributeTx.encode()));
+    return Numeric.toHexString(attributeTx.encode());
   }
 
   private void updateSequenceNumber(String batchEpochHash) {
@@ -241,11 +244,15 @@ public class Attributes<I extends PurgeableIterator<Batch>>
       List<?> decodedEvent = event.decode(Numeric.hexStringToByteArray(log.getData()), topics);
       byte[] opaqueData = (byte[]) decodedEvent.get(3);
 
-      String from = log.getTopics().get(1);
-      String to = log.getTopics().get(2);
-      BigInteger mint = new BigInteger(ArrayUtils.subarray(opaqueData, 0, 32));
-      BigInteger value = new BigInteger(ArrayUtils.subarray(opaqueData, 32, 64));
-      BigInteger gas = new BigInteger(ArrayUtils.subarray(opaqueData, 64, 72));
+      String from =
+          Numeric.prependHexPrefix(
+              StringUtils.substring(Numeric.cleanHexPrefix(log.getTopics().get(1)), 24));
+      String to =
+          Numeric.prependHexPrefix(
+              StringUtils.substring(Numeric.cleanHexPrefix(log.getTopics().get(2)), 24));
+      BigInteger mint = Numeric.toBigInt(ArrayUtils.subarray(opaqueData, 0, 32));
+      BigInteger value = Numeric.toBigInt(ArrayUtils.subarray(opaqueData, 32, 64));
+      BigInteger gas = Numeric.toBigInt(ArrayUtils.subarray(opaqueData, 64, 72));
       boolean isCreation = opaqueData[72] != (byte) 0;
       byte[] data = ArrayUtils.subarray(opaqueData, 73, opaqueData.length);
       BigInteger l1BlockNum = log.getBlockNumber();
@@ -423,20 +430,28 @@ public class Attributes<I extends PurgeableIterator<Batch>>
      *
      * @return the rlp list
      */
-    public RlpList encode() {
-      return new RlpList(
-          RlpString.create("7E"),
-          new RlpList(
-              RlpString.create(Numeric.cleanHexPrefix(this.sourceHash)),
-              RlpString.create(Numeric.cleanHexPrefix(this.from)),
-              this.to != null
-                  ? RlpString.create(Numeric.cleanHexPrefix(this.to))
-                  : RlpString.create(""),
-              RlpString.create(this.mint),
-              RlpString.create(this.value),
-              RlpString.create(this.gas),
-              RlpString.create(this.isSystemTx ? 1 : 0),
-              RlpString.create(this.data)));
+    public byte[] encode() {
+      List<RlpType> result = new ArrayList<>();
+
+      result.add(RlpString.create(Numeric.hexStringToByteArray(this.sourceHash)));
+      result.add(RlpString.create(Numeric.hexStringToByteArray(this.from)));
+
+      if (StringUtils.isNotEmpty(this.to)) {
+        result.add(RlpString.create(Numeric.hexStringToByteArray(this.to)));
+      } else {
+        result.add(RlpString.create(""));
+      }
+
+      result.add(RlpString.create(this.mint));
+      result.add(RlpString.create(this.value));
+      result.add(RlpString.create(this.gas));
+      result.add(RlpString.create(this.isSystemTx ? 1L : 0L));
+      result.add(RlpString.create(this.data));
+
+      RlpList rlpList = new RlpList(result);
+      byte[] encoded = RlpEncoder.encode(rlpList);
+
+      return ByteBuffer.allocate(encoded.length + 1).put((byte) 0x7e).put(encoded).array();
     }
   }
 }

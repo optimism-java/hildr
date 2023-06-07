@@ -23,6 +23,7 @@ import io.optimism.config.Config;
 import io.optimism.runner.Runner;
 import io.optimism.telemetry.InnerMetrics;
 import io.optimism.telemetry.Logging;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,6 +105,7 @@ public class Cli implements Runnable {
             new Thread(
                 () -> {
                   LOGGER.info("hildr: shutdown");
+                  InnerMetrics.stop();
                   runner.stopAsync().awaitTerminated();
                 }));
     var span = tracer.nextSpan().name("start-runner").start();
@@ -129,7 +131,7 @@ public class Cli implements Runnable {
 
     var configPath = Paths.get(System.getProperty("user.home"), ".hildr/hildr.toml");
     var cliConfig = from(Cli.this);
-    return Config.create(configPath, cliConfig, chain);
+    return Config.create(Files.exists(configPath) ? configPath : null, cliConfig, chain);
   }
 
   private Config.CliConfig from(Cli cli) {

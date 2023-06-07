@@ -53,10 +53,8 @@ class UserDepositedTest {
     log.setLogIndex("0x2");
 
     UserDeposited userDeposited = UserDeposited.fromLog(log);
-    assertEquals(
-        "0x000000000000000000000000445c250cb0b46d326f571ec6e278cc92ec984dd3", userDeposited.from());
-    assertEquals(
-        "0x000000000000000000000000445c250cb0b46d326f571ec6e278cc92ec984dd3", userDeposited.to());
+    assertEquals("0x445c250cb0b46d326f571ec6e278cc92ec984dd3", userDeposited.from());
+    assertEquals("0x445c250cb0b46d326f571ec6e278cc92ec984dd3", userDeposited.to());
     assertEquals(new BigInteger("5000000000000000"), userDeposited.mint());
     assertEquals(new BigInteger("5000000000000000"), userDeposited.value());
     assertEquals(new BigInteger("100000"), userDeposited.gas());

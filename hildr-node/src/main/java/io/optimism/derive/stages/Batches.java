@@ -16,7 +16,6 @@
 
 package io.optimism.derive.stages;
 
-import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.Lists;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
@@ -30,6 +29,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import org.apache.commons.lang3.ArrayUtils;
@@ -49,8 +49,7 @@ import org.web3j.utils.Numeric;
  * @author grapebaba
  * @since 0.1.0
  */
-public class Batches<I extends PurgeableIterator<Channel>> extends AbstractIterator<Batch>
-    implements PurgeableIterator<Batch> {
+public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableIterator<Batch> {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Batches.class);
   private final TreeMap<BigInteger, Batch> batches;
@@ -87,13 +86,14 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
   }
 
   @Override
-  protected Batch computeNext() {
-    if (this.channelIterator.hasNext()) {
-      Channel channel = this.channelIterator.next();
+  public Batch next() {
+    Channel channel = this.channelIterator.next();
+    if (channel != null) {
       decodeBatches(channel).forEach(batch -> this.batches.put(batch.timestamp(), batch));
     }
 
     Batch derivedBatch = null;
+    loop:
     while (true) {
       if (this.batches.firstEntry() != null) {
         Batch batch = this.batches.firstEntry().getValue();
@@ -101,13 +101,13 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
           case Accept:
             derivedBatch = batch;
             this.batches.remove(batch.timestamp());
-            break;
+            break loop;
           case Drop:
             LOGGER.warn("dropping invalid batch");
             this.batches.remove(batch.timestamp());
             continue;
           case Future, Undecided:
-            break;
+            break loop;
           default:
             throw new IllegalStateException("Unexpected value: " + batchStatus(batch));
         }
@@ -145,9 +145,6 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
       }
     }
 
-    if (batch == null) {
-      LOGGER.debug("Failed to decode batch");
-    }
     return batch;
   }
 
@@ -165,13 +162,11 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
             rlpType -> {
               byte[] batchData =
                   ArrayUtils.subarray(
-                      ((RlpString) rlpType).getBytes(),
-                      1,
-                      ((RlpString) batches.get(0)).getBytes().length);
+                      ((RlpString) rlpType).getBytes(), 1, ((RlpString) rlpType).getBytes().length);
               RlpList rlpBatchData = (RlpList) RlpDecoder.decode(batchData).getValues().get(0);
               return Batch.decode(rlpBatchData, channel.l1InclusionBlock());
             })
-        .toList();
+        .collect(Collectors.toList());
   }
 
   private static byte[] decompressZlib(byte[] data) {
@@ -346,7 +341,9 @@ public class Batches<I extends PurgeableIterator<Channel>> extends AbstractItera
       BigInteger timestamp = ((RlpString) rlp.getValues().get(3)).asPositiveBigInteger();
       List<String> transactions =
           ((RlpList) rlp.getValues().get(4))
-              .getValues().stream().map(rlpString -> ((RlpString) rlpString).asString()).toList();
+              .getValues().stream()
+                  .map(rlpString -> ((RlpString) rlpString).asString())
+                  .collect(Collectors.toList());
       return new Batch(parentHash, epochNum, epochHash, timestamp, transactions, l1InclusionBlock);
     }
 
