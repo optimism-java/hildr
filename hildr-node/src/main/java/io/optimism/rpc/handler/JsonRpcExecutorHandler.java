@@ -53,6 +53,13 @@ public class JsonRpcExecutorHandler {
 
   private JsonRpcExecutorHandler() {}
 
+  /**
+   * Handler handler.
+   *
+   * @param processor the processor
+   * @param methods the methods
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler(
       JsonRpcProcessor processor, Map<String, JsonRpcMethod> methods) {
     final JsonRpcExecutor jsonRpcExecutor = new JsonRpcExecutor(processor, methods);

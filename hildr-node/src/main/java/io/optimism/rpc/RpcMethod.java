@@ -44,10 +44,21 @@ public enum RpcMethod {
     this.rpcMethodName = rpcMethodName;
   }
 
+  /**
+   * Gets rpc method name.
+   *
+   * @return the rpc method name
+   */
   public String getRpcMethodName() {
     return rpcMethodName;
   }
 
+  /**
+   * Rpc method exists boolean.
+   *
+   * @param rpcMethodName the rpc method name
+   * @return the boolean
+   */
   public static boolean rpcMethodExists(final String rpcMethodName) {
     return allMethodNames.contains(rpcMethodName);
   }

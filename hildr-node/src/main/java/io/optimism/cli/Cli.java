@@ -105,7 +105,6 @@ public class Cli implements Runnable {
             new Thread(
                 () -> {
                   LOGGER.info("hildr: shutdown");
-                  InnerMetrics.stop();
                   runner.stopAsync().awaitTerminated();
                 }));
     var span = tracer.nextSpan().name("start-runner").start();
@@ -115,6 +114,7 @@ public class Cli implements Runnable {
       LOGGER.error("hildr: ", e);
       throw new HildrServiceExecutionException(e);
     } finally {
+      InnerMetrics.stop();
       span.end();
     }
   }

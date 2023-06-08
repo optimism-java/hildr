@@ -20,6 +20,8 @@ import io.optimism.config.Config;
 import java.util.Map;
 
 /**
+ * The type Test constants.
+ *
  * @author thinkAfCod
  * @since 2023.06
  */
@@ -27,14 +29,23 @@ public class TestConstants {
 
   private TestConstants() {}
 
+  /** The constant isConfiguredApiKeyEnv. */
   public static boolean isConfiguredApiKeyEnv = false;
 
   private static final String ETH_API_ENV = "ETH_API_KEY";
   private static final String OPT_API_ENV = "OPT_API_KEY";
 
+  /** The L 1 rpc url format. */
   static String l1RpcUrlFormat = "https://eth-goerli.g.alchemy.com/v2/%s";
+
+  /** The L 2 rpc url format. */
   static String l2RpcUrlFormat = "https://opt-goerli.g.alchemy.com/v2/%s";
 
+  /**
+   * Create config config.
+   *
+   * @return the config
+   */
   public static Config createConfig() {
     Map<String, String> envs = System.getenv();
     isConfiguredApiKeyEnv = envs.containsKey(ETH_API_ENV) && envs.containsKey(OPT_API_ENV);

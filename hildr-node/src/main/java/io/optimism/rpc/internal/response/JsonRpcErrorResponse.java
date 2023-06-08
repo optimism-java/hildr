@@ -21,22 +21,39 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
 import java.util.Objects;
 
+/** The type Json rpc error response. */
 @JsonPropertyOrder({"jsonrpc", "id", "error"})
 public class JsonRpcErrorResponse implements JsonRpcResponse {
 
   private final Object id;
   private final JsonRpcError error;
 
+  /**
+   * Instantiates a new Json rpc error response.
+   *
+   * @param id the id
+   * @param error the error
+   */
   public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
   }
 
+  /**
+   * Gets id.
+   *
+   * @return the id
+   */
   @JsonGetter("id")
   public Object getId() {
     return id;
   }
 
+  /**
+   * Gets error.
+   *
+   * @return the error
+   */
   @JsonGetter("error")
   public JsonRpcError getError() {
     return error;

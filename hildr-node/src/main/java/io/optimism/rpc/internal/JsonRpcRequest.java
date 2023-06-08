@@ -42,6 +42,13 @@ public class JsonRpcRequest {
   private final String version;
   private boolean isNotification = true;
 
+  /**
+   * Instantiates a new Json rpc request.
+   *
+   * @param version the version
+   * @param method the method
+   * @param params the params
+   */
   @JsonCreator
   public JsonRpcRequest(
       @JsonProperty("jsonrpc") final String version,
@@ -55,37 +62,72 @@ public class JsonRpcRequest {
     }
   }
 
+  /**
+   * Gets id.
+   *
+   * @return the id
+   */
   @JsonGetter("id")
   public Object getId() {
     return id == null ? null : id.getValue();
   }
 
+  /**
+   * Gets method.
+   *
+   * @return the method
+   */
   @JsonGetter("method")
   public String getMethod() {
     return method;
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   @JsonGetter("jsonrpc")
   public String getVersion() {
     return version;
   }
 
+  /**
+   * Get params object [ ].
+   *
+   * @return the object [ ]
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter("params")
   public Object[] getParams() {
     return params;
   }
 
+  /**
+   * Is notification boolean.
+   *
+   * @return the boolean
+   */
   @JsonIgnore
   public boolean isNotification() {
     return isNotification;
   }
 
+  /**
+   * Gets param length.
+   *
+   * @return the param length
+   */
   @JsonIgnore
   public int getParamLength() {
     return hasParams() ? params.length : 0;
   }
 
+  /**
+   * Has params boolean.
+   *
+   * @return the boolean
+   */
   @JsonIgnore
   public boolean hasParams() {
 
@@ -102,6 +144,11 @@ public class JsonRpcRequest {
     return true;
   }
 
+  /**
+   * Sets id.
+   *
+   * @param id the id
+   */
   @JsonSetter("id")
   public void setId(final JsonRpcRequestId id) {
     // If an id is explicitly set, it is not a notification
@@ -130,6 +177,14 @@ public class JsonRpcRequest {
     return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
   }
 
+  /**
+   * Gets parameter.
+   *
+   * @param <T> the type parameter
+   * @param index the index
+   * @param paramClass the param class
+   * @return the parameter
+   */
   public <T> T getParameter(final int index, final Class<T> paramClass) {
     if (params == null || params.length <= index || params[index] == null) {
       return null;

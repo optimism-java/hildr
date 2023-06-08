@@ -66,6 +66,11 @@ public class RpcServer {
   private AtomicInteger activeConnectionsCount;
   private int maxActiveConnections;
 
+  /**
+   * Instantiates a new Rpc server.
+   *
+   * @param config the config
+   */
   public RpcServer(final Config config) {
     this.config = config;
     this.activeConnectionsCount = new AtomicInteger();
@@ -74,6 +79,11 @@ public class RpcServer {
     this.methods = new JsonRpcMethodsFactory().methods(this.config);
   }
 
+  /**
+   * Start.
+   *
+   * @throws Exception the exception
+   */
   public void start() throws Exception {
     this.httpServer = vertx.createHttpServer(getHttpServerOptions(config));
     httpServer.webSocketHandler(webSocketHandler());
@@ -165,6 +175,7 @@ public class RpcServer {
     return httpServerOptions;
   }
 
+  /** Stop. */
   public void stop() {
     CompletableFuture<Void> future = new CompletableFuture<>();
     httpServer.close(

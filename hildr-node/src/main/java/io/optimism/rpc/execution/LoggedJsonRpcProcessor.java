@@ -35,6 +35,11 @@ public class LoggedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
 
+  /**
+   * Instantiates a new Logged json rpc processor.
+   *
+   * @param rpcProcessor the rpc processor
+   */
   public LoggedJsonRpcProcessor(final JsonRpcProcessor rpcProcessor) {
     this.rpcProcessor = rpcProcessor;
   }

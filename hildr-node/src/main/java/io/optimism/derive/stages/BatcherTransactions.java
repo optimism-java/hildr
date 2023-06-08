@@ -25,8 +25,6 @@ import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jctools.queues.MessagePassingQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.web3j.utils.Numeric;
 
 /**
@@ -37,8 +35,6 @@ import org.web3j.utils.Numeric;
  */
 public class BatcherTransactions
     implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
-
-  private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
 
   private Deque<BatcherTransaction> txs;
 

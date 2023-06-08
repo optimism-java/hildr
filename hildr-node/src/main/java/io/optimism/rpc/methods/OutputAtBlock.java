@@ -16,6 +16,7 @@
 
 package io.optimism.rpc.methods;
 
+import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.rpc.RpcMethod;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
@@ -55,6 +56,12 @@ public class OutputAtBlock implements JsonRpcMethod {
 
   private Web3jService service;
 
+  /**
+   * Instantiates a new Output at block.
+   *
+   * @param l2RpcUrl the l 2 rpc url
+   * @param l2ToL1MessagePasser the l 2 to l 1 message passer
+   */
   public OutputAtBlock(final String l2RpcUrl, final String l2ToL1MessagePasser) {
     Tuple2<Web3j, Web3jService> tuple = Web3jProvider.create(l2RpcUrl);
     this.client = tuple.component1();
@@ -86,16 +93,16 @@ public class OutputAtBlock implements JsonRpcMethod {
               outputRoot, Numeric.toHexString(version), stateRoot, withdrawalStorageRoot);
       return new JsonRpcSuccessResponse(context.getRequest().getId(), result);
     } catch (ExecutionException e) {
-      throw new RuntimeException(e);
+      throw new HildrServiceExecutionException(e);
     } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+      Thread.currentThread().interrupt();
+      throw new HildrServiceExecutionException(e);
     }
   }
 
   private String computeL2OutputRoot(EthBlock.Block block, String storageRoot) {
     var version = new byte[32];
 
-    var digest = new Keccak.Digest256();
     byte[] digestBytes = null;
     digestBytes = ArrayUtils.addAll(digestBytes, version);
     digestBytes =
@@ -103,6 +110,7 @@ public class OutputAtBlock implements JsonRpcMethod {
     digestBytes = ArrayUtils.addAll(digestBytes, Numeric.hexStringToByteArray(storageRoot));
     digestBytes = ArrayUtils.addAll(digestBytes, Numeric.hexStringToByteArray(block.getHash()));
 
+    var digest = new Keccak.Digest256();
     byte[] hash = digest.digest(digestBytes);
     return Numeric.toHexString(hash);
   }

@@ -31,15 +31,34 @@ public class JsonRpcRequestContext {
 
   private final JsonRpcRequest jsonRpcRequest;
 
+  /**
+   * Instantiates a new Json rpc request context.
+   *
+   * @param context the context
+   * @param jsonRpcRequest the json rpc request
+   */
   public JsonRpcRequestContext(final RoutingContext context, final JsonRpcRequest jsonRpcRequest) {
     this.context = context;
     this.jsonRpcRequest = jsonRpcRequest;
   }
 
+  /**
+   * Gets request.
+   *
+   * @return the request
+   */
   public JsonRpcRequest getRequest() {
     return jsonRpcRequest;
   }
 
+  /**
+   * Gets parameter.
+   *
+   * @param <T> the type parameter
+   * @param index the index
+   * @param paramClass the param class
+   * @return the parameter
+   */
   public <T> T getParameter(final int index, final Class<T> paramClass) {
     return jsonRpcRequest.getParameter(index, paramClass);
   }

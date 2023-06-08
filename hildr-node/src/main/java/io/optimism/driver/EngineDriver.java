@@ -36,6 +36,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import jdk.incubator.concurrent.StructuredTaskScope;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Hash;
@@ -238,7 +239,12 @@ public class EngineDriver<E extends Engine> {
             .equals(attributesHashes)
         && attributes.timestamp().equals(block.getBlock().getTimestamp())
         && attributes.prevRandao().equalsIgnoreCase(block.getBlock().getMixHash())
-        && attributes.suggestedFeeRecipient().equalsIgnoreCase(block.getBlock().getAuthor())
+        && attributes
+            .suggestedFeeRecipient()
+            .equalsIgnoreCase(
+                StringUtils.isNotEmpty(block.getBlock().getAuthor())
+                    ? block.getBlock().getAuthor()
+                    : block.getBlock().getMiner())
         && attributes.gasLimit().equals(block.getBlock().getGasLimit());
   }
 
@@ -327,23 +333,27 @@ public class EngineDriver<E extends Engine> {
       scope.join();
       scope.throwIfFailed();
       forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
-      if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
-        throw new InvalidPayloadAttributesException();
-      }
-
-      if (forkChoiceUpdate.payloadId() == null) {
-        throw new PayloadIdNotReturnedException();
-      }
-
-      try (var scope1 = new StructuredTaskScope.ShutdownOnFailure()) {
-        Future<OpEthExecutionPayload> payloadFuture =
-            scope1.fork(() -> EngineDriver.this.engine.getPayload(forkChoiceUpdate.payloadId()));
-
-        scope1.join();
-        scope1.throwIfFailed();
-        return payloadFuture.resultNow();
-      }
     }
+
+    if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
+      throw new InvalidPayloadAttributesException();
+    }
+
+    BigInteger payloadId = forkChoiceUpdate.payloadId();
+    if (payloadId == null) {
+      throw new PayloadIdNotReturnedException();
+    }
+
+    OpEthExecutionPayload res;
+    try (var scope1 = new StructuredTaskScope.ShutdownOnFailure()) {
+      Future<OpEthExecutionPayload> payloadFuture =
+          scope1.fork(() -> EngineDriver.this.engine.getPayload(payloadId));
+
+      scope1.join();
+      scope1.throwIfFailed();
+      res = payloadFuture.resultNow();
+    }
+    return res;
   }
 
   private void skipAttributes(PayloadAttributes attributes, EthBlock block)

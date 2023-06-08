@@ -52,10 +52,10 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
     return getResult();
   }
 
-  /** eth_getProof response. */
+  /** Instantiates a new Eth get proof. */
   public EthGetProof() {}
 
-  /** json rpc result of object */
+  /** json rpc result of object. */
   public static class Proof {
 
     private String address;
@@ -72,8 +72,20 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
 
     private List<StorageProof> storageProof;
 
+    /** Instantiates a new Proof. */
     public Proof() {}
 
+    /**
+     * Instantiates a new Proof.
+     *
+     * @param address the address
+     * @param balance the balance
+     * @param codeHash the code hash
+     * @param nonce the nonce
+     * @param storageHash the storage hash
+     * @param accountProof the account proof
+     * @param storageProof the storage proof
+     */
     public Proof(
         String address,
         String balance,
@@ -91,62 +103,137 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
       this.storageProof = storageProof;
     }
 
+    /**
+     * Gets address.
+     *
+     * @return the address
+     */
     public String getAddress() {
       return address;
     }
 
+    /**
+     * Sets address.
+     *
+     * @param address the address
+     */
     public void setAddress(String address) {
       this.address = address;
     }
 
+    /**
+     * Gets balance raw.
+     *
+     * @return the balance raw
+     */
     public String getBalanceRaw() {
       return this.balance;
     }
 
+    /**
+     * Gets balance.
+     *
+     * @return the balance
+     */
     public BigInteger getBalance() {
       return Numeric.decodeQuantity(balance);
     }
 
+    /**
+     * Sets balance.
+     *
+     * @param balance the balance
+     */
     public void setBalance(String balance) {
       this.balance = balance;
     }
 
+    /**
+     * Gets code hash.
+     *
+     * @return the code hash
+     */
     public String getCodeHash() {
       return codeHash;
     }
 
+    /**
+     * Sets code hash.
+     *
+     * @param codeHash the code hash
+     */
     public void setCodeHash(String codeHash) {
       this.codeHash = codeHash;
     }
 
+    /**
+     * Gets nonce.
+     *
+     * @return the nonce
+     */
     public String getNonce() {
       return nonce;
     }
 
+    /**
+     * Sets nonce.
+     *
+     * @param nonce the nonce
+     */
     public void setNonce(String nonce) {
       this.nonce = nonce;
     }
 
+    /**
+     * Gets storage hash.
+     *
+     * @return the storage hash
+     */
     public String getStorageHash() {
       return storageHash;
     }
 
+    /**
+     * Sets storage hash.
+     *
+     * @param storageHash the storage hash
+     */
     public void setStorageHash(String storageHash) {
       this.storageHash = storageHash;
     }
 
+    /**
+     * Gets account proof.
+     *
+     * @return the account proof
+     */
     public List<String> getAccountProof() {
       return accountProof;
     }
 
+    /**
+     * Sets account proof.
+     *
+     * @param accountProof the account proof
+     */
     public void setAccountProof(List<String> accountProof) {
       this.accountProof = accountProof;
     }
 
+    /**
+     * Gets storage proof.
+     *
+     * @return the storage proof
+     */
     public List<StorageProof> getStorageProof() {
       return storageProof;
     }
 
+    /**
+     * Sets storage proof.
+     *
+     * @param storageProof the storage proof
+     */
     public void setStorageProof(List<StorageProof> storageProof) {
       this.storageProof = storageProof;
     }
@@ -223,32 +310,69 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
     /** Storage proof. */
     public StorageProof() {}
 
+    /**
+     * Instantiates a new Storage proof.
+     *
+     * @param key the key
+     * @param value the value
+     * @param proof the proof
+     */
     public StorageProof(String key, String value, List<String> proof) {
       this.key = key;
       this.value = value;
       this.proof = proof;
     }
 
+    /**
+     * Gets key.
+     *
+     * @return the key
+     */
     public String getKey() {
       return key;
     }
 
+    /**
+     * Sets key.
+     *
+     * @param key the key
+     */
     public void setKey(String key) {
       this.key = key;
     }
 
+    /**
+     * Gets value.
+     *
+     * @return the value
+     */
     public String getValue() {
       return value;
     }
 
+    /**
+     * Sets value.
+     *
+     * @param value the value
+     */
     public void setValue(String value) {
       this.value = value;
     }
 
+    /**
+     * Gets proof.
+     *
+     * @return the proof
+     */
     public List<String> getProof() {
       return proof;
     }
 
+    /**
+     * Sets proof.
+     *
+     * @param proof the proof
+     */
     public void setProof(List<String> proof) {
       this.proof = proof;
     }
@@ -285,6 +409,9 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
   /** Json Deserializer of Proof. */
   public static class ResponseDeserializer extends JsonDeserializer<EthGetProof.Proof> {
 
+    /** Instantiates a new Response deserializer. */
+    public ResponseDeserializer() {}
+
     private ObjectReader objectReader = ObjectMapperFactory.getObjectReader();
 
     @Override
@@ -297,33 +424,4 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
       }
     }
   }
-
-  // {
-  //  "id": 1,
-  //  "jsonrpc": "2.0",
-  //  "result": {
-  //    "accountProof": [
-  //      "0xf90211a...0701bc80",
-  //      "0xf90211a...0d832380",
-  //      "0xf90211a...5fb20c80",
-  //      "0xf90211a...0675b80",
-  //      "0xf90151a0...ca08080"
-  //    ],
-  //    "balance": "0x0",
-  //    "codeHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
-  //    "nonce": "0x0",
-  //    "storageHash": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-  //    "storageProof": [
-  //      {
-  //        "key": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-  //        "proof": [
-  //          "0xf90211a...0701bc80",
-  //          "0xf90211a...0d832380"
-  //        ],
-  //        "value": "0x1"
-  //      }
-  //    ]
-  //  }
-  // }
-
 }

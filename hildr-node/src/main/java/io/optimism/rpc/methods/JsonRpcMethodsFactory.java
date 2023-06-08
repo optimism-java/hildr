@@ -30,6 +30,12 @@ public class JsonRpcMethodsFactory {
   /** JsonRpcMethodsFactory constructor. */
   public JsonRpcMethodsFactory() {}
 
+  /**
+   * Methods map.
+   *
+   * @param config the config
+   * @return the map
+   */
   public Map<String, JsonRpcMethod> methods(Config config) {
     final Map<String, JsonRpcMethod> methods = new HashMap<>();
     JsonRpcMethod outputAtBlock =

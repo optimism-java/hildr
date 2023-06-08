@@ -20,6 +20,7 @@ import io.optimism.common.Epoch;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.utils.Numeric;
@@ -132,7 +133,7 @@ public record ExecutionPayload(
 
     return new ExecutionPayload(
         block.getParentHash(),
-        block.getAuthor(),
+        StringUtils.isNotEmpty(block.getAuthor()) ? block.getAuthor() : block.getMiner(),
         block.getStateRoot(),
         block.getReceiptsRoot(),
         block.getLogsBloom(),

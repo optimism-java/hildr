@@ -35,7 +35,7 @@ import java.util.Collections;
  * @author thinkAfCod
  * @since 2023.05
  */
-@SuppressWarnings("ImmutableEnumChecker")
+@SuppressWarnings({"ImmutableEnumChecker", "checkstyle:AbbreviationAsWordInName"})
 public enum Logging {
 
   /** Logging single instance. */
@@ -52,6 +52,11 @@ public enum Logging {
     this.slf4JBaggageEventListener = new Slf4JBaggageEventListener(Collections.emptyList());
   }
 
+  /**
+   * Gets tracer.
+   *
+   * @return the tracer
+   */
   public Tracer getTracer() {
     return this.getTracer(Thread.currentThread().getName());
   }
@@ -59,6 +64,7 @@ public enum Logging {
   /**
    * get Tracer single instance.
    *
+   * @param tracerName the tracer name
    * @return Tracer single instance
    */
   public Tracer getTracer(String tracerName) {

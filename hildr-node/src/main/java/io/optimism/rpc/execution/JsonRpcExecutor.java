@@ -42,12 +42,24 @@ public class JsonRpcExecutor {
   private final JsonRpcProcessor rpcProcessor;
   private final Map<String, JsonRpcMethod> rpcMethods;
 
+  /**
+   * Instantiates a new Json rpc executor.
+   *
+   * @param rpcProcessor the rpc processor
+   * @param rpcMethods the rpc methods
+   */
   public JsonRpcExecutor(
       final JsonRpcProcessor rpcProcessor, final Map<String, JsonRpcMethod> rpcMethods) {
     this.rpcProcessor = rpcProcessor;
     this.rpcMethods = rpcMethods;
   }
 
+  /**
+   * Execute json rpc response.
+   *
+   * @param context the context
+   * @return the json rpc response
+   */
   public JsonRpcResponse execute(JsonRpcRequestContext context) {
     JsonRpcRequest requestBody = context.getRequest();
     try {

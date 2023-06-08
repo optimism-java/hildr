@@ -34,6 +34,11 @@ public class JsonRpcParseHandler {
 
   private JsonRpcParseHandler() {}
 
+  /**
+   * Handler handler.
+   *
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler() {
     return ctx -> {
       final HttpServerResponse response = ctx.response();
