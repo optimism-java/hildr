@@ -12,7 +12,7 @@ plugins {
 	id 'application'
 	id "checkstyle"
 	id "jacoco"
-	id "com.diffplug.spotless" version "6.18.0"
+	id "com.diffplug.spotless" version "6.19.0"
 	id "net.ltgt.errorprone" version "3.1.0"
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
@@ -298,57 +298,17 @@ task buildBinary {
 	println(out.toString())
 }
 
-task buildDocker {
+task buildJarForDocker {
 	dependsOn jar
 	def buildImageDir = "build/docker"
 	def out = new ByteArrayOutputStream()
 	doFirst {
 		new File(buildImageDir).mkdirs()
 		copy {
-			from "../docker/Dockerfile"
-			into buildImageDir
-		}
-		copy {
 			from "build/libs/${project.name}-${project.version}.jar"
 			into buildImageDir
 			rename "${project.name}-${project.version}.jar", "${project.name}.jar"
 		}
 	}
-	doLast {
-		exec {
-			workingDir buildImageDir
-			executable "sh"
-			args "-c", "docker build --platform=linux/amd64 -t optimism-java/${project.name}:latest ."
-			standardOutput out
-		}
-	}
 	println(out.toString())
-}
-
-task buildNativeDocker {
-	dependsOn buildBinary
-	def buildImageDir = "build/docker"
-	def out = new ByteArrayOutputStream()
-	doFirst {
-		new File(buildImageDir).mkdirs()
-		copy {
-			from "../docker/binary.dock"
-			into buildImageDir
-		}
-		copy {
-			from "build/binary/"
-			into buildImageDir
-			include "${project.name}"
-		}
-	}
-	doLast {
-		exec {
-			workingDir buildImageDir
-			executable "sh"
-			args "-c", "docker build --platform=linux/amd64 -f binary.dock -t optimism-java/${project.name}:latest ."
-			standardOutput out
-		}
-	}
-	println(out.toString())
-
 }
