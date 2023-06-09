@@ -3,7 +3,8 @@ RUN gu install native-image
 WORKDIR /root/hildr
 COPY . .
 RUN ./gradlew buildJarForDocker
-RUN cd /root/hildr/hildr-node/build/docker && native-image -jar hildr-node.jar --static --initialize-at-build-time=ch.qos.logback,org.slf4j,io.opentelemetry,java.io hildr-node
+RUN cd /root/hildr/hildr-node/build/docker && \
+native-image -jar hildr-node.jar --no-fallback --static --initialize-at-build-time=java.io.FileDescriptor,org.slf4j.MDC,io.opentelemetry.context,io.opentelemetry.api,io.opentelemetry.context,ch.qos.logback,io.netty.channel.AbstractChannel,org.slf4j.LoggerFactory hildr-node
 
 FROM eclipse-temurin:19-jdk
 

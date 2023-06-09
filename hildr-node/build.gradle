@@ -291,7 +291,7 @@ task buildBinary {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --static --initialize-at-build-time=ch.qos.logback,org.slf4j,io.opentelemetry,java.io ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --static --initialize-at-build-time=ch.qos.logback,org.slf4j,io.opentelemetry,java.io,io.netty ${project.name}"
 			standardOutput out
 		}
 	}
