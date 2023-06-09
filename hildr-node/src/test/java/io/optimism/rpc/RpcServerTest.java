@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.optimism.TestConstants;
+import io.optimism.concurrency.TracerTaskWrapper;
 import io.optimism.config.Config;
 import io.optimism.rpc.internal.JsonRpcRequest;
 import io.optimism.rpc.internal.JsonRpcRequestId;
@@ -38,6 +39,8 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * rpc server test.
@@ -46,6 +49,8 @@ import org.junit.jupiter.api.Test;
  * @since 2023.06
  */
 public class RpcServerTest {
+
+  private static final Logger logger = LoggerFactory.getLogger(RpcServerTest.class);
 
   private static Config config;
 
@@ -86,7 +91,13 @@ public class RpcServerTest {
           new Request.Builder().url("http://127.0.0.1:9545").post(requestBody).build();
 
       try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-        Future<Response> fork = scope.fork(() -> okHttpClient.newCall(request).execute());
+        Future<Response> fork =
+            scope.fork(
+                TracerTaskWrapper.wrap(
+                    () -> {
+                      logger.info("test: {}", Thread.currentThread().getName());
+                      return okHttpClient.newCall(request).execute();
+                    }));
         scope.join();
         Response response = fork.get();
         assertEquals(200, response.code());

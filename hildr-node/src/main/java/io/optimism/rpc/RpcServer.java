@@ -79,12 +79,8 @@ public class RpcServer {
     this.methods = new JsonRpcMethodsFactory().methods(this.config);
   }
 
-  /**
-   * Start.
-   *
-   * @throws Exception the exception
-   */
-  public void start() throws Exception {
+  /** Start. */
+  public void start() {
     this.httpServer = vertx.createHttpServer(getHttpServerOptions(config));
     httpServer.webSocketHandler(webSocketHandler());
     httpServer.connectionHandler(connectionHandler());
@@ -102,7 +98,11 @@ public class RpcServer {
               future.completeExceptionally(res.cause());
               httpServer = null;
             });
-    future.get();
+    try {
+      future.get();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private Handler<HttpServerRequest> buildRouter() {

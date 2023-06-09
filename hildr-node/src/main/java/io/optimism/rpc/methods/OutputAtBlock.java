@@ -17,6 +17,7 @@
 package io.optimism.rpc.methods;
 
 import io.optimism.common.HildrServiceExecutionException;
+import io.optimism.concurrency.TracerTaskWrapper;
 import io.optimism.rpc.RpcMethod;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
@@ -120,10 +121,11 @@ public class OutputAtBlock implements JsonRpcMethod {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<EthBlock> ethBlockFuture =
           scope.fork(
-              () ->
-                  client
-                      .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
-                      .send());
+              TracerTaskWrapper.wrap(
+                  () ->
+                      client
+                          .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
+                          .send()));
       scope.join();
       scope.throwIfFailed();
       return ethBlockFuture.resultNow().getBlock();
@@ -135,15 +137,18 @@ public class OutputAtBlock implements JsonRpcMethod {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<EthGetProof> ehtGetProofFuture =
           scope.fork(
-              () -> {
-                return new Request<>(
-                        ETH_GET_PROOF,
-                        Arrays.asList(
-                            this.l2ToL1MessagePasser, Collections.<String>emptyList(), blockHash),
-                        this.service,
-                        EthGetProof.class)
-                    .send();
-              });
+              TracerTaskWrapper.wrap(
+                  () -> {
+                    return new Request<>(
+                            ETH_GET_PROOF,
+                            Arrays.asList(
+                                this.l2ToL1MessagePasser,
+                                Collections.<String>emptyList(),
+                                blockHash),
+                            this.service,
+                            EthGetProof.class)
+                        .send();
+                  }));
       scope.join();
       scope.throwIfFailed();
       return ehtGetProofFuture.resultNow().getProof();
