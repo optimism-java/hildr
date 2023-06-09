@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
 import io.optimism.common.HildrServiceExecutionException;
+import io.optimism.concurrency.TracerTaskWrapper;
 import io.optimism.config.Config;
 import io.optimism.derive.Pipeline;
 import io.optimism.engine.Engine;
@@ -33,6 +34,7 @@ import io.optimism.engine.ExecutionPayload;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.BlockUpdate;
 import io.optimism.l1.ChainWatcher;
+import io.optimism.rpc.RpcServer;
 import io.optimism.telemetry.InnerMetrics;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -71,6 +73,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private final EngineDriver<E> engineDriver;
 
+  private final RpcServer rpcServer;
+
   private List<UnfinalizedBlock> unfinalizedBlocks;
 
   private BigInteger finalizedL1BlockNumber;
@@ -102,8 +106,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       Pipeline pipeline,
       AtomicReference<io.optimism.derive.State> state,
       ChainWatcher chainWatcher,
-      MessagePassingQueue<ExecutionPayload> unsafeBlockQueue) {
+      MessagePassingQueue<ExecutionPayload> unsafeBlockQueue,
+      RpcServer rpcServer) {
     this.engineDriver = engineDriver;
+    this.rpcServer = rpcServer;
     this.pipeline = pipeline;
     this.state = state;
     this.chainWatcher = chainWatcher;
@@ -137,7 +143,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     EthBlock finalizedBlock;
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       Future<EthBlock> finalizedBlockFuture =
-          scope.fork(() -> provider.ethGetBlockByNumber(FINALIZED, true).send());
+          scope.fork(
+              TracerTaskWrapper.wrap(() -> provider.ethGetBlockByNumber(FINALIZED, true).send()));
       scope.join();
       scope.throwIfFailed();
 
@@ -183,11 +190,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     Pipeline pipeline = new Pipeline(state, config, finalizedSeq);
 
-    // TODO: RPC SERVER
+    RpcServer rpcServer = new RpcServer(config);
+    rpcServer.start();
+
     MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue =
         new MpscUnboundedXaddArrayQueue<>(1024 * 64);
     provider.shutdown();
-    return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue);
+    return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer);
   }
 
   @Override
@@ -228,6 +237,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     this.chainWatcher.stop();
     this.executor.shutdown();
     this.engineDriver.stop();
+    this.rpcServer.stop();
   }
 
   @Override
@@ -246,11 +256,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       var voidFuture =
           scope.fork(
-              (Callable<Void>)
-                  () -> {
-                    Driver.this.advanceSafeHead();
-                    return null;
-                  });
+              TracerTaskWrapper.wrap(
+                  (Callable<Void>)
+                      () -> {
+                        Driver.this.advanceSafeHead();
+                        return null;
+                      }));
 
       scope.join();
       scope.throwIfFailed();
@@ -260,11 +271,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       var voidFuture =
           scope.fork(
-              (Callable<Void>)
-                  () -> {
-                    Driver.this.advanceUnsafeHead();
-                    return null;
-                  });
+              TracerTaskWrapper.wrap(
+                  (Callable<Void>)
+                      () -> {
+                        Driver.this.advanceUnsafeHead();
+                        return null;
+                      }));
       scope.join();
       scope.throwIfFailed();
       voidFuture.resultNow();
