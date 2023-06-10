@@ -234,6 +234,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() {
+    LOGGER.info("will shutdown driver.");
     this.chainWatcher.stop();
     this.executor.shutdown();
     this.engineDriver.stop();
