@@ -17,6 +17,8 @@
 package io.optimism.l1;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.BlockNotIncludedException;
 import io.optimism.common.HildrServiceExecutionException;
@@ -27,6 +29,7 @@ import io.optimism.derive.stages.Attributes.UserDeposited;
 import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.BlockUpdate.FinalityUpdate;
 import io.optimism.rpc.provider.Web3jProvider;
+import io.optimism.telemetry.Logging;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -468,14 +471,18 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   @Override
   protected void run() {
     while (isRunning() && !this.isShutdownTriggered) {
-      LOGGER.debug("fetching L1 data for block {}", currentBlock);
-      try {
+      Tracer tracer = Logging.INSTANCE.getTracer("structure-task-scope");
+      Span span = tracer.nextSpan().name("call").start();
+      try (var unused = tracer.withSpan(span)) {
+        LOGGER.debug("fetching L1 data for block {}", currentBlock);
         this.tryIngestBlock();
       } catch (ExecutionException e) {
         LOGGER.error("error while fetching L1 data for block {}", currentBlock);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new HildrServiceExecutionException(e);
+      } finally {
+        span.end();
       }
     }
   }
