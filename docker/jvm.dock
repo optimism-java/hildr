@@ -2,12 +2,12 @@ FROM eclipse-temurin:19-jdk as builder
 
 WORKDIR /root/hildr
 COPY . .
-RUN ./gradlew buildJarForDocker
+RUN ./gradlew clean buildJarForDocker
 
 FROM eclipse-temurin:19-jdk
 
 WORKDIR /usr/local/bin
-COPY --from=builder /root/hildr/build/docker/hildr-node.jar .
+COPY --from=builder /root/hildr/hildr-node/build/docker/hildr-node.jar .
 
 COPY . .
 ENV HILDR_JAR /usr/local/bin/hildr-node.jar
