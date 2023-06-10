@@ -14,7 +14,7 @@
       <totalSizeCap>3GB</totalSizeCap>
     </rollingPolicy>
     <encoder>
-      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} %msg%n</pattern>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %logger{36} trace_id=%X{trace_id} span_id=%X{span_id} trace_flags=%X{trace_flags} %msg%n</pattern>
     </encoder>
   </appender>
 
