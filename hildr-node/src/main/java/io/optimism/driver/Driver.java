@@ -99,6 +99,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    * @param state the state
    * @param chainWatcher the chain watcher
    * @param unsafeBlockQueue the unsafe block queue
+   * @param rpcServer the rpc server
    */
   @SuppressWarnings("preview")
   public Driver(
