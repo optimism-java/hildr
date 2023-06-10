@@ -12,13 +12,13 @@ services:
     image: optimism-java/hildr-node:latest
     container_name: hildr-node
     build:
-      dockerfile: Dockerfile
+      dockerfile: ./docker/jvm.dock
       context: ../
     profiles:
       - hildr-node
     restart: unless-stopped
     stop_grace_period: 3m
-    entrypoint: /scripts/start-hildr-node.sh
+    entrypoint: /scripts/start-hildr-node-java.sh
     depends_on:
       - op-geth
     env_file:
@@ -32,7 +32,7 @@ services:
     <<: *logging
 
   op-geth:
-    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:3fa9e812447af947c0208838453268a8ea33444b
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101105.2
     container_name: op-geth
     profiles:
       - op-geth
