@@ -8,7 +8,5 @@ FROM eclipse-temurin:19-jdk
 
 WORKDIR /usr/local/bin
 COPY --from=builder /root/hildr/hildr-node/build/docker/hildr-node.jar .
-
-COPY . .
 ENV HILDR_JAR /usr/local/bin/hildr-node.jar
 ENV HILDR_MAIN_CLASS io.optimism.Hildr

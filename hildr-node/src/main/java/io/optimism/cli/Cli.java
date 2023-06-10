@@ -114,6 +114,7 @@ public class Cli implements Runnable {
       LOGGER.error("hildr: ", e);
       throw new HildrServiceExecutionException(e);
     } finally {
+      LOGGER.info("stop inner metrics");
       InnerMetrics.stop();
       span.end();
     }
