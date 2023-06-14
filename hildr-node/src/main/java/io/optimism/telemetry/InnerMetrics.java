@@ -77,7 +77,7 @@ public class InnerMetrics {
       httpServer = HttpServer.create(new InetSocketAddress(port), 2);
       httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
       httpServer.createContext(
-          "/prometheus",
+          "/metrics",
           httpExchange -> {
             String response = registry.scrape();
             httpExchange.sendResponseHeaders(

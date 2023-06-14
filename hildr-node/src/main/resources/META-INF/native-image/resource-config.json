@@ -2,7 +2,7 @@
   "resources":{
   "includes":[
     {
-      "pattern":".*/logback.*xml$"
+      "pattern":"logback.xml"
     }
   ]},
   "bundles":[]
