@@ -416,13 +416,14 @@ public class Runner extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() {
+    LOGGER.info("runner shut down");
     driver.stopAsync().awaitTerminated();
     LOGGER.info("stopped driver");
   }
 
   @Override
   protected void triggerShutdown() {
-    LOGGER.info("trigger shut down");
+    LOGGER.info("runner trigger shut down");
     this.isShutdownTriggered = true;
     this.latch.countDown();
   }

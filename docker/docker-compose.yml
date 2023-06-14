@@ -11,9 +11,9 @@ services:
   hildr-node:
     image: optimism-java/hildr-node:latest
     container_name: hildr-node
-#    build:
-#      dockerfile: ./docker/jvm.dock
-#      context: ../
+    build:
+      dockerfile: ./docker/Dockerfile
+      context: ../
     profiles:
       - hildr-node
     restart: unless-stopped

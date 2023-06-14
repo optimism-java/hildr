@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
+import sun.misc.Signal;
 
 /**
  * CLI handler.
@@ -91,14 +92,14 @@ public class Cli implements Runnable {
 
   @Override
   public void run() {
+    InnerMetrics.start(9200);
+    Signal.handle(new Signal("INT"), sig -> System.exit(0));
+    Signal.handle(new Signal("TERM"), sig -> System.exit(0));
+
     var syncMode = this.syncMode;
     var unusedVerbose = this.verbose;
     var checkpointHash = this.checkpointHash;
     var config = this.toConfig();
-
-    Tracer tracer = Logging.INSTANCE.getTracer("hildr-cli");
-    InnerMetrics.start(9200);
-
     Runner runner = Runner.create(config).setSyncMode(syncMode).setCheckpointHash(checkpointHash);
     Runtime.getRuntime()
         .addShutdownHook(
@@ -107,6 +108,7 @@ public class Cli implements Runnable {
                   LOGGER.info("hildr: shutdown");
                   runner.stopAsync().awaitTerminated();
                 }));
+    Tracer tracer = Logging.INSTANCE.getTracer("hildr-cli");
     var span = tracer.nextSpan().name("start-runner").start();
     try (var unused = tracer.withSpan(span)) {
       runner.startAsync().awaitTerminated();

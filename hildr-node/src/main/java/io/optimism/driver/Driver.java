@@ -47,7 +47,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import jdk.incubator.concurrent.StructuredTaskScope;
@@ -90,7 +89,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private final ExecutorService executor;
 
-  private final AtomicBoolean isShutdownTriggered = new AtomicBoolean(false);
+  private volatile boolean isShutdownTriggered;
 
   private CountDownLatch latch;
 
@@ -209,7 +208,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   @Override
   protected void run() {
-    while (isRunning() && !isShutdownTriggered.get()) {
+    while (isRunning() && !isShutdownTriggered) {
       try {
         this.advance();
       } catch (InterruptedException e) {
@@ -247,16 +246,21 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   @Override
   protected void shutDown() {
-    LOGGER.info("will shutdown driver.");
+    LOGGER.info("driver shut down.");
     this.chainWatcher.stop();
+    LOGGER.info("chainWatcher shut down.");
     this.executor.shutdown();
+    LOGGER.info("executor shut down.");
     this.engineDriver.stop();
+    LOGGER.info("engineDriver shut down.");
     this.rpcServer.stop();
+    LOGGER.info("driver stopped.");
   }
 
   @Override
   protected void triggerShutdown() {
-    this.isShutdownTriggered.compareAndExchange(false, true);
+    LOGGER.info("driver trigger shut down");
+    this.isShutdownTriggered = true;
   }
 
   private void awaitEngineReady() throws InterruptedException {

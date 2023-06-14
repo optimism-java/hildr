@@ -46,7 +46,7 @@ public class InnerMetricsTest {
 
   private String getMetric() throws IOException {
     OkHttpClient client = new OkHttpClient.Builder().build();
-    Request request = new Request.Builder().get().url("http://127.0.0.1:9200/prometheus").build();
+    Request request = new Request.Builder().get().url("http://127.0.0.1:9200/metrics").build();
     return client.newCall(request).execute().body().string();
   }
 

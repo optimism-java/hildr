@@ -345,7 +345,7 @@ graalvmNative {
 			buildArgs.add('--enable-https')
 			buildArgs.add('--enable-preview')
 			buildArgs.add('--add-modules=jdk.incubator.concurrent')
-			buildArgs.add('--gc=epsilon')
+//			buildArgs.add('--gc=epsilon')
 //			buildArgs.add('--report-unsupported-elements-at-runtime')
 //			buildArgs.add('--features=okhttp3.internal.graal.OkHttpFeature')
 //			buildArgs.add('-H:EnableURLProtocols=http,https')
