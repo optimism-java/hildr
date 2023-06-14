@@ -36,6 +36,8 @@ import java.time.Duration;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.ArrayUtils;
@@ -71,6 +73,8 @@ public class Runner extends AbstractExecutionThreadService {
 
   private CountDownLatch latch = new CountDownLatch(1);
 
+  private Executor executor;
+
   /**
    * Instantiates a new Runner.
    *
@@ -82,13 +86,16 @@ public class Runner extends AbstractExecutionThreadService {
     this.config = config;
     this.syncMode = syncMode;
     this.checkpointHash = checkpointHash;
+    this.executor = Executors.newVirtualThreadPerTaskExecutor();
     this.engineApi = new EngineApi(this.config.l2EngineUrl(), this.config.jwtSecret());
     try {
       waitReady();
     } catch (InterruptedException e) {
+      LOGGER.error("interrupted while waiting for engine to be ready", e);
       Thread.currentThread().interrupt();
       throw new DriverInitException(e);
     } catch (ExecutionException e) {
+      LOGGER.error("execution exception while waiting for engine to be ready", e);
       throw new DriverInitException(e);
     }
   }
@@ -116,7 +123,7 @@ public class Runner extends AbstractExecutionThreadService {
         Thread.sleep(Duration.ofSeconds(3L));
       }
     }
-    this.driver = Driver.from(this.config);
+    this.driver = Driver.from(this.config, this.latch);
   }
 
   /**
@@ -418,5 +425,10 @@ public class Runner extends AbstractExecutionThreadService {
     LOGGER.info("trigger shut down");
     this.isShutdownTriggered = true;
     this.latch.countDown();
+  }
+
+  @Override
+  protected Executor executor() {
+    return this.executor;
   }
 }

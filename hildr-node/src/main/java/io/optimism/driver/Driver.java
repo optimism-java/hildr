@@ -41,6 +41,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -91,6 +92,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private final AtomicBoolean isShutdownTriggered = new AtomicBoolean(false);
 
+  private CountDownLatch latch;
+
   /**
    * Instantiates a new Driver.
    *
@@ -100,6 +103,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    * @param chainWatcher the chain watcher
    * @param unsafeBlockQueue the unsafe block queue
    * @param rpcServer the rpc server
+   * @param latch the close notifier
    */
   @SuppressWarnings("preview")
   public Driver(
@@ -108,7 +112,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       AtomicReference<io.optimism.derive.State> state,
       ChainWatcher chainWatcher,
       MessagePassingQueue<ExecutionPayload> unsafeBlockQueue,
-      RpcServer rpcServer) {
+      RpcServer rpcServer,
+      CountDownLatch latch) {
     this.engineDriver = engineDriver;
     this.rpcServer = rpcServer;
     this.pipeline = pipeline;
@@ -118,6 +123,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     this.futureUnsafeBlocks = Lists.newArrayList();
     this.unfinalizedBlocks = Lists.newArrayList();
     this.executor = Executors.newVirtualThreadPerTaskExecutor();
+    this.latch = latch;
   }
 
   /**
@@ -133,11 +139,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    * From driver.
    *
    * @param config the config
+   * @param latch the latch
    * @return the driver
    * @throws InterruptedException the interrupted exception
    * @throws ExecutionException the execution exception
    */
-  public static Driver<EngineApi> from(Config config)
+  public static Driver<EngineApi> from(Config config, CountDownLatch latch)
       throws InterruptedException, ExecutionException {
     Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
 
@@ -197,7 +204,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue =
         new MpscUnboundedXaddArrayQueue<>(1024 * 64);
     provider.shutdown();
-    return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer);
+    return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch);
   }
 
   @Override
@@ -207,10 +214,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.advance();
       } catch (InterruptedException e) {
         LOGGER.error("driver run interrupted", e);
+        this.latch.countDown();
         Thread.currentThread().interrupt();
         throw new HildrServiceExecutionException(e);
-      } catch (ExecutionException e) {
+      } catch (Throwable e) {
         LOGGER.error("driver run fatal error", e);
+        this.latch.countDown();
         throw new HildrServiceExecutionException(e);
       }
     }
@@ -221,8 +230,11 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     try {
       this.awaitEngineReady();
     } catch (InterruptedException e) {
-      LOGGER.error("driver run interrupted", e);
+      LOGGER.error("driver start interrupted", e);
       Thread.currentThread().interrupt();
+      throw new HildrServiceExecutionException(e);
+    } catch (Throwable e) {
+      LOGGER.error("driver start fatal error", e);
       throw new HildrServiceExecutionException(e);
     }
     this.chainWatcher.start();

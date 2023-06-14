@@ -24,6 +24,7 @@ import io.optimism.config.Config.ChainConfig;
 import io.optimism.config.Config.CliConfig;
 import io.optimism.engine.EngineApi;
 import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.Web3j;
@@ -52,7 +53,7 @@ class DriverTest {
     Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
     Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
     EthBlock finalizedBlock = provider.ethGetBlockByNumber(FINALIZED, true).send();
-    Driver<EngineApi> driver = Driver.from(config);
+    Driver<EngineApi> driver = Driver.from(config, new CountDownLatch(1));
 
     assertEquals(
         driver.getEngineDriver().getFinalizedHead().number(),
