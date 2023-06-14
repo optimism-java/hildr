@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.EthChainId;
 import org.web3j.protocol.http.HttpService;
@@ -42,6 +43,8 @@ import org.web3j.utils.Numeric;
  * @since 0.1.0
  */
 public class EngineApi implements Engine {
+
+  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EngineApi.class);
 
   /** The forkchoice updated method string. */
   public static final String ENGINE_FORKCHOICE_UPDATED_V1 = "engine_forkchoiceUpdatedV1";
@@ -175,6 +178,7 @@ public class EngineApi implements Engine {
    * @return the boolean
    */
   public boolean isAvailable() {
+    LOGGER.debug("Checking if EngineApi is available");
     web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
     Request<?, EthChainId> r =
         new Request<>("eth_chainId", List.of(), web3jService, EthChainId.class);
@@ -182,6 +186,7 @@ public class EngineApi implements Engine {
     try {
       chainId = r.send();
     } catch (IOException e) {
+      LOGGER.error("EngineApi is not available", e);
       return false;
     }
     return chainId != null;

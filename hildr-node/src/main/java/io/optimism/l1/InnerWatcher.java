@@ -477,7 +477,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         LOGGER.debug("fetching L1 data for block {}", currentBlock);
         this.tryIngestBlock();
       } catch (ExecutionException e) {
-        LOGGER.error("error while fetching L1 data for block {}", currentBlock);
+        LOGGER.error(String.format("error while fetching L1 data for block %d", currentBlock), e);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw new HildrServiceExecutionException(e);
