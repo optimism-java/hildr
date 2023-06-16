@@ -87,6 +87,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private final MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
 
+  private BigInteger channelTimeout;
+
   private final ExecutorService executor;
 
   private volatile boolean isShutdownTriggered;
@@ -186,7 +188,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     LOGGER.info("starting from head: {}", finalizedHead.hash());
 
     ChainWatcher watcher =
-        new ChainWatcher(finalizedEpoch.number(), finalizedHead.number(), config);
+        new ChainWatcher(
+            finalizedEpoch.number().subtract(config.chainConfig().channelTimeout()),
+            finalizedHead.number(),
+            config);
 
     AtomicReference<io.optimism.derive.State> state =
         new AtomicReference<>(
@@ -351,7 +356,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                   BigInteger unsafeBlockNum = payload.blockNumber();
                   BigInteger syncedBlockNum = Driver.this.engineDriver.getUnsafeHead().number();
                   return unsafeBlockNum.compareTo(syncedBlockNum) > 0
-                      && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(256L))
+                      && unsafeBlockNum
+                              .subtract(syncedBlockNum)
+                              .compareTo(BigInteger.valueOf(1024L))
                           < 0;
                 })
             .collect(Collectors.toList());
@@ -409,7 +416,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         Driver.this.unfinalizedBlocks.clear();
 
         Driver.this.chainWatcher.restart(
-            Driver.this.engineDriver.getFinalizedEpoch().number(),
+            Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
             Driver.this.engineDriver.getFinalizedHead().number());
 
         Driver.this.state.getAndUpdate(

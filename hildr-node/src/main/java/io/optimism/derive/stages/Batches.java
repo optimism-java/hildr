@@ -256,6 +256,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 return BatchStatus.Drop;
               }
             } else {
+              LOGGER.debug("sequencer drift undecided");
               return BatchStatus.Undecided;
             }
           }
@@ -265,6 +266,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
       }
     } else {
+      LOGGER.debug("batch origin not known");
       return BatchStatus.Undecided;
     }
 

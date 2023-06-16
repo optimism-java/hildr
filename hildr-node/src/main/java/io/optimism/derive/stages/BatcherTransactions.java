@@ -25,6 +25,8 @@ import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jctools.queues.MessagePassingQueue;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.utils.Numeric;
 
 /**
@@ -35,7 +37,7 @@ import org.web3j.utils.Numeric;
  */
 public class BatcherTransactions
     implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
-
+  private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
   private Deque<BatcherTransaction> txs;
 
   private MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;
@@ -168,6 +170,10 @@ public class BatcherTransactions
       final boolean isLastFrame = frameDataMessage[frameDataEnd] != 0;
       final Frame frame =
           new Frame(channelId, frameNumber, frameDataLen, frameData, isLastFrame, l1InclusionBlock);
+      LOGGER.debug(
+          String.format(
+              "saw batcher tx: block=%d, number=%d, is_last=%b",
+              l1InclusionBlock, frameNumber, isLastFrame));
 
       return new ImmutablePair<>(frame, offset + frameDataMessage.length);
     }

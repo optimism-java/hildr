@@ -42,7 +42,10 @@ public class Cli implements Runnable {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
-  @Option(names = "--network", description = "network type, support: optimism-goerli, base-goerli")
+  @Option(
+      names = "--network",
+      defaultValue = "optimism",
+      description = "network type, support: optimism-goerli, base-goerli")
   String network;
 
   @Option(names = "--l1-rpc-url", required = true, description = "The base chain RPC URL")
@@ -122,15 +125,15 @@ public class Cli implements Runnable {
     }
   }
 
+  @SuppressWarnings("checkstyle:Indentation")
   private Config toConfig() {
-    Config.ChainConfig chain;
-    if ("optimism-goerli".equals(network)) {
-      chain = Config.ChainConfig.optimismGoerli();
-    } else if ("base-goerli".equals(network)) {
-      chain = Config.ChainConfig.baseGoerli();
-    } else {
-      throw new RuntimeException("network not recognized");
-    }
+    Config.ChainConfig chain =
+        switch (network) {
+          case "optimism" -> Config.ChainConfig.optimism();
+          case "optimism-goerli" -> Config.ChainConfig.optimismGoerli();
+          case "base-goerli" -> Config.ChainConfig.baseGoerli();
+          default -> throw new RuntimeException("network not recognized");
+        };
 
     var configPath = Paths.get(System.getProperty("user.home"), ".hildr/hildr.toml");
     var cliConfig = from(Cli.this);

@@ -209,6 +209,42 @@ public record Config(
       String l2Tol1MessagePasser) {
 
     /**
+     * Optimism chain config.
+     *
+     * @return the chain config
+     */
+    public static ChainConfig optimism() {
+      return new ChainConfig(
+          "optimism",
+          BigInteger.valueOf(10L),
+          new Epoch(
+              BigInteger.valueOf(17422590L),
+              "0x438335a20d98863a4c0c97999eb2481921ccd28553eac6f913af7c12aec04108",
+              BigInteger.valueOf(1686068903L)),
+          new BlockInfo(
+              "0xdbf6a80fef073de06add9b0d14026d6e5a86c85f6d102c36d3d8e9cf89c2afd3",
+              BigInteger.valueOf(105235063L),
+              "0x21a168dfa5e727926063a28ba16fd5ee84c814e847c81a699c7a0ea551e4ca50",
+              BigInteger.valueOf(1686068903L)),
+          new SystemConfig(
+              "0x6887246668a3b87f54deb3b94ba47a6f63f32985",
+              BigInteger.valueOf(30_000_000L),
+              BigInteger.valueOf(188L),
+              BigInteger.valueOf(684000L),
+              "0xAAAA45d9549EDA09E70937013520214382Ffc4A2"),
+          "0xff00000000000000000000000000000000000010",
+          "0xbEb5Fc579115071764c7423A4f12eDde41f106Ed",
+          "0x229047fed2591dbec1eF1118d64F7aF3dB9EB290",
+          BigInteger.valueOf(100_000_000L),
+          BigInteger.valueOf(300L),
+          BigInteger.valueOf(3600L),
+          BigInteger.valueOf(600L),
+          BigInteger.ZERO,
+          BigInteger.valueOf(2L),
+          "0x4200000000000000000000000000000000000016");
+    }
+
+    /**
      * Optimism goerli chain config.
      *
      * @return the chain config
