@@ -46,9 +46,9 @@ public class InnerMetrics {
   private static Future<?> serverFuture;
 
   static {
-    FINALIZED_HEAD = new AtomicReference<>();
-    SAFE_HEAD = new AtomicReference<>();
-    SYNCED = new AtomicReference<>();
+    FINALIZED_HEAD = new AtomicReference<>(BigInteger.ZERO);
+    SAFE_HEAD = new AtomicReference<>(BigInteger.ZERO);
+    SYNCED = new AtomicReference<>(BigInteger.ZERO);
     registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
     Gauge.builder("finalized_head", FINALIZED_HEAD, ref -> ref.get().doubleValue())
         .description("finalized head number")
