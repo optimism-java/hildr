@@ -24,7 +24,7 @@ env:
 
 jobs:
   native-build:
-    name: GraalVM CE latest ${{ matrix.java-version }} on ${{ matrix.os }}
+    name: GraalVM latest ${{ matrix.java-version }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -32,11 +32,10 @@ jobs:
       matrix:
         version: [ '20.0.1' ]
         java-version: [ '20.0.1' ]
-        os: [ macos-latest, windows-latest, ubuntu-latest ]
+        os: [ macos-latest, windows-latest ]
 
     outputs:
-      version: ${{ steps.native-build.outputs.version }}
-      native_image_name: ${{ steps.native-build.outputs.native_image_name }}
+      version: ${{ github.ref_name }}
 
     steps:
       - name: 🛎️ Check out repository
@@ -44,7 +43,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: ☕ Setup GraalVM CE Dev Build
+      - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
           version: ${{ matrix.version }}
@@ -53,29 +52,35 @@ jobs:
           distribution: 'graalvm'
           cache: 'gradle'
           set-java-home: 'true'
-          native-image-job-reports: 'false'
+          native-image-job-reports: 'true'
 
-      - name: 🏗️ Native Image Build & Test
+      - name: 🏗️ Native Image Build & Test ${{ matrix.os }}
         id: native-build
         run: |
           ./gradlew nativeCompile
-          ls -ltrh hildr-node/build/${{ github.event.repository.name }}*.tar.gz
+          ls -ltrh hildr-node/build/native/nativeCompile/hildr-node          
 
       - name: 📤 Upload ${{ matrix.os }} native image
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.native-build.outputs.native_image_name }}
+          name: hildr-node-${{ matrix.os }}
           path: |
-            hildr-node/build/${{ steps.native-build.outputs.native_image_name }}
+            hildr-node/build/native/nativeCompile/hildr-node
           if-no-files-found: error
 
-
-  native-build-musl:
-    name: GraalVM CE Dev + musl static image
-    runs-on: ubuntu-latest
+  native-build-linux:
+    name: GraalVM latest ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        version: [ '20.0.1' ]
+        java-version: [ '20.0.1' ]
+        os: [ ubuntu-latest ]
 
     outputs:
-      native_image_name: ${{ steps.native-build.outputs.native_image_name }}
+      version: ${{ github.ref_name }}
 
     steps:
       - name: 🛎️ Check out repository
@@ -83,7 +88,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: ☕ Setup GraalVM CE Dev Build
+      - name: ☕ Setup GraalVM Build
+        uses: graalvm/setup-graalvm@v1
+        with:
+          version: ${{ matrix.version }}
+          java-version: ${{ matrix.java-version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          distribution: 'graalvm'
+          cache: 'gradle'
+          set-java-home: 'true'
+          native-image-job-reports: 'true'
+
+      - name: 🏗️ Native Image Build & Test linux
+        id: native-build-${{ matrix.os }}
+        run: |
+          ./gradlew buildBinaryG1GC
+          ls -ltrh hildr-node/build/binary/hildr-node    
+
+      - name: 📤 Upload ubuntu-latest native image
+        uses: actions/upload-artifact@v3
+        with:
+          name: hildr-node-${{ matrix.os }}
+          path: |
+            hildr-node/build/binary/hildr-node
+          if-no-files-found: error
+
+  native-build-musl:
+    name: GraalVM + musl static image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛎️ Check out repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
           version: '20.0.1'
@@ -98,20 +138,20 @@ jobs:
       - name: 🏗️ Build static image with musl libc
         id: native-build
         run: |
-          ./gradlew nativeCompile -Pmusl
-          ls -ltrh hildr-node/build/native/nativeCompile/hildr-node
+          ./gradlew buildBinaryStatic
+          ls -ltrh hildr-node/build/binary/hildr-node
 
       - name: 📤 Upload static binary
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.native-build.outputs.native_image_name }}
+          name: hildr-node
           path: |
-            hildr-node/build/native/nativeCompile/hildr-node
+            hildr-node/build/binary/hildr-node
           if-no-files-found: error
 
   release:
     name: 🚰 Release new version.
-    needs: [ native-build, native-build-musl ]
+    needs: [ native-build, native-build-linux, native-build-musl ]
     if: startsWith(github.ref, 'refs/tags/') && needs.native-build.result == 'success'
     runs-on: ubuntu-latest
 
