@@ -93,7 +93,7 @@ jobs:
           cache: 'gradle'
           native-image-musl: 'true'
           set-java-home: 'true'
-          native-image-job-reports: 'false'
+          native-image-job-reports: 'true'
 
       - name: 🏗️ Build static image with musl libc
         id: native-build
