@@ -99,14 +99,14 @@ jobs:
         id: native-build
         run: |
           ./gradlew nativeCompile -Pmusl
-          ls -ltrh build/${{ github.event.repository.name }}*.tar.gz
+          ls -ltrh hildr-node/build/native/nativeCompile/hildr-node
 
       - name: 📤 Upload static binary
         uses: actions/upload-artifact@v3
         with:
           name: ${{ steps.native-build.outputs.native_image_name }}
           path: |
-            build/${{ steps.native-build.outputs.native_image_name }}
+            hildr-node/build/native/nativeCompile/hildr-node
           if-no-files-found: error
 
   release:
