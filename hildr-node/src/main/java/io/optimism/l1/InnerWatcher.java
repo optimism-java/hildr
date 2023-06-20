@@ -206,6 +206,10 @@ public class InnerWatcher extends AbstractExecutionThreadService {
    */
   public void tryIngestBlock() throws ExecutionException, InterruptedException {
     if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
+      LOGGER.debug(
+          "will get finalized block: currentBlock({}) > finalizedBlock({})",
+          this.currentBlock,
+          this.finalizedBlock);
       this.finalizedBlock = this.getFinalized();
       this.putBlockUpdate(new FinalityUpdate(finalizedBlock));
       this.unfinalizedBlocks =
@@ -216,12 +220,21 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     if (this.currentBlock.compareTo(this.headBlock) > 0) {
+      LOGGER.debug(
+          "will get head block: currentBlock({}) > headBlock({})",
+          this.currentBlock,
+          this.headBlock);
       this.headBlock = this.getHead();
     }
 
     if (this.currentBlock.compareTo(this.headBlock) <= 0) {
+      LOGGER.debug(
+          "will update system config with newest log: currentBlock({}) <= headBlock({})",
+          this.currentBlock,
+          this.headBlock);
       updateSystemConfigWithNewestLog();
     } else {
+      LOGGER.debug("will sleep 250 milliseconds", this.currentBlock, this.headBlock);
       try {
         Thread.sleep(Duration.ofMillis(250L));
       } catch (InterruptedException e) {
@@ -258,6 +271,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     BlockUpdate update =
         this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
     this.putBlockUpdate(update);
+    LOGGER.debug("current block will add one: {}", this.currentBlock);
     this.currentBlock = this.currentBlock.add(BigInteger.ONE);
   }
 
@@ -476,6 +490,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
       try (var unused = tracer.withSpan(span)) {
         LOGGER.debug("fetching L1 data for block {}", currentBlock);
         this.tryIngestBlock();
+        LOGGER.debug("done fetching L1 data for block {}", currentBlock);
       } catch (ExecutionException e) {
         LOGGER.error(String.format("error while fetching L1 data for block %d", currentBlock), e);
       } catch (InterruptedException e) {
