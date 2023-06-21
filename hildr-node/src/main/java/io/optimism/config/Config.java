@@ -18,9 +18,16 @@ package io.optimism.config;
 
 import static java.util.Map.entry;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
+import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -187,13 +194,15 @@ public record Config(
    * @param regolithTime Timestamp of the regolith hardfork.
    * @param blockTime Network blocktime.
    * @param l2Tol1MessagePasser L2 To L1 Message passer address.
-   * @param chainId The chain id.
+   * @param l1ChainId The L1 chain id.
+   * @param l2ChainId The L2 chain id.
    * @author grapebaba
    * @since 0.1.0
    */
   public record ChainConfig(
       String network,
-      BigInteger chainId,
+      BigInteger l1ChainId,
+      BigInteger l2ChainId,
       Epoch l1StartEpoch,
       BlockInfo l2Genesis,
       SystemConfig systemConfig,
@@ -216,6 +225,7 @@ public record Config(
     public static ChainConfig optimism() {
       return new ChainConfig(
           "optimism",
+          BigInteger.valueOf(1L),
           BigInteger.valueOf(10L),
           new Epoch(
               BigInteger.valueOf(17422590L),
@@ -252,6 +262,7 @@ public record Config(
     public static ChainConfig optimismGoerli() {
       return new ChainConfig(
           "optimism-goerli",
+          BigInteger.valueOf(5L),
           BigInteger.valueOf(420L),
           new Epoch(
               BigInteger.valueOf(8300214L),
@@ -288,6 +299,7 @@ public record Config(
     public static ChainConfig baseGoerli() {
       return new ChainConfig(
           "base-goerli",
+          BigInteger.valueOf(5L),
           BigInteger.valueOf(84531L),
           new Epoch(
               BigInteger.valueOf(8410981L),
@@ -317,6 +329,60 @@ public record Config(
     }
 
     /**
+     * External ChainConfig from json.
+     *
+     * @param filePath json file path
+     * @return the chain config
+     */
+    public static ChainConfig fromJson(String filePath) {
+      ObjectMapper mapper = new ObjectMapper();
+      try {
+        ExternalChainConfig externalChainConfig =
+            mapper.readValue(
+                Files.readString(Path.of(filePath), StandardCharsets.UTF_8),
+                ExternalChainConfig.class);
+        return ChainConfig.fromExternal(externalChainConfig);
+      } catch (IOException e) {
+        throw new ConfigLoadException(e);
+      }
+    }
+
+    /**
+     * ChainConfig from External ChainConfig.
+     *
+     * @param external External ChainConfig
+     * @return the chain config
+     */
+    public static ChainConfig fromExternal(ExternalChainConfig external) {
+      return new ChainConfig(
+          "external",
+          external.l1ChainId,
+          external.l2ChainId,
+          new Epoch(external.genesis.l1.number, external.genesis.l1.hash, BigInteger.ZERO),
+          new BlockInfo(
+              external.genesis.l2.hash,
+              external.genesis.l2.number,
+              Numeric.toHexString(new byte[32]),
+              external.genesis.l2Time),
+          new SystemConfig(
+              external.genesis.systemConfig.batcherAddr,
+              external.genesis.systemConfig.gasLimit,
+              Numeric.toBigInt(external.genesis.systemConfig.overhead),
+              Numeric.toBigInt(external.genesis.systemConfig.scalar),
+              Numeric.toHexString(new byte[32])),
+          external.batchInboxAddress,
+          external.depositContractAddress,
+          external.l1SystemConfigAddress,
+          BigInteger.valueOf(100_000_000L),
+          external.channelTimeout,
+          external.seqWindowSize,
+          external.maxSequencerDrift,
+          external.regolithTime,
+          external.blockTime,
+          Numeric.toHexString(new byte[32]));
+    }
+
+    /**
      * To ConfigMap.
      *
      * @return the map
@@ -324,7 +390,8 @@ public record Config(
     public Map<String, String> toConfigMap() {
       return Map.ofEntries(
           entry("config.chainConfig.network", this.network),
-          entry("config.chainConfig.chainId", this.chainId.toString()),
+          entry("config.chainConfig.l1ChainId", this.l1ChainId.toString()),
+          entry("config.chainConfig.l2ChainId", this.l2ChainId.toString()),
           entry("config.chainConfig.l1StartEpoch.number", this.l1StartEpoch.number().toString()),
           entry(
               "config.chainConfig.l1StartEpoch.timestamp",
@@ -444,4 +511,69 @@ public record Config(
       return Numeric.toHexStringWithPrefixZeroPadded(Numeric.toBigInt(batchSender), 64);
     }
   }
+
+  /**
+   * External chain config.
+   *
+   * <p>This is used to parse external chain configs from JSON. This interface corresponds to the
+   * default output of the `op-node`
+   *
+   * @param genesis external genesis info
+   * @param blockTime block time
+   * @param maxSequencerDrift max sequencer drift
+   * @param seqWindowSize seq window size
+   * @param channelTimeout channel timeout
+   * @param l1ChainId l1 chain id
+   * @param l2ChainId l2 chain id
+   * @param regolithTime regolith time
+   * @param batchInboxAddress batch inbox address
+   * @param depositContractAddress deposit contract address
+   * @param l1SystemConfigAddress l1 system config address
+   */
+  @JsonSerialize
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  public record ExternalChainConfig(
+      ExternalGenesisInfo genesis,
+      BigInteger blockTime,
+      BigInteger maxSequencerDrift,
+      BigInteger seqWindowSize,
+      BigInteger channelTimeout,
+      BigInteger l1ChainId,
+      BigInteger l2ChainId,
+      BigInteger regolithTime,
+      String batchInboxAddress,
+      String depositContractAddress,
+      String l1SystemConfigAddress) {}
+
+  /**
+   * External Genesis Info.
+   *
+   * @param l1 L1 chain genesis info
+   * @param l2 L2 chain genesis info
+   * @param l2Time L2 time
+   * @param systemConfig system config
+   */
+  @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
+  public record ExternalGenesisInfo(
+      ChainGenesisInfo l1, ChainGenesisInfo l2, BigInteger l2Time, SystemConfigInfo systemConfig) {}
+
+  /**
+   * system config info.
+   *
+   * @param batcherAddr batcher address
+   * @param overhead overhead
+   * @param scalar scalar
+   * @param gasLimit gas limit
+   */
+  @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
+  public record SystemConfigInfo(
+      String batcherAddr, String overhead, String scalar, BigInteger gasLimit) {}
+
+  /**
+   * chain genesis info.
+   *
+   * @param hash chain hash
+   * @param number chain number
+   */
+  public record ChainGenesisInfo(String hash, BigInteger number) {}
 }

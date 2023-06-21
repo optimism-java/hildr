@@ -132,7 +132,12 @@ public class Cli implements Runnable {
           case "optimism" -> Config.ChainConfig.optimism();
           case "optimism-goerli" -> Config.ChainConfig.optimismGoerli();
           case "base-goerli" -> Config.ChainConfig.baseGoerli();
-          default -> throw new RuntimeException("network not recognized");
+          default -> {
+            if (network.endsWith(".json")) {
+              Config.ChainConfig.fromJson(network);
+            }
+            throw new RuntimeException("network not recognized");
+          }
         };
 
     var configPath = Paths.get(System.getProperty("user.home"), ".hildr/hildr.toml");

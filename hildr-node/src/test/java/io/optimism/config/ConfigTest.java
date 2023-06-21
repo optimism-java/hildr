@@ -16,9 +16,9 @@
 
 package io.optimism.config;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.optimism.config.Config.ChainConfig;
 import io.optimism.config.Config.CliConfig;
 import io.optimism.config.Config.SystemConfig;
@@ -128,6 +128,76 @@ class ConfigTest {
 
       assertTrue(
           systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
+    }
+  }
+
+  static class ExternalChainConfigTest {
+    @Test
+    void readExternalChainFromJson() {
+      var devnetJson =
+          "{\n"
+              + "\"genesis\": {\n"
+              + "  \"l1\": {\n"
+              + "    \"hash\": \"0xdb52a58e7341447d1a9525d248ea07dbca7dfa0e105721dee1aa5a86163c088d\",\n"
+              + "    \"number\": 0\n"
+              + "  },\n"
+              + "  \"l2\": {\n"
+              + "    \"hash\": \"0xf85bca315a08237644b06a8350cda3bc0de1593745a91be93daeadb28fb3a32e\",\n"
+              + "    \"number\": 0\n"
+              + "  },\n"
+              + "  \"l2_time\": 1685710775,\n"
+              + "  \"system_config\": {\n"
+              + "    \"batcherAddr\": \"0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc\",\n"
+              + "    \"overhead\":\n"
+              + "         \"0x0000000000000000000000000000000000000000000000000000000000000834\",\n"
+              + "    \"scalar\": \"0x00000000000000000000000000000000000000000000000000000000000f4240\",\n"
+              + "    \"gasLimit\": 30000000\n"
+              + "  }\n"
+              + "},\n"
+              + "\"block_time\": 2,\n"
+              + "\"max_sequencer_drift\": 300,\n"
+              + "\"seq_window_size\": 200,\n"
+              + "\"channel_timeout\": 120,\n"
+              + "\"l1_chain_id\": 900,\n"
+              + "\"l2_chain_id\": 901,\n"
+              + "\"regolith_time\": 0,\n"
+              + "\"batch_inbox_address\": \"0xff00000000000000000000000000000000000000\",\n"
+              + "\"deposit_contract_address\": \"0x6900000000000000000000000000000000000001\",\n"
+              + "\"l1_system_config_address\": \"0x6900000000000000000000000000000000000009\"\n"
+              + "}";
+      var external =
+          assertDoesNotThrow(
+              () -> {
+                var mapper = new ObjectMapper();
+                return mapper.readValue(devnetJson, Config.ExternalChainConfig.class);
+              },
+              "parse json content should not throws but it does");
+      var chain = Config.ChainConfig.fromExternal(external);
+      assertEquals(chain.network(), "external");
+      assertEquals(chain.l1ChainId(), BigInteger.valueOf(900L));
+      assertEquals(chain.l2ChainId(), BigInteger.valueOf(901L));
+      assertEquals(chain.l1StartEpoch().number(), BigInteger.ZERO);
+      assertEquals(
+          chain.l1StartEpoch().hash(),
+          "0xdb52a58e7341447d1a9525d248ea07dbca7dfa0e105721dee1aa5a86163c088d");
+      assertEquals(
+          chain.l2Genesis().hash(),
+          "0xf85bca315a08237644b06a8350cda3bc0de1593745a91be93daeadb28fb3a32e");
+      assertEquals(chain.systemConfig().gasLimit(), BigInteger.valueOf(30_000_000L));
+      assertEquals(chain.systemConfig().l1FeeOverhead(), BigInteger.valueOf(2100L));
+      assertEquals(chain.systemConfig().l1FeeScalar(), BigInteger.valueOf(1_000_000L));
+      assertEquals(
+          chain.systemConfig().batchSender(), "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc");
+      assertEquals(chain.batchInbox(), "0xff00000000000000000000000000000000000000");
+      assertEquals(chain.depositContract(), "0x6900000000000000000000000000000000000001");
+      assertEquals(chain.systemConfigContract(), "0x6900000000000000000000000000000000000009");
+
+      assertEquals(chain.maxChannelSize(), BigInteger.valueOf(100_000_000L));
+      assertEquals(chain.channelTimeout(), BigInteger.valueOf(120L));
+      assertEquals(chain.seqWindowSize(), BigInteger.valueOf(200L));
+      assertEquals(chain.maxSeqDrift(), BigInteger.valueOf(300L));
+      assertEquals(chain.regolithTime(), BigInteger.ZERO);
+      assertEquals(chain.blockTime(), BigInteger.TWO);
     }
   }
 }
