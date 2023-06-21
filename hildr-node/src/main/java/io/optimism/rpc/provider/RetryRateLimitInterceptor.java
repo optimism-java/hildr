@@ -111,9 +111,9 @@ public class RetryRateLimitInterceptor implements Interceptor {
         return false;
       }
       String jsonRpcRes = res.peekBody(Long.MAX_VALUE).string();
-      Map<String, String> rpcRes = mapper.readValue(jsonRpcRes, new TypeReference<>() {});
-      String rpcCode = rpcRes.get(RPC_CODE);
-      String rpcMsg = rpcRes.getOrDefault(RPC_MESSAGE, "");
+      Map<String, Object> rpcRes = mapper.readValue(jsonRpcRes, new TypeReference<>() {});
+      String rpcCode = (String) rpcRes.get(RPC_CODE);
+      String rpcMsg = (String) rpcRes.getOrDefault(RPC_MESSAGE, "");
       if (RPC_ERROR_CODE.equals(rpcCode)
           || EXCEEDS_BLOCK_GAS_LIMIT.equals(rpcCode)
           || (RATE_LIMIT_ERROR_CODE.equals(rpcCode) && RATE_LIMIT_MSG.contains(rpcMsg))) {
