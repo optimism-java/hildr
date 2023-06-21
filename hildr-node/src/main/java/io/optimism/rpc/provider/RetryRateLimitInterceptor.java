@@ -110,7 +110,7 @@ public class RetryRateLimitInterceptor implements Interceptor {
       if (res.body() == null) {
         return false;
       }
-      String jsonRpcRes = res.body().string();
+      String jsonRpcRes = res.peekBody(Long.MAX_VALUE).string();
       Map<String, String> rpcRes = mapper.readValue(jsonRpcRes, new TypeReference<>() {});
       String rpcCode = rpcRes.get(RPC_CODE);
       String rpcMsg = rpcRes.getOrDefault(RPC_MESSAGE, "");
