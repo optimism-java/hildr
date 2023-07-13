@@ -18,7 +18,6 @@ package io.optimism.runner;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockNotIncludedException;
-import io.optimism.concurrency.TracerTaskWrapper;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SyncMode;
 import io.optimism.config.Config.SystemAccounts;
@@ -31,6 +30,7 @@ import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
+import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;

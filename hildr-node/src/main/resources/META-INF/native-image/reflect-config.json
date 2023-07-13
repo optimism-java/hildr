@@ -367,7 +367,7 @@
     ]
   },
   {
-    "name":"io.optimism.log.LazyInitRollingFileAppender",
+    "name":"io.optimism.telemetry.LazyInitRollingFileAppender",
     "queryAllPublicMethods":true,
     "methods":[{"name":"<init>","parameterTypes":[] }]
   },

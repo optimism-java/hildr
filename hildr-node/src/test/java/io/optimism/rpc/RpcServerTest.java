@@ -23,11 +23,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.optimism.TestConstants;
-import io.optimism.concurrency.TracerTaskWrapper;
 import io.optimism.config.Config;
 import io.optimism.rpc.internal.JsonRpcRequest;
 import io.optimism.rpc.internal.JsonRpcRequestId;
 import io.optimism.rpc.internal.result.OutputRootResult;
+import io.optimism.telemetry.TracerTaskWrapper;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.Future;

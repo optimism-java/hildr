@@ -14,11 +14,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.concurrency;
+package io.optimism.telemetry;
 
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
-import io.optimism.telemetry.Logging;
 import java.util.concurrent.Callable;
 
 /**

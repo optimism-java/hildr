@@ -18,7 +18,6 @@ package io.optimism.driver;
 
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
-import io.optimism.concurrency.TracerTaskWrapper;
 import io.optimism.config.Config;
 import io.optimism.engine.Engine;
 import io.optimism.engine.EngineApi;
@@ -31,6 +30,7 @@ import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthExecutionPayload;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
+import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;

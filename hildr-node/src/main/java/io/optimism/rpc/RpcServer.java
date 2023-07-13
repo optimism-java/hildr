@@ -75,7 +75,7 @@ public class RpcServer {
     this.config = config;
     this.activeConnectionsCount = new AtomicInteger();
     this.maxActiveConnections = DEFAULT_MAX_ACTIVE_CONNECTIONS;
-    this.vertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(1));
+    this.vertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(20));
     this.methods = new JsonRpcMethodsFactory().methods(this.config);
   }
 
