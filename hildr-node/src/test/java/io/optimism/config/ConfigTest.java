@@ -16,7 +16,9 @@
 
 package io.optimism.config;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.optimism.config.Config.ChainConfig;
@@ -138,11 +140,13 @@ class ConfigTest {
           "{\n"
               + "\"genesis\": {\n"
               + "  \"l1\": {\n"
-              + "    \"hash\": \"0xdb52a58e7341447d1a9525d248ea07dbca7dfa0e105721dee1aa5a86163c088d\",\n"
+              + "    \"hash\": \"0xdb52a58e7341447d1a9525d248ea"
+              + "07dbca7dfa0e105721dee1aa5a86163c088d\",\n"
               + "    \"number\": 0\n"
               + "  },\n"
               + "  \"l2\": {\n"
-              + "    \"hash\": \"0xf85bca315a08237644b06a8350cda3bc0de1593745a91be93daeadb28fb3a32e\",\n"
+              + "    \"hash\": \"0xf85bca315a08237644b06a8350cda3"
+              + "bc0de1593745a91be93daeadb28fb3a32e\",\n"
               + "    \"number\": 0\n"
               + "  },\n"
               + "  \"l2_time\": 1685710775,\n"
@@ -150,7 +154,8 @@ class ConfigTest {
               + "    \"batcherAddr\": \"0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc\",\n"
               + "    \"overhead\":\n"
               + "         \"0x0000000000000000000000000000000000000000000000000000000000000834\",\n"
-              + "    \"scalar\": \"0x00000000000000000000000000000000000000000000000000000000000f4240\",\n"
+              + "    \"scalar\": \"0x000000000000000000000000000000"
+              + "00000000000000000000000000000f4240\",\n"
               + "    \"gasLimit\": 30000000\n"
               + "  }\n"
               + "},\n"
