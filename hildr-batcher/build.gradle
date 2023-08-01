@@ -9,7 +9,7 @@ plugins {
 }
 
 group = 'io.optimism'
-version = '0.1.0'
+version = '0.1.1'
 
 repositories {
 	// Use Maven Central for resolving dependencies.
@@ -33,20 +33,21 @@ application {
 	mainClass = 'io.optimism.HildrBatcher'
 }
 
+tasks.withType(JavaCompile).configureEach {
+	options.annotationProcessorPath = configurations.annotationProcessor
+	options.compilerArgs += "--enable-preview"
+	options.compilerArgs += "-Xlint:preview"
+	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
+	options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
+}
+
+tasks.withType(JavaExec).configureEach {
+	jvmArgs += "--enable-preview"
+	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+}
+
 dependencies {
-	// This dependency is used by the application.
-	implementation 'com.google.guava:guava:31.1-jre'
-	implementation 'com.github.rholder:guava-retrying:2.0.0'
-
-	// define any required OkHttp artifacts without version
-	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
-	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
-
-	implementation('org.web3j:core:4.9.8') {
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
-		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
-	}
+	implementation project(':hildr-utilities')
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
@@ -86,6 +87,13 @@ dependencies {
 	implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:1.26.0-alpha")
 	runtimeOnly 'io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0'
 
+	implementation('io.tmio:tuweni-crypto:2.4.2'){
+		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
+		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
+		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
+		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
+	}
 
 	implementation 'info.picocli:picocli:4.7.3'
 	annotationProcessor 'info.picocli:picocli-codegen:4.7.3'
@@ -135,7 +143,6 @@ jacocoTestReport {
 }
 
 jacocoTestCoverageVerification {
-
 	violationRules {
 		rule {
 			limit {
@@ -212,9 +219,6 @@ checkstyleMain
 		.exclude('io/optimism/rpc/internal/response/JsonRpcNoResponse.java')
 		.exclude('io/optimism/rpc/execution/BaseJsonRpcProcessor.java')
 		.exclude('io/optimism/rpc/execution/JsonRpcProcessor.java')
-//testSets {
-//    integrationTest
-//}
 
 tasks.named('test') {
 	// Use JUnit Platform for unit tests.
@@ -232,7 +236,8 @@ tasks.withType(Test).configureEach {
 		[
 				"-Djunit.platform.reporting.open.xml.enabled=true",
 				"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}",
-				"--enable-preview"
+				"--enable-preview",
+				"--add-modules jdk.incubator.concurrent"
 		]
 	} as CommandLineArgumentProvider)
 }
@@ -253,6 +258,7 @@ javadoc {
 }
 
 jar {
+	dependsOn(configurations.runtimeClasspath)
 	manifest {
 		attributes "Main-Class": "io.optimism.HildrBatcher"
 	}
