@@ -35,7 +35,7 @@ import io.optimism.l1.BlockUpdate;
 import io.optimism.l1.ChainWatcher;
 import io.optimism.rpc.RpcServer;
 import io.optimism.telemetry.InnerMetrics;
-import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;

@@ -23,6 +23,7 @@ import io.optimism.config.Config;
 import io.optimism.runner.Runner;
 import io.optimism.telemetry.InnerMetrics;
 import io.optimism.telemetry.Logging;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.slf4j.Logger;
@@ -95,6 +96,7 @@ public class Cli implements Runnable {
 
   @Override
   public void run() {
+    TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
     InnerMetrics.start(9200);
     Signal.handle(new Signal("INT"), sig -> System.exit(0));
     Signal.handle(new Signal("TERM"), sig -> System.exit(0));
