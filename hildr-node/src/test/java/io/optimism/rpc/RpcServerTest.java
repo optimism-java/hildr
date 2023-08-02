@@ -27,7 +27,7 @@ import io.optimism.config.Config;
 import io.optimism.rpc.internal.JsonRpcRequest;
 import io.optimism.rpc.internal.JsonRpcRequestId;
 import io.optimism.rpc.internal.result.OutputRootResult;
-import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.Future;
