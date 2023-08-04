@@ -27,6 +27,7 @@ import io.optimism.config.Config;
 import io.optimism.rpc.internal.JsonRpcRequest;
 import io.optimism.rpc.internal.JsonRpcRequestId;
 import io.optimism.rpc.internal.result.OutputRootResult;
+import io.optimism.telemetry.Logging;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.time.Duration;
 import java.util.Map;
@@ -56,6 +57,7 @@ public class RpcServerTest {
 
   @BeforeAll
   static void setUp() {
+    TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
     config = TestConstants.createConfig();
   }
 

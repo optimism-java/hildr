@@ -64,10 +64,12 @@ public record L1BlockInfo(
    */
   public static L1BlockInfo from(byte[] data) {
     if (data == null || data.length != L1_INFO_LENGTH) {
+      // todo create ParseBlockException
       throw new RuntimeException(
           String.format("data is unexpected length: %d", data == null ? 0 : data.length));
     }
     if (!Objects.deepEquals(ArrayUtils.subarray(data, 0, 4), SIGNATURE_BYTES)) {
+      // todo create ParseBlockException
       throw new RuntimeException("");
     }
     BigInteger number = Numeric.toBigInt(data, 4, 32);
