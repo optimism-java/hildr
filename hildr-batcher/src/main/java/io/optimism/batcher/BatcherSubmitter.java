@@ -19,7 +19,7 @@ package io.optimism.batcher;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.batcher.channel.ChannelManager;
 import io.optimism.batcher.config.Config;
-import io.optimism.batcher.ex.BatcherExecutionException;
+import io.optimism.batcher.exception.BatcherExecutionException;
 import io.optimism.batcher.loader.BlockLoader;
 import io.optimism.batcher.loader.LoaderConfig;
 import io.optimism.batcher.publisher.ChannelDataPublisher;

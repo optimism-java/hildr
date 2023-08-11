@@ -14,7 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.derive.stages;
+package io.optimism.utilities.derive.stages;
 
 /**
  * The type InvalidFrameSizeException.

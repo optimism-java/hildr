@@ -16,6 +16,7 @@
 
 package io.optimism.type;
 
+import io.optimism.batcher.loader.ParseBlockException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -64,13 +65,11 @@ public record L1BlockInfo(
    */
   public static L1BlockInfo from(byte[] data) {
     if (data == null || data.length != L1_INFO_LENGTH) {
-      // todo create ParseBlockException
-      throw new RuntimeException(
+      throw new ParseBlockException(
           String.format("data is unexpected length: %d", data == null ? 0 : data.length));
     }
     if (!Objects.deepEquals(ArrayUtils.subarray(data, 0, 4), SIGNATURE_BYTES)) {
-      // todo create ParseBlockException
-      throw new RuntimeException("");
+      throw new ParseBlockException("");
     }
     BigInteger number = Numeric.toBigInt(data, 4, 32);
     BigInteger time = Numeric.toBigInt(data, 36, 32);

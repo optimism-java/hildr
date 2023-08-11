@@ -17,7 +17,7 @@
 package io.optimism.batcher.publisher;
 
 import io.optimism.batcher.channel.Channel;
-import io.optimism.batcher.ex.Web3jCallException;
+import io.optimism.batcher.exception.Web3jCallException;
 import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockRef;
 import io.optimism.type.TxCandidate;
@@ -109,8 +109,7 @@ public class ChannelDataPublisher implements Closeable {
     Channel.TxData txData = dataSupplier.apply(l1HeadBlockRef.toId());
     if (txData == null) {
       LOGGER.trace("no transaction data available");
-      // todo create PublishException
-      throw new RuntimeException("");
+      throw new NoDataPublishException("no transaction data available");
     }
     this.sendTx(txData);
     return true;
@@ -154,8 +153,7 @@ public class ChannelDataPublisher implements Closeable {
       scope.throwIfFailed();
       var block = headBlockFuture.get();
       if (block == null) {
-        // todo create PublishException
-        throw new RuntimeException("");
+        throw new Web3jCallException("get l1 latest block failed");
       }
       return L1BlockRef.from(block);
     } catch (ExecutionException | InterruptedException e) {

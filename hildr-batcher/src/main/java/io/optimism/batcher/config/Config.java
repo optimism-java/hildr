@@ -27,6 +27,9 @@ package io.optimism.batcher.config;
  * @param subSafetyMargin Sub-safety margin
  * @param pollInterval Milliseconds of poll interval
  * @param maxL1TxSize Max L1 Tx Size
+ * @param targetFrameSize Max L1 Tx Size
+ * @param targetNumFrames Max L1 Tx Size
+ * @param approxComprRatio Max L1 Tx Size
  * @author thinkAfCod
  * @since 0.1.1
  */
@@ -38,4 +41,7 @@ public record Config(
     String batchInboxAddress,
     Long subSafetyMargin,
     Long pollInterval,
-    Long maxL1TxSize) {}
+    Long maxL1TxSize,
+    Integer targetFrameSize,
+    Integer targetNumFrames,
+    String approxComprRatio) {}

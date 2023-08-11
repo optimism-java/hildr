@@ -48,7 +48,6 @@ tasks.withType(JavaExec).configureEach {
 
 dependencies {
 	implementation project(':hildr-utilities')
-	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
 

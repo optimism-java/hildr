@@ -14,35 +14,41 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.compressor;
-
-import io.optimism.batcher.exception.UnsupportedException;
+package io.optimism.utilities.exception;
 
 /**
- * Compressor create tool.
+ * GasOverflowException class.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class Compressors {
-
-  /** Kind type of ratio. */
-  public static final String RatioKind = "ratio";
-
-  private Compressors() {}
+public class GasOverflowException extends RuntimeException {
 
   /**
-   * Create Compressor by kind.
+   * Instantiates a new GasOverflowException.
    *
-   * @param config Config of compressor
-   * @return a compressor
+   * @param message the message
    */
-  public static Compressor create(final CompressorConfig config) {
-    String kind = config.kind();
-    if (kind.equalsIgnoreCase(RatioKind)) {
-      return new RatioCompressor(config);
-    } else {
-      throw new UnsupportedException(String.format("unsupported kind: %s", kind));
-    }
+  public GasOverflowException(String message) {
+    super(message);
+  }
+
+  /**
+   * Instantiates a new GasOverflowException.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
+  public GasOverflowException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  /**
+   * Instantiates a new GasOverflowException.
+   *
+   * @param cause the cause
+   */
+  public GasOverflowException(Throwable cause) {
+    super(cause);
   }
 }

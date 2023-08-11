@@ -14,23 +14,41 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.compressor.ex;
+package io.optimism.batcher.loader;
 
 /**
- * If the compressor is full and no more data should be written or the compressor is known to be
- * full.
+ * ParseBlockException class.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class CompressorFullException extends RuntimeException {
+public class ParseBlockException extends RuntimeException {
 
   /**
-   * Constructor of CompressorFullException.
+   * Instantiates a new ParseBlockException.
    *
-   * @param message error message
+   * @param message the message
    */
-  public CompressorFullException(String message) {
+  public ParseBlockException(String message) {
     super(message);
+  }
+
+  /**
+   * Instantiates a new ParseBlockException.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
+  public ParseBlockException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  /**
+   * Instantiates a new ParseBlockException.
+   *
+   * @param cause the cause
+   */
+  public ParseBlockException(Throwable cause) {
+    super(cause);
   }
 }

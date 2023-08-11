@@ -19,6 +19,7 @@ package io.optimism.derive.stages;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.optimism.derive.stages.Channels.Channel;
+import io.optimism.utilities.derive.stages.Batch;
 import java.math.BigInteger;
 import java.util.List;
 import org.bouncycastle.util.encoders.Hex;
@@ -140,7 +141,7 @@ class BatchesTest {
             + "4c665ca197cebff1c90e5484cc8a6cb2c5b1badab35aefa35c1384f0bb64"
             + "59061ad574c2f37f8bbbd2e8dff5f27f020000ffff8db46838";
     Channel channel = new Channel(BigInteger.ONE, Hex.decode(data), BigInteger.ONE);
-    List<Batches.Batch> batches = Batches.decodeBatches(channel);
+    List<Batch> batches = Batches.decodeBatches(channel);
     System.out.println(batches);
 
     assertEquals(6, batches.size());

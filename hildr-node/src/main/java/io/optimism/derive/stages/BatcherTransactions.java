@@ -17,6 +17,7 @@
 package io.optimism.derive.stages;
 
 import io.optimism.derive.PurgeableIterator;
+import io.optimism.utilities.derive.stages.Frame;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -27,7 +28,6 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jctools.queues.MessagePassingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.web3j.utils.Numeric;
 
 /**
  * The type BatcherTransactions.
@@ -119,63 +119,4 @@ public class BatcherTransactions
    * @since 0.1.0
    */
   public record BatcherTransactionMessage(List<byte[]> txs, BigInteger l1Origin) {}
-
-  /**
-   * The type Frame.
-   *
-   * @param channelId the channel id
-   * @param frameNumber the frame number
-   * @param frameDataLen the frame data len
-   * @param frameData the frame data
-   * @param isLastFrame the is last frame
-   * @param l1InclusionBlock the L1 inclusion block
-   * @author grapebaba
-   * @since 0.1.0
-   */
-  public record Frame(
-      BigInteger channelId,
-      Integer frameNumber,
-      Integer frameDataLen,
-      byte[] frameData,
-      Boolean isLastFrame,
-      BigInteger l1InclusionBlock) {
-
-    /**
-     * From data immutable pair.
-     *
-     * @param data the data
-     * @param offset the offset
-     * @param l1InclusionBlock the L1 inclusion block
-     * @return the immutable pair
-     */
-    public static ImmutablePair<Frame, Integer> from(
-        byte[] data, int offset, BigInteger l1InclusionBlock) {
-      final byte[] frameDataMessage = ArrayUtils.subarray(data, offset, data.length);
-      if (frameDataMessage.length < 23) {
-        throw new InvalidFrameSizeException("invalid frame size");
-      }
-
-      final BigInteger channelId = Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 0, 16));
-      final int frameNumber =
-          Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 16, 18)).intValue();
-      final int frameDataLen =
-          Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 18, 22)).intValue();
-      final int frameDataEnd = 22 + frameDataLen;
-
-      if (frameDataMessage.length < frameDataEnd) {
-        throw new InvalidFrameSizeException("invalid frame size");
-      }
-
-      final byte[] frameData = ArrayUtils.subarray(frameDataMessage, 22, frameDataEnd);
-      final boolean isLastFrame = frameDataMessage[frameDataEnd] != 0;
-      final Frame frame =
-          new Frame(channelId, frameNumber, frameDataLen, frameData, isLastFrame, l1InclusionBlock);
-      LOGGER.debug(
-          String.format(
-              "saw batcher tx: block=%d, number=%d, is_last=%b",
-              l1InclusionBlock, frameNumber, isLastFrame));
-
-      return new ImmutablePair<>(frame, offset + frameDataMessage.length);
-    }
-  }
 }
