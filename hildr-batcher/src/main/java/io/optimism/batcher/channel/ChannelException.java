@@ -14,35 +14,41 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.compressor;
-
-import io.optimism.batcher.exception.UnsupportedException;
+package io.optimism.batcher.channel;
 
 /**
- * Compressor create tool.
+ * Batcher Channel Exception class.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class Compressors {
-
-  /** Kind type of ratio. */
-  public static final String RatioKind = "ratio";
-
-  private Compressors() {}
+public class ChannelException extends RuntimeException {
 
   /**
-   * Create Compressor by kind.
+   * Instantiates a new ChannelException.
    *
-   * @param config Config of compressor
-   * @return a compressor
+   * @param message the message
    */
-  public static Compressor create(final CompressorConfig config) {
-    String kind = config.kind();
-    if (kind.equalsIgnoreCase(RatioKind)) {
-      return new RatioCompressor(config);
-    } else {
-      throw new UnsupportedException(String.format("unsupported kind: %s", kind));
-    }
+  public ChannelException(String message) {
+    super(message);
+  }
+
+  /**
+   * Instantiates a new ChannelException.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
+  public ChannelException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  /**
+   * Instantiates a new ChannelException.
+   *
+   * @param cause the cause
+   */
+  public ChannelException(Throwable cause) {
+    super(cause);
   }
 }

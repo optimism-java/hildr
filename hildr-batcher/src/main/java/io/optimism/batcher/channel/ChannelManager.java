@@ -16,7 +16,6 @@
 
 package io.optimism.batcher.channel;
 
-import io.optimism.batcher.ex.ReorgException;
 import io.optimism.type.BlockId;
 import java.util.ArrayList;
 import java.util.List;

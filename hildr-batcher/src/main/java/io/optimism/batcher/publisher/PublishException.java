@@ -14,41 +14,41 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.ex;
+package io.optimism.batcher.publisher;
 
 /**
- * ReorgException class. Throws this when chain occurs reorg.
+ * PublishException class. Throws this when publish data to L1.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class ReorgException extends RuntimeException {
+public class PublishException extends RuntimeException {
 
   /**
-   * Instantiates a new reorg exception.
+   * Instantiates a new PublishException.
    *
    * @param message the message
    */
-  public ReorgException(String message) {
+  public PublishException(String message) {
     super(message);
   }
 
   /**
-   * Instantiates a new reorg exception.
+   * Instantiates a new PublishException.
    *
    * @param message the message
    * @param cause the cause
    */
-  public ReorgException(String message, Throwable cause) {
+  public PublishException(String message, Throwable cause) {
     super(message, cause);
   }
 
   /**
-   * Instantiates a new reorg exception.
+   * Instantiates a new PublishException.
    *
    * @param cause the cause
    */
-  public ReorgException(Throwable cause) {
+  public PublishException(Throwable cause) {
     super(cause);
   }
 }

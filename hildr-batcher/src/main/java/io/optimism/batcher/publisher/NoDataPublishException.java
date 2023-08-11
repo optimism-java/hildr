@@ -14,41 +14,41 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.ex;
+package io.optimism.batcher.publisher;
 
 /**
- * The execution exception of Bathcer.
+ * NoDataPublishException class. Throws this when no available data publish to L1.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class BatcherExecutionException extends RuntimeException {
+public class NoDataPublishException extends RuntimeException {
 
   /**
-   * Instantiates a new Hildr Batcher execution exception.
+   * Instantiates a new NoDataPublishException.
    *
    * @param message the message
    */
-  public BatcherExecutionException(String message) {
+  public NoDataPublishException(String message) {
     super(message);
   }
 
   /**
-   * Instantiates a new Hildr Batcher execution exception.
+   * Instantiates a new NoDataPublishException.
    *
    * @param message the message
    * @param cause the cause
    */
-  public BatcherExecutionException(String message, Throwable cause) {
+  public NoDataPublishException(String message, Throwable cause) {
     super(message, cause);
   }
 
   /**
-   * Instantiates a new Hildr Batcher execution exception.
+   * Instantiates a new NoDataPublishException.
    *
    * @param cause the cause
    */
-  public BatcherExecutionException(Throwable cause) {
+  public NoDataPublishException(Throwable cause) {
     super(cause);
   }
 }

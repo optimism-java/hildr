@@ -16,9 +16,8 @@
 
 package io.optimism.batcher.loader;
 
-import io.optimism.batcher.ex.ReorgException;
-import io.optimism.batcher.ex.SyncStatusException;
-import io.optimism.batcher.ex.Web3jCallException;
+import io.optimism.batcher.channel.ReorgException;
+import io.optimism.batcher.exception.Web3jCallException;
 import io.optimism.type.BlockId;
 import io.optimism.type.Genesis;
 import io.optimism.type.L1BlockInfo;
@@ -121,7 +120,6 @@ public class BlockLoader implements Closeable {
       return future.resultNow();
     } catch (ExecutionException | InterruptedException e) {
       Thread.currentThread().interrupt();
-      // todo add description
       throw new Web3jCallException("failed to get op-rollup config", e);
     }
   }
@@ -140,8 +138,7 @@ public class BlockLoader implements Closeable {
       lastestBlock = block;
     }
     if (lastestBlock == null) {
-      // todo create BlockLoaderException
-      throw new RuntimeException("");
+      throw new BlockLoaderException("get latest block failed");
     }
     var ignore = l2BlockToBlockRef(lastestBlock, rollupConfig.genesis());
     // todo metrics.RecordL2BlocksLoaded l2Ref
@@ -169,8 +166,7 @@ public class BlockLoader implements Closeable {
 
       if (syncStatus.safeL2().number().compareTo(syncStatus.unsafeL2().number()) >= 0
           || latestLoadedBlock.number().compareTo(syncStatus.unsafeL2().number()) >= 0) {
-        // todo create BlockLoaderException
-        throw new RuntimeException("L2 safe head ahead of L2 unsafe head");
+        throw new SyncStatusException("L2 safe head ahead of L2 unsafe head");
       }
       return new Tuple2<>(latestLoadedBlock, syncStatus.unsafeL2().number());
     } catch (ExecutionException | InterruptedException e) {
@@ -184,8 +180,7 @@ public class BlockLoader implements Closeable {
     BigInteger sequenceNumber = null;
     if (block.getNumber().compareTo(genesis.l2().number()) == 0) {
       if (!block.getHash().equals(genesis.l2().hash())) {
-        // todo replace to BlockLoaderException
-        throw new RuntimeException(
+        throw new BlockLoaderException(
             String.format(
                 "expected L2 genesis hash to match L2 block at genesis block number %d: %s <> %s",
                 genesis.l2().number(), block.getHash(), genesis.l2().hash()));
@@ -195,15 +190,13 @@ public class BlockLoader implements Closeable {
     } else {
       var txs = block.getTransactions();
       if (txs == null || txs.size() == 0) {
-        // todo replace BlockLoaderException
-        throw new RuntimeException(
+        throw new BlockLoaderException(
             String.format(
                 "l2 block is missing L1 info deposit tx, block hash: %s", block.getHash()));
       }
       EthBlock.TransactionObject tx = (EthBlock.TransactionObject) txs.get(0).get();
       if (!DEPOSIT_TX_TYPE.equalsIgnoreCase(tx.getType())) {
-        // todo replace to BlockLoaderException
-        throw new RuntimeException(
+        throw new BlockLoaderException(
             String.format("first payload tx has unexpected tx type: %s", tx.getType()));
       }
       final byte[] input = Numeric.hexStringToByteArray(tx.getInput());

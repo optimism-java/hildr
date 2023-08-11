@@ -14,41 +14,41 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.ex;
+package io.optimism.batcher.channel;
 
 /**
- * Sync status exception. Throws this when the call to the SyncStatus API fails.
+ * ReorgException class. Throws this when chain occurs reorg.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class SyncStatusException extends RuntimeException {
+public class ReorgException extends RuntimeException {
 
   /**
-   * Instantiates a new sync status exception.
+   * Instantiates a new reorg exception.
    *
    * @param message the message
    */
-  public SyncStatusException(String message) {
+  public ReorgException(String message) {
     super(message);
   }
 
   /**
-   * Instantiates a new sync status exception.
+   * Instantiates a new reorg exception.
    *
    * @param message the message
    * @param cause the cause
    */
-  public SyncStatusException(String message, Throwable cause) {
+  public ReorgException(String message, Throwable cause) {
     super(message, cause);
   }
 
   /**
-   * Instantiates a new sync status exception.
+   * Instantiates a new reorg exception.
    *
    * @param cause the cause
    */
-  public SyncStatusException(Throwable cause) {
+  public ReorgException(Throwable cause) {
     super(cause);
   }
 }
