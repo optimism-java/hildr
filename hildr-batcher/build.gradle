@@ -271,3 +271,7 @@ jar {
 		exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
 	}
 }
+
+nativeCompile {
+	enabled = false
+}
