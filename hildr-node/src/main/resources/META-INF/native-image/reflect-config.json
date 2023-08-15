@@ -827,9 +827,18 @@
   },
   {
     "name":"org.web3j.protocol.core.Response$Error",
-    "allDeclaredFields":true,
-    "queryAllDeclaredMethods":true,
-    "queryAllDeclaredConstructors":true
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allPublicMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
   },
   {
     "name":"org.web3j.protocol.core.methods.request.EthFilter",
@@ -1547,7 +1556,7 @@
     "allPublicFields": true
   },
   {
-    "name" : "io.optimism.engine.ExecutionPayload$EpochReq",
+    "name" : "io.optimism.engine.ExecutionPayload$PayloadAttributes$EpochReq",
     "queryAllDeclaredConstructors": true,
     "queryAllPublicConstructors": true,
     "queryAllDeclaredMethods": true,
@@ -1562,7 +1571,7 @@
     "allPublicFields": true
   },
   {
-    "name" : "io.optimism.engine.ExecutionPayload$PayloadAttributesReq",
+    "name" : "io.optimism.engine.ExecutionPayload$PayloadAttributes$PayloadAttributesReq",
     "queryAllDeclaredConstructors": true,
     "queryAllPublicConstructors": true,
     "queryAllDeclaredMethods": true,
@@ -1576,6 +1585,7 @@
     "allDeclaredFields": true,
     "allPublicFields": true
   },
+
   {
     "name" : "io.optimism.engine.ForkChoiceUpdate",
     "queryAllDeclaredConstructors": true,
@@ -1712,7 +1722,7 @@
     "allPublicFields": true
   },
   {
-    "name" : "io.optimism.engine.ExecutionPayload$PayloadAttributesReq",
+    "name" : "org.web3j.protocol.core.methods.response.AccessListObject",
     "queryAllDeclaredConstructors": true,
     "queryAllPublicConstructors": true,
     "queryAllDeclaredMethods": true,
@@ -1727,7 +1737,22 @@
     "allPublicFields": true
   },
   {
-    "name" : "org.web3j.protocol.core.methods.response.AccessListObject",
+    "name" : "io.optimism.utilities.derive.stages.Batch",
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allPublicMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  },
+  {
+    "name" : "io.optimism.utilities.derive.stages.Frame",
     "queryAllDeclaredConstructors": true,
     "queryAllPublicConstructors": true,
     "queryAllDeclaredMethods": true,
