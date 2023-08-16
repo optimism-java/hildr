@@ -38,4 +38,9 @@ public record BlockId(String hash, BigInteger number) {
   public static BlockId from(EthBlock.Block block) {
     return new BlockId(block.getHash(), block.getNumber());
   }
+
+  @Override
+  public String toString() {
+    return "BlockId{" + "hash='" + hash + '\'' + ", number=" + number + '}';
+  }
 }

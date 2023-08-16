@@ -23,12 +23,19 @@ import io.optimism.batcher.config.Config;
  *
  * @param channelTimeout The maximum number of L1 blocks that the inclusion transactions of a
  *     channel's frames can span.
- * @param maxChannelDuration If 0, duration checks are disabled.
+ * @param maxChannelDuration Timeout of max block number.If 0, duration checks are disabled.
  * @param maxFrameSize The maximum byte-size a frame can have.
+ * @param seqWindowSize The maximum byte-size a frame can have.
+ * @param subSafetyMargin The maximum byte-size a frame can have.
  * @author thinkAfCod
  * @since 0.1.1
  */
-public record ChannelConfig(long channelTimeout, long maxChannelDuration, int maxFrameSize) {
+public record ChannelConfig(
+    long channelTimeout,
+    long maxChannelDuration,
+    int maxFrameSize,
+    long seqWindowSize,
+    long subSafetyMargin) {
 
   /**
    * Create a ChannelConfig instance from Config instance.
@@ -37,6 +44,6 @@ public record ChannelConfig(long channelTimeout, long maxChannelDuration, int ma
    * @return ChannelConfig instance
    */
   public static ChannelConfig from(Config config) {
-    return new ChannelConfig(30000, 0, 120_000);
+    return new ChannelConfig(30000, 0, 120_000, 3600, 10);
   }
 }

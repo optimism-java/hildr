@@ -16,6 +16,8 @@
 
 package io.optimism.utilities.gas;
 
+import java.math.BigInteger;
+
 /**
  * Gas util.
  *
@@ -28,7 +30,8 @@ public class GasCalculator {
   /**
    * Private Constructor of GasCalculator.
    */
-  private GasCalculator() {}
+  private GasCalculator() {
+  }
 
   public static final long TX_GAS_CONTRACT_CREATION = 53000L;
 
@@ -45,11 +48,11 @@ public class GasCalculator {
   /**
    * Calculator gas fee but exclude effective of AccessList.
    *
-   * @param data Tx data
+   * @param data               Tx data
    * @param isContractCreation Is contract creation
-   * @param isHomestead Is home stead
-   * @param isEIP2028 Is EIP2028
-   * @param isEIP3860 Is EIP3860
+   * @param isHomestead        Is home stead
+   * @param isEIP2028          Is EIP2028
+   * @param isEIP3860          Is EIP3860
    * @return Intrinsic gas
    */
   public static long intrinsicGasWithoutAccessList(
@@ -79,6 +82,19 @@ public class GasCalculator {
       gas += lenWords * INIT_CODE_WORD_GAS;
     }
     return gas;
+  }
+
+  /**
+   * Calculate gas fee cap.
+   *
+   * @param baseFee   base fee
+   * @param gasTipCap gas tip cap
+   * @return gas fee
+   */
+  public static BigInteger calcGasFeeCap(BigInteger baseFee, BigInteger gasTipCap) {
+    return gasTipCap.add(
+        baseFee.multiply(BigInteger.TWO)
+    );
   }
 
   private static long toWordSize(int size) {

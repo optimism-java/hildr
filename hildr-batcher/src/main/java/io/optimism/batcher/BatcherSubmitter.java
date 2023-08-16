@@ -17,13 +17,18 @@
 package io.optimism.batcher;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import io.optimism.batcher.channel.ChannelConfig;
 import io.optimism.batcher.channel.ChannelManager;
+import io.optimism.batcher.compressor.CompressorConfig;
 import io.optimism.batcher.config.Config;
 import io.optimism.batcher.exception.BatcherExecutionException;
 import io.optimism.batcher.loader.BlockLoader;
 import io.optimism.batcher.loader.LoaderConfig;
 import io.optimism.batcher.publisher.ChannelDataPublisher;
 import io.optimism.batcher.publisher.PublisherConfig;
+import io.optimism.type.BlockId;
+import io.optimism.type.L1BlockRef;
+import io.optimism.utilities.derive.stages.Frame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -47,6 +52,8 @@ public class BatcherSubmitter extends AbstractExecutionThreadService {
 
   private volatile boolean isShutdownTriggered = false;
 
+  private L1BlockRef lastL1Tip;
+
   /**
    * Constructor of BatcherSubmitter.
    *
@@ -54,12 +61,13 @@ public class BatcherSubmitter extends AbstractExecutionThreadService {
    */
   public BatcherSubmitter(Config config) {
     this.config = config;
-    this.channelManager = new ChannelManager();
+    this.channelManager =
+        new ChannelManager(ChannelConfig.from(config), CompressorConfig.from(config));
     this.blockLoader = new BlockLoader(LoaderConfig.from(config), this.channelManager::addL2Block);
 
     this.channelPublisher =
         new ChannelDataPublisher(
-            PublisherConfig.from(config, this.blockLoader.getRollConfig().batchInboxAddress()),
+            PublisherConfig.from(config, this.blockLoader.getRollConfig()),
             this.channelManager::txData,
             this::handleReceipt);
   }
@@ -72,16 +80,17 @@ public class BatcherSubmitter extends AbstractExecutionThreadService {
         Thread.sleep(config.pollInterval());
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
-        throw new BatcherExecutionException(e);
+        throw new BatcherExecutionException("Batcher thread has been interrupted", e);
       }
     }
   }
 
-  private void handleReceipt(TransactionReceipt receipt) {
+  private void handleReceipt(Frame tx, TransactionReceipt receipt) {
     if (receipt.isStatusOK()) {
-      // todo this.channelManager.txConfirmed();
+      this.channelManager.txConfirmed(
+          tx, new BlockId(receipt.getBlockHash(), receipt.getBlockNumber()));
     } else {
-      // todo this.channelManager.txFailed();
+      this.channelManager.txFailed(tx);
     }
   }
 
