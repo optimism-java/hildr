@@ -129,56 +129,59 @@ public class BlockLoader implements Closeable {
     final BigInteger start = blockNumbers.component1().number();
     final BigInteger end = blockNumbers.component2();
     var stopBlock = end.add(BigInteger.ONE);
-    EthBlock.Block lastestBlock = null;
+    EthBlock.Block lastBlock = null;
     for (BigInteger i = start.add(BigInteger.ONE);
         i.compareTo(stopBlock) < 0;
         i = i.add(BigInteger.ONE)) {
       EthBlock.Block block = this.loadBlockToChannel(i);
       this.latestLoadedBlock = BlockId.from(block);
-      lastestBlock = block;
+      lastBlock = block;
     }
-    if (lastestBlock == null) {
+    if (lastBlock == null) {
       throw new BlockLoaderException("get latest block failed");
     }
-    var ignore = l2BlockToBlockRef(lastestBlock, rollupConfig.genesis());
+    var ignore = l2BlockToBlockRef(lastBlock, rollupConfig.genesis());
     // todo metrics.RecordL2BlocksLoaded l2Ref
   }
 
   private Tuple2<BlockId, BigInteger> calculateL2BlockRangeToStore() {
     final Request<?, OpEthSyncStatusRes> req =
         new Request<>(OP_SYNC_STATUS, List.of(), this.rollupService, OpEthSyncStatusRes.class);
+    OpEthSyncStatusRes.OpEthSyncStatus syncStatus = null;
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       var future = scope.fork(req::send);
       scope.join();
       scope.throwIfFailed();
-      var syncStatus = future.resultNow().getOpEthSyncStatus();
-      if (syncStatus.headL1().equals(L1BlockRef.emptyBlock)) {
-        throw new SyncStatusException("empty sync status");
-      }
-      if (latestLoadedBlock == null || latestLoadedBlock.number().compareTo(BigInteger.ZERO) == 0) {
-        LOGGER.info("Starting batch-submitter work at L2 safe-head: {}", syncStatus.safeL2());
-        latestLoadedBlock = syncStatus.safeL2().toId();
-      } else if (latestLoadedBlock.number().compareTo(syncStatus.safeL2().number()) <= 0) {
-        LOGGER.warn(
-            "last submitted block lagged behind L2 safe head: batch submission will continue");
-        latestLoadedBlock = syncStatus.safeL2().toId();
-      }
-
-      if (syncStatus.safeL2().number().compareTo(syncStatus.unsafeL2().number()) >= 0
-          || latestLoadedBlock.number().compareTo(syncStatus.unsafeL2().number()) >= 0) {
-        throw new SyncStatusException("L2 safe head ahead of L2 unsafe head");
-      }
-      return new Tuple2<>(latestLoadedBlock, syncStatus.unsafeL2().number());
-    } catch (ExecutionException | InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new Web3jCallException("failed to get syncStatus", e);
+      syncStatus = future.resultNow().getOpEthSyncStatus();
+    } catch (ExecutionException e) {
+      throw new Web3jCallException("StructuredTaskScope execute syncStatus failed:", e);
+    } catch (InterruptedException e) {
+      throw new Web3jCallException(
+          "Thread has been interrupted while calling calculateL2BlockRangeToStore:", e);
     }
+    if (syncStatus.headL1().equals(L1BlockRef.emptyBlock)) {
+      throw new SyncStatusException("empty sync status");
+    }
+    if (latestLoadedBlock == null || latestLoadedBlock.number().equals(BigInteger.ZERO)) {
+      LOGGER.info("Starting batch-submitter work at L2 safe-head: {}", syncStatus.safeL2());
+      latestLoadedBlock = syncStatus.safeL2().toId();
+    } else if (latestLoadedBlock.number().compareTo(syncStatus.safeL2().number()) <= 0) {
+      LOGGER.warn(
+          "last submitted block lagged behind L2 safe head: batch submission will continue");
+      latestLoadedBlock = syncStatus.safeL2().toId();
+    }
+
+    if (syncStatus.safeL2().number().compareTo(syncStatus.unsafeL2().number()) >= 0
+        || latestLoadedBlock.number().compareTo(syncStatus.unsafeL2().number()) >= 0) {
+      throw new SyncStatusException("L2 safe head ahead of L2 unsafe head");
+    }
+    return new Tuple2<>(latestLoadedBlock, syncStatus.unsafeL2().number());
   }
 
   private L2BlockRef l2BlockToBlockRef(final EthBlock.Block block, Genesis genesis) {
     BlockId l1Origin = null;
     BigInteger sequenceNumber = null;
-    if (block.getNumber().compareTo(genesis.l2().number()) == 0) {
+    if (block.getNumber().equals(genesis.l2().number())) {
       if (!block.getHash().equals(genesis.l2().hash())) {
         throw new BlockLoaderException(
             String.format(

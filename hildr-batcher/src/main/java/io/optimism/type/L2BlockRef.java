@@ -18,6 +18,7 @@ package io.optimism.type;
 
 import java.math.BigInteger;
 import java.util.Objects;
+import org.web3j.protocol.core.methods.response.EthBlock;
 
 /**
  * L2 block brief information.
@@ -46,6 +47,23 @@ public record L2BlockRef(
    */
   public BlockId toId() {
     return new BlockId(hash, number);
+  }
+
+  /**
+   * Create a L2BlockRef instance from EthBlock.Block and L1BlockInfo
+   *
+   * @param block block info
+   * @param l1Info l1 block info
+   * @return L2BlockRef instance
+   */
+  public static L2BlockRef fromBlockAndL1Info(EthBlock.Block block, L1BlockInfo l1Info) {
+    return new L2BlockRef(
+        block.getHash(),
+        block.getNumber(),
+        block.getParentHash(),
+        block.getTimestamp(),
+        new BlockId(l1Info.blockHash(), l1Info.number()),
+        l1Info.sequenceNumber());
   }
 
   @Override

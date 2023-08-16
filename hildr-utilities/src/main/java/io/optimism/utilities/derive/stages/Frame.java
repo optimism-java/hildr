@@ -76,6 +76,20 @@ public record Frame(
   }
 
   /**
+   * Create a new Frame instance.
+   *
+   * @param id channel id
+   * @param frameNumber frame number
+   * @param data frame data
+   * @param isLastFrame is last frame
+   * @return a new Frame instance
+   */
+  public static Frame create(BigInteger id, int frameNumber, byte[] data, boolean isLastFrame) {
+    var dataLen = data == null ? 0 : data.length;
+    return new Frame(id, frameNumber, dataLen, data, isLastFrame, null);
+  }
+
+  /**
    * Encode this Frame to bytes.
    *
    * @return encoded bytes from frame

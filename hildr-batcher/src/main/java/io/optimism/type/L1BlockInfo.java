@@ -69,7 +69,7 @@ public record L1BlockInfo(
           String.format("data is unexpected length: %d", data == null ? 0 : data.length));
     }
     if (!Objects.deepEquals(ArrayUtils.subarray(data, 0, 4), SIGNATURE_BYTES)) {
-      throw new ParseBlockException("");
+      throw new ParseBlockException("not equals signature bytes");
     }
     BigInteger number = Numeric.toBigInt(data, 4, 32);
     BigInteger time = Numeric.toBigInt(data, 36, 32);
