@@ -255,6 +255,43 @@ public record Config(
     }
 
     /**
+     * Base mainnet chain config.
+     *
+     * @return the chain config
+     */
+    public static ChainConfig base() {
+      return new ChainConfig(
+          "base",
+          BigInteger.valueOf(1L),
+          BigInteger.valueOf(8453L),
+          new Epoch(
+              BigInteger.valueOf(17481768L),
+              "0x5c13d307623a926cd31415036c8b7fa14572f9dac64528e857a470511fc30771",
+              BigInteger.valueOf(1686789347L)),
+          new BlockInfo(
+              "0xf712aa9241cc24369b143cf6dce85f0902a9731e70d66818a3a5845b296c73dd",
+              BigInteger.valueOf(0L),
+              Numeric.toHexString(new byte[32]),
+              BigInteger.valueOf(1686789347L)),
+          new SystemConfig(
+              "0x5050f69a9786f081509234f1a7f4684b5e5b76c9",
+              BigInteger.valueOf(30_000_000L),
+              BigInteger.valueOf(188),
+              BigInteger.valueOf(684000),
+              "0xAf6E19BE0F9cE7f8afd49a1824851023A8249e8a"),
+          "0xff00000000000000000000000000000000008453",
+          "0x49048044d57e1c92a77f79988d21fa8faf74e97e",
+          "0x73a79fab69143498ed3712e519a88a918e1f4072",
+          BigInteger.valueOf(100_000_000L),
+          BigInteger.valueOf(300L),
+          BigInteger.valueOf(3600L),
+          BigInteger.valueOf(600L),
+          BigInteger.valueOf(Long.MAX_VALUE),
+          BigInteger.valueOf(2L),
+          "0x4200000000000000000000000000000000000016");
+    }
+
+    /**
      * Optimism goerli chain config.
      *
      * @return the chain config
