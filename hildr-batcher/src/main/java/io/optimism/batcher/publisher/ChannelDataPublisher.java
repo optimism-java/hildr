@@ -17,6 +17,7 @@
 package io.optimism.batcher.publisher;
 
 import io.optimism.batcher.exception.Web3jCallException;
+import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockRef;
 import io.optimism.utilities.derive.stages.Frame;
@@ -58,6 +59,8 @@ public class ChannelDataPublisher implements Closeable {
 
   private final PublisherConfig config;
 
+  private final BatcherMetrics metrics;
+
   private final String fromAddress;
 
   private final Web3j l1Client;
@@ -84,6 +87,7 @@ public class ChannelDataPublisher implements Closeable {
       Function<BlockId, Frame> dataSupplier,
       BiConsumer<Frame, TransactionReceipt> txReceiptReturn) {
     this.config = config;
+    this.metrics = config.metrics();
     this.l1Client = Web3jProvider.createClient(config.l1RpcUrl());
     var credentials = Credentials.create(config.l1Signer());
     this.fromAddress = credentials.getAddress();
@@ -196,7 +200,7 @@ public class ChannelDataPublisher implements Closeable {
       return;
     }
     this.lastL1Tip = headRef;
-    // todo metrics LatestL1Block
+    this.metrics.recordLatestL1Block(headRef);
   }
 
   private synchronized BigInteger nextNonce() {

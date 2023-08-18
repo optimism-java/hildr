@@ -23,8 +23,6 @@
     <appender-ref ref="CONSOLE" />
   </appender>
   <root level="debug">
-<!--    <appender-ref ref="CONSOLE" />-->
-<!--    <appender-ref ref="FILE" />-->
     <appender-ref ref="OTEL" />
   </root>
 </configuration>

@@ -16,6 +16,9 @@
 
 package io.optimism.batcher.config;
 
+import io.optimism.batcher.telemetry.BatcherMetrics;
+import java.util.Objects;
+
 /**
  * Batcher config.
  *
@@ -27,9 +30,10 @@ package io.optimism.batcher.config;
  * @param subSafetyMargin Sub-safety margin
  * @param pollInterval Milliseconds of poll interval
  * @param maxL1TxSize Max L1 Tx Size
- * @param targetFrameSize Max L1 Tx Size
- * @param targetNumFrames Max L1 Tx Size
- * @param approxComprRatio Max L1 Tx Size
+ * @param targetFrameSize The target of frame size
+ * @param targetNumFrames The target of frame number
+ * @param approxComprRatio Compress ratio
+ * @param metrics Batcher metrics
  * @author thinkAfCod
  * @since 0.1.1
  */
@@ -44,4 +48,81 @@ public record Config(
     Long maxL1TxSize,
     Integer targetFrameSize,
     Integer targetNumFrames,
-    String approxComprRatio) {}
+    String approxComprRatio,
+    BatcherMetrics metrics) {
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) {
+      return true;
+    }
+    if (!(obj instanceof Config that)) {
+      return false;
+    }
+    return Objects.equals(this.l1RpcUrl, that.l1RpcUrl)
+        && Objects.equals(this.l2RpcUrl, that.l2RpcUrl)
+        && Objects.equals(this.rollupRpcUrl, that.rollupRpcUrl)
+        && Objects.equals(this.l1Signer, that.l1Signer)
+        && Objects.equals(this.batchInboxAddress, that.batchInboxAddress)
+        && Objects.equals(this.subSafetyMargin, that.subSafetyMargin)
+        && Objects.equals(this.pollInterval, that.pollInterval)
+        && Objects.equals(this.maxL1TxSize, that.maxL1TxSize)
+        && Objects.equals(this.targetFrameSize, that.targetFrameSize)
+        && Objects.equals(this.targetNumFrames, that.targetNumFrames)
+        && Objects.equals(this.approxComprRatio, that.approxComprRatio);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        l1RpcUrl,
+        l2RpcUrl,
+        rollupRpcUrl,
+        l1Signer,
+        batchInboxAddress,
+        subSafetyMargin,
+        pollInterval,
+        maxL1TxSize,
+        targetFrameSize,
+        targetNumFrames,
+        approxComprRatio);
+  }
+
+  @Override
+  public String toString() {
+    return "Config["
+        + "l1RpcUrl="
+        + l1RpcUrl
+        + ", "
+        + "l2RpcUrl="
+        + l2RpcUrl
+        + ", "
+        + "rollupRpcUrl="
+        + rollupRpcUrl
+        + ", "
+        + "l1Signer="
+        + l1Signer
+        + ", "
+        + "batchInboxAddress="
+        + batchInboxAddress
+        + ", "
+        + "subSafetyMargin="
+        + subSafetyMargin
+        + ", "
+        + "pollInterval="
+        + pollInterval
+        + ", "
+        + "maxL1TxSize="
+        + maxL1TxSize
+        + ", "
+        + "targetFrameSize="
+        + targetFrameSize
+        + ", "
+        + "targetNumFrames="
+        + targetNumFrames
+        + ", "
+        + "approxComprRatio="
+        + approxComprRatio
+        + ']';
+  }
+}

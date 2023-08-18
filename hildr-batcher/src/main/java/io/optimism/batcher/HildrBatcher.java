@@ -14,7 +14,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism;
+package io.optimism.batcher;
+
+import io.optimism.batcher.cli.Cli;
+import picocli.CommandLine;
 
 /**
  * Batcher main method.
@@ -33,9 +36,7 @@ public class HildrBatcher {
    * @param args Starts arguments
    */
   public static void main(String[] args) {
-    // todo start batcherSubmitter
-    // todo start server
-    // todo start metrics server
-    // todo listen close signal
+    int exitCode = new CommandLine(new Cli()).execute(args);
+    System.exit(exitCode);
   }
 }

@@ -18,6 +18,7 @@ package io.optimism.batcher.channel;
 
 import io.optimism.batcher.compressor.Compressor;
 import io.optimism.batcher.exception.UnsupportedException;
+import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.utilities.derive.stages.Batch;
@@ -58,25 +59,27 @@ public class ChannelImpl implements Channel {
 
   private final ChannelConfig chConfig;
 
+  private final BatcherMetrics metrics;
+
   private final BigInteger seqWindowTimeout;
 
   private final BigInteger id;
 
-  private AtomicInteger frameNumber;
+  private final AtomicInteger frameNumber;
 
-  private List<Frame> outputFrames;
+  private final List<Frame> outputFrames;
 
-  private Map<String, Frame> pendingTxs;
+  private final Map<String, Frame> pendingTxs;
 
-  private Map<String, BlockId> confirmedTxs;
+  private final Map<String, BlockId> confirmedTxs;
 
-  private List<EthBlock.Block> blocks;
+  private final List<EthBlock.Block> blocks;
 
   private BigInteger timeoutBlock;
 
-  private Compressor compressor;
+  private final Compressor compressor;
 
-  private AtomicInteger rlpLength;
+  private final AtomicInteger rlpLength;
 
   private volatile boolean isFull;
 
@@ -90,6 +93,7 @@ public class ChannelImpl implements Channel {
    */
   public ChannelImpl(ChannelConfig chConfig, Compressor compressor) {
     this.chConfig = chConfig;
+    this.metrics = chConfig.metrics();
     this.seqWindowTimeout =
         BigInteger.valueOf(chConfig.seqWindowSize() - chConfig.subSafetyMargin());
     this.compressor = compressor;
@@ -175,7 +179,7 @@ public class ChannelImpl implements Channel {
 
   @Override
   public void txFailed(Frame tx) {
-    // todo metrics record batch tx failed.
+    this.metrics.recordBatchTxFailed();
     var code = tx.code();
     if (!this.pendingTxs.containsKey(code)) {
       LOGGER.warn(
@@ -190,7 +194,7 @@ public class ChannelImpl implements Channel {
 
   @Override
   public List<EthBlock.Block> txConfirmed(Frame tx, BlockId inclusionBlock) {
-    // todo metrics RecordBatchTxSubmitted
+    this.metrics.recordBatchTxSubmitted();
     LOGGER.debug(
         "marked tx as confirmed: chId: {}; frameNum: {}; block: {}",
         tx.channelId(),
@@ -214,12 +218,12 @@ public class ChannelImpl implements Channel {
             .subtract(BigInteger.valueOf(chConfig.subSafetyMargin()));
     this.updateTimeout(timeout);
     if (this.isTimeout()) {
-      // todo metrics recordChannelTimeout
+      this.metrics.recordChannelTimedOut(tx);
       LOGGER.warn("Channel timeout: chId:{}", tx.channelId());
       return this.blocks;
     }
     if (this.isFullySubmitted()) {
-      // todo metrics RecordChannelFullySubmitted
+      this.metrics.recordChannelFullySubmitted(tx);
       LOGGER.info("Channel is fully submitted: chId:{}", tx.channelId());
     }
     return null;
