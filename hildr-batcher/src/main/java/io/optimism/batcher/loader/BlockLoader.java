@@ -18,6 +18,7 @@ package io.optimism.batcher.loader;
 
 import io.optimism.batcher.channel.ReorgException;
 import io.optimism.batcher.exception.Web3jCallException;
+import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
 import io.optimism.type.Genesis;
 import io.optimism.type.L1BlockInfo;
@@ -65,6 +66,8 @@ public class BlockLoader implements Closeable {
 
   private final Web3jService rollupService;
 
+  private final BatcherMetrics metrics;
+
   private final Consumer<EthBlock.Block> blockConsumer;
 
   private BlockId latestLoadedBlock;
@@ -75,13 +78,14 @@ public class BlockLoader implements Closeable {
    * Constructor of BlockLoader.
    *
    * @param config LoaderConfig instance
-   * @param blockConsumer consumer block loaded from L2
+   * @param blockConsumer Consumer block loaded from L2
    */
   public BlockLoader(LoaderConfig config, Consumer<EthBlock.Block> blockConsumer) {
     this.l2Client = Web3jProvider.createClient(config.l2RpcUrl());
     Tuple2<Web3j, Web3jService> tuple = Web3jProvider.create(config.rollupUrl());
     this.rollupClient = tuple.component1();
     this.rollupService = tuple.component2();
+    this.metrics = config.metrics();
     this.blockConsumer = blockConsumer;
     this.rollupConfig = loadRollConfig();
   }
@@ -140,8 +144,8 @@ public class BlockLoader implements Closeable {
     if (lastBlock == null) {
       throw new BlockLoaderException("get latest block failed");
     }
-    var ignore = l2BlockToBlockRef(lastBlock, rollupConfig.genesis());
-    // todo metrics.RecordL2BlocksLoaded l2Ref
+    var l2Ref = l2BlockToBlockRef(lastBlock, rollupConfig.genesis());
+    this.metrics.recordL2BlocksLoaded(l2Ref);
   }
 
   private Tuple2<BlockId, BigInteger> calculateL2BlockRangeToStore() {

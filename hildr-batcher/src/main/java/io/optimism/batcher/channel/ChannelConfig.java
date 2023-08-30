@@ -17,6 +17,7 @@
 package io.optimism.batcher.channel;
 
 import io.optimism.batcher.config.Config;
+import io.optimism.batcher.telemetry.BatcherMetrics;
 
 /**
  * ChannelConfig class.
@@ -27,6 +28,7 @@ import io.optimism.batcher.config.Config;
  * @param maxFrameSize The maximum byte-size a frame can have.
  * @param seqWindowSize The maximum byte-size a frame can have.
  * @param subSafetyMargin The maximum byte-size a frame can have.
+ * @param metrics Batcher metrics
  * @author thinkAfCod
  * @since 0.1.1
  */
@@ -35,7 +37,8 @@ public record ChannelConfig(
     long maxChannelDuration,
     int maxFrameSize,
     long seqWindowSize,
-    long subSafetyMargin) {
+    long subSafetyMargin,
+    BatcherMetrics metrics) {
 
   /**
    * Create a ChannelConfig instance from Config instance.
@@ -44,6 +47,6 @@ public record ChannelConfig(
    * @return ChannelConfig instance
    */
   public static ChannelConfig from(Config config) {
-    return new ChannelConfig(30000, 0, 120_000, 3600, 10);
+    return new ChannelConfig(30000, 0, 120_000, 3600, 10, config.metrics());
   }
 }
