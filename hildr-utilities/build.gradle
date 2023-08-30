@@ -25,6 +25,30 @@ repositories {
     }
 }
 
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(20)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.annotationProcessorPath = configurations.annotationProcessor
+    options.compilerArgs += "--enable-preview"
+    options.compilerArgs += "-Xlint:preview"
+    options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
+    options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
+}
+
+tasks.withType(Test).configureEach {
+    jvmArgs += "--enable-preview"
+    jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+}
+
+tasks.withType(JavaExec).configureEach {
+    jvmArgs += "--enable-preview"
+    jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+}
+
 dependencies {
     api 'com.google.guava:guava:31.1-jre'
     api 'com.github.rholder:guava-retrying:2.0.0'
@@ -38,10 +62,20 @@ dependencies {
         exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
     }
 
-    implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
-    implementation platform('io.micrometer:micrometer-tracing-bom:1.1.1')
-    implementation 'io.micrometer:micrometer-tracing'
-    implementation 'io.micrometer:micrometer-tracing-bridge-otel'
+    api 'io.micrometer:micrometer-registry-prometheus:1.11.0'
+    api platform('io.micrometer:micrometer-tracing-bom:1.1.1')
+    api 'io.micrometer:micrometer-tracing'
+    api 'io.micrometer:micrometer-tracing-bridge-otel'
+
+    api platform("io.opentelemetry:opentelemetry-bom-alpha:1.26.0-alpha")
+    api platform("io.opentelemetry:opentelemetry-bom:1.26.0")
+    api 'io.opentelemetry:opentelemetry-api'
+    api 'io.opentelemetry:opentelemetry-sdk'
+    api 'io.opentelemetry:opentelemetry-sdk-logs'
+
+    implementation 'ch.qos.logback:logback-core:1.4.7'
+    implementation 'ch.qos.logback:logback-classic:1.4.7'
+    implementation 'org.slf4j:slf4j-api:2.0.7'
 
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -56,4 +90,27 @@ test {
 checkstyle {
     toolVersion = '10.10.0'
     configFile = project(":").file("config/checkstyle/google_checks.xml")
+}
+
+jacoco {
+    toolVersion = "0.8.9"
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        csv.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+
+    violationRules {
+        rule {
+            limit {
+                minimum = 0
+            }
+        }
+    }
 }
