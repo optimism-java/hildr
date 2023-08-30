@@ -18,6 +18,7 @@ package io.optimism.batcher.channel;
 
 import io.optimism.batcher.compressor.CompressorConfig;
 import io.optimism.batcher.compressor.Compressors;
+import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.type.L2BlockRef;
@@ -45,6 +46,8 @@ public class ChannelManager {
 
   private final ChannelConfig chConfig;
 
+  private final BatcherMetrics metrics;
+
   private final CompressorConfig compressorConfig;
 
   private List<EthBlock.Block> blocks;
@@ -67,6 +70,7 @@ public class ChannelManager {
    */
   public ChannelManager(final ChannelConfig chConfig, final CompressorConfig compressorConfig) {
     this.chConfig = chConfig;
+    this.metrics = chConfig.metrics();
     this.compressorConfig = compressorConfig;
     this.blocks = new ArrayList<>(256);
     this.channels = new ArrayList<>(256);
@@ -85,9 +89,9 @@ public class ChannelManager {
     if (!StringUtils.isEmpty(latestBlockHash) && !latestBlockHash.equals(block.getParentHash())) {
       throw new ReorgException("block does not extend existing chain");
     }
-    // todo metrics pending block
     this.blocks.add(block);
     this.latestBlockHash = block.getHash();
+    this.metrics.recordL2BlockInPendingQueue(block);
   }
 
   /**
@@ -155,7 +159,7 @@ public class ChannelManager {
    * @param inclusionBlock inclusion block id
    */
   public void txConfirmed(final Frame tx, final BlockId inclusionBlock) {
-    // todo metrics RecordBatchTxSubmitted
+    this.metrics.recordBatchTxSubmitted();
     LOGGER.debug(
         "marked transaction as confirmed: chId: {}; frameNum: {};block: {}",
         tx.channelId(),
@@ -222,21 +226,21 @@ public class ChannelManager {
     Channel ch = new ChannelImpl(this.chConfig, Compressors.create(this.compressorConfig));
     LOGGER.info(
         "Created a channel: id:{}, l1Head: {}, blocksPending:{}", ch, l1Head, this.blocks.size());
-    // todo metrics record opened channel
+    this.metrics.recordChannelOpened(null, this.blocks.size());
     return ch;
   }
 
   private void pushBlocks(final Channel lastChannel) {
     int blocksAdded = 0;
-    L2BlockRef unused = null;
+    L2BlockRef l2Ref = null;
     try {
       for (final EthBlock.Block block : this.blocks) {
         final L1BlockInfo l1Info = lastChannel.addBlock(block);
-        unused = L2BlockRef.fromBlockAndL1Info(block, l1Info);
-        // todo metrics recordL2BlockInChannel
+        l2Ref = L2BlockRef.fromBlockAndL1Info(block, l1Info);
         if (latestChannel.isFull()) {
           break;
         }
+        this.metrics.recordL2BlockInChannel(block);
         blocksAdded += 1;
       }
     } catch (ChannelException e) {
@@ -252,7 +256,12 @@ public class ChannelManager {
       this.blocks = this.blocks.stream().skip(blocksAdded).collect(Collectors.toList());
     }
 
-    // todo metrics RecordL2BlocksAdded
+    this.metrics.recordL2BlocksAdded(
+        l2Ref,
+        blocksAdded,
+        this.blocks.size(),
+        this.latestChannel.inputBytesLength(),
+        this.latestChannel.readyBytesLength());
 
     LOGGER.debug(
         "Added blocks to channel:"

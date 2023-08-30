@@ -27,7 +27,6 @@ import io.optimism.batcher.loader.LoaderConfig;
 import io.optimism.batcher.publisher.ChannelDataPublisher;
 import io.optimism.batcher.publisher.PublisherConfig;
 import io.optimism.type.BlockId;
-import io.optimism.type.L1BlockRef;
 import io.optimism.utilities.derive.stages.Frame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +50,6 @@ public class BatcherSubmitter extends AbstractExecutionThreadService {
   private final ChannelDataPublisher channelPublisher;
 
   private volatile boolean isShutdownTriggered = false;
-
-  private L1BlockRef lastL1Tip;
 
   /**
    * Constructor of BatcherSubmitter.

@@ -17,6 +17,7 @@
 package io.optimism.batcher.publisher;
 
 import io.optimism.batcher.config.Config;
+import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.RollupConfigRes;
 import java.math.BigInteger;
 
@@ -27,11 +28,16 @@ import java.math.BigInteger;
  * @param l1Signer L1 signer private key
  * @param l1chainId L1 chain id
  * @param batchInboxAddress Address of BatchInboxContract on L1
+ * @param metrics Batcher metrics
  * @author thinkAfCod
  * @since 0.1.1
  */
 public record PublisherConfig(
-    String l1RpcUrl, String l1Signer, BigInteger l1chainId, String batchInboxAddress) {
+    String l1RpcUrl,
+    String l1Signer,
+    BigInteger l1chainId,
+    String batchInboxAddress,
+    BatcherMetrics metrics) {
 
   /**
    * Create a PublisherConfig instance from Config instance.
@@ -45,6 +51,7 @@ public record PublisherConfig(
         config.l1RpcUrl(),
         config.l1Signer(),
         rollupConfig.l1ChainId(),
-        rollupConfig.batchInboxAddress());
+        rollupConfig.batchInboxAddress(),
+        config.metrics());
   }
 }
