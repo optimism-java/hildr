@@ -14,28 +14,34 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism;
+package io.optimism.batcher.telemetry;
+
+import io.micrometer.core.instrument.MeterRegistry;
+import io.optimism.utilities.telemetry.MetricsServer;
 
 /**
- * Batcher main method.
+ * The BatcherMetricsRegistry enum.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class HildrBatcher {
+@SuppressWarnings("ImmutableEnumChecker")
+public enum BatcherMetricsRegistry {
+  /** The instance of BatcherMetricsRegistry. */
+  INSTANCE;
 
-  /** Constructor of HildrBatcher. */
-  public HildrBatcher() {}
+  private final MeterRegistry prometheusRegistry;
+
+  BatcherMetricsRegistry() {
+    this.prometheusRegistry = MetricsServer.createPrometheusRegistry();
+  }
 
   /**
-   * Main method of HildrBatcher.
+   * Get singleton meter registry.
    *
-   * @param args Starts arguments
+   * @return the meter registry
    */
-  public static void main(String[] args) {
-    // todo start batcherSubmitter
-    // todo start server
-    // todo start metrics server
-    // todo listen close signal
+  public MeterRegistry registry() {
+    return this.prometheusRegistry;
   }
 }
