@@ -14,7 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.telemetry;
+package io.optimism.utilities.telemetry;
 
 import ch.qos.logback.core.rolling.RollingFileAppender;
 

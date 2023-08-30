@@ -22,7 +22,7 @@ import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
 import io.optimism.runner.Runner;
 import io.optimism.telemetry.InnerMetrics;
-import io.optimism.telemetry.Logging;
+import io.optimism.utilities.telemetry.Logging;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.nio.file.Files;
 import java.nio.file.Paths;
