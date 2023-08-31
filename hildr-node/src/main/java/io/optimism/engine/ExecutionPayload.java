@@ -17,6 +17,7 @@
 package io.optimism.engine;
 
 import io.optimism.common.Epoch;
+import io.optimism.network.BlockTopicHandler;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -146,6 +147,32 @@ public record ExecutionPayload(
         block.getBaseFeePerGas(),
         block.getHash(),
         encodedTxs);
+  }
+
+  /**
+   * From ExecutionPayloadSSZ to ExecutionPayload.
+   *
+   * @param payload the ExecutionPayloadSSZ
+   * @return the ExecutionPayload
+   */
+  public static ExecutionPayload from(BlockTopicHandler.ExecutionPayloadSSZ payload) {
+    return new ExecutionPayload(
+        Numeric.toHexString(payload.parentHash().toArray()),
+        Numeric.toHexString(payload.feeRecipient().toArray()),
+        Numeric.toHexString(payload.stateRoot().toArray()),
+        Numeric.toHexString(payload.receiptsRoot().toArray()),
+        Numeric.toHexString(payload.logsBloom().toArray()),
+        Numeric.toHexString(payload.prevRandao().toArray()),
+        BigInteger.valueOf(payload.blockNumber()),
+        BigInteger.valueOf(payload.gasLimit()),
+        BigInteger.valueOf(payload.gasUsed()),
+        BigInteger.valueOf(payload.timestamp()),
+        Numeric.toHexString(payload.extraData().toArray()),
+        payload.baseFeePerGas().toBigInteger(),
+        Numeric.toHexString(payload.blockHash().toArray()),
+        payload.transactions().stream()
+            .map(bytes -> Numeric.toHexString(bytes.toArray()))
+            .collect(Collectors.toList()));
   }
 
   /**

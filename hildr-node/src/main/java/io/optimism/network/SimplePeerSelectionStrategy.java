@@ -31,7 +31,12 @@ import tech.pegasys.teku.networking.p2p.network.P2PNetwork;
 import tech.pegasys.teku.networking.p2p.network.PeerAddress;
 import tech.pegasys.teku.networking.p2p.peer.Peer;
 
-/** The type Simple peer selection strategy. */
+/**
+ * The type SimplePeerSelectionStrategy.
+ *
+ * @author grapebaba
+ * @since 0.1.1
+ */
 public class SimplePeerSelectionStrategy implements PeerSelectionStrategy {
   private final TargetPeerRange targetPeerRange;
 

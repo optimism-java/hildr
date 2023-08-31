@@ -1,6 +1,8 @@
 #!/bin/sh
 set -e
 
+apk add zstd
+
 DATADIR=/data/geth
 
 if [ $NETWORK = "optimism" ]
@@ -9,8 +11,17 @@ then
     if [ ! -d $DATADIR ]
     then
         mkdir $DATADIR
-        wget -c "https://storage.googleapis.com/oplabs-mainnet-data/mainnet-bedrock.tar" -P $DATADIR
-        tar -xvf $DATADIR/mainnet-bedrock.tar -C $DATADIR
+        wget "https://datadirs.optimism.io/mainnet-bedrock.tar.zst" -P $DATADIR
+        zstd -cd $DATADIR/mainnet-bedrock.tar.zst | tar xvf - -C $DATADIR
+    fi
+elif [ $NETWORK = "base" ]
+then
+    CHAIN_ID=8453
+    if [ ! -d $DATADIR ]
+    then
+        mkdir $DATADIR
+        wget "https://raw.githubusercontent.com/base-org/node/main/mainnet/genesis-l2.json" -O ./genesis-l2.json
+        exec geth init --datadir=$DATADIR ./genesis-l2.json
     fi
 elif [ $NETWORK = "optimism-goerli" ]
 then
@@ -18,8 +29,8 @@ then
     if [ ! -d $DATADIR ]
     then
         mkdir $DATADIR
-        wget "https://storage.googleapis.com/oplabs-goerli-data/goerli-bedrock.tar" -P $DATADIR
-        tar -xvf $DATADIR/goerli-bedrock.tar -C $DATADIR
+        wget "https://datadirs.optimism.io/goerli-bedrock.tar.zst" -P $DATADIR
+        zstd -cd $DATADIR/goerli-bedrock.tar.zst | tar xvf - -C $DATADIR
     fi
 elif [ $NETWORK = "base-goerli" ]
 then
@@ -57,3 +68,5 @@ exec geth \
   --authrpc.port=8551 \
   --authrpc.jwtsecret=/jwtsecret.txt \
   --rollup.disabletxpoolgossip=true \
+  --snapshot=false
+  $@

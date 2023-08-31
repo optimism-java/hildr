@@ -76,7 +76,7 @@ public class DiscV5Service extends Service implements DiscoveryService {
 
   private final AsyncRunner asyncRunner;
   private final SecretKey localNodePrivateKey;
-  //  private final SchemaDefinitionsSupplier currentSchemaDefinitionsSupplier;
+
   private final NodeRecordConverter nodeRecordConverter;
 
   private final DiscoverySystem discoverySystem;
@@ -112,7 +112,6 @@ public class DiscV5Service extends Service implements DiscoveryService {
     this.chainId = chainId;
     this.asyncRunner = asyncRunner;
     this.localNodePrivateKey = SecretKeyParser.fromLibP2pPrivKey(privateKey);
-    //    this.currentSchemaDefinitionsSupplier = currentSchemaDefinitionsSupplier;
     this.nodeRecordConverter = nodeRecordConverter;
     final String listenAddress = p2pConfig.getNetworkInterface();
     final int listenUdpPort = discoConfig.getListenUdpPort();
@@ -212,7 +211,6 @@ public class DiscV5Service extends Service implements DiscoveryService {
   @Override
   public SafeFuture<Collection<DiscoveryPeer>> searchForPeers() {
     return SafeFuture.of(discoverySystem.searchForNewPeers())
-        // Current version of discovery doesn't return the found peers but next version will
         .thenApply(this::filterByOpStackDataEnr)
         .thenApply(this::convertToDiscoveryPeers);
   }

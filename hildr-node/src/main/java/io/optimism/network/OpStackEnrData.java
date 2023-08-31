@@ -88,10 +88,9 @@ public class OpStackEnrData {
     if (this == o) {
       return true;
     }
-    if (!(o instanceof OpStackEnrData)) {
+    if (!(o instanceof OpStackEnrData that)) {
       return false;
     }
-    OpStackEnrData that = (OpStackEnrData) o;
     return Objects.equal(chainId, that.chainId) && Objects.equal(version, that.version);
   }
 
