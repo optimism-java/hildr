@@ -38,94 +38,91 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class InnerMetrics {
 
-  private static AtomicReference<BigInteger> FINALIZED_HEAD;
-  private static AtomicReference<BigInteger> SAFE_HEAD;
-  private static AtomicReference<BigInteger> SYNCED;
-  private static PrometheusMeterRegistry registry;
-  private static HttpServer httpServer;
-  private static Future<?> serverFuture;
+    private static AtomicReference<BigInteger> FINALIZED_HEAD;
+    private static AtomicReference<BigInteger> SAFE_HEAD;
+    private static AtomicReference<BigInteger> SYNCED;
+    private static PrometheusMeterRegistry registry;
+    private static HttpServer httpServer;
+    private static Future<?> serverFuture;
 
-  static {
-    FINALIZED_HEAD = new AtomicReference<>(BigInteger.ZERO);
-    SAFE_HEAD = new AtomicReference<>(BigInteger.ZERO);
-    SYNCED = new AtomicReference<>(BigInteger.ZERO);
-    registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
-    Gauge.builder("finalized_head", FINALIZED_HEAD, ref -> ref.get().doubleValue())
-        .description("finalized head number")
-        .register(registry);
+    static {
+        FINALIZED_HEAD = new AtomicReference<>(BigInteger.ZERO);
+        SAFE_HEAD = new AtomicReference<>(BigInteger.ZERO);
+        SYNCED = new AtomicReference<>(BigInteger.ZERO);
+        registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        Gauge.builder("finalized_head", FINALIZED_HEAD, ref -> ref.get().doubleValue())
+                .description("finalized head number")
+                .register(registry);
 
-    Gauge.builder("safe_head", SAFE_HEAD, ref -> ref.get().doubleValue())
-        .description("safe head number")
-        .register(registry);
+        Gauge.builder("safe_head", SAFE_HEAD, ref -> ref.get().doubleValue())
+                .description("safe head number")
+                .register(registry);
 
-    Gauge.builder("synced", SYNCED, ref -> ref.get().doubleValue())
-        .description("synced flag")
-        .register(registry);
+        Gauge.builder("synced", SYNCED, ref -> ref.get().doubleValue())
+                .description("synced flag")
+                .register(registry);
 
-    Metrics.addRegistry(registry);
-  }
-
-  private InnerMetrics() {}
-
-  /**
-   * start a http server for prometheus to access.
-   *
-   * @param port custom http server port
-   */
-  public static void start(int port) {
-    try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-      httpServer = HttpServer.create(new InetSocketAddress(port), 2);
-      httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
-      httpServer.createContext(
-          "/metrics",
-          httpExchange -> {
-            String response = registry.scrape();
-            httpExchange.sendResponseHeaders(
-                200, response.getBytes(Charset.defaultCharset()).length);
-            try (OutputStream os = httpExchange.getResponseBody()) {
-              os.write(response.getBytes(Charset.defaultCharset()));
-            }
-          });
-      serverFuture = executor.submit(httpServer::start);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+        Metrics.addRegistry(registry);
     }
-  }
 
-  /** stop the http server. */
-  public static void stop() {
-    if (serverFuture != null) {
-      serverFuture.cancel(true);
+    private InnerMetrics() {}
+
+    /**
+     * start a http server for prometheus to access.
+     *
+     * @param port custom http server port
+     */
+    public static void start(int port) {
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            httpServer = HttpServer.create(new InetSocketAddress(port), 2);
+            httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
+            httpServer.createContext("/metrics", httpExchange -> {
+                String response = registry.scrape();
+                httpExchange.sendResponseHeaders(200, response.getBytes(Charset.defaultCharset()).length);
+                try (OutputStream os = httpExchange.getResponseBody()) {
+                    os.write(response.getBytes(Charset.defaultCharset()));
+                }
+            });
+            serverFuture = executor.submit(httpServer::start);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-    if (httpServer != null) {
-      httpServer.stop(5);
+
+    /** stop the http server. */
+    public static void stop() {
+        if (serverFuture != null) {
+            serverFuture.cancel(true);
+        }
+        if (httpServer != null) {
+            httpServer.stop(5);
+        }
     }
-  }
 
-  /**
-   * set metrics finalized head block.
-   *
-   * @param finalizedHead finalized head block
-   */
-  public static void setFinalizedHead(BigInteger finalizedHead) {
-    FINALIZED_HEAD.getAndSet(finalizedHead);
-  }
+    /**
+     * set metrics finalized head block.
+     *
+     * @param finalizedHead finalized head block
+     */
+    public static void setFinalizedHead(BigInteger finalizedHead) {
+        FINALIZED_HEAD.getAndSet(finalizedHead);
+    }
 
-  /**
-   * set metrics safe head block.
-   *
-   * @param safeHead safe head block
-   */
-  public static void setSafeHead(BigInteger safeHead) {
-    SAFE_HEAD.getAndSet(safeHead);
-  }
+    /**
+     * set metrics safe head block.
+     *
+     * @param safeHead safe head block
+     */
+    public static void setSafeHead(BigInteger safeHead) {
+        SAFE_HEAD.getAndSet(safeHead);
+    }
 
-  /**
-   * set metrics synced block count.
-   *
-   * @param synced synced block count
-   */
-  public static void setSynced(BigInteger synced) {
-    SYNCED.getAndSet(synced);
-  }
+    /**
+     * set metrics synced block count.
+     *
+     * @param synced synced block count
+     */
+    public static void setSynced(BigInteger synced) {
+        SYNCED.getAndSet(synced);
+    }
 }

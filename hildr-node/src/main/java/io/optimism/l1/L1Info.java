@@ -38,90 +38,87 @@ import java.util.stream.Collectors;
  * @since 0.1.0
  */
 public record L1Info(
-    L1BlockInfo blockInfo,
-    SystemConfig systemConfig,
-    List<UserDeposited> userDeposits,
-    List<String> batcherTransactions,
-    boolean finalized) {
-
-  /**
-   * Create L1Info.
-   *
-   * @param block the block
-   * @param userDeposits the user deposits
-   * @param batchInbox the batch inbox
-   * @param finalized the finalized
-   * @param systemConfig the system config
-   * @return the L1Info
-   */
-  public static L1Info create(
-      Block block,
-      List<UserDeposited> userDeposits,
-      String batchInbox,
-      boolean finalized,
-      SystemConfig systemConfig) {
-    BigInteger blockNumber = block.getNumber();
-    if (blockNumber == null) {
-      throw new BlockNotIncludedException();
-    }
-    String blockHash = block.getHash();
-    if (blockHash == null) {
-      throw new BlockNotIncludedException();
-    }
-    String mixHash = block.getMixHash();
-    if (mixHash == null) {
-      throw new BlockNotIncludedException();
-    }
-    BigInteger baseFeePerGas = block.getBaseFeePerGas();
-    if (baseFeePerGas == null) {
-      throw new BlockIsPreLondonException();
-    }
-    L1BlockInfo l1BlockInfo =
-        L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, mixHash);
-    List<String> batcherTransactions =
-        createBatcherTransactions(block, systemConfig.batchSender(), batchInbox);
-
-    return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, finalized);
-  }
-
-  private static List<String> createBatcherTransactions(
-      Block block, String batchSender, String batchInbox) {
-    return block.getTransactions().stream()
-        .filter(
-            transactionResult ->
-                batchSender.equalsIgnoreCase(((TransactionObject) transactionResult).getFrom())
-                    && batchInbox.equalsIgnoreCase(((TransactionObject) transactionResult).getTo()))
-        .map(transactionResult -> ((TransactionObject) transactionResult).getInput())
-        .collect(Collectors.toList());
-  }
-
-  /**
-   * The type L1BlockInfo.
-   *
-   * @param number L1 block number
-   * @param hash L1 block hash
-   * @param timestamp L1 block timestamp
-   * @param baseFee L1 base fee per gas
-   * @param mixHash L1 mix hash (prevrandao)
-   * @author grapebaba
-   * @since 0.1.0
-   */
-  public record L1BlockInfo(
-      BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
+        L1BlockInfo blockInfo,
+        SystemConfig systemConfig,
+        List<UserDeposited> userDeposits,
+        List<String> batcherTransactions,
+        boolean finalized) {
 
     /**
-     * Create L1BlockInfo.
+     * Create L1Info.
      *
-     * @param number the number
-     * @param hash the hash
-     * @param timestamp the timestamp
-     * @param baseFee the base fee
-     * @param mixHash the mix hash
-     * @return the l 1 block info
+     * @param block the block
+     * @param userDeposits the user deposits
+     * @param batchInbox the batch inbox
+     * @param finalized the finalized
+     * @param systemConfig the system config
+     * @return the L1Info
      */
-    public static L1BlockInfo create(
-        BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
-      return new L1BlockInfo(number, hash, timestamp, baseFee, mixHash);
+    public static L1Info create(
+            Block block,
+            List<UserDeposited> userDeposits,
+            String batchInbox,
+            boolean finalized,
+            SystemConfig systemConfig) {
+        BigInteger blockNumber = block.getNumber();
+        if (blockNumber == null) {
+            throw new BlockNotIncludedException();
+        }
+        String blockHash = block.getHash();
+        if (blockHash == null) {
+            throw new BlockNotIncludedException();
+        }
+        String mixHash = block.getMixHash();
+        if (mixHash == null) {
+            throw new BlockNotIncludedException();
+        }
+        BigInteger baseFeePerGas = block.getBaseFeePerGas();
+        if (baseFeePerGas == null) {
+            throw new BlockIsPreLondonException();
+        }
+        L1BlockInfo l1BlockInfo =
+                L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, mixHash);
+        List<String> batcherTransactions = createBatcherTransactions(block, systemConfig.batchSender(), batchInbox);
+
+        return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, finalized);
     }
-  }
+
+    private static List<String> createBatcherTransactions(Block block, String batchSender, String batchInbox) {
+        return block.getTransactions().stream()
+                .filter(transactionResult ->
+                        batchSender.equalsIgnoreCase(((TransactionObject) transactionResult).getFrom())
+                                && batchInbox.equalsIgnoreCase(((TransactionObject) transactionResult).getTo()))
+                .map(transactionResult -> ((TransactionObject) transactionResult).getInput())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * The type L1BlockInfo.
+     *
+     * @param number L1 block number
+     * @param hash L1 block hash
+     * @param timestamp L1 block timestamp
+     * @param baseFee L1 base fee per gas
+     * @param mixHash L1 mix hash (prevrandao)
+     * @author grapebaba
+     * @since 0.1.0
+     */
+    public record L1BlockInfo(
+            BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
+
+        /**
+         * Create L1BlockInfo.
+         *
+         * @param number the number
+         * @param hash the hash
+         * @param timestamp the timestamp
+         * @param baseFee the base fee
+         * @param mixHash the mix hash
+         * @return the l 1 block info
+         */
+        public static L1BlockInfo create(
+                BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
+            return new L1BlockInfo(number, hash, timestamp, baseFee, mixHash);
+        }
+    }
 }

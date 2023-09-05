@@ -24,17 +24,17 @@ package io.optimism.driver;
  */
 public class InvalidExecutionPayloadException extends RuntimeException {
 
-  /** Instantiates a new Invalid execution payload exception. */
-  public InvalidExecutionPayloadException() {
-    super("invalid execution payload");
-  }
+    /** Instantiates a new Invalid execution payload exception. */
+    public InvalidExecutionPayloadException() {
+        super("invalid execution payload");
+    }
 
-  /**
-   * Instantiates a new Invalid execution payload exception.
-   *
-   * @param message the message
-   */
-  public InvalidExecutionPayloadException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Invalid execution payload exception.
+     *
+     * @param message the message
+     */
+    public InvalidExecutionPayloadException(String message) {
+        super(message);
+    }
 }

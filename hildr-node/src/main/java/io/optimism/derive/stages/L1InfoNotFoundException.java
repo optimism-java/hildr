@@ -24,8 +24,8 @@ package io.optimism.derive.stages;
  */
 public class L1InfoNotFoundException extends RuntimeException {
 
-  /** Instantiates a new L1 info not found exception. */
-  public L1InfoNotFoundException() {
-    super("L1 info not found");
-  }
+    /** Instantiates a new L1 info not found exception. */
+    public L1InfoNotFoundException() {
+        super("L1 info not found");
+    }
 }

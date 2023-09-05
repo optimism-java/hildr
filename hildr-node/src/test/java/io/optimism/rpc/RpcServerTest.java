@@ -50,67 +50,63 @@ import org.slf4j.LoggerFactory;
  */
 public class RpcServerTest {
 
-  private static final Logger logger = LoggerFactory.getLogger(RpcServerTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(RpcServerTest.class);
 
-  private static Config config;
+    private static Config config;
 
-  @BeforeAll
-  static void setUp() {
-    config = TestConstants.createConfig();
-  }
-
-  RpcServer createRpcServer(Config config) {
-    return new RpcServer(config);
-  }
-
-  @Test
-  void testRpcServerStart() throws Exception {
-    if (!TestConstants.isConfiguredApiKeyEnv) {
-      return;
+    @BeforeAll
+    static void setUp() {
+        config = TestConstants.createConfig();
     }
 
-    RpcServer rpcServer = createRpcServer(config);
-    try {
-      rpcServer.start();
-
-      OkHttpClient okHttpClient =
-          new OkHttpClient.Builder()
-              .readTimeout(Duration.ofMinutes(5))
-              .callTimeout(Duration.ofMinutes(5))
-              .build();
-
-      ObjectMapper mapper = new ObjectMapper();
-      JsonRpcRequest jsonRpcRequest =
-          new JsonRpcRequest(
-              "2.0", RpcMethod.OP_OUTPUT_AT_BLOCK.getRpcMethodName(), new Object[] {"7900000"});
-      jsonRpcRequest.setId(new JsonRpcRequestId("1"));
-      var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
-      RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
-
-      final Request request =
-          new Request.Builder().url("http://127.0.0.1:9545").post(requestBody).build();
-
-      try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-        Future<Response> fork =
-            scope.fork(
-                TracerTaskWrapper.wrap(
-                    () -> {
-                      logger.info("test: {}", Thread.currentThread().getName());
-                      return okHttpClient.newCall(request).execute();
-                    }));
-        scope.join();
-        Response response = fork.get();
-        assertEquals(200, response.code());
-        assertNotNull(response.body());
-        Map jsonRpcResp = mapper.readValue(response.body().string(), Map.class);
-        assertEquals(jsonRpcResp.get("id"), "1");
-        OutputRootResult outputRootResult =
-            mapper.readValue(
-                mapper.writeValueAsString(jsonRpcResp.get("result")), OutputRootResult.class);
-        assertNotNull(outputRootResult);
-      }
-    } finally {
-      rpcServer.stop();
+    RpcServer createRpcServer(Config config) {
+        return new RpcServer(config);
     }
-  }
+
+    @Test
+    void testRpcServerStart() throws Exception {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
+
+        RpcServer rpcServer = createRpcServer(config);
+        try {
+            rpcServer.start();
+
+            OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                    .readTimeout(Duration.ofMinutes(5))
+                    .callTimeout(Duration.ofMinutes(5))
+                    .build();
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonRpcRequest jsonRpcRequest = new JsonRpcRequest(
+                    "2.0", RpcMethod.OP_OUTPUT_AT_BLOCK.getRpcMethodName(), new Object[] {"7900000"});
+            jsonRpcRequest.setId(new JsonRpcRequestId("1"));
+            var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
+            RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
+
+            final Request request = new Request.Builder()
+                    .url("http://127.0.0.1:9545")
+                    .post(requestBody)
+                    .build();
+
+            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+                Future<Response> fork = scope.fork(TracerTaskWrapper.wrap(() -> {
+                    logger.info("test: {}", Thread.currentThread().getName());
+                    return okHttpClient.newCall(request).execute();
+                }));
+                scope.join();
+                Response response = fork.get();
+                assertEquals(200, response.code());
+                assertNotNull(response.body());
+                Map jsonRpcResp = mapper.readValue(response.body().string(), Map.class);
+                assertEquals(jsonRpcResp.get("id"), "1");
+                OutputRootResult outputRootResult =
+                        mapper.readValue(mapper.writeValueAsString(jsonRpcResp.get("result")), OutputRootResult.class);
+                assertNotNull(outputRootResult);
+            }
+        } finally {
+            rpcServer.stop();
+        }
+    }
 }

@@ -29,177 +29,177 @@ import org.web3j.utils.Numeric;
  */
 public abstract class SystemConfigUpdate {
 
-  /** not public constructor. */
-  private SystemConfigUpdate() {}
+    /** not public constructor. */
+    private SystemConfigUpdate() {}
 
-  /** update batch sender. */
-  public static final class BatchSender extends SystemConfigUpdate {
+    /** update batch sender. */
+    public static final class BatchSender extends SystemConfigUpdate {
 
-    private final String address;
+        private final String address;
 
-    /**
-     * the BatchSender constructor.
-     *
-     * @param address batch sender address
-     */
-    public BatchSender(String address) {
-      this.address = address;
+        /**
+         * the BatchSender constructor.
+         *
+         * @param address batch sender address
+         */
+        public BatchSender(String address) {
+            this.address = address;
+        }
+
+        /**
+         * get batch sender.
+         *
+         * @return batch sender
+         */
+        public String getAddress() {
+            return address;
+        }
+    }
+
+    /** update fee. */
+    public static final class Fees extends SystemConfigUpdate {
+
+        private final BigInteger feeOverhead;
+
+        private final BigInteger feeScalar;
+
+        /**
+         * Fees constructor.
+         *
+         * @param feeOverhead overhead fee
+         * @param feeScalar scalar fee
+         */
+        public Fees(BigInteger feeOverhead, BigInteger feeScalar) {
+            this.feeOverhead = feeOverhead;
+            this.feeScalar = feeScalar;
+        }
+
+        /**
+         * get fee of overhead.
+         *
+         * @return fee of overhead
+         */
+        public BigInteger getFeeOverhead() {
+            return feeOverhead;
+        }
+
+        /**
+         * get fee of scalar.
+         *
+         * @return fee of scalar
+         */
+        public BigInteger getFeeScalar() {
+            return feeScalar;
+        }
+    }
+
+    /** update gas. */
+    public static final class Gas extends SystemConfigUpdate {
+
+        private final BigInteger gas;
+
+        /**
+         * the Gas constructor.
+         *
+         * @param gas gas value
+         */
+        public Gas(BigInteger gas) {
+            this.gas = gas;
+        }
+
+        /**
+         * get fee of gas.
+         *
+         * @return fee of gas
+         */
+        public BigInteger getGas() {
+            return gas;
+        }
+    }
+
+    /** The type Unsafe block signer. */
+    public static final class UnsafeBlockSigner extends SystemConfigUpdate {
+
+        private final String address;
+
+        /**
+         * the UnsafeBlockSigner constructor.
+         *
+         * @param address batch sender address
+         */
+        public UnsafeBlockSigner(String address) {
+            this.address = address;
+        }
+
+        /**
+         * get UnsafeBlockSigner.
+         *
+         * @return UnsafeBlockSigner
+         */
+        public String getAddress() {
+            return address;
+        }
     }
 
     /**
-     * get batch sender.
+     * create systemConfigUpdate from EthLog.LogObject.
      *
-     * @return batch sender
+     * @param log EthLog.LogObject
+     * @return a SystemConfigUpdate instance
      */
-    public String getAddress() {
-      return address;
+    public static SystemConfigUpdate tryFrom(EthLog.LogObject log) {
+        if (log.getTopics().get(1) == null) {
+            throw new InvalidSystemConfigUpdateException();
+        }
+        byte[] decodeVersion = Numeric.hexStringToByteArray(log.getTopics().get(1));
+        BigInteger version = Numeric.toBigInt(decodeVersion);
+
+        if (version.compareTo(BigInteger.ZERO) != 0) {
+            throw new InvalidSystemConfigUpdateException();
+        }
+
+        if (log.getTopics().get(2) == null) {
+            throw new InvalidSystemConfigUpdateException();
+        }
+        byte[] decodeUpdateType = Numeric.hexStringToByteArray(log.getTopics().get(2));
+        BigInteger updateType = Numeric.toBigInt(decodeUpdateType);
+        if (BigInteger.ZERO.compareTo(updateType) == 0) {
+            byte[] data = Numeric.hexStringToByteArray(log.getData());
+            byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
+            if (addrBytes.length != 20) {
+                throw new InvalidSystemConfigUpdateException();
+            }
+            return new BatchSender(Numeric.toHexString(addrBytes));
+        } else if (BigInteger.ONE.compareTo(updateType) == 0) {
+            byte[] data = Numeric.hexStringToByteArray(log.getData());
+            byte[] feeOverheadBytes = Arrays.copyOfRange(data, 64, 96);
+            if (feeOverheadBytes.length != 32) {
+                throw new InvalidSystemConfigUpdateException();
+            }
+            byte[] feeScalarBytes = Arrays.copyOfRange(data, 96, 128);
+            if (feeScalarBytes.length != 32) {
+                throw new InvalidSystemConfigUpdateException();
+            }
+            BigInteger feeOverhead = Numeric.toBigInt(feeOverheadBytes);
+            BigInteger feeScalar = Numeric.toBigInt(feeScalarBytes);
+            return new Fees(feeOverhead, feeScalar);
+        } else if (BigInteger.TWO.compareTo(updateType) == 0) {
+            byte[] data = Numeric.hexStringToByteArray(log.getData());
+            byte[] gasBytes = Arrays.copyOfRange(data, 64, 96);
+            if (gasBytes.length != 32) {
+                throw new InvalidSystemConfigUpdateException();
+            }
+            BigInteger gas = Numeric.toBigInt(gasBytes);
+            return new Gas(gas);
+        } else if (BigInteger.valueOf(3L).compareTo(updateType) == 0) {
+            byte[] data = Numeric.hexStringToByteArray(log.getData());
+            byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
+            if (addrBytes.length != 20) {
+                throw new InvalidSystemConfigUpdateException();
+            }
+            return new UnsafeBlockSigner(Numeric.toHexString(addrBytes));
+        } else {
+            throw new InvalidSystemConfigUpdateException();
+        }
     }
-  }
-
-  /** update fee. */
-  public static final class Fees extends SystemConfigUpdate {
-
-    private final BigInteger feeOverhead;
-
-    private final BigInteger feeScalar;
-
-    /**
-     * Fees constructor.
-     *
-     * @param feeOverhead overhead fee
-     * @param feeScalar scalar fee
-     */
-    public Fees(BigInteger feeOverhead, BigInteger feeScalar) {
-      this.feeOverhead = feeOverhead;
-      this.feeScalar = feeScalar;
-    }
-
-    /**
-     * get fee of overhead.
-     *
-     * @return fee of overhead
-     */
-    public BigInteger getFeeOverhead() {
-      return feeOverhead;
-    }
-
-    /**
-     * get fee of scalar.
-     *
-     * @return fee of scalar
-     */
-    public BigInteger getFeeScalar() {
-      return feeScalar;
-    }
-  }
-
-  /** update gas. */
-  public static final class Gas extends SystemConfigUpdate {
-
-    private final BigInteger gas;
-
-    /**
-     * the Gas constructor.
-     *
-     * @param gas gas value
-     */
-    public Gas(BigInteger gas) {
-      this.gas = gas;
-    }
-
-    /**
-     * get fee of gas.
-     *
-     * @return fee of gas
-     */
-    public BigInteger getGas() {
-      return gas;
-    }
-  }
-
-  /** The type Unsafe block signer. */
-  public static final class UnsafeBlockSigner extends SystemConfigUpdate {
-
-    private final String address;
-
-    /**
-     * the UnsafeBlockSigner constructor.
-     *
-     * @param address batch sender address
-     */
-    public UnsafeBlockSigner(String address) {
-      this.address = address;
-    }
-
-    /**
-     * get UnsafeBlockSigner.
-     *
-     * @return UnsafeBlockSigner
-     */
-    public String getAddress() {
-      return address;
-    }
-  }
-
-  /**
-   * create systemConfigUpdate from EthLog.LogObject.
-   *
-   * @param log EthLog.LogObject
-   * @return a SystemConfigUpdate instance
-   */
-  public static SystemConfigUpdate tryFrom(EthLog.LogObject log) {
-    if (log.getTopics().get(1) == null) {
-      throw new InvalidSystemConfigUpdateException();
-    }
-    byte[] decodeVersion = Numeric.hexStringToByteArray(log.getTopics().get(1));
-    BigInteger version = Numeric.toBigInt(decodeVersion);
-
-    if (version.compareTo(BigInteger.ZERO) != 0) {
-      throw new InvalidSystemConfigUpdateException();
-    }
-
-    if (log.getTopics().get(2) == null) {
-      throw new InvalidSystemConfigUpdateException();
-    }
-    byte[] decodeUpdateType = Numeric.hexStringToByteArray(log.getTopics().get(2));
-    BigInteger updateType = Numeric.toBigInt(decodeUpdateType);
-    if (BigInteger.ZERO.compareTo(updateType) == 0) {
-      byte[] data = Numeric.hexStringToByteArray(log.getData());
-      byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
-      if (addrBytes.length != 20) {
-        throw new InvalidSystemConfigUpdateException();
-      }
-      return new BatchSender(Numeric.toHexString(addrBytes));
-    } else if (BigInteger.ONE.compareTo(updateType) == 0) {
-      byte[] data = Numeric.hexStringToByteArray(log.getData());
-      byte[] feeOverheadBytes = Arrays.copyOfRange(data, 64, 96);
-      if (feeOverheadBytes.length != 32) {
-        throw new InvalidSystemConfigUpdateException();
-      }
-      byte[] feeScalarBytes = Arrays.copyOfRange(data, 96, 128);
-      if (feeScalarBytes.length != 32) {
-        throw new InvalidSystemConfigUpdateException();
-      }
-      BigInteger feeOverhead = Numeric.toBigInt(feeOverheadBytes);
-      BigInteger feeScalar = Numeric.toBigInt(feeScalarBytes);
-      return new Fees(feeOverhead, feeScalar);
-    } else if (BigInteger.TWO.compareTo(updateType) == 0) {
-      byte[] data = Numeric.hexStringToByteArray(log.getData());
-      byte[] gasBytes = Arrays.copyOfRange(data, 64, 96);
-      if (gasBytes.length != 32) {
-        throw new InvalidSystemConfigUpdateException();
-      }
-      BigInteger gas = Numeric.toBigInt(gasBytes);
-      return new Gas(gas);
-    } else if (BigInteger.valueOf(3L).compareTo(updateType) == 0) {
-      byte[] data = Numeric.hexStringToByteArray(log.getData());
-      byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
-      if (addrBytes.length != 20) {
-        throw new InvalidSystemConfigUpdateException();
-      }
-      return new UnsafeBlockSigner(Numeric.toHexString(addrBytes));
-    } else {
-      throw new InvalidSystemConfigUpdateException();
-    }
-  }
 }

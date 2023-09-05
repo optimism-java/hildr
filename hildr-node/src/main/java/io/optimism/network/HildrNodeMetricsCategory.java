@@ -27,22 +27,22 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
  */
 public enum HildrNodeMetricsCategory implements MetricCategory {
 
-  /** p2p network hildr node metrics category. */
-  P2P_NETWORK("p2p_network");
+    /** p2p network hildr node metrics category. */
+    P2P_NETWORK("p2p_network");
 
-  private final String name;
+    private final String name;
 
-  HildrNodeMetricsCategory(String name) {
-    this.name = name;
-  }
+    HildrNodeMetricsCategory(String name) {
+        this.name = name;
+    }
 
-  @Override
-  public String getName() {
-    return name;
-  }
+    @Override
+    public String getName() {
+        return name;
+    }
 
-  @Override
-  public Optional<String> getApplicationPrefix() {
-    return Optional.of("hildr_node");
-  }
+    @Override
+    public Optional<String> getApplicationPrefix() {
+        return Optional.of("hildr_node");
+    }
 }

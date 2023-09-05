@@ -24,12 +24,12 @@ package io.optimism.runner;
  */
 public class DriverInitException extends RuntimeException {
 
-  /**
-   * Instantiates a new Driver init exception.
-   *
-   * @param cause the cause
-   */
-  public DriverInitException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new Driver init exception.
+     *
+     * @param cause the cause
+     */
+    public DriverInitException(Throwable cause) {
+        super(cause);
+    }
 }

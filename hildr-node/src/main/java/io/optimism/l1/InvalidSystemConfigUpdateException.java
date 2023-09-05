@@ -24,8 +24,8 @@ package io.optimism.l1;
  */
 public class InvalidSystemConfigUpdateException extends RuntimeException {
 
-  /** Instantiates a new Invalid system config update exception. */
-  public InvalidSystemConfigUpdateException() {
-    super("invalid system config update");
-  }
+    /** Instantiates a new Invalid system config update exception. */
+    public InvalidSystemConfigUpdateException() {
+        super("invalid system config update");
+    }
 }

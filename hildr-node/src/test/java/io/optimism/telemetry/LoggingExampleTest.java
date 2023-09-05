@@ -30,48 +30,46 @@ import org.slf4j.LoggerFactory;
  */
 @SuppressWarnings("UnusedVariable")
 public class LoggingExampleTest {
-  private static final Logger logger = LoggerFactory.getLogger(LoggingExampleTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoggingExampleTest.class);
 
-  @Test
-  void testLogging() throws InterruptedException {
+    @Test
+    void testLogging() throws InterruptedException {
 
-    final Thread[] threads = new Thread[10];
-    for (int i = 0; i < 5; i++) {
-      final int logId = i;
-      Thread thread =
-          new Thread(
-              () -> {
+        final Thread[] threads = new Thread[10];
+        for (int i = 0; i < 5; i++) {
+            final int logId = i;
+            Thread thread = new Thread(() -> {
                 Tracer tracer = Logging.INSTANCE.getTracer("unit-test-case");
                 Span span = tracer.nextSpan().name("my-span").start();
                 logger.info("step 1:parent {} log", logId);
                 try (var unusedScope1 = tracer.withSpan(span)) {
-                  logger.info("step 2:parent {} log", logId);
-                  Span childSpan = tracer.nextSpan().name("childSpan").start();
-                  try (var unusedBag2 = tracer.withSpan(childSpan)) {
-                    logger.info("step 3:parent {} log", logId);
-                    throw new RuntimeException("test error for span");
-                  } catch (Exception e) {
-                    logger.error("catch a throw in scope", e);
-                  } finally {
-                    childSpan.end();
-                  }
+                    logger.info("step 2:parent {} log", logId);
+                    Span childSpan = tracer.nextSpan().name("childSpan").start();
+                    try (var unusedBag2 = tracer.withSpan(childSpan)) {
+                        logger.info("step 3:parent {} log", logId);
+                        throw new RuntimeException("test error for span");
+                    } catch (Exception e) {
+                        logger.error("catch a throw in scope", e);
+                    } finally {
+                        childSpan.end();
+                    }
                 } catch (Exception e) {
-                  logger.error("catch a throw", e);
+                    logger.error("catch a throw", e);
                 } finally {
-                  span.end();
+                    span.end();
                 }
-              });
-      threads[i] = thread;
-      thread.start();
-    }
-    for (Thread thread : threads) {
-      try {
-        if (thread != null) {
-          thread.join();
+            });
+            threads[i] = thread;
+            thread.start();
         }
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
+        for (Thread thread : threads) {
+            try {
+                if (thread != null) {
+                    thread.join();
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
-  }
 }

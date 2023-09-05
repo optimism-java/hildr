@@ -34,197 +34,197 @@ import java.util.Objects;
  */
 public class JsonRpcRequest {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
-  private JsonRpcRequestId id;
-  private final String method;
-  private final Object[] params;
-  private final String version;
-  private boolean isNotification = true;
+    private JsonRpcRequestId id;
+    private final String method;
+    private final Object[] params;
+    private final String version;
+    private boolean isNotification = true;
 
-  /**
-   * Instantiates a new Json rpc request.
-   *
-   * @param version the version
-   * @param method the method
-   * @param params the params
-   */
-  @JsonCreator
-  public JsonRpcRequest(
-      @JsonProperty("jsonrpc") final String version,
-      @JsonProperty("method") final String method,
-      @JsonProperty("params") final Object[] params) {
-    this.version = version;
-    this.method = method;
-    this.params = params;
-    if (method == null) {
-      throw new RuntimeException("Field 'method' is required");
-    }
-  }
-
-  /**
-   * Gets id.
-   *
-   * @return the id
-   */
-  @JsonGetter("id")
-  public Object getId() {
-    return id == null ? null : id.getValue();
-  }
-
-  /**
-   * Gets method.
-   *
-   * @return the method
-   */
-  @JsonGetter("method")
-  public String getMethod() {
-    return method;
-  }
-
-  /**
-   * Gets version.
-   *
-   * @return the version
-   */
-  @JsonGetter("jsonrpc")
-  public String getVersion() {
-    return version;
-  }
-
-  /**
-   * Get params object [ ].
-   *
-   * @return the object [ ]
-   */
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  @JsonGetter("params")
-  public Object[] getParams() {
-    return params;
-  }
-
-  /**
-   * Is notification boolean.
-   *
-   * @return the boolean
-   */
-  @JsonIgnore
-  public boolean isNotification() {
-    return isNotification;
-  }
-
-  /**
-   * Gets param length.
-   *
-   * @return the param length
-   */
-  @JsonIgnore
-  public int getParamLength() {
-    return hasParams() ? params.length : 0;
-  }
-
-  /**
-   * Has params boolean.
-   *
-   * @return the boolean
-   */
-  @JsonIgnore
-  public boolean hasParams() {
-
-    // Null Object: "params":null
-    if (params == null) {
-      return false;
+    /**
+     * Instantiates a new Json rpc request.
+     *
+     * @param version the version
+     * @param method the method
+     * @param params the params
+     */
+    @JsonCreator
+    public JsonRpcRequest(
+            @JsonProperty("jsonrpc") final String version,
+            @JsonProperty("method") final String method,
+            @JsonProperty("params") final Object[] params) {
+        this.version = version;
+        this.method = method;
+        this.params = params;
+        if (method == null) {
+            throw new RuntimeException("Field 'method' is required");
+        }
     }
 
-    // Null Array: "params":[null]
-    if (params.length == 0 || params[0] == null) {
-      return false;
+    /**
+     * Gets id.
+     *
+     * @return the id
+     */
+    @JsonGetter("id")
+    public Object getId() {
+        return id == null ? null : id.getValue();
     }
 
-    return true;
-  }
-
-  /**
-   * Sets id.
-   *
-   * @param id the id
-   */
-  @JsonSetter("id")
-  public void setId(final JsonRpcRequestId id) {
-    // If an id is explicitly set, it is not a notification
-    isNotification = false;
-    this.id = id;
-  }
-
-  @Override
-  public boolean equals(final Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || !(o instanceof JsonRpcRequest)) {
-      return false;
-    }
-    final JsonRpcRequest that = (JsonRpcRequest) o;
-    return isNotification == that.isNotification
-        && Objects.equals(id, that.id)
-        && Objects.equals(method, that.method)
-        && Arrays.equals(params, that.params)
-        && Objects.equals(version, that.version);
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
-  }
-
-  /**
-   * Gets parameter.
-   *
-   * @param <T> the type parameter
-   * @param index the index
-   * @param paramClass the param class
-   * @return the parameter
-   */
-  public <T> T getParameter(final int index, final Class<T> paramClass) {
-    if (params == null || params.length <= index || params[index] == null) {
-      return null;
+    /**
+     * Gets method.
+     *
+     * @return the method
+     */
+    @JsonGetter("method")
+    public String getMethod() {
+        return method;
     }
 
-    final T param;
-    final Object rawParam = params[index];
-    if (paramClass.isAssignableFrom(rawParam.getClass())) {
-      param = (T) rawParam;
-    } else {
-      try {
-        final String json = mapper.writeValueAsString(rawParam);
-        param = mapper.readValue(json, paramClass);
-      } catch (final JsonProcessingException e) {
-        throw new IllegalArgumentException(
-            String.format(
-                "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
-                index, rawParam, rawParam.getClass().getName(), paramClass.getName()),
-            e);
-      }
+    /**
+     * Gets version.
+     *
+     * @return the version
+     */
+    @JsonGetter("jsonrpc")
+    public String getVersion() {
+        return version;
     }
 
-    return param;
-  }
+    /**
+     * Get params object [ ].
+     *
+     * @return the object [ ]
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonGetter("params")
+    public Object[] getParams() {
+        return params;
+    }
 
-  @Override
-  public String toString() {
-    return "JsonRpcRequest{"
-        + "id="
-        + id
-        + ", method='"
-        + method
-        + '\''
-        + ", params="
-        + Arrays.toString(params)
-        + ", version='"
-        + version
-        + '\''
-        + ", isNotification="
-        + isNotification
-        + '}';
-  }
+    /**
+     * Is notification boolean.
+     *
+     * @return the boolean
+     */
+    @JsonIgnore
+    public boolean isNotification() {
+        return isNotification;
+    }
+
+    /**
+     * Gets param length.
+     *
+     * @return the param length
+     */
+    @JsonIgnore
+    public int getParamLength() {
+        return hasParams() ? params.length : 0;
+    }
+
+    /**
+     * Has params boolean.
+     *
+     * @return the boolean
+     */
+    @JsonIgnore
+    public boolean hasParams() {
+
+        // Null Object: "params":null
+        if (params == null) {
+            return false;
+        }
+
+        // Null Array: "params":[null]
+        if (params.length == 0 || params[0] == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Sets id.
+     *
+     * @param id the id
+     */
+    @JsonSetter("id")
+    public void setId(final JsonRpcRequestId id) {
+        // If an id is explicitly set, it is not a notification
+        isNotification = false;
+        this.id = id;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || !(o instanceof JsonRpcRequest)) {
+            return false;
+        }
+        final JsonRpcRequest that = (JsonRpcRequest) o;
+        return isNotification == that.isNotification
+                && Objects.equals(id, that.id)
+                && Objects.equals(method, that.method)
+                && Arrays.equals(params, that.params)
+                && Objects.equals(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
+    }
+
+    /**
+     * Gets parameter.
+     *
+     * @param <T> the type parameter
+     * @param index the index
+     * @param paramClass the param class
+     * @return the parameter
+     */
+    public <T> T getParameter(final int index, final Class<T> paramClass) {
+        if (params == null || params.length <= index || params[index] == null) {
+            return null;
+        }
+
+        final T param;
+        final Object rawParam = params[index];
+        if (paramClass.isAssignableFrom(rawParam.getClass())) {
+            param = (T) rawParam;
+        } else {
+            try {
+                final String json = mapper.writeValueAsString(rawParam);
+                param = mapper.readValue(json, paramClass);
+            } catch (final JsonProcessingException e) {
+                throw new IllegalArgumentException(
+                        String.format(
+                                "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
+                                index, rawParam, rawParam.getClass().getName(), paramClass.getName()),
+                        e);
+            }
+        }
+
+        return param;
+    }
+
+    @Override
+    public String toString() {
+        return "JsonRpcRequest{"
+                + "id="
+                + id
+                + ", method='"
+                + method
+                + '\''
+                + ", params="
+                + Arrays.toString(params)
+                + ", version='"
+                + version
+                + '\''
+                + ", isNotification="
+                + isNotification
+                + '}';
+    }
 }

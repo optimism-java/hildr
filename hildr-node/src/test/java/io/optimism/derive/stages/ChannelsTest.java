@@ -41,79 +41,75 @@ import org.web3j.tuples.generated.Tuple2;
  */
 class ChannelsTest {
 
-  @Test
-  @DisplayName("test push single channel frame")
-  void testPushSingleChannelFrame() {
-    Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 =
-        createStage();
-    Frame frame = new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], true, BigInteger.ZERO);
+    @Test
+    @DisplayName("test push single channel frame")
+    void testPushSingleChannelFrame() {
+        Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 = createStage();
+        Frame frame = new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], true, BigInteger.ZERO);
 
-    tuple2.component1().pushFrame(frame);
-    assertEquals(1, tuple2.component1().getPendingChannels().size());
-    assertEquals(
-        BigInteger.valueOf(5L), tuple2.component1().getPendingChannels().get(0).getChannelId());
-    assertTrue(tuple2.component1().getPendingChannels().get(0).isComplete());
-  }
+        tuple2.component1().pushFrame(frame);
+        assertEquals(1, tuple2.component1().getPendingChannels().size());
+        assertEquals(
+                BigInteger.valueOf(5L),
+                tuple2.component1().getPendingChannels().get(0).getChannelId());
+        assertTrue(tuple2.component1().getPendingChannels().get(0).isComplete());
+    }
 
-  @Test
-  @DisplayName("test push multi channel frames")
-  void testPushMultiChannelFrames() {
-    Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 =
-        createStage();
-    Frame frame1 = new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], false, BigInteger.ZERO);
+    @Test
+    @DisplayName("test push multi channel frames")
+    void testPushMultiChannelFrames() {
+        Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 = createStage();
+        Frame frame1 = new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], false, BigInteger.ZERO);
 
-    tuple2.component1().pushFrame(frame1);
-    assertEquals(1, tuple2.component1().getPendingChannels().size());
-    assertEquals(
-        BigInteger.valueOf(5L), tuple2.component1().getPendingChannels().get(0).getChannelId());
-    assertFalse(tuple2.component1().getPendingChannels().get(0).isComplete());
-    Frame frame2 = new Frame(BigInteger.valueOf(5L), 1, 0, new byte[0], true, BigInteger.ZERO);
+        tuple2.component1().pushFrame(frame1);
+        assertEquals(1, tuple2.component1().getPendingChannels().size());
+        assertEquals(
+                BigInteger.valueOf(5L),
+                tuple2.component1().getPendingChannels().get(0).getChannelId());
+        assertFalse(tuple2.component1().getPendingChannels().get(0).isComplete());
+        Frame frame2 = new Frame(BigInteger.valueOf(5L), 1, 0, new byte[0], true, BigInteger.ZERO);
 
-    tuple2.component1().pushFrame(frame2);
-    assertEquals(1, tuple2.component1().getPendingChannels().size());
-    assertEquals(
-        BigInteger.valueOf(5L), tuple2.component1().getPendingChannels().get(0).getChannelId());
-    assertTrue(tuple2.component1().getPendingChannels().get(0).isComplete());
-  }
+        tuple2.component1().pushFrame(frame2);
+        assertEquals(1, tuple2.component1().getPendingChannels().size());
+        assertEquals(
+                BigInteger.valueOf(5L),
+                tuple2.component1().getPendingChannels().get(0).getChannelId());
+        assertTrue(tuple2.component1().getPendingChannels().get(0).isComplete());
+    }
 
-  @Test
-  @DisplayName("test ready channel")
-  void testReadyChannel() {
-    Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 =
-        createStage();
-    Frame frame1 =
-        new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], false, BigInteger.valueOf(43L));
+    @Test
+    @DisplayName("test ready channel")
+    void testReadyChannel() {
+        Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 = createStage();
+        Frame frame1 = new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], false, BigInteger.valueOf(43L));
 
-    Frame frame2 =
-        new Frame(BigInteger.valueOf(5L), 1, 0, new byte[0], true, BigInteger.valueOf(96L));
+        Frame frame2 = new Frame(BigInteger.valueOf(5L), 1, 0, new byte[0], true, BigInteger.valueOf(96L));
 
-    tuple2.component1().pushFrame(frame1);
-    tuple2.component1().pushFrame(frame2);
-    Channel channel = tuple2.component1().fetchReadyChannel(BigInteger.valueOf(5L)).get();
-    assertEquals(BigInteger.valueOf(5L), channel.id());
-    assertEquals(BigInteger.valueOf(96L), channel.l1InclusionBlock());
-  }
+        tuple2.component1().pushFrame(frame1);
+        tuple2.component1().pushFrame(frame2);
+        Channel channel =
+                tuple2.component1().fetchReadyChannel(BigInteger.valueOf(5L)).get();
+        assertEquals(BigInteger.valueOf(5L), channel.id());
+        assertEquals(BigInteger.valueOf(96L), channel.l1InclusionBlock());
+    }
 
-  @Test
-  @DisplayName("test ready channel not found")
-  void testReadyChannelStillPending() {
-    Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 =
-        createStage();
-    Frame frame1 =
-        new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], false, BigInteger.valueOf(43L));
+    @Test
+    @DisplayName("test ready channel not found")
+    void testReadyChannelStillPending() {
+        Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> tuple2 = createStage();
+        Frame frame1 = new Frame(BigInteger.valueOf(5L), 0, 0, new byte[0], false, BigInteger.valueOf(43L));
 
-    tuple2.component1().pushFrame(frame1);
-    Optional<Channel> channelOpt = tuple2.component1().fetchReadyChannel(BigInteger.valueOf(5L));
-    assertTrue(channelOpt.isEmpty());
-  }
+        tuple2.component1().pushFrame(frame1);
+        Optional<Channel> channelOpt = tuple2.component1().fetchReadyChannel(BigInteger.valueOf(5L));
+        assertTrue(channelOpt.isEmpty());
+    }
 
-  private Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>>
-      createStage() {
-    Config config = new Config("", "", "", "", null, 9545, ChainConfig.optimismGoerli());
-    MessagePassingQueue<BatcherTransactionMessage> transactionMessageMessagePassingQueue =
-        new MpscGrowableArrayQueue<>(4096);
-    Channels<BatcherTransactions> channels =
-        Channels.create(new BatcherTransactions(transactionMessageMessagePassingQueue), config);
-    return new Tuple2<>(channels, transactionMessageMessagePassingQueue);
-  }
+    private Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> createStage() {
+        Config config = new Config("", "", "", "", null, 9545, ChainConfig.optimismGoerli());
+        MessagePassingQueue<BatcherTransactionMessage> transactionMessageMessagePassingQueue =
+                new MpscGrowableArrayQueue<>(4096);
+        Channels<BatcherTransactions> channels =
+                Channels.create(new BatcherTransactions(transactionMessageMessagePassingQueue), config);
+        return new Tuple2<>(channels, transactionMessageMessagePassingQueue);
+    }
 }

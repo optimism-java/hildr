@@ -26,40 +26,40 @@ import java.util.HashSet;
  */
 public enum RpcMethod {
 
-  /** optimism_outputAtBlock api. */
-  OP_OUTPUT_AT_BLOCK("optimism_outputAtBlock");
+    /** optimism_outputAtBlock api. */
+    OP_OUTPUT_AT_BLOCK("optimism_outputAtBlock");
 
-  private final String rpcMethodName;
+    private final String rpcMethodName;
 
-  private static final HashSet<String> allMethodNames;
+    private static final HashSet<String> allMethodNames;
 
-  static {
-    allMethodNames = new HashSet<>();
-    for (RpcMethod m : RpcMethod.values()) {
-      allMethodNames.add(m.getRpcMethodName());
+    static {
+        allMethodNames = new HashSet<>();
+        for (RpcMethod m : RpcMethod.values()) {
+            allMethodNames.add(m.getRpcMethodName());
+        }
     }
-  }
 
-  RpcMethod(String rpcMethodName) {
-    this.rpcMethodName = rpcMethodName;
-  }
+    RpcMethod(String rpcMethodName) {
+        this.rpcMethodName = rpcMethodName;
+    }
 
-  /**
-   * Gets rpc method name.
-   *
-   * @return the rpc method name
-   */
-  public String getRpcMethodName() {
-    return rpcMethodName;
-  }
+    /**
+     * Gets rpc method name.
+     *
+     * @return the rpc method name
+     */
+    public String getRpcMethodName() {
+        return rpcMethodName;
+    }
 
-  /**
-   * Rpc method exists boolean.
-   *
-   * @param rpcMethodName the rpc method name
-   * @return the boolean
-   */
-  public static boolean rpcMethodExists(final String rpcMethodName) {
-    return allMethodNames.contains(rpcMethodName);
-  }
+    /**
+     * Rpc method exists boolean.
+     *
+     * @param rpcMethodName the rpc method name
+     * @return the boolean
+     */
+    public static boolean rpcMethodExists(final String rpcMethodName) {
+        return allMethodNames.contains(rpcMethodName);
+    }
 }

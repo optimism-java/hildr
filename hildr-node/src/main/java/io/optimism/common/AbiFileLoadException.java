@@ -24,12 +24,12 @@ package io.optimism.common;
  */
 public class AbiFileLoadException extends RuntimeException {
 
-  /**
-   * Instantiates a new Abi file load exception.
-   *
-   * @param throwable the throwable
-   */
-  public AbiFileLoadException(Throwable throwable) {
-    super(throwable);
-  }
+    /**
+     * Instantiates a new Abi file load exception.
+     *
+     * @param throwable the throwable
+     */
+    public AbiFileLoadException(Throwable throwable) {
+        super(throwable);
+    }
 }

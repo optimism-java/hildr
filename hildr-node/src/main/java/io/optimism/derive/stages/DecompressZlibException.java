@@ -24,12 +24,12 @@ package io.optimism.derive.stages;
  */
 public class DecompressZlibException extends RuntimeException {
 
-  /**
-   * Instantiates a new Decompress zlib exception.
-   *
-   * @param throwable the throwable
-   */
-  public DecompressZlibException(Throwable throwable) {
-    super(throwable);
-  }
+    /**
+     * Instantiates a new Decompress zlib exception.
+     *
+     * @param throwable the throwable
+     */
+    public DecompressZlibException(Throwable throwable) {
+        super(throwable);
+    }
 }

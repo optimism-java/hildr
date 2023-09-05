@@ -37,20 +37,19 @@ import org.web3j.protocol.http.HttpService;
  */
 class HeadInfoTest {
 
-  /**
-   * Should fail conversion from block to head info if missing l 1 deposited tx.
-   *
-   * @throws JsonProcessingException the json processing exception
-   */
-  @Test
-  @DisplayName("should fail conversion from a block to head info if missing L1 deposited tx")
-  @SuppressWarnings("checkstyle:LineLength")
-  void shouldFailConversionFromBlockToHeadInfoIfMissingL1DepositedTx()
-      throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * Should fail conversion from block to head info if missing l 1 deposited tx.
+     *
+     * @throws JsonProcessingException the json processing exception
+     */
+    @Test
+    @DisplayName("should fail conversion from a block to head info if missing L1 deposited tx")
+    @SuppressWarnings("checkstyle:LineLength")
+    void shouldFailConversionFromBlockToHeadInfoIfMissingL1DepositedTx() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
 
-    String rawBlock =
-        """
+        String rawBlock =
+                """
             {
                             "hash": "0x2e4f4aff36bb7951be9742ad349fb1db84643c6bbac5014f3d196fd88fe333eb",
                             "parentHash": "0xeccf4c06ad0d27be1cadee5720a509d31a9de0462b52f2cf6045d9a73c9aa504",
@@ -75,28 +74,26 @@ class HeadInfoTest {
                             "nonce": "0x0000000000000000",
                             "baseFeePerGas": "0x32"
                         }""";
-    EthBlock.Block block = objectMapper.readValue(rawBlock, EthBlock.Block.class);
+        EthBlock.Block block = objectMapper.readValue(rawBlock, EthBlock.Block.class);
 
-    assertThrowsExactly(
-        L1AttributesDepositedTxNotFoundException.class,
-        () -> {
-          HeadInfo ignored = HeadInfo.from(block);
+        assertThrowsExactly(L1AttributesDepositedTxNotFoundException.class, () -> {
+            HeadInfo ignored = HeadInfo.from(block);
         });
-  }
+    }
 
-  /**
-   * Should convert from block to head info.
-   *
-   * @throws JsonProcessingException the json processing exception
-   */
-  @Test
-  @DisplayName("should convert from a block to head info")
-  @SuppressWarnings("checkstyle:LineLength")
-  void shouldConvertFromBlockToHeadInfo() throws JsonProcessingException {
-    ObjectMapper objectMapper = new ObjectMapper();
+    /**
+     * Should convert from block to head info.
+     *
+     * @throws JsonProcessingException the json processing exception
+     */
+    @Test
+    @DisplayName("should convert from a block to head info")
+    @SuppressWarnings("checkstyle:LineLength")
+    void shouldConvertFromBlockToHeadInfo() throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
 
-    String rawBlock =
-        """
+        String rawBlock =
+                """
             {
                             "hash": "0x2e4f4aff36bb7951be9742ad349fb1db84643c6bbac5014f3d196fd88fe333eb",
                             "parentHash": "0xeccf4c06ad0d27be1cadee5720a509d31a9de0462b52f2cf6045d9a73c9aa504",
@@ -142,41 +139,41 @@ class HeadInfoTest {
                             "baseFeePerGas": "0x32"
                         }""";
 
-    EthBlock.Block block = objectMapper.readValue(rawBlock, EthBlock.Block.class);
+        EthBlock.Block block = objectMapper.readValue(rawBlock, EthBlock.Block.class);
 
-    HeadInfo headInfo = HeadInfo.from(block);
+        HeadInfo headInfo = HeadInfo.from(block);
 
-    assertEquals(
-        "0x2e4f4aff36bb7951be9742ad349fb1db84643c6bbac5014f3d196fd88fe333eb",
-        headInfo.l2BlockInfo().hash());
-    assertEquals(BigInteger.valueOf(8381743L), headInfo.l2BlockInfo().number());
-    assertEquals(BigInteger.valueOf(1682191554L), headInfo.l2BlockInfo().timestamp());
+        assertEquals(
+                "0x2e4f4aff36bb7951be9742ad349fb1db84643c6bbac5014f3d196fd88fe333eb",
+                headInfo.l2BlockInfo().hash());
+        assertEquals(BigInteger.valueOf(8381743L), headInfo.l2BlockInfo().number());
+        assertEquals(BigInteger.valueOf(1682191554L), headInfo.l2BlockInfo().timestamp());
 
-    assertEquals(
-        "0x0444c991c5fe1d7291ff34b3f5c3b44ee861f021396d33ba3255b83df30e357d",
-        headInfo.l1Epoch().hash());
-    assertEquals(BigInteger.valueOf(8874020L), headInfo.l1Epoch().number());
-    assertEquals(BigInteger.valueOf(1682191440L), headInfo.l1Epoch().timestamp());
-  }
-
-  @Test
-  void testHeadInfoFromL2BlockHash() throws IOException {
-    if (System.getenv("L2_TEST_RPC_URL") == null) {
-      return;
+        assertEquals(
+                "0x0444c991c5fe1d7291ff34b3f5c3b44ee861f021396d33ba3255b83df30e357d",
+                headInfo.l1Epoch().hash());
+        assertEquals(BigInteger.valueOf(8874020L), headInfo.l1Epoch().number());
+        assertEquals(BigInteger.valueOf(1682191440L), headInfo.l1Epoch().timestamp());
     }
-    String l2RpcUrl = System.getenv("L2_TEST_RPC_URL");
-    Web3j l2Provider = Web3j.build(new HttpService(l2RpcUrl));
-    String l2BlockHash = "0x75d4a658d7b6430c874c5518752a8d90fb1503eccd6ae4cfc97fd4aedeebb939";
-    EthBlock ethBlock = l2Provider.ethGetBlockByHash(l2BlockHash, true).send();
-    HeadInfo headInfo = HeadInfo.from(ethBlock.getBlock());
 
-    assertEquals(BigInteger.valueOf(8428108L), headInfo.l2BlockInfo().number());
-    assertEquals(BigInteger.valueOf(1682284284L), headInfo.l2BlockInfo().timestamp());
-    assertEquals(
-        "0x76ab90dc2afea158bbe14a99f22d5f867b51719378aa37d1a3aa3833ace67cad",
-        headInfo.l1Epoch().hash());
-    assertEquals(BigInteger.valueOf(8879997L), headInfo.l1Epoch().number());
-    assertEquals(BigInteger.valueOf(1682284164L), headInfo.l1Epoch().timestamp());
-    assertEquals(BigInteger.valueOf(4L), headInfo.sequenceNumber());
-  }
+    @Test
+    void testHeadInfoFromL2BlockHash() throws IOException {
+        if (System.getenv("L2_TEST_RPC_URL") == null) {
+            return;
+        }
+        String l2RpcUrl = System.getenv("L2_TEST_RPC_URL");
+        Web3j l2Provider = Web3j.build(new HttpService(l2RpcUrl));
+        String l2BlockHash = "0x75d4a658d7b6430c874c5518752a8d90fb1503eccd6ae4cfc97fd4aedeebb939";
+        EthBlock ethBlock = l2Provider.ethGetBlockByHash(l2BlockHash, true).send();
+        HeadInfo headInfo = HeadInfo.from(ethBlock.getBlock());
+
+        assertEquals(BigInteger.valueOf(8428108L), headInfo.l2BlockInfo().number());
+        assertEquals(BigInteger.valueOf(1682284284L), headInfo.l2BlockInfo().timestamp());
+        assertEquals(
+                "0x76ab90dc2afea158bbe14a99f22d5f867b51719378aa37d1a3aa3833ace67cad",
+                headInfo.l1Epoch().hash());
+        assertEquals(BigInteger.valueOf(8879997L), headInfo.l1Epoch().number());
+        assertEquals(BigInteger.valueOf(1682284164L), headInfo.l1Epoch().timestamp());
+        assertEquals(BigInteger.valueOf(4L), headInfo.sequenceNumber());
+    }
 }

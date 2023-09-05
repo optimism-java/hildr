@@ -24,8 +24,8 @@ package io.optimism.driver;
  */
 public class InvalidPayloadAttributesException extends RuntimeException {
 
-  /** Instantiates a new Invalid payload attributes exception. */
-  public InvalidPayloadAttributesException() {
-    super("invalid payload attributes");
-  }
+    /** Instantiates a new Invalid payload attributes exception. */
+    public InvalidPayloadAttributesException() {
+        super("invalid payload attributes");
+    }
 }

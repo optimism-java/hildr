@@ -37,7 +37,6 @@ import io.optimism.network.OpStackNetwork;
 import io.optimism.rpc.RpcServer;
 import io.optimism.telemetry.InnerMetrics;
 import io.optimism.telemetry.TracerTaskWrapper;
-
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.List;
@@ -51,7 +50,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
@@ -110,6 +108,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param unsafeBlockQueue the unsafe block queue
      * @param rpcServer        the rpc server
      * @param latch            the close notifier
+     * @param channelTimeout   the channel timeout
+     * @param opStackNetwork   the op stack network
      */
     @SuppressWarnings("preview")
     public Driver(
@@ -160,9 +160,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         EthBlock finalizedBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> finalizedBlockFuture =
-                    scope.fork(
-                            TracerTaskWrapper.wrap(() -> provider.ethGetBlockByNumber(FINALIZED, true).send()));
+            Future<EthBlock> finalizedBlockFuture = scope.fork(TracerTaskWrapper.wrap(
+                    () -> provider.ethGetBlockByNumber(FINALIZED, true).send()));
             scope.join();
             scope.throwIfFailed();
 
@@ -172,21 +171,15 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         HeadInfo head;
         if (finalizedBlock == null) {
             LOGGER.warn("could not get head info. Falling back to the genesis head.");
-            head =
-                    new HeadInfo(
-                            config.chainConfig().l2Genesis(),
-                            config.chainConfig().l1StartEpoch(),
-                            BigInteger.ZERO);
+            head = new HeadInfo(
+                    config.chainConfig().l2Genesis(), config.chainConfig().l1StartEpoch(), BigInteger.ZERO);
         } else {
             try {
                 head = HeadInfo.from(finalizedBlock.getBlock());
             } catch (Throwable throwable) {
                 LOGGER.warn("could not get head info. Falling back to the genesis head.");
-                head =
-                        new HeadInfo(
-                                config.chainConfig().l2Genesis(),
-                                config.chainConfig().l1StartEpoch(),
-                                BigInteger.ZERO);
+                head = new HeadInfo(
+                        config.chainConfig().l2Genesis(), config.chainConfig().l1StartEpoch(), BigInteger.ZERO);
             }
         }
 
@@ -196,29 +189,35 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         LOGGER.info("starting from head: {}", finalizedHead.hash());
 
-        ChainWatcher watcher =
-                new ChainWatcher(
-                        finalizedEpoch.number().subtract(config.chainConfig().channelTimeout()),
-                        finalizedHead.number(),
-                        config);
+        ChainWatcher watcher = new ChainWatcher(
+                finalizedEpoch.number().subtract(config.chainConfig().channelTimeout()),
+                finalizedHead.number(),
+                config);
 
         AtomicReference<io.optimism.derive.State> state =
-                new AtomicReference<>(
-                        io.optimism.derive.State.create(finalizedHead, finalizedEpoch, config));
+                new AtomicReference<>(io.optimism.derive.State.create(finalizedHead, finalizedEpoch, config));
 
-        EngineDriver<EngineApi> engineDriver =
-                new EngineDriver<>(finalizedHead, finalizedEpoch, provider, config);
+        EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, provider, config);
 
         Pipeline pipeline = new Pipeline(state, config, finalizedSeq);
 
         RpcServer rpcServer = new RpcServer(config);
         rpcServer.start();
 
-        MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue =
-                new MpscUnboundedXaddArrayQueue<>(1024 * 64);
+        MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
         OpStackNetwork opStackNetwork = new OpStackNetwork(config.chainConfig(), unsafeBlockQueue);
+        //        opStackNetwork.start();
 
-        return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch, config.chainConfig().channelTimeout(), opStackNetwork);
+        return new Driver<>(
+                engineDriver,
+                pipeline,
+                state,
+                watcher,
+                unsafeBlockQueue,
+                rpcServer,
+                latch,
+                config.chainConfig().channelTimeout(),
+                opStackNetwork);
     }
 
     @Override
@@ -270,6 +269,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         LOGGER.info("engineDriver shut down.");
         this.rpcServer.stop();
         LOGGER.info("driver stopped.");
+        if (this.opStackNetwork != null) {
+            this.opStackNetwork.stop();
+            LOGGER.info("opStackNetwork stopped.");
+        }
     }
 
     @Override
@@ -287,14 +290,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     @SuppressWarnings("VariableDeclarationUsageDistance")
     private void advance() throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            var voidFuture =
-                    scope.fork(
-                            TracerTaskWrapper.wrap(
-                                    (Callable<Void>)
-                                            () -> {
-                                                Driver.this.advanceSafeHead();
-                                                return null;
-                                            }));
+            var voidFuture = scope.fork(TracerTaskWrapper.wrap((Callable<Void>) () -> {
+                Driver.this.advanceSafeHead();
+                return null;
+            }));
 
             scope.join();
             scope.throwIfFailed();
@@ -302,20 +301,17 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         }
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            var voidFuture =
-                    scope.fork(
-                            TracerTaskWrapper.wrap(
-                                    (Callable<Void>)
-                                            () -> {
-                                                Driver.this.advanceUnsafeHead();
-                                                return null;
-                                            }));
+            var voidFuture = scope.fork(TracerTaskWrapper.wrap((Callable<Void>) () -> {
+                Driver.this.advanceUnsafeHead();
+                return null;
+            }));
             scope.join();
             scope.throwIfFailed();
             voidFuture.resultNow();
         }
         this.updateFinalized();
         this.updateMetrics();
+        this.tryStartNetwork();
     }
 
     private void advanceSafeHead() throws ExecutionException, InterruptedException {
@@ -323,8 +319,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.updateStateHead();
 
         for (PayloadAttributes payloadAttributes = this.pipeline.next();
-             payloadAttributes != null;
-             payloadAttributes = this.pipeline.next()) {
+                payloadAttributes != null;
+                payloadAttributes = this.pipeline.next()) {
             BigInteger l1InclusionBlock = payloadAttributes.l1InclusionBlock();
             if (l1InclusionBlock == null) {
                 throw new InvalidAttributesException("attributes without inclusion block");
@@ -354,33 +350,26 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private void advanceUnsafeHead() throws ExecutionException, InterruptedException {
         for (ExecutionPayload payload = this.unsafeBlockQueue.poll();
-             payload != null;
-             payload = this.unsafeBlockQueue.poll()) {
+                payload != null;
+                payload = this.unsafeBlockQueue.poll()) {
             this.futureUnsafeBlocks.add(payload);
         }
 
-        this.futureUnsafeBlocks =
-                this.futureUnsafeBlocks.stream()
-                        .filter(
-                                payload -> {
-                                    BigInteger unsafeBlockNum = payload.blockNumber();
-                                    BigInteger syncedBlockNum = Driver.this.engineDriver.getUnsafeHead().number();
-                                    return unsafeBlockNum.compareTo(syncedBlockNum) > 0
-                                            && unsafeBlockNum
-                                            .subtract(syncedBlockNum)
-                                            .compareTo(BigInteger.valueOf(1024L))
-                                            < 0;
-                                })
-                        .collect(Collectors.toList());
+        this.futureUnsafeBlocks = this.futureUnsafeBlocks.stream()
+                .filter(payload -> {
+                    BigInteger unsafeBlockNum = payload.blockNumber();
+                    BigInteger syncedBlockNum =
+                            Driver.this.engineDriver.getUnsafeHead().number();
+                    return unsafeBlockNum.compareTo(syncedBlockNum) > 0
+                            && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(1024L)) < 0;
+                })
+                .collect(Collectors.toList());
 
-        Optional<ExecutionPayload> nextUnsafePayload =
-                Iterables.tryFind(
-                                this.futureUnsafeBlocks,
-                                input ->
-                                        input
-                                                .parentHash()
-                                                .equalsIgnoreCase(Driver.this.engineDriver.getUnsafeHead().hash()))
-                        .toJavaUtil();
+        Optional<ExecutionPayload> nextUnsafePayload = Iterables.tryFind(
+                        this.futureUnsafeBlocks, input -> input.parentHash()
+                                .equalsIgnoreCase(
+                                        Driver.this.engineDriver.getUnsafeHead().hash()))
+                .toJavaUtil();
 
         if (nextUnsafePayload.isPresent()) {
             this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
@@ -388,11 +377,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void updateStateHead() {
-        this.state.getAndUpdate(
-                state -> {
-                    state.updateSafeHead(this.engineDriver.getSafeHead(), this.engineDriver.getSafeEpoch());
-                    return state;
-                });
+        this.state.getAndUpdate(state -> {
+            state.updateSafeHead(this.engineDriver.getSafeHead(), this.engineDriver.getSafeEpoch());
+            return state;
+        });
     }
 
     @SuppressWarnings("preview")
@@ -415,11 +403,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                                 .collect(Collectors.toList()),
                         num);
 
-                Driver.this.state.getAndUpdate(
-                        state -> {
-                            state.updateL1Info(((BlockUpdate.NewBlock) next).get());
-                            return state;
-                        });
+                Driver.this.state.getAndUpdate(state -> {
+                    state.updateL1Info(((BlockUpdate.NewBlock) next).get());
+                    return state;
+                });
             }
             case BlockUpdate.Reorg ignored -> {
                 LOGGER.warn("reorg detected, purging pipeline");
@@ -429,13 +416,11 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                         Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
                         Driver.this.engineDriver.getFinalizedHead().number());
 
-                Driver.this.state.getAndUpdate(
-                        state -> {
-                            state.purge(
-                                    Driver.this.engineDriver.getFinalizedHead(),
-                                    Driver.this.engineDriver.getFinalizedEpoch());
-                            return state;
-                        });
+                Driver.this.state.getAndUpdate(state -> {
+                    state.purge(
+                            Driver.this.engineDriver.getFinalizedHead(), Driver.this.engineDriver.getFinalizedEpoch());
+                    return state;
+                });
 
                 Driver.this.pipeline.purge();
                 Driver.this.engineDriver.reorg();
@@ -446,32 +431,22 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void updateFinalized() {
-        UnfinalizedBlock newFinalized =
-                Iterables.getLast(
-                        this.unfinalizedBlocks.stream()
-                                .filter(
-                                        unfinalizedBlock ->
-                                                unfinalizedBlock
-                                                        .l1InclusionBlock()
-                                                        .compareTo(Driver.this.finalizedL1BlockNumber)
-                                                        <= 0
-                                                        && unfinalizedBlock.seqNumber().compareTo(BigInteger.ZERO) == 0)
-                                .collect(Collectors.toList()),
-                        null);
+        UnfinalizedBlock newFinalized = Iterables.getLast(
+                this.unfinalizedBlocks.stream()
+                        .filter(unfinalizedBlock ->
+                                unfinalizedBlock.l1InclusionBlock().compareTo(Driver.this.finalizedL1BlockNumber) <= 0
+                                        && unfinalizedBlock.seqNumber().compareTo(BigInteger.ZERO) == 0)
+                        .collect(Collectors.toList()),
+                null);
 
         if (newFinalized != null) {
             this.engineDriver.updateFinalized(newFinalized.head(), newFinalized.epoch());
         }
 
-        this.unfinalizedBlocks =
-                this.unfinalizedBlocks.stream()
-                        .filter(
-                                unfinalizedBlock ->
-                                        unfinalizedBlock
-                                                .l1InclusionBlock()
-                                                .compareTo(Driver.this.finalizedL1BlockNumber)
-                                                > 0)
-                        .collect(Collectors.toList());
+        this.unfinalizedBlocks = this.unfinalizedBlocks.stream()
+                .filter(unfinalizedBlock ->
+                        unfinalizedBlock.l1InclusionBlock().compareTo(Driver.this.finalizedL1BlockNumber) > 0)
+                .collect(Collectors.toList());
     }
 
     private void updateMetrics() {
@@ -498,7 +473,5 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param l1InclusionBlock the L1 inclusion block
      * @param seqNumber        the seq number
      */
-    protected record UnfinalizedBlock(
-            BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {
-    }
+    protected record UnfinalizedBlock(BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {}
 }

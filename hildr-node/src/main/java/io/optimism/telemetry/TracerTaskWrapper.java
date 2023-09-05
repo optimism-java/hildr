@@ -28,25 +28,25 @@ import java.util.concurrent.Callable;
  */
 public class TracerTaskWrapper {
 
-  /** Instantiates a new Tracer task wrapper. */
-  public TracerTaskWrapper() {}
+    /** Instantiates a new Tracer task wrapper. */
+    public TracerTaskWrapper() {}
 
-  /**
-   * Wrap callable.
-   *
-   * @param <T> the type parameter
-   * @param call the call
-   * @return the callable
-   */
-  public static <T> Callable<T> wrap(Callable<T> call) {
-    return () -> {
-      Tracer tracer = Logging.INSTANCE.getTracer("structure-task-scope");
-      Span span = tracer.nextSpan().name("call").start();
-      try (var spanInScope = tracer.withSpan(span)) {
-        return call.call();
-      } finally {
-        span.end();
-      }
-    };
-  }
+    /**
+     * Wrap callable.
+     *
+     * @param <T> the type parameter
+     * @param call the call
+     * @return the callable
+     */
+    public static <T> Callable<T> wrap(Callable<T> call) {
+        return () -> {
+            Tracer tracer = Logging.INSTANCE.getTracer("structure-task-scope");
+            Span span = tracer.nextSpan().name("call").start();
+            try (var spanInScope = tracer.withSpan(span)) {
+                return call.call();
+            } finally {
+                span.end();
+            }
+        };
+    }
 }

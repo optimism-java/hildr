@@ -24,8 +24,8 @@ package io.optimism.driver;
  */
 public class PayloadIdNotReturnedException extends RuntimeException {
 
-  /** Instantiates a new Payload id not returned exception. */
-  public PayloadIdNotReturnedException() {
-    super("engine did not return payload id");
-  }
+    /** Instantiates a new Payload id not returned exception. */
+    public PayloadIdNotReturnedException() {
+        super("engine did not return payload id");
+    }
 }

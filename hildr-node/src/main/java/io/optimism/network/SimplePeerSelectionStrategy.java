@@ -38,40 +38,38 @@ import tech.pegasys.teku.networking.p2p.peer.Peer;
  * @since 0.1.1
  */
 public class SimplePeerSelectionStrategy implements PeerSelectionStrategy {
-  private final TargetPeerRange targetPeerRange;
+    private final TargetPeerRange targetPeerRange;
 
-  /**
-   * Instantiates a new Simple peer selection strategy.
-   *
-   * @param targetPeerRange the target peer range
-   */
-  public SimplePeerSelectionStrategy(final TargetPeerRange targetPeerRange) {
-    this.targetPeerRange = targetPeerRange;
-  }
-
-  @Override
-  public List<PeerAddress> selectPeersToConnect(
-      final P2PNetwork<?> network,
-      final PeerPools peerPools,
-      final Supplier<? extends Collection<DiscoveryPeer>> candidates) {
-    final int peersToAdd = targetPeerRange.getPeersToAdd(network.getPeerCount());
-    if (peersToAdd == 0) {
-      return emptyList();
+    /**
+     * Instantiates a new Simple peer selection strategy.
+     *
+     * @param targetPeerRange the target peer range
+     */
+    public SimplePeerSelectionStrategy(final TargetPeerRange targetPeerRange) {
+        this.targetPeerRange = targetPeerRange;
     }
-    return candidates.get().stream()
-        .map(network::createPeerAddress)
-        .limit(peersToAdd)
-        .collect(toList());
-  }
 
-  @Override
-  public List<Peer> selectPeersToDisconnect(
-      final P2PNetwork<?> network, final PeerPools peerPools) {
-    final int peersToDrop = targetPeerRange.getPeersToDrop(network.getPeerCount());
-    return network
-        .streamPeers()
-        .filter(peer -> peerPools.getPeerConnectionType(peer.getId()) != STATIC)
-        .limit(peersToDrop)
-        .collect(toList());
-  }
+    @Override
+    public List<PeerAddress> selectPeersToConnect(
+            final P2PNetwork<?> network,
+            final PeerPools peerPools,
+            final Supplier<? extends Collection<DiscoveryPeer>> candidates) {
+        final int peersToAdd = targetPeerRange.getPeersToAdd(network.getPeerCount());
+        if (peersToAdd == 0) {
+            return emptyList();
+        }
+        return candidates.get().stream()
+                .map(network::createPeerAddress)
+                .limit(peersToAdd)
+                .collect(toList());
+    }
+
+    @Override
+    public List<Peer> selectPeersToDisconnect(final P2PNetwork<?> network, final PeerPools peerPools) {
+        final int peersToDrop = targetPeerRange.getPeersToDrop(network.getPeerCount());
+        return network.streamPeers()
+                .filter(peer -> peerPools.getPeerConnectionType(peer.getId()) != STATIC)
+                .limit(peersToDrop)
+                .collect(toList());
+    }
 }

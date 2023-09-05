@@ -27,25 +27,25 @@ import picocli.CommandLine;
  */
 public class Hildr {
 
-  /** Instantiates a new Hildr. */
-  public Hildr() {}
+    /** Instantiates a new Hildr. */
+    public Hildr() {}
 
-  /**
-   * Gets greeting.
-   *
-   * @return the greeting
-   */
-  public String getGreeting() {
-    return "Hello World!";
-  }
+    /**
+     * Gets greeting.
+     *
+     * @return the greeting
+     */
+    public String getGreeting() {
+        return "Hello World!";
+    }
 
-  /**
-   * The entry point of application.
-   *
-   * @param args the input arguments
-   */
-  public static void main(String[] args) {
-    int exitCode = new CommandLine(new Cli()).execute(args);
-    System.exit(exitCode);
-  }
+    /**
+     * The entry point of application.
+     *
+     * @param args the input arguments
+     */
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new Cli()).execute(args);
+        System.exit(exitCode);
+    }
 }

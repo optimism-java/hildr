@@ -29,9 +29,12 @@ import tech.pegasys.teku.spec.config.NetworkingSpecConfig;
  */
 public class SnappyPreparedGossipMessageFactory implements PreparedGossipMessageFactory {
 
-  @Override
-  public PreparedGossipMessage create(
-      final String topic, final Bytes data, final NetworkingSpecConfig networkingConfig) {
-    return new SnappyPreparedGossipMessage(topic, data);
-  }
+    /** Instantiates a new SnappyPreparedGossipMessageFactory. */
+    public SnappyPreparedGossipMessageFactory() {}
+
+    @Override
+    public PreparedGossipMessage create(
+            final String topic, final Bytes data, final NetworkingSpecConfig networkingConfig) {
+        return new SnappyPreparedGossipMessage(topic, data);
+    }
 }

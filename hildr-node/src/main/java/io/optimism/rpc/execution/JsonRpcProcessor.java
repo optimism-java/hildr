@@ -27,12 +27,12 @@ import io.optimism.rpc.methods.JsonRpcMethod;
  */
 public interface JsonRpcProcessor {
 
-  /**
-   * process jsonRpcMethod with JsonRpcRequestContext.
-   *
-   * @param method JsonRpcMethod instant
-   * @param request JsonRpcRequestContext instant
-   * @return json rpc process response
-   */
-  JsonRpcResponse process(final JsonRpcMethod method, final JsonRpcRequestContext request);
+    /**
+     * process jsonRpcMethod with JsonRpcRequestContext.
+     *
+     * @param method JsonRpcMethod instant
+     * @param request JsonRpcRequestContext instant
+     * @return json rpc process response
+     */
+    JsonRpcResponse process(final JsonRpcMethod method, final JsonRpcRequestContext request);
 }

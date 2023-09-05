@@ -42,254 +42,252 @@ import tech.pegasys.teku.storage.store.KeyValueStore;
 @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public class OpStackP2PNetworkBuilder {
 
-  /**
-   * Create OpStackP2PNetworkBuilder.
-   *
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public static OpStackP2PNetworkBuilder create() {
-    return new OpStackP2PNetworkBuilder();
-  }
-
-  /** The Metrics system. */
-  protected MetricsSystem metricsSystem;
-
-  /** The Async runner. */
-  protected AsyncRunner asyncRunner;
-
-  /** The Kv store. */
-  protected KeyValueStore<String, Bytes> kvStore;
-
-  /** The P 2 p network. */
-  protected P2PNetwork<?> p2pNetwork;
-
-  /** The Peer pools. */
-  protected PeerPools peerPools;
-
-  /** The Peer selection strategy. */
-  protected PeerSelectionStrategy peerSelectionStrategy;
-
-  /** The Discovery config. */
-  protected DiscoveryConfig discoveryConfig;
-
-  /** The P 2 p config. */
-  protected NetworkConfig p2pConfig;
-
-  /** The Discovery service. */
-  protected DiscoveryService discoveryService;
-
-  /** The Connection manager. */
-  protected ConnectionManager connectionManager;
-
-  /** The Chain id. */
-  protected UInt64 chainId;
-
-  /** Instantiates a new OpStackP2PNetworkBuilder. */
-  protected OpStackP2PNetworkBuilder() {}
-
-  /** Init missing defaults. */
-  protected void initMissingDefaults() {
-    if (discoveryService == null) {
-      discoveryService = createDiscoveryService();
+    /**
+     * Create OpStackP2PNetworkBuilder.
+     *
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public static OpStackP2PNetworkBuilder create() {
+        return new OpStackP2PNetworkBuilder();
     }
 
-    if (connectionManager == null) {
-      connectionManager = createConnectionManager();
+    /** The Metrics system. */
+    protected MetricsSystem metricsSystem;
+
+    /** The Async runner. */
+    protected AsyncRunner asyncRunner;
+
+    /** The Kv store. */
+    protected KeyValueStore<String, Bytes> kvStore;
+
+    /** The P 2 p network. */
+    protected P2PNetwork<?> p2pNetwork;
+
+    /** The Peer pools. */
+    protected PeerPools peerPools;
+
+    /** The Peer selection strategy. */
+    protected PeerSelectionStrategy peerSelectionStrategy;
+
+    /** The Discovery config. */
+    protected DiscoveryConfig discoveryConfig;
+
+    /** The P 2 p config. */
+    protected NetworkConfig p2pConfig;
+
+    /** The Discovery service. */
+    protected DiscoveryService discoveryService;
+
+    /** The Connection manager. */
+    protected ConnectionManager connectionManager;
+
+    /** The Chain id. */
+    protected UInt64 chainId;
+
+    /** Instantiates a new OpStackP2PNetworkBuilder. */
+    protected OpStackP2PNetworkBuilder() {}
+
+    /** Init missing defaults. */
+    protected void initMissingDefaults() {
+        if (discoveryService == null) {
+            discoveryService = createDiscoveryService();
+        }
+
+        if (connectionManager == null) {
+            connectionManager = createConnectionManager();
+        }
     }
-  }
 
-  /**
-   * Build OpStackP2PNetwork.
-   *
-   * @return the OpStackP2PNetwork
-   */
-  public OpStackP2PNetwork<?> build() {
-    initMissingDefaults();
+    /**
+     * Build OpStackP2PNetwork.
+     *
+     * @return the OpStackP2PNetwork
+     */
+    public OpStackP2PNetwork<?> build() {
+        initMissingDefaults();
 
-    checkNotNull(p2pNetwork);
-    checkNotNull(discoveryService);
-    checkNotNull(connectionManager);
+        checkNotNull(p2pNetwork);
+        checkNotNull(discoveryService);
+        checkNotNull(connectionManager);
 
-    return new OpStackP2PNetwork<>(p2pNetwork, discoveryService, connectionManager);
-  }
-
-  /**
-   * Create connection manager.
-   *
-   * @return the ConnectionManager
-   */
-  protected ConnectionManager createConnectionManager() {
-    checkNotNull(metricsSystem);
-    checkNotNull(discoveryService);
-    checkNotNull(asyncRunner);
-    checkNotNull(p2pNetwork);
-    checkNotNull(peerSelectionStrategy);
-    checkNotNull(discoveryConfig);
-
-    return new ConnectionManager(
-        metricsSystem,
-        discoveryService,
-        asyncRunner,
-        p2pNetwork,
-        peerSelectionStrategy,
-        discoveryConfig.getStaticPeers().stream()
-            .map(p2pNetwork::createPeerAddress)
-            .collect(toList()),
-        peerPools);
-  }
-
-  /**
-   * Create discovery service.
-   *
-   * @return the DiscoveryService
-   */
-  protected DiscoveryService createDiscoveryService() {
-    final DiscoveryService discoveryService;
-
-    checkNotNull(discoveryConfig);
-    if (discoveryConfig.isDiscoveryEnabled()) {
-      checkNotNull(metricsSystem);
-      checkNotNull(asyncRunner);
-      checkNotNull(p2pConfig);
-      checkNotNull(kvStore);
-      checkNotNull(p2pNetwork);
-
-      discoveryService =
-          new DiscV5Service(
-              metricsSystem,
-              asyncRunner,
-              discoveryConfig,
-              p2pConfig,
-              kvStore,
-              p2pNetwork.getPrivateKey(),
-              DiscV5Service.createDefaultDiscoverySystemBuilder(),
-              this.chainId,
-              new NodeRecordConverter());
-    } else {
-      discoveryService = new NoOpDiscoveryService();
+        return new OpStackP2PNetwork<>(p2pNetwork, discoveryService, connectionManager);
     }
-    return discoveryService;
-  }
 
-  /**
-   * Metrics system OpStackP2PNetworkBuilder.
-   *
-   * @param metricsSystem the metrics system
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder metricsSystem(MetricsSystem metricsSystem) {
-    this.metricsSystem = metricsSystem;
-    return this;
-  }
+    /**
+     * Create connection manager.
+     *
+     * @return the ConnectionManager
+     */
+    protected ConnectionManager createConnectionManager() {
+        checkNotNull(metricsSystem);
+        checkNotNull(discoveryService);
+        checkNotNull(asyncRunner);
+        checkNotNull(p2pNetwork);
+        checkNotNull(peerSelectionStrategy);
+        checkNotNull(discoveryConfig);
 
-  /**
-   * Async runner OpStackP2PNetworkBuilder.
-   *
-   * @param asyncRunner the async runner
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder asyncRunner(AsyncRunner asyncRunner) {
-    this.asyncRunner = asyncRunner;
-    return this;
-  }
+        return new ConnectionManager(
+                metricsSystem,
+                discoveryService,
+                asyncRunner,
+                p2pNetwork,
+                peerSelectionStrategy,
+                discoveryConfig.getStaticPeers().stream()
+                        .map(p2pNetwork::createPeerAddress)
+                        .collect(toList()),
+                peerPools);
+    }
 
-  /**
-   * kvStore OpStackP2PNetworkBuilder.
-   *
-   * @param kvStore the kvStore
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder kvStore(KeyValueStore<String, Bytes> kvStore) {
-    this.kvStore = kvStore;
-    return this;
-  }
+    /**
+     * Create discovery service.
+     *
+     * @return the DiscoveryService
+     */
+    protected DiscoveryService createDiscoveryService() {
+        final DiscoveryService discoveryService;
 
-  /**
-   * p2pNetwork OpStackP2PNetworkBuilder.
-   *
-   * @param p2pNetwork the p2pNetwork
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder p2pNetwork(P2PNetwork<?> p2pNetwork) {
-    this.p2pNetwork = p2pNetwork;
-    return this;
-  }
+        checkNotNull(discoveryConfig);
+        if (discoveryConfig.isDiscoveryEnabled()) {
+            checkNotNull(metricsSystem);
+            checkNotNull(asyncRunner);
+            checkNotNull(p2pConfig);
+            checkNotNull(kvStore);
+            checkNotNull(p2pNetwork);
 
-  /**
-   * Peer pools OpStackP2PNetworkBuilder.
-   *
-   * @param peerPools the peer pools
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder peerPools(PeerPools peerPools) {
-    this.peerPools = peerPools;
-    return this;
-  }
+            discoveryService = new DiscV5Service(
+                    metricsSystem,
+                    asyncRunner,
+                    discoveryConfig,
+                    p2pConfig,
+                    kvStore,
+                    p2pNetwork.getPrivateKey(),
+                    DiscV5Service.createDefaultDiscoverySystemBuilder(),
+                    this.chainId,
+                    new NodeRecordConverter());
+        } else {
+            discoveryService = new NoOpDiscoveryService();
+        }
+        return discoveryService;
+    }
 
-  /**
-   * Peer selection strategy OpStackP2PNetworkBuilder.
-   *
-   * @param peerSelectionStrategy the peer selection strategy
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder peerSelectionStrategy(
-      PeerSelectionStrategy peerSelectionStrategy) {
-    this.peerSelectionStrategy = peerSelectionStrategy;
-    return this;
-  }
+    /**
+     * Metrics system OpStackP2PNetworkBuilder.
+     *
+     * @param metricsSystem the metrics system
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder metricsSystem(MetricsSystem metricsSystem) {
+        this.metricsSystem = metricsSystem;
+        return this;
+    }
 
-  /**
-   * Discovery config OpStackP2PNetworkBuilder.
-   *
-   * @param discoveryConfig the discoveryConfig
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder discoveryConfig(DiscoveryConfig discoveryConfig) {
-    this.discoveryConfig = discoveryConfig;
-    return this;
-  }
+    /**
+     * Async runner OpStackP2PNetworkBuilder.
+     *
+     * @param asyncRunner the async runner
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder asyncRunner(AsyncRunner asyncRunner) {
+        this.asyncRunner = asyncRunner;
+        return this;
+    }
 
-  /**
-   * p2pConfigOpStackP2PNetworkBuilder.
-   *
-   * @param p2pConfig the p2pConfig
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder p2pConfig(NetworkConfig p2pConfig) {
-    this.p2pConfig = p2pConfig;
-    return this;
-  }
+    /**
+     * kvStore OpStackP2PNetworkBuilder.
+     *
+     * @param kvStore the kvStore
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder kvStore(KeyValueStore<String, Bytes> kvStore) {
+        this.kvStore = kvStore;
+        return this;
+    }
 
-  /**
-   * Discovery service OpStackP2PNetworkBuilder.
-   *
-   * @param discoveryService the discovery service
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder discoveryService(DiscoveryService discoveryService) {
-    this.discoveryService = discoveryService;
-    return this;
-  }
+    /**
+     * p2pNetwork OpStackP2PNetworkBuilder.
+     *
+     * @param p2pNetwork the p2pNetwork
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder p2pNetwork(P2PNetwork<?> p2pNetwork) {
+        this.p2pNetwork = p2pNetwork;
+        return this;
+    }
 
-  /**
-   * Connection manager OpStackP2PNetworkBuilder.
-   *
-   * @param connectionManager the connection manager
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder connectionManager(ConnectionManager connectionManager) {
-    this.connectionManager = connectionManager;
-    return this;
-  }
+    /**
+     * Peer pools OpStackP2PNetworkBuilder.
+     *
+     * @param peerPools the peer pools
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder peerPools(PeerPools peerPools) {
+        this.peerPools = peerPools;
+        return this;
+    }
 
-  /**
-   * Chain id OpStackP2PNetworkBuilder.
-   *
-   * @param chainId the chain id
-   * @return the OpStackP2PNetworkBuilder
-   */
-  public OpStackP2PNetworkBuilder chainId(UInt64 chainId) {
-    this.chainId = chainId;
-    return this;
-  }
+    /**
+     * Peer selection strategy OpStackP2PNetworkBuilder.
+     *
+     * @param peerSelectionStrategy the peer selection strategy
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder peerSelectionStrategy(PeerSelectionStrategy peerSelectionStrategy) {
+        this.peerSelectionStrategy = peerSelectionStrategy;
+        return this;
+    }
+
+    /**
+     * Discovery config OpStackP2PNetworkBuilder.
+     *
+     * @param discoveryConfig the discoveryConfig
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder discoveryConfig(DiscoveryConfig discoveryConfig) {
+        this.discoveryConfig = discoveryConfig;
+        return this;
+    }
+
+    /**
+     * p2pConfigOpStackP2PNetworkBuilder.
+     *
+     * @param p2pConfig the p2pConfig
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder p2pConfig(NetworkConfig p2pConfig) {
+        this.p2pConfig = p2pConfig;
+        return this;
+    }
+
+    /**
+     * Discovery service OpStackP2PNetworkBuilder.
+     *
+     * @param discoveryService the discovery service
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder discoveryService(DiscoveryService discoveryService) {
+        this.discoveryService = discoveryService;
+        return this;
+    }
+
+    /**
+     * Connection manager OpStackP2PNetworkBuilder.
+     *
+     * @param connectionManager the connection manager
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder connectionManager(ConnectionManager connectionManager) {
+        this.connectionManager = connectionManager;
+        return this;
+    }
+
+    /**
+     * Chain id OpStackP2PNetworkBuilder.
+     *
+     * @param chainId the chain id
+     * @return the OpStackP2PNetworkBuilder
+     */
+    public OpStackP2PNetworkBuilder chainId(UInt64 chainId) {
+        this.chainId = chainId;
+        return this;
+    }
 }

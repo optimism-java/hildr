@@ -34,33 +34,32 @@ import org.web3j.protocol.core.methods.response.EthBlock.Block;
  */
 public record BlockInfo(String hash, BigInteger number, String parentHash, BigInteger timestamp) {
 
-  /**
-   * From block info.
-   *
-   * @param block the block
-   * @return the block info
-   */
-  public static BlockInfo from(Block block) {
-    BigInteger number = block.getNumber();
-    if (number == null) {
-      throw new BlockNotIncludedException();
+    /**
+     * From block info.
+     *
+     * @param block the block
+     * @return the block info
+     */
+    public static BlockInfo from(Block block) {
+        BigInteger number = block.getNumber();
+        if (number == null) {
+            throw new BlockNotIncludedException();
+        }
+
+        String hash = block.getHash();
+        if (hash == null) {
+            throw new BlockNotIncludedException();
+        }
+        return new BlockInfo(hash, number, block.getParentHash(), block.getTimestamp());
     }
 
-    String hash = block.getHash();
-    if (hash == null) {
-      throw new BlockNotIncludedException();
+    /**
+     * From block info.
+     *
+     * @param payload the payload
+     * @return the block info
+     */
+    public static BlockInfo from(ExecutionPayload payload) {
+        return new BlockInfo(payload.blockHash(), payload.blockNumber(), payload.parentHash(), payload.timestamp());
     }
-    return new BlockInfo(hash, number, block.getParentHash(), block.getTimestamp());
-  }
-
-  /**
-   * From block info.
-   *
-   * @param payload the payload
-   * @return the block info
-   */
-  public static BlockInfo from(ExecutionPayload payload) {
-    return new BlockInfo(
-        payload.blockHash(), payload.blockNumber(), payload.parentHash(), payload.timestamp());
-  }
 }

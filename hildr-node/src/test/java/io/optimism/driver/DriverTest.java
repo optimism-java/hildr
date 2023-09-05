@@ -33,30 +33,23 @@ import org.web3j.protocol.http.HttpService;
 
 class DriverTest {
 
-  @Test
-  void testNewDriverFromFinalizedHead()
-      throws IOException, ExecutionException, InterruptedException {
-    if (System.getenv("L2_TEST_RPC_URL") == null || System.getenv("L1_TEST_RPC_URL") == null) {
-      return;
+    @Test
+    void testNewDriverFromFinalizedHead() throws IOException, ExecutionException, InterruptedException {
+        if (System.getenv("L2_TEST_RPC_URL") == null || System.getenv("L1_TEST_RPC_URL") == null) {
+            return;
+        }
+        String l1rpc = System.getenv("L1_TEST_RPC_URL");
+        String l2rpc = System.getenv("L2_TEST_RPC_URL");
+        CliConfig cliConfig = new CliConfig(
+                l1rpc, l2rpc, null, "d195a64e08587a3f1560686448867220c2727550ce3e0c95c7200d0ade0f9167", l2rpc, null);
+
+        Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
+        Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
+        EthBlock finalizedBlock = provider.ethGetBlockByNumber(FINALIZED, true).send();
+        Driver<EngineApi> driver = Driver.from(config, new CountDownLatch(1));
+
+        assertEquals(
+                driver.getEngineDriver().getFinalizedHead().number(),
+                finalizedBlock.getBlock().getNumber());
     }
-    String l1rpc = System.getenv("L1_TEST_RPC_URL");
-    String l2rpc = System.getenv("L2_TEST_RPC_URL");
-    CliConfig cliConfig =
-        new CliConfig(
-            l1rpc,
-            l2rpc,
-            null,
-            "d195a64e08587a3f1560686448867220c2727550ce3e0c95c7200d0ade0f9167",
-            l2rpc,
-            null);
-
-    Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
-    Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
-    EthBlock finalizedBlock = provider.ethGetBlockByNumber(FINALIZED, true).send();
-    Driver<EngineApi> driver = Driver.from(config, new CountDownLatch(1));
-
-    assertEquals(
-        driver.getEngineDriver().getFinalizedHead().number(),
-        finalizedBlock.getBlock().getNumber());
-  }
 }

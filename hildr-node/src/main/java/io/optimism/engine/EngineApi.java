@@ -44,151 +44,146 @@ import org.web3j.utils.Numeric;
  */
 public class EngineApi implements Engine {
 
-  private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EngineApi.class);
+    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EngineApi.class);
 
-  /** The forkchoice updated method string. */
-  public static final String ENGINE_FORKCHOICE_UPDATED_V1 = "engine_forkchoiceUpdatedV1";
+    /** The forkchoice updated method string. */
+    public static final String ENGINE_FORKCHOICE_UPDATED_V1 = "engine_forkchoiceUpdatedV1";
 
-  /** The new payload method string. */
-  public static final String ENGINE_NEW_PAYLOAD_V1 = "engine_newPayloadV1";
+    /** The new payload method string. */
+    public static final String ENGINE_NEW_PAYLOAD_V1 = "engine_newPayloadV1";
 
-  /** The get payload method string. */
-  public static final String ENGINE_GET_PAYLOAD_V1 = "engine_getPayloadV1";
+    /** The get payload method string. */
+    public static final String ENGINE_GET_PAYLOAD_V1 = "engine_getPayloadV1";
 
-  /** The default engine api authentication port. */
-  public static final Integer DEFAULT_AUTH_PORT = 8851;
+    /** The default engine api authentication port. */
+    public static final Integer DEFAULT_AUTH_PORT = 8851;
 
-  /** HttpService web3jService. */
-  private final HttpService web3jService;
+    /** HttpService web3jService. */
+    private final HttpService web3jService;
 
-  private final Key key;
+    private final Key key;
 
-  /**
-   * Creates an engine api from environment variables.
-   *
-   * @return EngineApi. engine api
-   */
-  public EngineApi fromEnv() {
-    String baseUrlParm = System.getenv("ENGINE_API_URL");
-    if (StringUtils.isBlank(baseUrlParm)) {
-      throw new RuntimeException(
-          """
+    /**
+     * Creates an engine api from environment variables.
+     *
+     * @return EngineApi. engine api
+     */
+    public EngineApi fromEnv() {
+        String baseUrlParm = System.getenv("ENGINE_API_URL");
+        if (StringUtils.isBlank(baseUrlParm)) {
+            throw new RuntimeException(
+                    """
               ENGINE_API_URL environment variable not set.
               Please set this to the base url of the engine api
               """);
-    }
-    String secretKey = System.getenv("JWT_SECRET");
-    if (StringUtils.isBlank(secretKey)) {
-      throw new RuntimeException(
-          """
+        }
+        String secretKey = System.getenv("JWT_SECRET");
+        if (StringUtils.isBlank(secretKey)) {
+            throw new RuntimeException(
+                    """
               JWT_SECRET environment variable not set.
               Please set this to the 256 bit hex-encoded secret key
                used to authenticate with the engine api.
               This should be the same as set in the `--auth.secret`
                flag when executing go-ethereum.
               """);
+        }
+        String baseUrlFormat = authUrlFromAddr(baseUrlParm, null);
+        return new EngineApi(baseUrlFormat, secretKey);
     }
-    String baseUrlFormat = authUrlFromAddr(baseUrlParm, null);
-    return new EngineApi(baseUrlFormat, secretKey);
-  }
 
-  /**
-   * Creates a new [`EngineApi`] with a base url and secret.
-   *
-   * @param baseUrl baseUrl
-   * @param secretStr secret
-   */
-  public EngineApi(final String baseUrl, final String secretStr) {
-    this.key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
-    this.web3jService = new HttpService(baseUrl);
-  }
-
-  /**
-   * Constructs the base engine api url for the given address.
-   *
-   * @param addr addr
-   * @param portParm port
-   * @return url string
-   */
-  public static String authUrlFromAddr(String addr, Integer portParm) {
-    String stripped = addr.replace("http://", "").replace("https://", "");
-    Integer port = portParm == null ? DEFAULT_AUTH_PORT : portParm;
-    return String.format("http://%1$s:%2$s", stripped, port);
-  }
-
-  /**
-   * Generate jws string.
-   *
-   * @param key the key
-   * @return the string
-   */
-  protected static String generateJws(Key key) {
-    Instant now = Instant.now();
-    Date nowDate = Date.from(now);
-    Date expirationDate = Date.from(now.plusSeconds(60));
-    return Jwts.builder()
-        .setIssuedAt(nowDate)
-        .setExpiration(expirationDate)
-        .signWith(key, SignatureAlgorithm.HS256)
-        .compact();
-  }
-
-  @Override
-  public OpEthForkChoiceUpdate forkchoiceUpdated(
-      ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) throws IOException {
-    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
-    Request<?, OpEthForkChoiceUpdate> r =
-        new Request<>(
-            ENGINE_FORKCHOICE_UPDATED_V1,
-            Arrays.asList(
-                forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
-            web3jService,
-            OpEthForkChoiceUpdate.class);
-    return r.send();
-  }
-
-  @Override
-  public OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException {
-    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
-    Request<?, OpEthPayloadStatus> r =
-        new Request<>(
-            ENGINE_NEW_PAYLOAD_V1,
-            Collections.singletonList(executionPayload != null ? executionPayload.toReq() : null),
-            web3jService,
-            OpEthPayloadStatus.class);
-    return r.send();
-  }
-
-  @Override
-  public OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException {
-    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
-    Request<?, OpEthExecutionPayload> r =
-        new Request<>(
-            ENGINE_GET_PAYLOAD_V1,
-            Collections.singletonList(
-                payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
-            web3jService,
-            OpEthExecutionPayload.class);
-    return r.send();
-  }
-
-  /**
-   * Is available boolean.
-   *
-   * @return the boolean
-   */
-  public boolean isAvailable() {
-    LOGGER.debug("Checking if EngineApi is available");
-    web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
-    Request<?, EthChainId> r =
-        new Request<>("eth_chainId", List.of(), web3jService, EthChainId.class);
-    EthChainId chainId;
-    try {
-      chainId = r.send();
-    } catch (IOException e) {
-      LOGGER.error("EngineApi is not available", e);
-      return false;
+    /**
+     * Creates a new [`EngineApi`] with a base url and secret.
+     *
+     * @param baseUrl baseUrl
+     * @param secretStr secret
+     */
+    public EngineApi(final String baseUrl, final String secretStr) {
+        this.key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
+        this.web3jService = new HttpService(baseUrl);
     }
-    return chainId != null;
-  }
+
+    /**
+     * Constructs the base engine api url for the given address.
+     *
+     * @param addr addr
+     * @param portParm port
+     * @return url string
+     */
+    public static String authUrlFromAddr(String addr, Integer portParm) {
+        String stripped = addr.replace("http://", "").replace("https://", "");
+        Integer port = portParm == null ? DEFAULT_AUTH_PORT : portParm;
+        return String.format("http://%1$s:%2$s", stripped, port);
+    }
+
+    /**
+     * Generate jws string.
+     *
+     * @param key the key
+     * @return the string
+     */
+    protected static String generateJws(Key key) {
+        Instant now = Instant.now();
+        Date nowDate = Date.from(now);
+        Date expirationDate = Date.from(now.plusSeconds(60));
+        return Jwts.builder()
+                .setIssuedAt(nowDate)
+                .setExpiration(expirationDate)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    @Override
+    public OpEthForkChoiceUpdate forkchoiceUpdated(ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes)
+            throws IOException {
+        web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
+        Request<?, OpEthForkChoiceUpdate> r = new Request<>(
+                ENGINE_FORKCHOICE_UPDATED_V1,
+                Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
+                web3jService,
+                OpEthForkChoiceUpdate.class);
+        return r.send();
+    }
+
+    @Override
+    public OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException {
+        web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
+        Request<?, OpEthPayloadStatus> r = new Request<>(
+                ENGINE_NEW_PAYLOAD_V1,
+                Collections.singletonList(executionPayload != null ? executionPayload.toReq() : null),
+                web3jService,
+                OpEthPayloadStatus.class);
+        return r.send();
+    }
+
+    @Override
+    public OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException {
+        web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
+        Request<?, OpEthExecutionPayload> r = new Request<>(
+                ENGINE_GET_PAYLOAD_V1,
+                Collections.singletonList(
+                        payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
+                web3jService,
+                OpEthExecutionPayload.class);
+        return r.send();
+    }
+
+    /**
+     * Is available boolean.
+     *
+     * @return the boolean
+     */
+    public boolean isAvailable() {
+        LOGGER.debug("Checking if EngineApi is available");
+        web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
+        Request<?, EthChainId> r = new Request<>("eth_chainId", List.of(), web3jService, EthChainId.class);
+        EthChainId chainId;
+        try {
+            chainId = r.send();
+        } catch (IOException e) {
+            LOGGER.error("EngineApi is not available", e);
+            return false;
+        }
+        return chainId != null;
+    }
 }

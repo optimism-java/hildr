@@ -33,19 +33,19 @@ import org.slf4j.LoggerFactory;
  */
 public class BaseJsonRpcProcessor implements JsonRpcProcessor {
 
-  private static final Logger logger = LoggerFactory.getLogger(BaseJsonRpcProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(BaseJsonRpcProcessor.class);
 
-  /** BaseJsonRpcProcessor constructor. */
-  public BaseJsonRpcProcessor() {}
+    /** BaseJsonRpcProcessor constructor. */
+    public BaseJsonRpcProcessor() {}
 
-  @Override
-  public JsonRpcResponse process(JsonRpcMethod method, JsonRpcRequestContext request) {
-    try {
-      return method.response(request);
-    } catch (final RuntimeException e) {
-      final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
-      logger.error(String.format("Error processing method: %s %s", method.getName(), params), e);
-      return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+    @Override
+    public JsonRpcResponse process(JsonRpcMethod method, JsonRpcRequestContext request) {
+        try {
+            return method.response(request);
+        } catch (final RuntimeException e) {
+            final JsonArray params = JsonObject.mapFrom(request.getRequest()).getJsonArray("params");
+            logger.error(String.format("Error processing method: %s %s", method.getName(), params), e);
+            return new JsonRpcErrorResponse(request.getRequest().getId(), JsonRpcError.INTERNAL_ERROR);
+        }
     }
-  }
 }

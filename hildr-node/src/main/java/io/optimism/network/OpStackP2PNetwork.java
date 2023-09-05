@@ -38,94 +38,91 @@ import tech.pegasys.teku.networking.p2p.peer.PeerConnectedSubscriber;
  */
 @SuppressWarnings("checkstyle:AbbreviationAsWordInName")
 public class OpStackP2PNetwork<P extends Peer> extends DelegatingP2PNetwork<P> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(OpStackP2PNetwork.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(OpStackP2PNetwork.class);
 
-  private final P2PNetwork<P> p2pNetwork;
-  private final DiscoveryService discoveryService;
-  private final ConnectionManager connectionManager;
+    private final P2PNetwork<P> p2pNetwork;
+    private final DiscoveryService discoveryService;
+    private final ConnectionManager connectionManager;
 
-  /**
-   * Instantiates a new OpStackP2PNetwork.
-   *
-   * @param p2pNetwork the p2pNetwork
-   * @param discoveryService the discovery service
-   * @param connectionManager the connection manager
-   */
-  protected OpStackP2PNetwork(
-      final P2PNetwork<P> p2pNetwork,
-      final DiscoveryService discoveryService,
-      final ConnectionManager connectionManager) {
-    super(p2pNetwork);
-    this.p2pNetwork = p2pNetwork;
-    this.discoveryService = discoveryService;
-    this.connectionManager = connectionManager;
-  }
+    /**
+     * Instantiates a new OpStackP2PNetwork.
+     *
+     * @param p2pNetwork the p2pNetwork
+     * @param discoveryService the discovery service
+     * @param connectionManager the connection manager
+     */
+    protected OpStackP2PNetwork(
+            final P2PNetwork<P> p2pNetwork,
+            final DiscoveryService discoveryService,
+            final ConnectionManager connectionManager) {
+        super(p2pNetwork);
+        this.p2pNetwork = p2pNetwork;
+        this.discoveryService = discoveryService;
+        this.connectionManager = connectionManager;
+    }
 
-  @Override
-  public SafeFuture<?> start() {
-    return SafeFuture.allOfFailFast(p2pNetwork.start(), discoveryService.start())
-        .thenCompose(unused -> connectionManager.start())
-        .thenRun(() -> getEnr().ifPresent(enr -> LOGGER.info("Local ENR: {}", enr)));
-  }
+    @Override
+    public SafeFuture<?> start() {
+        return SafeFuture.allOfFailFast(p2pNetwork.start(), discoveryService.start())
+                .thenCompose(unused -> connectionManager.start())
+                .thenRun(() -> getEnr().ifPresent(enr -> LOGGER.info("Local ENR: {}", enr)));
+    }
 
-  @Override
-  public SafeFuture<?> stop() {
-    return connectionManager
-        .stop()
-        .handleComposed(
-            (unused, err) -> {
-              if (err != null) {
+    @Override
+    public SafeFuture<?> stop() {
+        return connectionManager.stop().handleComposed((unused, err) -> {
+            if (err != null) {
                 LOGGER.warn("Error shutting down connection manager", err);
-              }
-              return SafeFuture.allOf(p2pNetwork.stop(), discoveryService.stop());
-            });
-  }
+            }
+            return SafeFuture.allOf(p2pNetwork.stop(), discoveryService.stop());
+        });
+    }
 
-  /**
-   * Add static peer.
-   *
-   * @param peerAddress the peer address
-   */
-  public void addStaticPeer(final String peerAddress) {
-    connectionManager.addStaticPeer(p2pNetwork.createPeerAddress(peerAddress));
-  }
+    /**
+     * Add static peer.
+     *
+     * @param peerAddress the peer address
+     */
+    public void addStaticPeer(final String peerAddress) {
+        connectionManager.addStaticPeer(p2pNetwork.createPeerAddress(peerAddress));
+    }
 
-  @Override
-  public Optional<String> getEnr() {
-    return discoveryService.getEnr();
-  }
+    @Override
+    public Optional<String> getEnr() {
+        return discoveryService.getEnr();
+    }
 
-  @Override
-  public Optional<String> getDiscoveryAddress() {
-    return discoveryService.getDiscoveryAddress();
-  }
+    @Override
+    public Optional<String> getDiscoveryAddress() {
+        return discoveryService.getDiscoveryAddress();
+    }
 
-  @Override
-  public long subscribeConnect(final PeerConnectedSubscriber<P> subscriber) {
-    return p2pNetwork.subscribeConnect(subscriber);
-  }
+    @Override
+    public long subscribeConnect(final PeerConnectedSubscriber<P> subscriber) {
+        return p2pNetwork.subscribeConnect(subscriber);
+    }
 
-  @Override
-  public void unsubscribeConnect(final long subscriptionId) {
-    p2pNetwork.unsubscribeConnect(subscriptionId);
-  }
+    @Override
+    public void unsubscribeConnect(final long subscriptionId) {
+        p2pNetwork.unsubscribeConnect(subscriptionId);
+    }
 
-  @Override
-  public Optional<P> getPeer(final NodeId id) {
-    return p2pNetwork.getPeer(id);
-  }
+    @Override
+    public Optional<P> getPeer(final NodeId id) {
+        return p2pNetwork.getPeer(id);
+    }
 
-  @Override
-  public Stream<P> streamPeers() {
-    return p2pNetwork.streamPeers();
-  }
+    @Override
+    public Stream<P> streamPeers() {
+        return p2pNetwork.streamPeers();
+    }
 
-  /**
-   * Gets discovery service.
-   *
-   * @return the discovery service
-   */
-  public DiscoveryService getDiscoveryService() {
-    return discoveryService;
-  }
+    /**
+     * Gets discovery service.
+     *
+     * @return the discovery service
+     */
+    public DiscoveryService getDiscoveryService() {
+        return discoveryService;
+    }
 }

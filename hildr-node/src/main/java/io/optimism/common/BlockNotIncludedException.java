@@ -24,17 +24,17 @@ package io.optimism.common;
  */
 public class BlockNotIncludedException extends RuntimeException {
 
-  /** Instantiates a new Block not included exception. */
-  public BlockNotIncludedException() {
-    super("block not included");
-  }
+    /** Instantiates a new Block not included exception. */
+    public BlockNotIncludedException() {
+        super("block not included");
+    }
 
-  /**
-   * Instantiates a new Block not included exception.
-   *
-   * @param message the message
-   */
-  public BlockNotIncludedException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Block not included exception.
+     *
+     * @param message the message
+     */
+    public BlockNotIncludedException(String message) {
+        super(message);
+    }
 }

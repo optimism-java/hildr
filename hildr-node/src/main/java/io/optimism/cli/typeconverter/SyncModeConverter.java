@@ -27,11 +27,11 @@ import picocli.CommandLine;
  */
 public class SyncModeConverter implements CommandLine.ITypeConverter<Config.SyncMode> {
 
-  /** the SyncModeConverter constructor. */
-  public SyncModeConverter() {}
+    /** the SyncModeConverter constructor. */
+    public SyncModeConverter() {}
 
-  @Override
-  public Config.SyncMode convert(String value) throws Exception {
-    return Config.SyncMode.from(value);
-  }
+    @Override
+    public Config.SyncMode convert(String value) throws Exception {
+        return Config.SyncMode.from(value);
+    }
 }

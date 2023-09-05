@@ -35,147 +35,143 @@ import org.web3j.utils.Numeric;
  * @author grapebaba
  * @since 0.1.0
  */
-public class BatcherTransactions
-    implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
-  private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
-  private Deque<BatcherTransaction> txs;
+public class BatcherTransactions implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
+    private Deque<BatcherTransaction> txs;
 
-  private MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;
-
-  /**
-   * Instantiates a new Batcher transactions.
-   *
-   * @param txMessagesQueue the tx messages queue
-   */
-  public BatcherTransactions(MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue) {
-    txs = new ArrayDeque<>();
-    this.txMessagesQueue = txMessagesQueue;
-  }
-
-  /** Process incoming. */
-  public void processIncoming() {
-    BatcherTransactionMessage m;
-    while ((m = txMessagesQueue.poll()) != null) {
-      BatcherTransactionMessage curr = m;
-      curr.txs().forEach(txData -> txs.addLast(BatcherTransaction.create(txData, curr.l1Origin())));
-    }
-  }
-
-  @Override
-  public BatcherTransaction next() {
-    this.processIncoming();
-    return txs.pollFirst();
-  }
-
-  @Override
-  public void purge() {
-
-    while (this.txMessagesQueue.poll() != null) {}
-
-    this.txs.clear();
-  }
-
-  /**
-   * The type BatcherTransaction.
-   *
-   * @param version the version
-   * @param frames the frames
-   * @author grapebaba
-   * @since 0.1.0
-   */
-  public record BatcherTransaction(byte version, List<Frame> frames) {
+    private MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;
 
     /**
-     * Create BatcherTransaction.
+     * Instantiates a new Batcher transactions.
      *
-     * @param data the data
+     * @param txMessagesQueue the tx messages queue
+     */
+    public BatcherTransactions(MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue) {
+        txs = new ArrayDeque<>();
+        this.txMessagesQueue = txMessagesQueue;
+    }
+
+    /** Process incoming. */
+    public void processIncoming() {
+        BatcherTransactionMessage m;
+        while ((m = txMessagesQueue.poll()) != null) {
+            BatcherTransactionMessage curr = m;
+            curr.txs().forEach(txData -> txs.addLast(BatcherTransaction.create(txData, curr.l1Origin())));
+        }
+    }
+
+    @Override
+    public BatcherTransaction next() {
+        this.processIncoming();
+        return txs.pollFirst();
+    }
+
+    @Override
+    public void purge() {
+
+        while (this.txMessagesQueue.poll() != null) {}
+
+        this.txs.clear();
+    }
+
+    /**
+     * The type BatcherTransaction.
+     *
+     * @param version the version
+     * @param frames the frames
+     * @author grapebaba
+     * @since 0.1.0
+     */
+    public record BatcherTransaction(byte version, List<Frame> frames) {
+
+        /**
+         * Create BatcherTransaction.
+         *
+         * @param data the data
+         * @param l1Origin the L1 origin
+         * @return the BatcherTransaction
+         */
+        public static BatcherTransaction create(byte[] data, BigInteger l1Origin) {
+            final byte version = data[0];
+            final byte[] framesData = ArrayUtils.subarray(data, 1, data.length);
+
+            int offset = 0;
+            List<Frame> frames = new ArrayList<>();
+            while (offset < framesData.length) {
+                final ImmutablePair<Frame, Integer> framePair = Frame.from(framesData, offset, l1Origin);
+                Frame frame = framePair.getLeft();
+                int nextOffset = framePair.getRight();
+                frames.add(frame);
+                offset = nextOffset;
+            }
+
+            return new BatcherTransaction(version, frames);
+        }
+    }
+
+    /**
+     * The type BatcherTransactionMessage.
+     *
+     * @param txs the txs
      * @param l1Origin the L1 origin
-     * @return the BatcherTransaction
+     * @author grapebaba
+     * @since 0.1.0
      */
-    public static BatcherTransaction create(byte[] data, BigInteger l1Origin) {
-      final byte version = data[0];
-      final byte[] framesData = ArrayUtils.subarray(data, 1, data.length);
-
-      int offset = 0;
-      List<Frame> frames = new ArrayList<>();
-      while (offset < framesData.length) {
-        final ImmutablePair<Frame, Integer> framePair = Frame.from(framesData, offset, l1Origin);
-        Frame frame = framePair.getLeft();
-        int nextOffset = framePair.getRight();
-        frames.add(frame);
-        offset = nextOffset;
-      }
-
-      return new BatcherTransaction(version, frames);
-    }
-  }
-
-  /**
-   * The type BatcherTransactionMessage.
-   *
-   * @param txs the txs
-   * @param l1Origin the L1 origin
-   * @author grapebaba
-   * @since 0.1.0
-   */
-  public record BatcherTransactionMessage(List<byte[]> txs, BigInteger l1Origin) {}
-
-  /**
-   * The type Frame.
-   *
-   * @param channelId the channel id
-   * @param frameNumber the frame number
-   * @param frameDataLen the frame data len
-   * @param frameData the frame data
-   * @param isLastFrame the is last frame
-   * @param l1InclusionBlock the L1 inclusion block
-   * @author grapebaba
-   * @since 0.1.0
-   */
-  public record Frame(
-      BigInteger channelId,
-      Integer frameNumber,
-      Integer frameDataLen,
-      byte[] frameData,
-      Boolean isLastFrame,
-      BigInteger l1InclusionBlock) {
+    public record BatcherTransactionMessage(List<byte[]> txs, BigInteger l1Origin) {}
 
     /**
-     * From data immutable pair.
+     * The type Frame.
      *
-     * @param data the data
-     * @param offset the offset
+     * @param channelId the channel id
+     * @param frameNumber the frame number
+     * @param frameDataLen the frame data len
+     * @param frameData the frame data
+     * @param isLastFrame the is last frame
      * @param l1InclusionBlock the L1 inclusion block
-     * @return the immutable pair
+     * @author grapebaba
+     * @since 0.1.0
      */
-    public static ImmutablePair<Frame, Integer> from(
-        byte[] data, int offset, BigInteger l1InclusionBlock) {
-      final byte[] frameDataMessage = ArrayUtils.subarray(data, offset, data.length);
-      if (frameDataMessage.length < 23) {
-        throw new InvalidFrameSizeException("invalid frame size");
-      }
+    public record Frame(
+            BigInteger channelId,
+            Integer frameNumber,
+            Integer frameDataLen,
+            byte[] frameData,
+            Boolean isLastFrame,
+            BigInteger l1InclusionBlock) {
 
-      final BigInteger channelId = Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 0, 16));
-      final int frameNumber =
-          Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 16, 18)).intValue();
-      final int frameDataLen =
-          Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 18, 22)).intValue();
-      final int frameDataEnd = 22 + frameDataLen;
+        /**
+         * From data immutable pair.
+         *
+         * @param data the data
+         * @param offset the offset
+         * @param l1InclusionBlock the L1 inclusion block
+         * @return the immutable pair
+         */
+        public static ImmutablePair<Frame, Integer> from(byte[] data, int offset, BigInteger l1InclusionBlock) {
+            final byte[] frameDataMessage = ArrayUtils.subarray(data, offset, data.length);
+            if (frameDataMessage.length < 23) {
+                throw new InvalidFrameSizeException("invalid frame size");
+            }
 
-      if (frameDataMessage.length < frameDataEnd) {
-        throw new InvalidFrameSizeException("invalid frame size");
-      }
+            final BigInteger channelId = Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 0, 16));
+            final int frameNumber = Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 16, 18))
+                    .intValue();
+            final int frameDataLen = Numeric.toBigInt(ArrayUtils.subarray(frameDataMessage, 18, 22))
+                    .intValue();
+            final int frameDataEnd = 22 + frameDataLen;
 
-      final byte[] frameData = ArrayUtils.subarray(frameDataMessage, 22, frameDataEnd);
-      final boolean isLastFrame = frameDataMessage[frameDataEnd] != 0;
-      final Frame frame =
-          new Frame(channelId, frameNumber, frameDataLen, frameData, isLastFrame, l1InclusionBlock);
-      LOGGER.debug(
-          String.format(
-              "saw batcher tx: block=%d, number=%d, is_last=%b",
-              l1InclusionBlock, frameNumber, isLastFrame));
+            if (frameDataMessage.length < frameDataEnd) {
+                throw new InvalidFrameSizeException("invalid frame size");
+            }
 
-      return new ImmutablePair<>(frame, offset + frameDataMessage.length);
+            final byte[] frameData = ArrayUtils.subarray(frameDataMessage, 22, frameDataEnd);
+            final boolean isLastFrame = frameDataMessage[frameDataEnd] != 0;
+            final Frame frame =
+                    new Frame(channelId, frameNumber, frameDataLen, frameData, isLastFrame, l1InclusionBlock);
+            LOGGER.debug(String.format(
+                    "saw batcher tx: block=%d, number=%d, is_last=%b", l1InclusionBlock, frameNumber, isLastFrame));
+
+            return new ImmutablePair<>(frame, offset + frameDataMessage.length);
+        }
     }
-  }
 }

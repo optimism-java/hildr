@@ -25,13 +25,13 @@ package io.optimism.derive;
  */
 public interface PurgeableIterator<E> {
 
-  /** Purge. */
-  void purge();
+    /** Purge. */
+    void purge();
 
-  /**
-   * Next e.
-   *
-   * @return the e
-   */
-  E next();
+    /**
+     * Next e.
+     *
+     * @return the e
+     */
+    E next();
 }

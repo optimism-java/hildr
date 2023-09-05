@@ -1776,7 +1776,10 @@
   "methods" : [ {
     "name" : "openServerSocketChannel",
     "parameterTypes" : [ "java.net.ProtocolFamily" ]
-  } ]
+  }, {
+    "name" : "openSocketChannel",
+    "parameterTypes" : [ "java.net.ProtocolFamily" ]
+  }  ]
 }, {
   "name" : "java.nio.file.Path"
 }, {
