@@ -22,7 +22,7 @@ plugins {
 //    id 'signing'
 }
 
-group 'me.grapebaba'
+group 'io.optimism'
 version '0.4.0'
 
 repositories {
@@ -73,12 +73,6 @@ dependencies {
 	// define any required OkHttp artifacts without version
 	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
 	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
-
-	implementation('org.web3j:core:4.11.2') {
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
-		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
-	}
 
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'

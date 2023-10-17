@@ -1,7 +1,7 @@
 package io.optimism.batcher.exception;
 
 /**
- * The execution exception of Bathcer.
+ * The bathcer execution exception.
  *
  * @author thinkAfCod
  * @since 0.1.1
