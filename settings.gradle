@@ -18,3 +18,5 @@ rootProject.name = 'hildr'
 include('hildr-node')
 include('hildr-batcher')
 include('hildr-utilities')
+include ('hildr-proposer')
+

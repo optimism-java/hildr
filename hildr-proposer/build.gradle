@@ -26,32 +26,35 @@ repositories {
 	maven {
 		url "https://artifacts.consensys.net/public/maven/maven/"
 	}
-	maven { url "https://artifacts.consensys.net/public/maven/maven/" }
 	maven { url "https://jitpack.io" }
 	google()
 }
 
 application {
 	// Define the main class for the application.
-	mainClass = 'io.optimism.batcher.HildrBatcher'
+	mainClass = 'io.optimism.proposer.HildrProposer'
 }
 
 tasks.withType(JavaCompile).configureEach {
 	options.annotationProcessorPath = configurations.annotationProcessor
 	options.compilerArgs += "--enable-preview"
 	options.compilerArgs += "-Xlint:preview"
-//	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
 	options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
-tasks.withType(JavaExec).configureEach {
-	jvmArgs += "--enable-preview"
-//	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+tasks.withType(JavaCompile).configureEach {
+	options.annotationProcessorPath = configurations.annotationProcessor
+	options.compilerArgs += "--enable-preview"
+	options.compilerArgs += "-Xlint:preview"
+	options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
 tasks.withType(Test).configureEach {
 	jvmArgs += "--enable-preview"
-//	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+}
+
+tasks.withType(JavaExec).configureEach {
+	jvmArgs += "--enable-preview"
 }
 
 dependencies {
@@ -101,12 +104,12 @@ dependencies {
 		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
 		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
 	}
-	implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
 
 	implementation 'info.picocli:picocli:4.7.3'
 	annotationProcessor 'info.picocli:picocli-codegen:4.7.3'
 
-//	implementation fileTree(dir: '../lib', include: '*.jar')
+	implementation 'io.tmio:tuweni-crypto:2.4.2'
+
 	// Use JUnit Jupiter for testing.
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
 	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
@@ -189,26 +192,6 @@ spotless {
 	}
 }
 
-//checkstyleMain
-//		.exclude('io/optimism/rpc/handler/TimeoutHandler.java')
-//		.exclude('io/optimism/rpc/handler/JsonRpcExecutorHandler.java')
-//		.exclude('io/optimism/rpc/handler/JsonRpcParseHandler.java')
-//		.exclude('io/optimism/rpc/methods/JsonRpcMethod.java')
-//		.exclude('io/optimism/rpc/methods/JsonRpcMethodsFactory.java')
-//		.exclude('io/optimism/rpc/methods/JsonRpcProcessor.java')
-//		.exclude('io/optimism/rpc/execution/LoggedJsonRpcProcessor.java')
-//		.exclude('io/optimism/rpc/internal/JsonRpcRequest.java')
-//		.exclude('io/optimism/rpc/internal/JsonRpcRequestContext.java')
-//		.exclude('io/optimism/rpc/internal/JsonRpcRequestId.java')
-//		.exclude('io/optimism/rpc/internal/response/JsonRpcResponse.java')
-//		.exclude('io/optimism/rpc/internal/response/JsonRpcErrorResponse.java')
-//		.exclude('io/optimism/rpc/internal/response/JsonRpcError.java')
-//		.exclude('io/optimism/rpc/internal/response/JsonRpcResponseType.java')
-//		.exclude('io/optimism/rpc/internal/response/JsonRpcSuccessResponse.java')
-//		.exclude('io/optimism/rpc/internal/response/JsonRpcNoResponse.java')
-//		.exclude('io/optimism/rpc/execution/BaseJsonRpcProcessor.java')
-//		.exclude('io/optimism/rpc/execution/JsonRpcProcessor.java')
-
 tasks.named('test') {
 	// Use JUnit Platform for unit tests.
 	useJUnitPlatform()
@@ -225,7 +208,7 @@ tasks.withType(Test).configureEach {
 		[
 				"-Djunit.platform.reporting.open.xml.enabled=true",
 				"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}",
-				"--enable-preview",
+				"--enable-preview"
 		]
 	} as CommandLineArgumentProvider)
 }
@@ -242,13 +225,12 @@ javadoc {
 	}
 	options.addBooleanOption('-enable-preview', true)
 	options.addStringOption('-release', '21')
-//	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
 
 jar {
 	enabled = false
 	manifest {
-		attributes "Main-Class": "io.optimism.batcher.HildrBatcher"
+		attributes "Main-Class": "io.optimism.proposer.HildrProposer"
 		attributes "Multi-Release": "true"
 	}
 	dependsOn(shadowJar)
@@ -256,6 +238,7 @@ jar {
 
 shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
+	transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
 }
 
 nativeCompile {

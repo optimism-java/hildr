@@ -25,7 +25,7 @@ public class Cli implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
-    @Option(names = "--l1-rpc-url", required = true, description = "The base chain RPC URL")
+    @Option(names = "--l1-rpc-url", required = true, description = "The L1 chain RPC URL")
     String l1RpcUrl;
 
     @Option(names = "--l2-rpc-url", required = true, description = "The L2 engine RPC URL")

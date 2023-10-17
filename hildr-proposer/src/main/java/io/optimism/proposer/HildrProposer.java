@@ -1,6 +1,6 @@
-package io.optimism.batcher;
+package io.optimism.proposer;
 
-import io.optimism.batcher.cli.Cli;
+import io.optimism.proposer.cli.Cli;
 import picocli.CommandLine;
 
 /**
@@ -9,10 +9,10 @@ import picocli.CommandLine;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class HildrBatcher {
+public class HildrProposer {
 
     /** Constructor of HildrBatcher. */
-    public HildrBatcher() {}
+    public HildrProposer() {}
 
     /**
      * Main method of HildrBatcher.
