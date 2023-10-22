@@ -24,8 +24,12 @@ import io.optimism.runner.Runner;
 import io.optimism.telemetry.InnerMetrics;
 import io.optimism.utilities.telemetry.Logging;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine.Command;
@@ -71,6 +75,11 @@ public class Cli implements Runnable {
   String jwtSecret;
 
   @Option(
+      names = "--jwt-file",
+      description = "Path to a JWT secret to use for authenticated RPC endpoints")
+  String jwtFile;
+
+  @Option(
       names = {"--verbose", "-v"},
       description = "")
   Boolean verbose;
@@ -90,6 +99,9 @@ public class Cli implements Runnable {
       names = {"--checkpoint-sync-url"},
       description = "A trusted L2 RPC URL to use for fast/checkpoint syncing")
   String checkpointSyncUrl;
+
+  @Option(names = "--devnet", description = "Dev net flag")
+  private Boolean devnet;
 
   /** the Cli constructor. */
   public Cli() {}
@@ -133,6 +145,8 @@ public class Cli implements Runnable {
         switch (network) {
           case "optimism" -> Config.ChainConfig.optimism();
           case "optimism-goerli" -> Config.ChainConfig.optimismGoerli();
+          case "optimism-sepolia" -> Config.ChainConfig.optimismSepolia();
+          case "base" -> Config.ChainConfig.base();
           case "base-goerli" -> Config.ChainConfig.baseGoerli();
           default -> {
             if (network.endsWith(".json")) {
@@ -147,13 +161,36 @@ public class Cli implements Runnable {
     return Config.create(Files.exists(configPath) ? configPath : null, cliConfig, chain);
   }
 
+  private String getJwtSecret() {
+    if (StringUtils.isNotEmpty(Cli.this.jwtSecret)) {
+      return Cli.this.jwtSecret;
+    }
+    return Cli.this.getJwtFromFile();
+  }
+
+  private String getJwtFromFile() {
+    final Path jwtFilePath =
+        StringUtils.isNotEmpty(Cli.this.jwtFile)
+            ? Paths.get(Cli.this.jwtFile)
+            : Paths.get(System.getProperty("user.dir"), "jwt.hex");
+    if (!Files.exists(jwtFilePath)) {
+      throw new RuntimeException("Failed to read JWT secret from file: " + jwtFilePath);
+    }
+    try {
+      return Files.readString(jwtFilePath, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to read JWT secret from file: " + jwtFilePath, e);
+    }
+  }
+
   private Config.CliConfig from(Cli cli) {
     return new Config.CliConfig(
         cli.l1RpcUrl,
         cli.l2RpcUrl,
         cli.l2EngineUrl,
-        cli.jwtSecret,
+        Cli.this.getJwtSecret(),
         cli.checkpointSyncUrl,
-        cli.rpcPort);
+        cli.rpcPort,
+        cli.devnet);
   }
 }

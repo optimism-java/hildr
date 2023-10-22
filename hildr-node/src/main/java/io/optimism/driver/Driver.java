@@ -332,8 +332,14 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
           Driver.this.engineDriver.getSafeHead().number(),
           Driver.this.engineDriver.getSafeHead().hash());
 
-      BlockInfo newSafeHead = Driver.this.engineDriver.getSafeHead();
-      Epoch newSafeEpoch = Driver.this.engineDriver.getSafeEpoch();
+      final BlockInfo newSafeHead = Driver.this.engineDriver.getSafeHead();
+      final Epoch newSafeEpoch = Driver.this.engineDriver.getSafeEpoch();
+
+      Driver.this.state.getAndUpdate(
+          state -> {
+            state.updateSafeHead(newSafeHead, newSafeEpoch);
+            return state;
+          });
 
       UnfinalizedBlock newUnfinalizedBlock =
           new UnfinalizedBlock(newSafeHead, newSafeEpoch, l1InclusionBlock, seqNumber);
@@ -387,10 +393,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   @SuppressWarnings("preview")
   private void handleNextBlockUpdate() {
-    boolean isStateFull = this.state.get().isFull();
-    if (isStateFull) {
-      return;
-    }
     BlockUpdate next = this.chainWatcher.getBlockUpdateQueue().poll();
     if (next == null) {
       return;
