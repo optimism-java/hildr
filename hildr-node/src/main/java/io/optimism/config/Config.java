@@ -139,6 +139,7 @@ public record Config(
    * @param jwtSecret L2 engine API jwt secret.
    * @param checkpointSyncUrl The checkpoint sync url.
    * @param rpcPort The rpc port.
+   * @param devnet The devnet flag.
    */
   public record CliConfig(
       String l1RpcUrl,
@@ -146,7 +147,8 @@ public record Config(
       String l2EngineUrl,
       String jwtSecret,
       String checkpointSyncUrl,
-      Integer rpcPort) {
+      Integer rpcPort,
+      Boolean devnet) {
 
     /**
      * To configMap.
@@ -255,6 +257,43 @@ public record Config(
     }
 
     /**
+     * Optimism sepolia ChainConfig.
+     *
+     * @return the chain config
+     */
+    public static ChainConfig optimismSepolia() {
+      return new ChainConfig(
+          "base-goerli",
+          BigInteger.valueOf(11155111L),
+          BigInteger.valueOf(11155420L),
+          new Epoch(
+              BigInteger.valueOf(4071408L),
+              "0x48f520cf4ddaf34c8336e6e490632ea3cf1e5e93b0b2bc6e917557e31845371b",
+              BigInteger.valueOf(1691802540L)),
+          new BlockInfo(
+              "0x102de6ffb001480cc9b8b548fd05c34cd4f46ae4aa91759393db90ea0409887d",
+              BigInteger.valueOf(0L),
+              Numeric.toHexString(new byte[32]),
+              BigInteger.valueOf(1691802540L)),
+          new SystemConfig(
+              "0x8F23BB38F531600e5d8FDDaAEC41F13FaB46E98c",
+              BigInteger.valueOf(30_000_000L),
+              BigInteger.valueOf(188),
+              BigInteger.valueOf(684000),
+              "0x0000000000000000000000000000000000000000"),
+          "0xff00000000000000000000000000000011155420",
+          "0x16fc5058f25648194471939df75cf27a2fdc48bc",
+          "0x034edd2a225f7f429a63e0f1d2084b9e0a93b538",
+          BigInteger.valueOf(100_000_000L),
+          BigInteger.valueOf(300L),
+          BigInteger.valueOf(3600L),
+          BigInteger.valueOf(600L),
+          BigInteger.ZERO,
+          BigInteger.valueOf(2L),
+          "0x4200000000000000000000000000000000000016");
+    }
+
+    /**
      * Base mainnet chain config.
      *
      * @return the chain config
@@ -286,7 +325,7 @@ public record Config(
           BigInteger.valueOf(300L),
           BigInteger.valueOf(3600L),
           BigInteger.valueOf(600L),
-          BigInteger.valueOf(Long.MAX_VALUE),
+          BigInteger.ZERO,
           BigInteger.valueOf(2L),
           "0x4200000000000000000000000000000000000016");
     }
@@ -360,7 +399,7 @@ public record Config(
           BigInteger.valueOf(100L),
           BigInteger.valueOf(3600L),
           BigInteger.valueOf(600L),
-          BigInteger.valueOf(Long.MAX_VALUE),
+          BigInteger.valueOf(1683219600L),
           BigInteger.valueOf(2L),
           "0x4200000000000000000000000000000000000016");
     }
@@ -416,7 +455,7 @@ public record Config(
           external.maxSequencerDrift,
           external.regolithTime,
           external.blockTime,
-          Numeric.toHexString(new byte[32]));
+          "0x4200000000000000000000000000000000000016");
     }
 
     /**

@@ -48,7 +48,8 @@ class DriverTest {
             null,
             "d195a64e08587a3f1560686448867220c2727550ce3e0c95c7200d0ade0f9167",
             l2rpc,
-            null);
+            null,
+            false);
 
     Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
     Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
