@@ -6,6 +6,7 @@ plugins {
 	id "com.diffplug.spotless" version "6.19.0"
 	id "net.ltgt.errorprone" version "3.1.0"
 	id 'org.graalvm.buildtools.native' version '0.9.22'
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 group = 'io.optimism'
@@ -42,6 +43,11 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.withType(JavaExec).configureEach {
+	jvmArgs += "--enable-preview"
+	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+}
+
+tasks.withType(Test).configureEach {
 	jvmArgs += "--enable-preview"
 	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
@@ -93,11 +99,10 @@ dependencies {
 		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
 		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
 	}
+	implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
 
 	implementation 'info.picocli:picocli:4.7.3'
 	annotationProcessor 'info.picocli:picocli-codegen:4.7.3'
-
-	implementation 'io.tmio:tuweni-crypto:2.4.2'
 
 //	implementation fileTree(dir: '../lib', include: '*.jar')
 	// Use JUnit Jupiter for testing.
@@ -238,7 +243,6 @@ tasks.withType(Test).configureEach {
 				"-Djunit.platform.reporting.open.xml.enabled=true",
 				"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}",
 				"--enable-preview",
-				"--add-modules jdk.incubator.concurrent"
 		]
 	} as CommandLineArgumentProvider)
 }
@@ -259,17 +263,16 @@ javadoc {
 }
 
 jar {
-	dependsOn(configurations.runtimeClasspath)
+	enabled = false
 	manifest {
-		attributes "Main-Class": "io.optimism.HildrBatcher"
+		attributes "Main-Class": "io.optimism.batcher.HildrBatcher"
+		attributes "Multi-Release": "true"
 	}
+	dependsOn(shadowJar)
+}
 
-	duplicatesStrategy = DuplicatesStrategy.WARN
-	from {
-		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-	} {
-		exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
-	}
+shadowJar {
+	archiveFileName = "${project.name}-${project.version}.jar"
 }
 
 nativeCompile {

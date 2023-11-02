@@ -14,7 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.batcher.loader;
+package io.optimism.type;
 
 /**
  * ParseBlockException class.

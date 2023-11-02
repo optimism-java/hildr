@@ -15,6 +15,7 @@ plugins {
 	id "com.diffplug.spotless" version "6.19.0"
 	id "net.ltgt.errorprone" version "3.1.0"
 	id 'org.graalvm.buildtools.native' version '0.9.22'
+	id 'com.github.johnrengelman.shadow' version '8.1.1'
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
 //    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
@@ -378,17 +379,16 @@ javadoc {
 }
 
 jar {
-	dependsOn(configurations.runtimeClasspath)
+	enabled = false
 	manifest {
 		attributes "Main-Class": "io.optimism.Hildr"
+		attributes "Multi-Release": "true"
 	}
+	dependsOn(shadowJar)
+}
 
-	duplicatesStrategy = DuplicatesStrategy.WARN
-	from {
-		configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
-	} {
-		exclude 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/*.SF'
-	}
+shadowJar {
+	archiveFileName = "${project.name}-${project.version}.jar"
 }
 
 task copyJarToBinaryDir {
