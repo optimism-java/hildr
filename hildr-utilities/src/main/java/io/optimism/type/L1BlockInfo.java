@@ -16,12 +16,11 @@
 
 package io.optimism.type;
 
-import io.optimism.batcher.loader.ParseBlockException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.tuweni.crypto.Hash;
+import org.web3j.crypto.Hash;
 import org.web3j.utils.Numeric;
 
 /**
@@ -55,7 +54,7 @@ public record L1BlockInfo(
 
   private static final byte[] SIGNATURE_BYTES =
       ArrayUtils.subarray(
-          Hash.keccak256(L1_INFO_FUNC_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
+          Hash.sha3(L1_INFO_FUNC_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
 
   /**
    * Parse tx data to L1BlockInfo.

@@ -18,6 +18,7 @@ package io.optimism.common;
 
 import io.optimism.engine.ExecutionPayload;
 import java.math.BigInteger;
+import java.util.Objects;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
 
 /**
@@ -62,5 +63,21 @@ public record BlockInfo(String hash, BigInteger number, String parentHash, BigIn
   public static BlockInfo from(ExecutionPayload payload) {
     return new BlockInfo(
         payload.blockHash(), payload.blockNumber(), payload.parentHash(), payload.timestamp());
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    BlockInfo blockInfo = (BlockInfo) o;
+    return Objects.equals(hash, blockInfo.hash)
+        && Objects.equals(number, blockInfo.number)
+        && Objects.equals(parentHash, blockInfo.parentHash)
+        && Objects.equals(timestamp, blockInfo.timestamp);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(hash, number, parentHash, timestamp);
   }
 }

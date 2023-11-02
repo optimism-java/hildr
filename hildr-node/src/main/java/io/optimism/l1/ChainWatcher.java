@@ -16,6 +16,7 @@
 
 package io.optimism.l1;
 
+import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
 import java.math.BigInteger;
 import java.util.concurrent.Executors;
@@ -91,4 +92,59 @@ public class ChainWatcher {
             Executors.newVirtualThreadPerTaskExecutor());
     this.start();
   }
+
+  /**
+   * Gets current L1 block info.
+   *
+   * @return the current L1 block info.
+   */
+  public BlockInfo getCurrentL1() {
+    return this.innerWatcher.getCurrentL1();
+  }
+
+  /**
+   * Gets current L1 finalized block info.
+   *
+   * @return the current L1 finalized block info.
+   */
+  public BlockInfo getCurrentL1Finalized() {
+    return this.innerWatcher.getCurrentL1Finalized();
+  }
+
+  /**
+   * Gets L1 head block info.
+   *
+   * @return L1 head block info.
+   */
+  public BlockInfo getL1HeadBlock() {
+    return this.innerWatcher.getL1HeadBlock();
+  }
+
+  /**
+   * Gets L1 safe block info.
+   *
+   * @return L1 safe block info.
+   */
+  public BlockInfo getL1SafeBlock() {
+    return this.innerWatcher.getL1SafeBlock();
+  }
+
+  /**
+   * Gets L1 finalized block info.
+   *
+   * @return L1 finalized block info.
+   */
+  public BlockInfo getL1FinalizedBlock() {
+    return this.innerWatcher.getL1FinalizedBlock();
+  }
+
+  /**
+   * Gets current rollup system config info.
+   *
+   * @return rollup system config info.
+   */
+  public Config.SystemConfig getSystemConfig() {
+    return this.innerWatcher.getSystemConfig();
+  }
+
 }

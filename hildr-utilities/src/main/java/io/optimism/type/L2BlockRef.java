@@ -40,6 +40,8 @@ public record L2BlockRef(
     BlockId l1origin,
     BigInteger sequenceNumber) {
 
+  public final static L2BlockRef EMPTY = new L2BlockRef(null, null, null, null, null, null);
+
   /**
    * L2BlockRef instance converts to BlockId instance.
    *

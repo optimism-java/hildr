@@ -29,4 +29,4 @@ import java.math.BigInteger;
  * @since 0.1.1
  */
 public record SystemConfig(
-    String batcherAddr, String overhead, String scalar, BigInteger gasLimit) {}
+    String batcherAddr, BigInteger overhead, BigInteger scalar, BigInteger gasLimit) {}

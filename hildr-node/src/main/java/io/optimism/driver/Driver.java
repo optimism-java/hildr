@@ -33,11 +33,23 @@ import io.optimism.engine.ExecutionPayload;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.BlockUpdate;
 import io.optimism.l1.ChainWatcher;
+import io.optimism.rpc.RpcMethod;
 import io.optimism.rpc.RpcServer;
+import io.optimism.rpc.internal.result.SyncStatusResult;
 import io.optimism.telemetry.InnerMetrics;
+import io.optimism.type.BlockId;
+import io.optimism.type.DepositTransaction;
+import io.optimism.type.Genesis;
+import io.optimism.type.L1BlockInfo;
+import io.optimism.type.L2BlockRef;
+import io.optimism.type.RollupConfigResutl;
+import io.optimism.type.SystemConfig;
+import io.optimism.utilities.TxDecoder;
+import io.optimism.utilities.rpc.Web3jProvider;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -48,6 +60,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
@@ -95,6 +108,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private CountDownLatch latch;
 
+  private final Config config;
+
+  private RollupConfigResutl cachedRollConfig;
+
   /**
    * Instantiates a new Driver.
    *
@@ -105,6 +122,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    * @param unsafeBlockQueue the unsafe block queue
    * @param rpcServer the rpc server
    * @param latch the close notifier
+   * @param config the chain config
    */
   @SuppressWarnings("preview")
   public Driver(
@@ -114,7 +132,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       ChainWatcher chainWatcher,
       MessagePassingQueue<ExecutionPayload> unsafeBlockQueue,
       RpcServer rpcServer,
-      CountDownLatch latch) {
+      CountDownLatch latch,
+      Config config) {
     this.engineDriver = engineDriver;
     this.rpcServer = rpcServer;
     this.pipeline = pipeline;
@@ -125,6 +144,11 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     this.unfinalizedBlocks = Lists.newArrayList();
     this.executor = Executors.newVirtualThreadPerTaskExecutor();
     this.latch = latch;
+    this.config = config;
+    HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);
+    rpcHandler.put(RpcMethod.OP_SYNC_STATUS.getRpcMethodName(), unused -> this.getSyncStatus());
+    rpcHandler.put(RpcMethod.OP_ROLLUP_CONFIG.getRpcMethodName(), unused -> this.getRollupConfig());
+    this.rpcServer.register(rpcHandler);
   }
 
   /**
@@ -147,7 +171,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    */
   public static Driver<EngineApi> from(Config config, CountDownLatch latch)
       throws InterruptedException, ExecutionException {
-    Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
+    Web3j provider = Web3jProvider.createClient(config.l2RpcUrl());
 
     EthBlock finalizedBlock;
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -208,7 +232,81 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue =
         new MpscUnboundedXaddArrayQueue<>(1024 * 64);
     provider.shutdown();
-    return new Driver<>(engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch);
+    return new Driver<>(
+        engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch, config);
+  }
+
+  /**
+   * Get rollupConfig.
+   *
+   * @return The rollup config
+   */
+  public RollupConfigResutl getRollupConfig() {
+    var chainConfig = this.config.chainConfig();
+    if (this.cachedRollConfig == null) {
+      var rollupConfig = new RollupConfigResutl();
+      rollupConfig.setBlockTime(chainConfig.blockTime());
+      rollupConfig.setMaxSequencerDrift(chainConfig.maxSeqDrift());
+      rollupConfig.setSeqWindowSize(chainConfig.seqWindowSize());
+      rollupConfig.setChannelTimeout(chainConfig.channelTimeout());
+      rollupConfig.setL1ChainId(chainConfig.l1ChainId());
+      rollupConfig.setL2ChainId(chainConfig.l2ChainId());
+      rollupConfig.setRegolithTime(chainConfig.regolithTime());
+      rollupConfig.setBatchInboxAddress(chainConfig.batchInbox());
+      rollupConfig.setDepositContractAddress(chainConfig.depositContract());
+      this.cachedRollConfig = rollupConfig;
+    }
+    var curSysConfig = this.chainWatcher.getSystemConfig();
+    var sc =
+        new SystemConfig(
+            curSysConfig.batchSender(),
+            curSysConfig.l1FeeOverhead(),
+            curSysConfig.l1FeeScalar(),
+            curSysConfig.gasLimit());
+    var latestGenesis =
+        new Genesis(
+            new BlockId(chainConfig.l1StartEpoch().hash(), chainConfig.l1StartEpoch().number()),
+            new BlockId(chainConfig.l2Genesis().hash(), chainConfig.l2Genesis().number()),
+            chainConfig.l2Genesis().timestamp(),
+            sc);
+    this.cachedRollConfig.setGenesis(latestGenesis);
+    return this.cachedRollConfig;
+  }
+
+  /**
+   * Get sync status.
+   *
+   * @return result of sync status.
+   */
+  public SyncStatusResult getSyncStatus() {
+    // CurrentL1
+    final var currentL1 = this.chainWatcher.getCurrentL1();
+    // CurrentL1Finalized
+    final var currentL1Finalized = this.chainWatcher.getCurrentL1Finalized();
+
+    final var l1HeadBlock = this.chainWatcher.getL1HeadBlock();
+    final var l1SafeBlock = this.chainWatcher.getL1SafeBlock();
+    final var l1FinalizedBlock = this.chainWatcher.getL1FinalizedBlock();
+
+    // FinalizedL2
+    final var finalizedHead = this.engineDriver.getFinalizedHead();
+    // SafeL2
+    final var safeHead = this.engineDriver.getSafeHead();
+    // UnsafeL2
+    final var unsafeHead = this.engineDriver.getUnsafeHead();
+
+    final var unsafeL2SyncTarget = this.unsafeL2SyncTarget();
+    return new SyncStatusResult(
+        currentL1,
+        currentL1Finalized,
+        l1HeadBlock,
+        l1SafeBlock,
+        l1FinalizedBlock,
+        unsafeHead,
+        safeHead,
+        finalizedHead,
+        unsafeL2SyncTarget,
+        unsafeHead);
   }
 
   @Override
@@ -474,6 +572,52 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private boolean synced() {
     return !this.unfinalizedBlocks.isEmpty();
+  }
+
+  /**
+   * Retrieves the first queued-up L2 unsafe payload, or a zeroed reference if there is none.
+   *
+   * @return the L2BlockRef instance
+   */
+  private L2BlockRef unsafeL2SyncTarget() {
+    ExecutionPayload unsafePayload = this.unsafeBlockQueue.peek();
+    if (unsafePayload == null) {
+      return L2BlockRef.EMPTY;
+    }
+    return Driver.payloadToRef(unsafePayload, this.config.chainConfig());
+  }
+
+  public static L2BlockRef payloadToRef(ExecutionPayload payload, Config.ChainConfig genesis) {
+    BlockId l1Origin;
+    BigInteger sequenceNumber;
+    if (payload.blockNumber().compareTo(genesis.l2Genesis().number()) == 0) {
+      if (!payload.blockHash().equals(genesis.l2Genesis().hash())) {
+        throw new RuntimeException(
+            String.format(
+                "expected L2 genesis hash to match L2 block at genesis block number %d: %s <> %s",
+                genesis.l2Genesis().number(), payload.blockHash(), genesis.l2Genesis().hash()));
+      }
+      l1Origin = new BlockId(genesis.l1StartEpoch().hash(), genesis.l1StartEpoch().number());
+      sequenceNumber = BigInteger.ZERO;
+    } else {
+      if (payload.transactions().size() == 0) {
+        throw new RuntimeException(
+            String.format(
+                "l2 block is missing L1 info deposit tx, block hash: %s", payload.blockHash()));
+      }
+      DepositTransaction depositTx = TxDecoder.decodeToDeposit(payload.transactions().get(0));
+      L1BlockInfo info = L1BlockInfo.from(Numeric.hexStringToByteArray(depositTx.getData()));
+      l1Origin = new BlockId(info.blockHash(), info.number());
+      sequenceNumber = info.sequenceNumber();
+    }
+
+    return new L2BlockRef(
+        payload.blockHash(),
+        payload.blockNumber(),
+        payload.parentHash(),
+        payload.timestamp(),
+        new BlockId(l1Origin.hash(), l1Origin.number()),
+        sequenceNumber);
   }
 
   /**
