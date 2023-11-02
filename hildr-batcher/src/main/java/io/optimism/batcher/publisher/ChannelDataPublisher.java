@@ -105,13 +105,18 @@ public class ChannelDataPublisher implements Closeable {
   public boolean publishPendingBlock() {
     boolean hasData = false;
     boolean sendData = true;
-    while (sendData) {
-      sendData = this.publishTxToL1();
-      if (!hasData) {
-        hasData = sendData;
+    try {
+      while (sendData) {
+        sendData = this.publishTxToL1();
+        if (!hasData) {
+          hasData = sendData;
+        }
       }
+      return hasData;
+    } catch (NoDataPublishException e) {
+      LOGGER.info(e.getMessage());
+      return hasData;
     }
-    return hasData;
   }
 
   @Override

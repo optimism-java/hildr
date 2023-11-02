@@ -61,7 +61,7 @@ public class BatcherSubmitter extends AbstractExecutionThreadService {
     this.channelManager =
         new ChannelManager(ChannelConfig.from(config), CompressorConfig.from(config));
     this.blockLoader = new BlockLoader(LoaderConfig.from(config), this.channelManager::addL2Block);
-
+    this.blockLoader.init();
     this.channelPublisher =
         new ChannelDataPublisher(
             PublisherConfig.from(config, this.blockLoader.getRollConfig()),
