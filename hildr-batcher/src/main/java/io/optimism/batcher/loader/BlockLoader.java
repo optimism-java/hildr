@@ -92,7 +92,7 @@ public class BlockLoader implements Closeable {
     this.latestLoadedBlock = new BlockId("0x0", BigInteger.ZERO);
   }
 
-  /** Should be called before load block */
+  /** Should be called before load block. */
   public void init() {
     if (this.rollupConfig == null) {
       this.rollupConfig = this.loadRollConfig();

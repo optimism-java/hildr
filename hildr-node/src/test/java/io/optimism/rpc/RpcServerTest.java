@@ -126,7 +126,10 @@ public class RpcServerTest {
 
   @Test
   void testRpcServerRegister() throws IOException, InterruptedException, ExecutionException {
-    RpcServer rpcServer = createRpcServer(config);
+    RpcServer rpcServer =
+        createRpcServer(
+            new Config(
+                null, "http://fakeurl", null, null, null, 9545, Config.ChainConfig.optimism()));
     rpcServer.start();
     HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);
     rpcHandler.put("test_url", unused -> "response data");
