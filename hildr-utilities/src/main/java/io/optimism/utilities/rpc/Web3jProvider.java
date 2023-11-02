@@ -65,12 +65,10 @@ public class Web3jProvider {
       } catch (ConnectException e) {
         throw new IllegalStateException(e);
       }
-
     } else {
       throw new IllegalArgumentException("not supported scheme:" + url);
     }
     return new Tuple2<>(Web3j.build(web3Srv), web3Srv);
-
   }
 
 

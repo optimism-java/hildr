@@ -68,6 +68,7 @@ class BlockLoaderTest {
 
   @Test
   void calculateL2BlockRangeToStore() {
+    var config = new LoaderConfig("http://fakeurl", "http://fakeurl", mock(BatcherMetrics.class));
     BlockLoader loader = spy(new BlockLoader(config, (unused) -> {}));
     doReturn(
             new OpEthSyncStatusRes.OpEthSyncStatus(

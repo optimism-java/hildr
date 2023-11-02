@@ -16,9 +16,9 @@
 
 package io.optimism.batcher.publisher;
 
-import static org.junit.jupiter.api.Assertions.*;
-
 /**
+ * ChannelDataPublisher test case.
+ *
  * @author thinkAfCod
  * @since 0.1.1
  */

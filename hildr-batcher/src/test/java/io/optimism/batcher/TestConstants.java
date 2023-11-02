@@ -17,6 +17,7 @@
 package io.optimism.batcher;
 
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * The type Test constants.
@@ -47,10 +48,19 @@ public class TestConstants {
 
   static {
     Map<String, String> envs = System.getenv();
-    isConfiguredApiKeyEnv = envs.containsKey(ETH_API_ENV) && envs.containsKey(OPT_API_ENV);
-    l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
-    l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
-    rollupRpcUrl = l2RpcUrlFormat.formatted(envs.get(ROLLUP_API_KEY));
+    String ethApiKey = envs.get(ETH_API_ENV);
+    String optApiKey = envs.get(OPT_API_ENV);
+    String rollUpApiUrl = envs.get(ROLLUP_API_KEY);
+
+    if (!StringUtils.isEmpty(ethApiKey)) {
+      l1RpcUrl = l1RpcUrlFormat.formatted(ethApiKey);
+    }
+    if (!StringUtils.isEmpty(optApiKey)) {
+      l2RpcUrl = l2RpcUrlFormat.formatted(optApiKey);
+    }
+    if (!StringUtils.isEmpty(rollUpApiUrl)) {
+      rollupRpcUrl = rollUpApiUrl;
+    }
   }
 
   private TestConstants() {}
