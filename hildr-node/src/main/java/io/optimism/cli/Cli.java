@@ -100,6 +100,16 @@ public class Cli implements Runnable {
       description = "A trusted L2 RPC URL to use for fast/checkpoint syncing")
   String checkpointSyncUrl;
 
+  @Option(
+      names = {"--metrics-enable"},
+      description = "The flag of enabled metrics")
+  Boolean metricsEnable;
+
+  @Option(
+      names = {"--metrics-port"},
+      description = "The port of metrics server")
+  Integer metricsPort;
+
   @Option(names = "--devnet", description = "Dev net flag")
   private Boolean devnet;
 
@@ -109,7 +119,14 @@ public class Cli implements Runnable {
   @Override
   public void run() {
     TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
-    InnerMetrics.start(9200);
+    if (Boolean.TRUE.equals(metricsEnable)) {
+      var metricsPort = this.metricsPort;
+      if (metricsPort == null || metricsPort > 65535) {
+        metricsPort = 9200;
+      }
+      InnerMetrics.start(metricsPort);
+    }
+
     Signal.handle(new Signal("INT"), sig -> System.exit(0));
     Signal.handle(new Signal("TERM"), sig -> System.exit(0));
 
