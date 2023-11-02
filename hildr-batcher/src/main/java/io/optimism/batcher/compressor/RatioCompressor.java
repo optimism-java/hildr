@@ -68,11 +68,11 @@ public class RatioCompressor implements Compressor {
     this.inputLength += p.length;
     this.deflater.setInput(p);
     int len;
-//    int compressedLength = 0;
+    //    int compressedLength = 0;
     do {
       len = this.deflater.deflate(compressed, 0, compressed.length, Deflater.SYNC_FLUSH);
       if (len > 0) {
-//        compressedLength += len;
+        //        compressedLength += len;
         this.bos.write(compressed, 0, len);
       }
     } while (len > 0);

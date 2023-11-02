@@ -19,27 +19,16 @@ package io.optimism.l1;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.optimism.TestConstants;
-import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
-import io.reactivex.disposables.Disposable;
 import java.math.BigInteger;
-import java.net.ConnectException;
-import java.util.HashSet;
-import java.util.TreeSet;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import org.apache.commons.lang3.StringUtils;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.web3j.protocol.Web3j;
-import org.web3j.protocol.websocket.WebSocketService;
-import org.web3j.protocol.websocket.events.NewHead;
-import org.web3j.utils.Numeric;
 
 /**
  * test case of InnerWatcher.
