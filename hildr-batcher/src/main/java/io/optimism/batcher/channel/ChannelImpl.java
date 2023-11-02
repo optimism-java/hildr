@@ -17,6 +17,7 @@
 package io.optimism.batcher.channel;
 
 import io.optimism.batcher.compressor.Compressor;
+import io.optimism.batcher.compressor.exception.CompressorException;
 import io.optimism.batcher.exception.UnsupportedException;
 import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
@@ -128,9 +129,10 @@ public class ChannelImpl implements Channel {
     try {
       this.addBatch(batch);
       this.blocks.add(block);
-    } catch (ChannelFullException e) {
+    } catch (ChannelFullException | CompressorException e) {
       this.isFull = true;
     }
+    this.splitToFrame();
     this.updateSeqWindowTimeout(batch);
     return l1Info;
   }
@@ -312,6 +314,7 @@ public class ChannelImpl implements Channel {
     if (!DEPOSIT_TX_TYPE.equalsIgnoreCase(depositTxObj.getType())) {
       throw new ChannelException("block txs not contains deposit tx");
     }
+
     final L1BlockInfo l1Info =
         L1BlockInfo.from(Numeric.hexStringToByteArray(depositTxObj.getInput()));
 
@@ -345,8 +348,9 @@ public class ChannelImpl implements Channel {
               "could not add %d bytes to channel of %d bytes, max is %d",
               encode.length, this.rlpLength.get(), MAX_RLP_BYTES_PER_CHANNEL));
     }
+    int n = this.compressor.write(encode);
     this.rlpLength.addAndGet(encode.length);
-    return this.compressor.write(encode);
+    return n;
   }
 
   private void closeAndOutputAllFrames() {
@@ -383,8 +387,9 @@ public class ChannelImpl implements Channel {
     }
     var lastFrameFlag = false;
     var dataSize = maxSize - Frame.FRAME_V0_OVER_HEAD_SIZE;
-    if (dataSize > this.compressor.length()) {
-      dataSize = this.compressor.length();
+    var cprLength = this.compressor.length();
+    if (dataSize > cprLength) {
+      dataSize = cprLength;
       lastFrameFlag = this.isClose;
     }
 

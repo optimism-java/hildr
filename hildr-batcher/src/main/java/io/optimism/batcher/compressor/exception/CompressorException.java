@@ -23,14 +23,14 @@ package io.optimism.batcher.compressor.exception;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class CompressorFullException extends RuntimeException {
+public class CompressorException extends RuntimeException {
 
   /**
    * Constructor of CompressorFullException.
    *
    * @param message error message
    */
-  public CompressorFullException(String message) {
+  public CompressorException(String message) {
     super(message);
   }
 }

@@ -117,7 +117,13 @@ public class ChannelManager {
     }
     // no channel
     if (!this.hasSpace(this.latestChannel)) {
-      this.latestChannel = this.openChannel(l1Head);
+      this.latestChannel = this.openChannel();
+      LOGGER.info(
+          "Created a channel: id:{}, l1Head: {}, blocksPending:{}",
+          this.latestChannel,
+          l1Head,
+          this.blocks.size());
+      this.metrics.recordChannelOpened(null, this.blocks.size());
     }
     this.pushBlocks(this.latestChannel);
     this.updateChannelTimeout(l1Head);
@@ -222,12 +228,8 @@ public class ChannelManager {
     return channel != null && !channel.isFull();
   }
 
-  private Channel openChannel(final BlockId l1Head) {
-    Channel ch = new ChannelImpl(this.chConfig, Compressors.create(this.compressorConfig));
-    LOGGER.info(
-        "Created a channel: id:{}, l1Head: {}, blocksPending:{}", ch, l1Head, this.blocks.size());
-    this.metrics.recordChannelOpened(null, this.blocks.size());
-    return ch;
+  private Channel openChannel() {
+    return new ChannelImpl(this.chConfig, Compressors.create(this.compressorConfig));
   }
 
   private void pushBlocks(final Channel lastChannel) {

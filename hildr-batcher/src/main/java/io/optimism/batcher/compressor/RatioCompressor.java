@@ -16,7 +16,7 @@
 
 package io.optimism.batcher.compressor;
 
-import io.optimism.batcher.compressor.exception.CompressorFullException;
+import io.optimism.batcher.compressor.exception.CompressorException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -37,7 +37,11 @@ public class RatioCompressor implements Compressor {
 
   private final int inputThreshold;
 
+  private final byte[] compressed;
+
   private volatile ByteArrayOutputStream bos;
+
+  private boolean closed;
 
   private int pos;
 
@@ -48,6 +52,7 @@ public class RatioCompressor implements Compressor {
     this.deflater = new Deflater(Deflater.BEST_COMPRESSION);
     this.inputThreshold = inputThreshold();
     this.bos = new ByteArrayOutputStream(this.inputThreshold);
+    this.compressed = new byte[2048];
     this.pos = 0;
     this.inputLength = 0;
   }
@@ -55,15 +60,28 @@ public class RatioCompressor implements Compressor {
   @Override
   public int write(byte[] p) {
     if (this.isFull()) {
-      throw new CompressorFullException("the target amount of input data has been reached limit");
+      throw new CompressorException("the target amount of input data has been reached limit");
+    }
+    if (this.isClose()) {
+      throw new CompressorException("the compressor has been closed");
     }
     this.inputLength += p.length;
     this.deflater.setInput(p);
-    byte[] compressed = new byte[p.length];
-    int len = this.deflater.deflate(compressed);
-    this.bos.write(compressed, 0, len);
+    int len;
+//    int compressedLength = 0;
+    do {
+      len = this.deflater.deflate(compressed, 0, compressed.length, Deflater.SYNC_FLUSH);
+      if (len > 0) {
+//        compressedLength += len;
+        this.bos.write(compressed, 0, len);
+      }
+    } while (len > 0);
     this.deflater.reset();
     return p.length;
+  }
+
+  private boolean isClose() {
+    return this.closed;
   }
 
   @Override
@@ -105,6 +123,7 @@ public class RatioCompressor implements Compressor {
 
   @Override
   public void close() throws IOException {
+    closed = true;
     this.deflater.finish();
     this.deflater.end();
   }
