@@ -146,5 +146,4 @@ public class ChainWatcher {
   public Config.SystemConfig getSystemConfig() {
     return this.innerWatcher.getSystemConfig();
   }
-
 }

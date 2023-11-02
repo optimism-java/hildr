@@ -1,12 +1,13 @@
 package io.optimism.batcher.compressor;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * Ratio compressor test case.
@@ -38,5 +39,4 @@ class RatioCompressorTest {
 
     assertEquals(source, new String(uncompressed));
   }
-
 }
