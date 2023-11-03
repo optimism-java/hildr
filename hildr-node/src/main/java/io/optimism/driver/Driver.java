@@ -42,7 +42,7 @@ import io.optimism.type.DepositTransaction;
 import io.optimism.type.Genesis;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.type.L2BlockRef;
-import io.optimism.type.RollupConfigResutl;
+import io.optimism.type.RollupConfigResult;
 import io.optimism.type.SystemConfig;
 import io.optimism.utilities.TxDecoder;
 import io.optimism.utilities.rpc.Web3jProvider;
@@ -109,7 +109,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
   private final Config config;
 
-  private RollupConfigResutl cachedRollConfig;
+  private RollupConfigResult cachedRollConfig;
 
   /**
    * Instantiates a new Driver.
@@ -240,10 +240,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
    *
    * @return The rollup config
    */
-  public RollupConfigResutl getRollupConfig() {
+  public RollupConfigResult getRollupConfig() {
     var chainConfig = this.config.chainConfig();
     if (this.cachedRollConfig == null) {
-      var rollupConfig = new RollupConfigResutl();
+      var rollupConfig = new RollupConfigResult();
       rollupConfig.setBlockTime(chainConfig.blockTime());
       rollupConfig.setMaxSequencerDrift(chainConfig.maxSeqDrift());
       rollupConfig.setSeqWindowSize(chainConfig.seqWindowSize());
@@ -253,22 +253,23 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
       rollupConfig.setRegolithTime(chainConfig.regolithTime());
       rollupConfig.setBatchInboxAddress(chainConfig.batchInbox());
       rollupConfig.setDepositContractAddress(chainConfig.depositContract());
+      rollupConfig.setL1SystemConfigAddress(chainConfig.systemConfigContract());
+      var curSysConfig = chainConfig.systemConfig();
+      var sc =
+          new SystemConfig(
+              curSysConfig.batchSender(),
+              curSysConfig.l1FeeOverhead(),
+              curSysConfig.l1FeeScalar(),
+              curSysConfig.gasLimit());
+      var latestGenesis =
+          new Genesis(
+              new BlockId(chainConfig.l1StartEpoch().hash(), chainConfig.l1StartEpoch().number()),
+              new BlockId(chainConfig.l2Genesis().hash(), chainConfig.l2Genesis().number()),
+              chainConfig.l2Genesis().timestamp(),
+              sc);
+      this.cachedRollConfig.setGenesis(latestGenesis);
       this.cachedRollConfig = rollupConfig;
     }
-    var curSysConfig = this.chainWatcher.getSystemConfig();
-    var sc =
-        new SystemConfig(
-            curSysConfig.batchSender(),
-            curSysConfig.l1FeeOverhead(),
-            curSysConfig.l1FeeScalar(),
-            curSysConfig.gasLimit());
-    var latestGenesis =
-        new Genesis(
-            new BlockId(chainConfig.l1StartEpoch().hash(), chainConfig.l1StartEpoch().number()),
-            new BlockId(chainConfig.l2Genesis().hash(), chainConfig.l2Genesis().number()),
-            chainConfig.l2Genesis().timestamp(),
-            sc);
-    this.cachedRollConfig.setGenesis(latestGenesis);
     return this.cachedRollConfig;
   }
 
@@ -586,6 +587,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     return Driver.payloadToRef(unsafePayload, this.config.chainConfig());
   }
 
+  /**
+   * Read L2BlockRef info from Execution payload.
+   *
+   * @param payload l2 execution payload info
+   * @param genesis L2 genesis info
+   * @return L2BlockRef instance
+   */
   public static L2BlockRef payloadToRef(ExecutionPayload payload, Config.ChainConfig genesis) {
     BlockId l1Origin;
     BigInteger sequenceNumber;

@@ -109,7 +109,7 @@ class ChannelsTest {
 
   private Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>>
       createStage() {
-    Config config = new Config("", "", "", "", null, 9545, ChainConfig.optimismGoerli());
+    Config config = new Config("", "", "", "", null, 9545, false, ChainConfig.optimismGoerli());
     MessagePassingQueue<BatcherTransactionMessage> transactionMessageMessagePassingQueue =
         new MpscGrowableArrayQueue<>(4096);
     Channels<BatcherTransactions> channels =
