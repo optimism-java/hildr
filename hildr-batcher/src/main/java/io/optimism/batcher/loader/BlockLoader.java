@@ -26,7 +26,7 @@ import io.optimism.type.L1BlockRef;
 import io.optimism.type.L2BlockRef;
 import io.optimism.type.OpEthSyncStatusRes;
 import io.optimism.type.RollupConfigRes;
-import io.optimism.type.RollupConfigResutl;
+import io.optimism.type.RollupConfigResult;
 import io.optimism.utilities.rpc.Web3jProvider;
 import java.io.Closeable;
 import java.math.BigInteger;
@@ -74,7 +74,7 @@ public class BlockLoader implements Closeable {
 
   BlockId latestLoadedBlock;
 
-  private RollupConfigResutl rollupConfig;
+  private RollupConfigResult rollupConfig;
 
   /**
    * Constructor of BlockLoader.
@@ -104,7 +104,7 @@ public class BlockLoader implements Closeable {
    *
    * @return rollup config object
    */
-  public RollupConfigResutl getRollConfig() {
+  public RollupConfigResult getRollConfig() {
     return this.rollupConfig;
   }
 
@@ -216,7 +216,7 @@ public class BlockLoader implements Closeable {
     }
   }
 
-  RollupConfigResutl loadRollConfig() {
+  RollupConfigResult loadRollConfig() {
     try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
       var future =
           scope.fork(

@@ -24,7 +24,7 @@ import org.web3j.protocol.core.Response;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class RollupConfigRes extends Response<RollupConfigResutl> {
+public class RollupConfigRes extends Response<RollupConfigResult> {
 
   /** Constructor of RollupConfigRes. */
   public RollupConfigRes() {}
@@ -34,12 +34,12 @@ public class RollupConfigRes extends Response<RollupConfigResutl> {
    *
    * @return rollup config info
    */
-  public RollupConfigResutl getConfig() {
+  public RollupConfigResult getConfig() {
     return getResult();
   }
 
   @Override
-  public void setResult(RollupConfigResutl result) {
+  public void setResult(RollupConfigResult result) {
     super.setResult(result);
   }
 }

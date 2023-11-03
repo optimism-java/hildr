@@ -32,7 +32,7 @@ public class DepositsNotFoundException extends RuntimeException {
   /**
    * Instantiates a new Deposits not found exception.
    *
-   * @param message
+   * @param message exception message info
    */
   public DepositsNotFoundException(String message) {
     super(message);

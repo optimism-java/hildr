@@ -31,7 +31,7 @@ import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockRef;
 import io.optimism.type.L2BlockRef;
 import io.optimism.type.OpEthSyncStatusRes;
-import io.optimism.type.RollupConfigResutl;
+import io.optimism.type.RollupConfigResult;
 import io.optimism.utilities.rpc.Web3jProvider;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -137,7 +137,7 @@ class BlockLoaderTest {
         .when(loader)
         .calculateL2BlockRangeToStore();
     doReturn(null).when(loader).l2BlockToBlockRef(any(), any());
-    doReturn(new RollupConfigResutl()).when(loader).getRollConfig();
+    doReturn(new RollupConfigResult()).when(loader).getRollConfig();
     loader.loadBlocksIntoState();
     assertEquals(20, consumeCount.get());
     assertEquals(loader.latestLoadedBlock.number(), mockedBlock.getNumber());

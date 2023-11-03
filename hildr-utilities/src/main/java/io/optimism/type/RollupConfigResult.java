@@ -26,7 +26,7 @@ import java.util.Objects;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public class RollupConfigResutl {
+public class RollupConfigResult {
     /**
      * Genesis anchor point of the rollup.
      */
@@ -88,10 +88,16 @@ public class RollupConfigResutl {
     private String batchInboxAddress;
 
     /**
-     * L1 Deposit Contract Address.
+     * L1 deposit contract address.
      */
     @JsonProperty("deposit_contract_address")
     private String depositContractAddress;
+
+    /**
+     * L1 system config address.
+     */
+    @JsonProperty("l1_system_config_address")
+    private String l1SystemConfigAddress;
 
     public Genesis getGenesis() {
         return genesis;
@@ -173,11 +179,18 @@ public class RollupConfigResutl {
         this.depositContractAddress = depositContractAddress;
     }
 
+    public String getL1SystemConfigAddress() {
+        return l1SystemConfigAddress;
+    }
+
+    public void setL1SystemConfigAddress(String l1SystemConfigAddress) {
+        this.l1SystemConfigAddress = l1SystemConfigAddress;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RollupConfigResutl that = (RollupConfigResutl) o;
+        if (!(o instanceof RollupConfigResult that)) return false;
         return Objects.equals(genesis, that.genesis)
             && Objects.equals(blockTime, that.blockTime)
             && Objects.equals(maxSequencerDrift, that.maxSequencerDrift)
@@ -187,12 +200,13 @@ public class RollupConfigResutl {
             && Objects.equals(l2ChainId, that.l2ChainId)
             && Objects.equals(regolithTime, that.regolithTime)
             && Objects.equals(batchInboxAddress, that.batchInboxAddress)
-            && Objects.equals(depositContractAddress, that.depositContractAddress);
+            && Objects.equals(depositContractAddress, that.depositContractAddress)
+            && Objects.equals(l1SystemConfigAddress, that.l1SystemConfigAddress);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(genesis, blockTime, maxSequencerDrift, seqWindowSize, channelTimeout,
-            l1ChainId, l2ChainId, regolithTime, batchInboxAddress, depositContractAddress);
+            l1ChainId, l2ChainId, regolithTime, batchInboxAddress, l1SystemConfigAddress);
     }
 }

@@ -67,9 +67,12 @@ public record BlockInfo(String hash, BigInteger number, String parentHash, BigIn
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    BlockInfo blockInfo = (BlockInfo) o;
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof BlockInfo blockInfo)) {
+      return false;
+    }
     return Objects.equals(hash, blockInfo.hash)
         && Objects.equals(number, blockInfo.number)
         && Objects.equals(parentHash, blockInfo.parentHash)

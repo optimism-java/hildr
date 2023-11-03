@@ -42,7 +42,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import org.jctools.queues.MessagePassingQueue;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.EventEncoder;
@@ -150,6 +149,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
   private Disposable l1HeadListener;
 
+  private boolean devnet = false;
+
   /**
    * create a InnerWatcher instance.
    *
@@ -170,6 +171,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     this.provider = Web3jProvider.createClient(config.l1RpcUrl());
     this.l1StartBlock = l1StartBlock;
     this.l2StartBlock = l2StartBlock;
+    this.devnet = config.devnet() != null && config.devnet();
 
     this.blockUpdateQueue = queue;
     this.currentBlock = l1StartBlock;
@@ -405,7 +407,9 @@ public class InnerWatcher extends AbstractExecutionThreadService {
   }
 
   private EthBlock.Block getFinalized() throws ExecutionException, InterruptedException {
-    return this.pollBlock(this.provider, DefaultBlockParameterName.FINALIZED, false);
+    var parameter =
+        this.devnet ? DefaultBlockParameterName.LATEST : DefaultBlockParameterName.FINALIZED;
+    return this.pollBlock(this.provider, parameter, false);
   }
 
   private EthBlock.Block getHead() throws ExecutionException, InterruptedException {
@@ -518,7 +522,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
   }
 
-  @NotNull @Override
+  @Override
   protected Executor executor() {
     return this.executor;
   }
@@ -537,26 +541,56 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     this.isShutdownTriggered = true;
   }
 
+  /**
+   * Gets Current L1 block.
+   *
+   * @return Current L1 BlockInfo instance
+   */
   public BlockInfo getCurrentL1() {
     return this.currentBlockInfo;
   }
 
+  /**
+   * Gets Current L1 finalized block.
+   *
+   * @return Current L1 finalized BlockInfo instance
+   */
   public BlockInfo getCurrentL1Finalized() {
     return this.l1Finalized;
   }
 
+  /**
+   * Gets L1 head block.
+   *
+   * @return L1 head BlockInfo instance
+   */
   public BlockInfo getL1HeadBlock() {
     return this.l1Head;
   }
 
+  /**
+   * Gets L1 safe block.
+   *
+   * @return L1 safe BlockInfo instance
+   */
   public BlockInfo getL1SafeBlock() {
     return this.l1Safe;
   }
 
+  /**
+   * Gets L1 finalized block.
+   *
+   * @return L1 finalized BlockInfo instance
+   */
   public BlockInfo getL1FinalizedBlock() {
     return this.l1Finalized;
   }
 
+  /**
+   * Get system config info.
+   *
+   * @return SystemConfig instance
+   */
   public SystemConfig getSystemConfig() {
     return this.systemConfig;
   }

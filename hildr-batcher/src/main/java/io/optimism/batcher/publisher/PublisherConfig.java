@@ -18,7 +18,7 @@ package io.optimism.batcher.publisher;
 
 import io.optimism.batcher.config.Config;
 import io.optimism.batcher.telemetry.BatcherMetrics;
-import io.optimism.type.RollupConfigResutl;
+import io.optimism.type.RollupConfigResult;
 import java.math.BigInteger;
 
 /**
@@ -46,7 +46,7 @@ public record PublisherConfig(
    * @param rollupConfig Rollup config, get from rollup node api
    * @return PublisherConfig instance
    */
-  public static PublisherConfig from(Config config, RollupConfigResutl rollupConfig) {
+  public static PublisherConfig from(Config config, RollupConfigResult rollupConfig) {
     return new PublisherConfig(
         config.l1RpcUrl(),
         config.l1Signer(),

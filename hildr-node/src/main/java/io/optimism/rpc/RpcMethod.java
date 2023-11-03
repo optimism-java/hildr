@@ -28,9 +28,9 @@ public enum RpcMethod {
 
   /** optimism_outputAtBlock api. */
   OP_OUTPUT_AT_BLOCK("optimism_outputAtBlock"),
-  /** optimism_syncStatus api */
+  /** optimism_syncStatus api. */
   OP_SYNC_STATUS("optimism_syncStatus"),
-  /** optimism_rollupConfig api */
+  /** optimism_rollupConfig api. */
   OP_ROLLUP_CONFIG("optimism_rollupConfig");
 
   private final String rpcMethodName;

@@ -52,6 +52,7 @@ import org.web3j.utils.Numeric;
  * @param jwtSecret L2 engine API jwt secret.
  * @param chainConfig The chain config.
  * @param rpcPort The rpc port.
+ * @param devnet The flag of devnet.
  * @param checkpointSyncUrl The checkpoint sync url.
  * @author grapebaba
  * @since 0.1.0
@@ -63,6 +64,7 @@ public record Config(
     String jwtSecret,
     String checkpointSyncUrl,
     Integer rpcPort,
+    Boolean devnet,
     ChainConfig chainConfig) {
 
   /**
@@ -175,6 +177,7 @@ public record Config(
       if (rpcPort != null) {
         map.put("config.rpcPort", rpcPort.toString());
       }
+      map.put("config.devnet", String.valueOf(devnet != null && devnet));
       return map;
     }
   }
