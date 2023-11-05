@@ -40,6 +40,9 @@ repositories {
 	maven {
 		url "https://artifacts.consensys.net/public/maven/maven/"
 	}
+	maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+	maven { url "https://jitpack.io" }
+	google()
 }
 
 
@@ -123,109 +126,31 @@ dependencies {
 
 //	implementation 'io.tmio:tuweni-devp2p:2.4.2'
 	implementation 'io.tmio:tuweni-ssz:2.4.2'
-	implementation('tech.pegasys.teku.internal:p2p:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:metrics:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:async:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:storage:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:time:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:spec:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:serviceutils:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:unsigned:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:statetransition:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('org.hyperledger.besu.internal:metrics-core:22.10.4'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('org.hyperledger.besu:plugin-api:22.10.4'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('io.libp2p:jvm-libp2p-minimal:0.10.0-RELEASE'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
+	implementation('tech.pegasys.teku.internal:p2p:23.10.0')
+	implementation('tech.pegasys.teku.internal:metrics:23.10.0')
+	implementation('tech.pegasys.teku.internal:async:23.10.0')
+	implementation('tech.pegasys.teku.internal:storage:23.10.0')
+	implementation('tech.pegasys.teku.internal:time:23.10.0')
+	implementation('tech.pegasys.teku.internal:spec:23.10.0')
+	implementation('tech.pegasys.teku.internal:serviceutils:23.10.0')
+	implementation('tech.pegasys.teku.internal:unsigned:23.10.0')
+	implementation('tech.pegasys.teku.internal:statetransition:23.10.0')
+	implementation('org.hyperledger.besu.internal:metrics-core:22.10.4')
+	implementation('org.hyperledger.besu:plugin-api:22.10.4')
+	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE')
 	implementation 'io.tmio:tuweni-units:2.4.2'
 	implementation('io.tmio:tuweni-crypto:2.4.2'){
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 	implementation 'io.tmio:tuweni-rlp:2.4.2'
-	implementation('tech.pegasys.discovery:discovery:22.12.0'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
+	implementation('tech.pegasys.discovery:discovery:22.12.0')
 	implementation 'org.xerial.snappy:snappy-java:1.1.10.3'
 
-	implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
-	implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
-	implementation 'org.apache.logging.log4j:log4j-slf4j-impl:2.20.0'
-	implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.20.0'
-	implementation 'org.apache.logging.log4j:log4j-to-slf4j:2.20.0'
+	implementation 'org.apache.logging.log4j:log4j-api:3.0.0-alpha1'
+//	implementation 'org.apache.logging.log4j:log4j-core:3.0.0-alpha1'
+//	implementation 'org.apache.logging.log4j:log4j-slf4j-impl:3.0.0-alpha1'
+//	implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:3.0.0-alpha1'
+	implementation 'org.apache.logging.log4j:log4j-to-slf4j:3.0.0-alpha1'
 //	implementation fileTree(dir: '../lib', include: '*.jar')
 	// Use JUnit Jupiter for testing.
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'

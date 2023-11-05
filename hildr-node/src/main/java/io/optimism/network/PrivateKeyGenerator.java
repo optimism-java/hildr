@@ -16,8 +16,8 @@
 
 package io.optimism.network;
 
-import io.libp2p.core.crypto.KEY_TYPE;
 import io.libp2p.core.crypto.KeyKt;
+import io.libp2p.core.crypto.KeyType;
 import io.libp2p.core.crypto.PrivKey;
 
 /**
@@ -36,6 +36,6 @@ public class PrivateKeyGenerator {
      * @return the priv key
      */
     public static PrivKey generate() {
-        return KeyKt.generateKeyPair(KEY_TYPE.SECP256K1).component1();
+        return KeyKt.generateKeyPair(KeyType.SECP256K1).component1();
     }
 }

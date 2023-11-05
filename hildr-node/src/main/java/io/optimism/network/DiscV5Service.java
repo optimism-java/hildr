@@ -89,15 +89,15 @@ public class DiscV5Service extends Service implements DiscoveryService {
     /**
      * Instantiates a new Disc v 5 service.
      *
-     * @param metricsSystem the metrics system
-     * @param asyncRunner the async runner
-     * @param discoConfig the disco config
-     * @param p2pConfig the p 2 p config
-     * @param kvStore the kv store
-     * @param privateKey the private key
+     * @param metricsSystem          the metrics system
+     * @param asyncRunner            the async runner
+     * @param discoConfig            the disco config
+     * @param p2pConfig              the p 2 p config
+     * @param kvStore                the kv store
+     * @param privateKey             the private key
      * @param discoverySystemBuilder the discovery system builder
-     * @param chainId the chain id
-     * @param nodeRecordConverter the node record converter
+     * @param chainId                the chain id
+     * @param nodeRecordConverter    the node record converter
      */
     public DiscV5Service(
             final MetricsSystem metricsSystem,
@@ -229,6 +229,11 @@ public class DiscV5Service extends Service implements DiscoveryService {
     @Override
     public Optional<String> getEnr() {
         return Optional.of(discoverySystem.getLocalNodeRecord().asEnr());
+    }
+
+    @Override
+    public Optional<Bytes> getNodeId() {
+        return Optional.of(discoverySystem.getLocalNodeRecord().getNodeId());
     }
 
     @Override

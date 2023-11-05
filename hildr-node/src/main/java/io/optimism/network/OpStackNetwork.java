@@ -102,21 +102,24 @@ public class OpStackNetwork {
                 .bootnodes(BOOTNODES)
                 .build();
         final NetworkConfig p2pConfig = NetworkConfig.builder().build();
-        final AsyncRunner asyncRunner = AsyncRunnerFactory.createDefault(
-                        new MetricTrackingExecutorFactory(metricsSystem))
-                .create("hildr_node_p2p", 20);
         final KeyValueStore<String, Bytes> kvStore = new MemKeyValueStore<>();
         final PreparedGossipMessageFactory preparedGossipMessageFactory = new SnappyPreparedGossipMessageFactory();
 
+        final AsyncRunner gossipAsyncRunner = AsyncRunnerFactory.createDefault(
+                        new MetricTrackingExecutorFactory(metricsSystem))
+                .create("hildr_node_gossip", 20);
         this.topicHandler = new BlockTopicHandler(
                 new SnappyPreparedGossipMessageFactory(),
-                asyncRunner,
+                gossipAsyncRunner,
                 chainId,
                 config.systemConfig().unsafeBlockSigner(),
                 unsafeBlockQueue);
+        final AsyncRunner p2pAsyncRunner = AsyncRunnerFactory.createDefault(
+                        new MetricTrackingExecutorFactory(metricsSystem))
+                .create("hildr_node_p2p", 20);
         final P2PNetwork<?> p2pNetwork = LibP2PNetworkBuilder.create()
                 .metricsSystem(metricsSystem)
-                .asyncRunner(asyncRunner)
+                .asyncRunner(p2pAsyncRunner)
                 .config(p2pConfig)
                 .privateKeyProvider(PrivateKeyGenerator::generate)
                 .reputationManager(reputationManager)
@@ -131,8 +134,11 @@ public class OpStackNetwork {
                 discoveryConfig.getMaxPeers(),
                 discoveryConfig.getMinRandomlySelectedPeers());
         final PeerSelectionStrategy peerSelectionStrategy = new SimplePeerSelectionStrategy(targetPeerRange);
+        final AsyncRunner connAsyncRunner = AsyncRunnerFactory.createDefault(
+                        new MetricTrackingExecutorFactory(metricsSystem))
+                .create("hildr_node_conn", 20);
         this.p2pNetwork = builder.kvStore(kvStore)
-                .asyncRunner(asyncRunner)
+                .asyncRunner(connAsyncRunner)
                 .discoveryConfig(discoveryConfig)
                 .metricsSystem(metricsSystem)
                 .p2pConfig(p2pConfig)

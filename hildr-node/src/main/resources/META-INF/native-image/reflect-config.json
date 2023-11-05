@@ -450,7 +450,11 @@
     "parameterTypes" : [ "io.netty.channel.ChannelHandlerContext", "java.lang.Throwable" ]
   } ]
 }, {
-  "name" : "io.libp2p.mux.mplex.MplexHandler"
+  "name" : "io.libp2p.mux.mplex.MplexHandler",
+    "methods" : [ {
+        "name" : "channelRead",
+        "parameterTypes" : [ "io.netty.channel.ChannelHandlerContext", "java.lang.Object" ]
+    } ]
 }, {
   "name" : "io.libp2p.protocol.ProtocolMessageHandlerAdapter",
   "methods" : [ {
@@ -7469,6 +7473,15 @@
   } ]
 }, {
   "name" : "tech.pegasys.teku.networking.p2p.libp2p.MplexFirewall$MplexFirewallHandler",
+  "methods" : [ {
+    "name" : "channelRead",
+    "parameterTypes" : [ "io.netty.channel.ChannelHandlerContext", "java.lang.Object" ]
+  }, {
+    "name" : "write",
+    "parameterTypes" : [ "io.netty.channel.ChannelHandlerContext", "java.lang.Object", "io.netty.channel.ChannelPromise" ]
+  } ]
+}, {
+  "name" : "tech.pegasys.teku.networking.p2p.libp2p.MuxFirewall$MuxFirewallHandler",
   "methods" : [ {
     "name" : "channelRead",
     "parameterTypes" : [ "io.netty.channel.ChannelHandlerContext", "java.lang.Object" ]
