@@ -28,4 +28,13 @@ public class DepositsNotFoundException extends RuntimeException {
     public DepositsNotFoundException() {
         super("deposits not found");
     }
+
+    /**
+     * Instantiates a new Deposits not found exception.
+     *
+     * @param message exception message info
+     */
+    public DepositsNotFoundException(String message) {
+        super(message);
+    }
 }

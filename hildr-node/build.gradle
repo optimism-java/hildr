@@ -65,6 +65,7 @@ tasks.withType(JavaExec).configureEach {
 }
 
 dependencies {
+	implementation project(':hildr-utilities')
 	// This dependency is used by the application.
 	implementation 'com.google.guava:guava:31.1-jre'
 	implementation 'com.github.rholder:guava-retrying:2.0.0'

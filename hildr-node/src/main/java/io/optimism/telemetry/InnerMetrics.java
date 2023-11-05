@@ -16,18 +16,9 @@
 
 package io.optimism.telemetry;
 
-import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.Gauge;
-import io.micrometer.core.instrument.Metrics;
-import io.micrometer.prometheus.PrometheusConfig;
-import io.micrometer.prometheus.PrometheusMeterRegistry;
-import java.io.IOException;
-import java.io.OutputStream;
+import io.optimism.utilities.telemetry.MetricsServer;
 import java.math.BigInteger;
-import java.net.InetSocketAddress;
-import java.nio.charset.Charset;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -41,15 +32,19 @@ public class InnerMetrics {
     private static AtomicReference<BigInteger> FINALIZED_HEAD;
     private static AtomicReference<BigInteger> SAFE_HEAD;
     private static AtomicReference<BigInteger> SYNCED;
-    private static PrometheusMeterRegistry registry;
-    private static HttpServer httpServer;
-    private static Future<?> serverFuture;
 
-    static {
+    private InnerMetrics() {}
+
+    /**
+     * start a http server for prometheus to access.
+     *
+     * @param port custom http server port
+     */
+    public static void start(int port) {
         FINALIZED_HEAD = new AtomicReference<>(BigInteger.ZERO);
         SAFE_HEAD = new AtomicReference<>(BigInteger.ZERO);
         SYNCED = new AtomicReference<>(BigInteger.ZERO);
-        registry = new PrometheusMeterRegistry(PrometheusConfig.DEFAULT);
+        var registry = MetricsServer.createPrometheusRegistry();
         Gauge.builder("finalized_head", FINALIZED_HEAD, ref -> ref.get().doubleValue())
                 .description("finalized head number")
                 .register(registry);
@@ -61,42 +56,12 @@ public class InnerMetrics {
         Gauge.builder("synced", SYNCED, ref -> ref.get().doubleValue())
                 .description("synced flag")
                 .register(registry);
-
-        Metrics.addRegistry(registry);
-    }
-
-    private InnerMetrics() {}
-
-    /**
-     * start a http server for prometheus to access.
-     *
-     * @param port custom http server port
-     */
-    public static void start(int port) {
-        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            httpServer = HttpServer.create(new InetSocketAddress(port), 2);
-            httpServer.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
-            httpServer.createContext("/metrics", httpExchange -> {
-                String response = registry.scrape();
-                httpExchange.sendResponseHeaders(200, response.getBytes(Charset.defaultCharset()).length);
-                try (OutputStream os = httpExchange.getResponseBody()) {
-                    os.write(response.getBytes(Charset.defaultCharset()));
-                }
-            });
-            serverFuture = executor.submit(httpServer::start);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        MetricsServer.start(registry, port);
     }
 
     /** stop the http server. */
     public static void stop() {
-        if (serverFuture != null) {
-            serverFuture.cancel(true);
-        }
-        if (httpServer != null) {
-            httpServer.stop(5);
-        }
+        MetricsServer.stop();
     }
 
     /**

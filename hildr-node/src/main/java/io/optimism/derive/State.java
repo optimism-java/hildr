@@ -138,15 +138,6 @@ public class State {
     }
 
     /**
-     * Is full boolean.
-     *
-     * @return the boolean
-     */
-    public boolean isFull() {
-        return this.currentEpochNum.compareTo(this.safeEpoch.number().add(BigInteger.valueOf(1000L))) > 0;
-    }
-
-    /**
      * Update l 1 info.
      *
      * @param l1Info the l 1 info

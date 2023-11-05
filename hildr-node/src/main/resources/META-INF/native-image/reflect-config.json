@@ -7489,4 +7489,33 @@
     "name" : "write",
     "parameterTypes" : [ "io.netty.channel.ChannelHandlerContext", "java.lang.Object", "io.netty.channel.ChannelPromise" ]
   } ]
-} ]
+},  {
+  "name" : "io.optimism.utilities.derive.stages.Batch",
+  "queryAllDeclaredConstructors": true,
+  "queryAllPublicConstructors": true,
+  "queryAllDeclaredMethods": true,
+  "queryAllPublicMethods": true,
+  "allDeclaredClasses": true,
+  "allPublicClasses": true,
+  "allPublicMethods": true,
+  "allDeclaredMethods": true,
+  "allDeclaredConstructors": true,
+  "allPublicConstructors": true,
+  "allDeclaredFields": true,
+  "allPublicFields": true
+},
+  {
+    "name" : "io.optimism.utilities.derive.stages.Frame",
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "queryAllPublicMethods": true,
+    "allDeclaredClasses": true,
+    "allPublicClasses": true,
+    "allPublicMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "allDeclaredFields": true,
+    "allPublicFields": true
+  } ]

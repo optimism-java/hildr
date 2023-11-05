@@ -40,7 +40,7 @@ class ConfigTest {
     /** Create. */
     @Test
     void create() {
-        CliConfig cliConfig = new CliConfig(null, null, null, "testjwt", null, null);
+        CliConfig cliConfig = new CliConfig(null, null, null, "testjwt", null, null, false);
         Config config = Config.create(
                 Paths.get("src", "test", "resources", "test.toml"), cliConfig, ChainConfig.optimismGoerli());
         assertEquals("https://example2.com", config.l2RpcUrl());
@@ -111,7 +111,7 @@ class ConfigTest {
         @Test
         void baseGoerli() {
             ChainConfig chainConfig = ChainConfig.baseGoerli();
-            assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(Long.MAX_VALUE));
+            assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(1683219600L));
         }
 
         /** Base goerli. */

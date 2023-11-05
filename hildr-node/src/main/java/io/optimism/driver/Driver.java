@@ -34,11 +34,23 @@ import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.BlockUpdate;
 import io.optimism.l1.ChainWatcher;
 import io.optimism.network.OpStackNetwork;
+import io.optimism.rpc.RpcMethod;
 import io.optimism.rpc.RpcServer;
+import io.optimism.rpc.internal.result.SyncStatusResult;
 import io.optimism.telemetry.InnerMetrics;
-import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.type.BlockId;
+import io.optimism.type.DepositTransaction;
+import io.optimism.type.Genesis;
+import io.optimism.type.L1BlockInfo;
+import io.optimism.type.L2BlockRef;
+import io.optimism.type.RollupConfigResult;
+import io.optimism.type.SystemConfig;
+import io.optimism.utilities.TxDecoder;
+import io.optimism.utilities.rpc.Web3jProvider;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
@@ -49,15 +61,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthBlock;
-import org.web3j.protocol.http.HttpService;
 import org.web3j.utils.Numeric;
 
 /**
@@ -88,15 +101,19 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private final MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
 
-    private final BigInteger channelTimeout;
-
-    private OpStackNetwork opStackNetwork;
+    private BigInteger channelTimeout;
 
     private final ExecutorService executor;
 
     private volatile boolean isShutdownTriggered;
 
     private CountDownLatch latch;
+
+    private final Config config;
+
+    private RollupConfigResult cachedRollConfig;
+
+    private OpStackNetwork opStackNetwork;
 
     /**
      * Instantiates a new Driver.
@@ -108,8 +125,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param unsafeBlockQueue the unsafe block queue
      * @param rpcServer        the rpc server
      * @param latch            the close notifier
-     * @param channelTimeout   the channel timeout
-     * @param opStackNetwork   the op stack network
+     * @param config           the chain config
      */
     @SuppressWarnings("preview")
     public Driver(
@@ -120,7 +136,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             MessagePassingQueue<ExecutionPayload> unsafeBlockQueue,
             RpcServer rpcServer,
             CountDownLatch latch,
-            BigInteger channelTimeout,
+            Config config,
             OpStackNetwork opStackNetwork) {
         this.engineDriver = engineDriver;
         this.rpcServer = rpcServer;
@@ -132,8 +148,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.unfinalizedBlocks = Lists.newArrayList();
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
         this.latch = latch;
-        this.channelTimeout = channelTimeout;
+        this.config = config;
+        this.channelTimeout = config.chainConfig().channelTimeout();
         this.opStackNetwork = opStackNetwork;
+        HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);
+        rpcHandler.put(RpcMethod.OP_SYNC_STATUS.getRpcMethodName(), unused -> this.getSyncStatus());
+        rpcHandler.put(RpcMethod.OP_ROLLUP_CONFIG.getRpcMethodName(), unused -> this.getRollupConfig());
+        this.rpcServer.register(rpcHandler);
     }
 
     /**
@@ -156,7 +177,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      */
     public static Driver<EngineApi> from(Config config, CountDownLatch latch)
             throws InterruptedException, ExecutionException {
-        Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
+        Web3j provider = Web3jProvider.createClient(config.l2RpcUrl());
 
         EthBlock finalizedBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -206,18 +227,95 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
         OpStackNetwork opStackNetwork = new OpStackNetwork(config.chainConfig(), unsafeBlockQueue);
-        //        opStackNetwork.start();
 
+        provider.shutdown();
         return new Driver<>(
-                engineDriver,
-                pipeline,
-                state,
-                watcher,
-                unsafeBlockQueue,
-                rpcServer,
-                latch,
-                config.chainConfig().channelTimeout(),
-                opStackNetwork);
+                engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch, config, opStackNetwork);
+    }
+
+    /**
+     * Get rollupConfig.
+     *
+     * @return The rollup config
+     */
+    public RollupConfigResult getRollupConfig() {
+        var chainConfig = this.config.chainConfig();
+        if (this.cachedRollConfig == null) {
+            var rollupConfig = getRollupConfig(chainConfig);
+            var curSysConfig = chainConfig.systemConfig();
+            var latestGenesis = getLatestGenesis(curSysConfig, chainConfig);
+            this.cachedRollConfig.setGenesis(latestGenesis);
+            this.cachedRollConfig = rollupConfig;
+        }
+        return this.cachedRollConfig;
+    }
+
+    @NotNull private static Genesis getLatestGenesis(Config.SystemConfig curSysConfig, Config.ChainConfig chainConfig) {
+        var sc = new SystemConfig(
+                curSysConfig.batchSender(),
+                curSysConfig.l1FeeOverhead(),
+                curSysConfig.l1FeeScalar(),
+                curSysConfig.gasLimit());
+        var latestGenesis = new Genesis(
+                new BlockId(
+                        chainConfig.l1StartEpoch().hash(),
+                        chainConfig.l1StartEpoch().number()),
+                new BlockId(
+                        chainConfig.l2Genesis().hash(), chainConfig.l2Genesis().number()),
+                chainConfig.l2Genesis().timestamp(),
+                sc);
+        return latestGenesis;
+    }
+
+    @NotNull private static RollupConfigResult getRollupConfig(Config.ChainConfig chainConfig) {
+        var rollupConfig = new RollupConfigResult();
+        rollupConfig.setBlockTime(chainConfig.blockTime());
+        rollupConfig.setMaxSequencerDrift(chainConfig.maxSeqDrift());
+        rollupConfig.setSeqWindowSize(chainConfig.seqWindowSize());
+        rollupConfig.setChannelTimeout(chainConfig.channelTimeout());
+        rollupConfig.setL1ChainId(chainConfig.l1ChainId());
+        rollupConfig.setL2ChainId(chainConfig.l2ChainId());
+        rollupConfig.setRegolithTime(chainConfig.regolithTime());
+        rollupConfig.setBatchInboxAddress(chainConfig.batchInbox());
+        rollupConfig.setDepositContractAddress(chainConfig.depositContract());
+        rollupConfig.setL1SystemConfigAddress(chainConfig.systemConfigContract());
+        return rollupConfig;
+    }
+
+    /**
+     * Get sync status.
+     *
+     * @return result of sync status.
+     */
+    public SyncStatusResult getSyncStatus() {
+        // CurrentL1
+        final var currentL1 = this.chainWatcher.getCurrentL1();
+        // CurrentL1Finalized
+        final var currentL1Finalized = this.chainWatcher.getCurrentL1Finalized();
+
+        final var l1HeadBlock = this.chainWatcher.getL1HeadBlock();
+        final var l1SafeBlock = this.chainWatcher.getL1SafeBlock();
+        final var l1FinalizedBlock = this.chainWatcher.getL1FinalizedBlock();
+
+        // FinalizedL2
+        final var finalizedHead = this.engineDriver.getFinalizedHead();
+        // SafeL2
+        final var safeHead = this.engineDriver.getSafeHead();
+        // UnsafeL2
+        final var unsafeHead = this.engineDriver.getUnsafeHead();
+
+        final var unsafeL2SyncTarget = this.unsafeL2SyncTarget();
+        return new SyncStatusResult(
+                currentL1,
+                currentL1Finalized,
+                l1HeadBlock,
+                l1SafeBlock,
+                l1FinalizedBlock,
+                unsafeHead,
+                safeHead,
+                finalizedHead,
+                unsafeL2SyncTarget,
+                unsafeHead);
     }
 
     @Override
@@ -273,6 +371,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             this.opStackNetwork.stop();
             LOGGER.info("opStackNetwork stopped.");
         }
+        this.tryStartNetwork();
     }
 
     @Override
@@ -311,7 +410,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         }
         this.updateFinalized();
         this.updateMetrics();
-        this.tryStartNetwork();
     }
 
     private void advanceSafeHead() throws ExecutionException, InterruptedException {
@@ -338,8 +436,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                     Driver.this.engineDriver.getSafeHead().number(),
                     Driver.this.engineDriver.getSafeHead().hash());
 
-            BlockInfo newSafeHead = Driver.this.engineDriver.getSafeHead();
-            Epoch newSafeEpoch = Driver.this.engineDriver.getSafeEpoch();
+            final BlockInfo newSafeHead = Driver.this.engineDriver.getSafeHead();
+            final Epoch newSafeEpoch = Driver.this.engineDriver.getSafeEpoch();
+
+            Driver.this.state.getAndUpdate(state -> {
+                state.updateSafeHead(newSafeHead, newSafeEpoch);
+                return state;
+            });
 
             UnfinalizedBlock newUnfinalizedBlock =
                     new UnfinalizedBlock(newSafeHead, newSafeEpoch, l1InclusionBlock, seqNumber);
@@ -385,10 +488,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     @SuppressWarnings("preview")
     private void handleNextBlockUpdate() {
-        boolean isStateFull = this.state.get().isFull();
-        if (isStateFull) {
-            return;
-        }
         BlockUpdate next = this.chainWatcher.getBlockUpdateQueue().poll();
         if (next == null) {
             return;
@@ -463,6 +562,61 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         if (this.synced() && this.opStackNetwork != null) {
             this.opStackNetwork.start();
         }
+    }
+
+    /**
+     * Retrieves the first queued-up L2 unsafe payload, or a zeroed reference if there is none.
+     *
+     * @return the L2BlockRef instance
+     */
+    private L2BlockRef unsafeL2SyncTarget() {
+        ExecutionPayload unsafePayload = this.unsafeBlockQueue.peek();
+        if (unsafePayload == null) {
+            return L2BlockRef.EMPTY;
+        }
+        return Driver.payloadToRef(unsafePayload, this.config.chainConfig());
+    }
+
+    /**
+     * Read L2BlockRef info from Execution payload.
+     *
+     * @param payload l2 execution payload info
+     * @param genesis L2 genesis info
+     * @return L2BlockRef instance
+     */
+    public static L2BlockRef payloadToRef(ExecutionPayload payload, Config.ChainConfig genesis) {
+        BlockId l1Origin;
+        BigInteger sequenceNumber;
+        if (payload.blockNumber().compareTo(genesis.l2Genesis().number()) == 0) {
+            if (!payload.blockHash().equals(genesis.l2Genesis().hash())) {
+                throw new RuntimeException(String.format(
+                        "expected L2 genesis hash to match L2 block at genesis block number %d: %s <> %s",
+                        genesis.l2Genesis().number(),
+                        payload.blockHash(),
+                        genesis.l2Genesis().hash()));
+            }
+            l1Origin = new BlockId(
+                    genesis.l1StartEpoch().hash(), genesis.l1StartEpoch().number());
+            sequenceNumber = BigInteger.ZERO;
+        } else {
+            if (payload.transactions().size() == 0) {
+                throw new RuntimeException(
+                        String.format("l2 block is missing L1 info deposit tx, block hash: %s", payload.blockHash()));
+            }
+            DepositTransaction depositTx =
+                    TxDecoder.decodeToDeposit(payload.transactions().get(0));
+            L1BlockInfo info = L1BlockInfo.from(Numeric.hexStringToByteArray(depositTx.getData()));
+            l1Origin = new BlockId(info.blockHash(), info.number());
+            sequenceNumber = info.sequenceNumber();
+        }
+
+        return new L2BlockRef(
+                payload.blockHash(),
+                payload.blockNumber(),
+                payload.parentHash(),
+                payload.timestamp(),
+                new BlockId(l1Origin.hash(), l1Origin.number()),
+                sequenceNumber);
     }
 
     /**

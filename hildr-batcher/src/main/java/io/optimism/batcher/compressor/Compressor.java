@@ -17,7 +17,6 @@
 package io.optimism.batcher.compressor;
 
 import java.io.Closeable;
-import java.io.Flushable;
 
 /**
  * Tx data bytes compressor interface.
@@ -25,7 +24,7 @@ import java.io.Flushable;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public interface Compressor extends Closeable, Readable, Flushable {
+public interface Compressor extends Closeable {
 
   /**
    * write uncompressed data which will be compressed. Should return CompressorFullException if the
@@ -59,6 +58,8 @@ public interface Compressor extends Closeable, Readable, Flushable {
    * returns CompressorFullException if the compressor is known to be full. Note that calls to Write
    * will fail if an error is returned from this method, but calls to Write can still return
    * CompressorFullErr even if this does not.
+   *
+   * @return return true if compressed data length reached the limit, otherwise return false
    */
-  void fullErr();
+  boolean isFull();
 }

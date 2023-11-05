@@ -25,8 +25,9 @@ import io.optimism.rpc.handler.JsonRpcExecutorHandler;
 import io.optimism.rpc.handler.JsonRpcParseHandler;
 import io.optimism.rpc.handler.TimeoutHandler;
 import io.optimism.rpc.methods.JsonRpcMethod;
+import io.optimism.rpc.methods.JsonRpcMethodAdapter;
 import io.optimism.rpc.methods.JsonRpcMethodsFactory;
-import io.optimism.telemetry.Logging;
+import io.optimism.utilities.telemetry.Logging;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -41,6 +42,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,5 +182,20 @@ public class RpcServer {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * register method of handler to rpc server after start.
+     *
+     * @param methods map of json rpc handler
+     */
+    public void register(Map<String, Function> methods) {
+        if (methods == null || methods.isEmpty()) {
+            return;
+        }
+        methods.forEach((name, fn) -> {
+            logger.info("put json rpc method into processor: name({})", name);
+            this.methods.putIfAbsent(name, new JsonRpcMethodAdapter(name, fn));
+        });
     }
 }

@@ -21,16 +21,22 @@ package io.optimism.rpc;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.optimism.TestConstants;
 import io.optimism.config.Config;
 import io.optimism.rpc.internal.JsonRpcRequest;
 import io.optimism.rpc.internal.JsonRpcRequestId;
 import io.optimism.rpc.internal.result.OutputRootResult;
-import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.utilities.telemetry.Logging;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
+import java.io.IOException;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Function;
 import jdk.incubator.concurrent.StructuredTaskScope;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -54,9 +60,13 @@ public class RpcServerTest {
 
     private static Config config;
 
+    private static ObjectMapper mapper;
+
     @BeforeAll
     static void setUp() {
+        TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
         config = TestConstants.createConfig();
+        mapper = new ObjectMapper();
     }
 
     RpcServer createRpcServer(Config config) {
@@ -107,6 +117,51 @@ public class RpcServerTest {
             }
         } finally {
             rpcServer.stop();
+        }
+    }
+
+    @Test
+    void testRpcServerRegister() throws IOException, InterruptedException, ExecutionException {
+        RpcServer rpcServer = createRpcServer(
+                new Config(null, "http://fakeurl", null, null, null, 9545, false, Config.ChainConfig.optimism()));
+        rpcServer.start();
+        HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);
+        rpcHandler.put("test_url", unused -> "response data");
+        rpcServer.register(rpcHandler);
+
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .readTimeout(Duration.ofMinutes(5))
+                .callTimeout(Duration.ofMinutes(5))
+                .build();
+        JsonRpcRequest jsonRpcRequest = new JsonRpcRequest("2.0", "test_url", new Object[] {"7900000"});
+        jsonRpcRequest.setId(new JsonRpcRequestId("1"));
+        try {
+            Response response = sendRequest(okHttpClient, jsonRpcRequest);
+            assertEquals(200, response.code());
+            assertNotNull(response.body());
+            Map jsonRpcResp = mapper.readValue(response.body().string(), Map.class);
+            System.out.println(jsonRpcResp);
+        } finally {
+            rpcServer.stop();
+        }
+    }
+
+    private Response sendRequest(OkHttpClient okHttpClient, JsonRpcRequest jsonRpcRequest)
+            throws JsonProcessingException, InterruptedException, ExecutionException {
+        var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
+        RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
+
+        final Request request = new Request.Builder()
+                .url("http://127.0.0.1:9545")
+                .post(requestBody)
+                .build();
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            Future<Response> fork = scope.fork(TracerTaskWrapper.wrap(() -> {
+                logger.info("test: {}", Thread.currentThread().getName());
+                return okHttpClient.newCall(request).execute();
+            }));
+            scope.join();
+            return fork.get();
         }
     }
 }

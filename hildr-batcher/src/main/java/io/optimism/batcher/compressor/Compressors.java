@@ -16,24 +16,33 @@
 
 package io.optimism.batcher.compressor;
 
+import io.optimism.batcher.exception.UnsupportedException;
+
 /**
  * Compressor create tool.
  *
  * @author thinkAfCod
  * @since 0.1.1
  */
-public interface Compressors {
+public class Compressors {
 
   /** Kind type of ratio. */
-  String RatioKind = "ratio";
+  public static final String RatioKind = "ratio";
 
-  /** Kind type of shadow. */
-  String ShadowKind = "shadow";
+  private Compressors() {}
 
   /**
    * Create Compressor by kind.
    *
-   * @param kind Type of Compressor
+   * @param config Config of compressor
+   * @return a compressor
    */
-  default void create(String kind) {}
+  public static Compressor create(final CompressorConfig config) {
+    String kind = config.kind();
+    if (kind.equalsIgnoreCase(RatioKind)) {
+      return new RatioCompressor(config);
+    } else {
+      throw new UnsupportedException(String.format("unsupported kind: %s", kind));
+    }
+  }
 }

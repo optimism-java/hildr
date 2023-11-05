@@ -38,6 +38,8 @@ public class TestConstants {
     /** The L 1 rpc url format. */
     static String l1RpcUrlFormat = "https://eth-goerli.g.alchemy.com/v2/%s";
 
+    static String l1RpcWsUrlFormat = "wss://eth-goerli.g.alchemy.com/v2/%s";
+
     /** The L 2 rpc url format. */
     static String l2RpcUrlFormat = "https://opt-goerli.g.alchemy.com/v2/%s";
 
@@ -53,8 +55,9 @@ public class TestConstants {
             return null;
         }
         var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
+        var l1WsRpcUrl = l1RpcWsUrlFormat.formatted(envs.get(ETH_API_ENV));
         var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
-        Config.CliConfig cliConfig = new Config.CliConfig(l1RpcUrl, l2RpcUrl, null, "testjwt", null, null);
+        Config.CliConfig cliConfig = new Config.CliConfig(l1WsRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
         return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
     }
 }

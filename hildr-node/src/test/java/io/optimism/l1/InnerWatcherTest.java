@@ -21,7 +21,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import io.optimism.TestConstants;
 import io.optimism.config.Config;
 import java.math.BigInteger;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.jctools.queues.MessagePassingQueue;
@@ -74,13 +73,14 @@ public class InnerWatcherTest {
     }
 
     @Test
-    void testTryIngestBlock() throws ExecutionException, InterruptedException {
+    void testTryIngestBlock() throws Exception {
         if (!TestConstants.isConfiguredApiKeyEnv) {
             return;
         }
         ExecutorService executor = Executors.newSingleThreadExecutor();
         var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
         var watcher = this.createWatcher(null, queue, executor);
+        watcher.startUp();
         watcher.tryIngestBlock();
         assertEquals(2, queue.size());
     }

@@ -16,10 +16,13 @@
 
 package io.optimism.utilities.rpc;
 
+import java.net.ConnectException;
 import okhttp3.OkHttpClient;
+import org.apache.commons.lang3.StringUtils;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.http.HttpService;
+import org.web3j.protocol.websocket.WebSocketService;
 import org.web3j.tuples.generated.Tuple2;
 
 /**
@@ -39,9 +42,7 @@ public class Web3jProvider {
    * @return web3j client
    */
   public static Web3j createClient(String url) {
-    OkHttpClient okHttpClient =
-        new OkHttpClient.Builder().addInterceptor(new RetryRateLimitInterceptor()).build();
-    return Web3j.build(new HttpService(url, okHttpClient));
+    return create(url).component1();
   }
 
   /**
@@ -52,9 +53,31 @@ public class Web3jProvider {
    * @return web3j client and web3j service
    */
   public static Tuple2<Web3j, Web3jService> create(String url) {
-    OkHttpClient okHttpClient =
-        new OkHttpClient.Builder().addInterceptor(new RetryRateLimitInterceptor()).build();
-    Web3jService web3jService = new HttpService(url, okHttpClient);
-    return new Tuple2<>(Web3j.build(web3jService), web3jService);
+    Web3jService web3Srv = null;
+    if (Web3jProvider.isHttp(url)) {
+      OkHttpClient okHttpClient =
+          new OkHttpClient.Builder().addInterceptor(new RetryRateLimitInterceptor()).build();
+      web3Srv = new HttpService(url, okHttpClient);
+    } else if (Web3jProvider.isWs(url)) {
+      web3Srv = new WebSocketService(url, true);
+      try {
+        ((WebSocketService) web3Srv).connect();
+      } catch (ConnectException e) {
+        throw new IllegalStateException(e);
+      }
+    } else {
+      throw new IllegalArgumentException("not supported scheme:" + url);
+    }
+    return new Tuple2<>(Web3j.build(web3Srv), web3Srv);
+  }
+
+
+
+  private static boolean isHttp(final String url) {
+    return !StringUtils.isEmpty(url) && url.startsWith("http");
+  }
+
+  private static boolean isWs(final String url) {
+    return !StringUtils.isEmpty(url) && url.startsWith("ws");
   }
 }
