@@ -31,32 +31,31 @@ import org.slf4j.LoggerFactory;
  */
 public class LoggedJsonRpcProcessor implements JsonRpcProcessor {
 
-  private static final Logger logger = LoggerFactory.getLogger(LoggedJsonRpcProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(LoggedJsonRpcProcessor.class);
 
-  private final JsonRpcProcessor rpcProcessor;
+    private final JsonRpcProcessor rpcProcessor;
 
-  /**
-   * Instantiates a new Logged json rpc processor.
-   *
-   * @param rpcProcessor the rpc processor
-   */
-  public LoggedJsonRpcProcessor(final JsonRpcProcessor rpcProcessor) {
-    this.rpcProcessor = rpcProcessor;
-  }
-
-  @Override
-  public JsonRpcResponse process(final JsonRpcMethod method, final JsonRpcRequestContext context) {
-    JsonRpcResponse jsonRpcResponse = rpcProcessor.process(method, context);
-    if (JsonRpcResponseType.ERROR == jsonRpcResponse.getType()) {
-      JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) jsonRpcResponse;
-      switch (errorResponse.getError()) {
-        case INVALID_PARAMS -> logger.info("jsonrpc has error: {}", "Invalid Params");
-        case UNAUTHORIZED -> logger.info("jsonrpc has error: {}", "Unauthorized");
-        case INTERNAL_ERROR -> logger.info(
-            "jsonrpc has error: {}", "Error processing JSON-RPC requestBody");
-        default -> logger.info("jsonrpc has error: {}", "Unexpected error");
-      }
+    /**
+     * Instantiates a new Logged json rpc processor.
+     *
+     * @param rpcProcessor the rpc processor
+     */
+    public LoggedJsonRpcProcessor(final JsonRpcProcessor rpcProcessor) {
+        this.rpcProcessor = rpcProcessor;
     }
-    return jsonRpcResponse;
-  }
+
+    @Override
+    public JsonRpcResponse process(final JsonRpcMethod method, final JsonRpcRequestContext context) {
+        JsonRpcResponse jsonRpcResponse = rpcProcessor.process(method, context);
+        if (JsonRpcResponseType.ERROR == jsonRpcResponse.getType()) {
+            JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) jsonRpcResponse;
+            switch (errorResponse.getError()) {
+                case INVALID_PARAMS -> logger.info("jsonrpc has error: {}", "Invalid Params");
+                case UNAUTHORIZED -> logger.info("jsonrpc has error: {}", "Unauthorized");
+                case INTERNAL_ERROR -> logger.info("jsonrpc has error: {}", "Error processing JSON-RPC requestBody");
+                default -> logger.info("jsonrpc has error: {}", "Unexpected error");
+            }
+        }
+        return jsonRpcResponse;
+    }
 }

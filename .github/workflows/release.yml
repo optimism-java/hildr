@@ -29,8 +29,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '20.0.1' ]
-        java-version: [ '20.0.1' ]
+        version: [ '21.0.1' ]
+        java-version: [ '21' ]
         os: [ macos-latest ]
 
     outputs:
@@ -74,8 +74,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '20.0.1' ]
-        java-version: [ '20.0.1' ]
+        version: [ '21.0.1' ]
+        java-version: [ '21' ]
         os: [ windows-latest ]
 
     outputs:
@@ -118,8 +118,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '20.0.1' ]
-        java-version: [ '20.0.1' ]
+        version: [ '21.0.1' ]
+        java-version: [ '21' ]
         os: [ ubuntu-latest ]
 
     outputs:
@@ -170,8 +170,8 @@ jobs:
       - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '20.0.1'
-          java-version: '20.0.1'
+          version: '21.0.1'
+          java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'gradle'

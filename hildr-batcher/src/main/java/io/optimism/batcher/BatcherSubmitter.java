@@ -41,73 +41,70 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
 @SuppressWarnings("UnusedVariable")
 public class BatcherSubmitter extends AbstractExecutionThreadService {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(BatcherSubmitter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BatcherSubmitter.class);
 
-  private final Config config;
+    private final Config config;
 
-  private final ChannelManager channelManager;
-  private final BlockLoader blockLoader;
-  private final ChannelDataPublisher channelPublisher;
+    private final ChannelManager channelManager;
+    private final BlockLoader blockLoader;
+    private final ChannelDataPublisher channelPublisher;
 
-  private volatile boolean isShutdownTriggered = false;
+    private volatile boolean isShutdownTriggered = false;
 
-  /**
-   * Constructor of BatcherSubmitter.
-   *
-   * @param config BatcherSubmitter config
-   */
-  public BatcherSubmitter(Config config) {
-    this.config = config;
-    this.channelManager =
-        new ChannelManager(ChannelConfig.from(config), CompressorConfig.from(config));
-    this.blockLoader = new BlockLoader(LoaderConfig.from(config), this.channelManager::addL2Block);
-    this.blockLoader.init();
-    this.channelPublisher =
-        new ChannelDataPublisher(
-            PublisherConfig.from(config, this.blockLoader.getRollConfig()),
-            this.channelManager::txData,
-            this::handleReceipt);
-  }
-
-  private void trySubmitBatchData() {
-    this.blockLoader.loadBlock();
-    // If no data has been sent, then sleep for a period of time.
-    if (!this.channelPublisher.publishPendingBlock()) {
-      try {
-        Thread.sleep(config.pollInterval());
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw new BatcherExecutionException("Batcher thread has been interrupted", e);
-      }
+    /**
+     * Constructor of BatcherSubmitter.
+     *
+     * @param config BatcherSubmitter config
+     */
+    public BatcherSubmitter(Config config) {
+        this.config = config;
+        this.channelManager = new ChannelManager(ChannelConfig.from(config), CompressorConfig.from(config));
+        this.blockLoader = new BlockLoader(LoaderConfig.from(config), this.channelManager::addL2Block);
+        this.blockLoader.init();
+        this.channelPublisher = new ChannelDataPublisher(
+                PublisherConfig.from(config, this.blockLoader.getRollConfig()),
+                this.channelManager::txData,
+                this::handleReceipt);
     }
-  }
 
-  private void handleReceipt(Frame tx, TransactionReceipt receipt) {
-    if (receipt.isStatusOK()) {
-      this.channelManager.txConfirmed(
-          tx, new BlockId(receipt.getBlockHash(), receipt.getBlockNumber()));
-    } else {
-      this.channelManager.txFailed(tx);
+    private void trySubmitBatchData() {
+        this.blockLoader.loadBlock();
+        // If no data has been sent, then sleep for a period of time.
+        if (!this.channelPublisher.publishPendingBlock()) {
+            try {
+                Thread.sleep(config.pollInterval());
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new BatcherExecutionException("Batcher thread has been interrupted", e);
+            }
+        }
     }
-  }
 
-  @Override
-  protected void run() throws Exception {
-    while (isRunning() && !this.isShutdownTriggered) {
-      this.trySubmitBatchData();
+    private void handleReceipt(Frame tx, TransactionReceipt receipt) {
+        if (receipt.isStatusOK()) {
+            this.channelManager.txConfirmed(tx, new BlockId(receipt.getBlockHash(), receipt.getBlockNumber()));
+        } else {
+            this.channelManager.txFailed(tx);
+        }
     }
-  }
 
-  @Override
-  protected void shutDown() throws Exception {
-    super.shutDown();
-    this.blockLoader.close();
-    this.channelPublisher.close();
-    this.channelManager.clear();
-  }
+    @Override
+    protected void run() throws Exception {
+        while (isRunning() && !this.isShutdownTriggered) {
+            this.trySubmitBatchData();
+        }
+    }
 
-  @Override
-  protected void triggerShutdown() {
-    this.isShutdownTriggered = true;
-  }
+    @Override
+    protected void shutDown() throws Exception {
+        super.shutDown();
+        this.blockLoader.close();
+        this.channelPublisher.close();
+        this.channelManager.clear();
+    }
+
+    @Override
+    protected void triggerShutdown() {
+        this.isShutdownTriggered = true;
+    }
 }

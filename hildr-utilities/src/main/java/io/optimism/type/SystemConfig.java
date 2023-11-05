@@ -28,5 +28,4 @@ import java.math.BigInteger;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public record SystemConfig(
-    String batcherAddr, BigInteger overhead, BigInteger scalar, BigInteger gasLimit) {}
+public record SystemConfig(String batcherAddr, BigInteger overhead, BigInteger scalar, BigInteger gasLimit) {}

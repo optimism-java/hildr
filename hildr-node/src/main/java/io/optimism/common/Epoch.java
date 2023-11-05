@@ -29,13 +29,13 @@ import java.math.BigInteger;
  */
 public record Epoch(BigInteger number, String hash, BigInteger timestamp) {
 
-  /**
-   * From epoch.
-   *
-   * @param call the hex call data
-   * @return the epoch
-   */
-  public static Epoch from(AttributesDepositedCall call) {
-    return new Epoch(call.number(), call.hash(), call.timestamp());
-  }
+    /**
+     * From epoch.
+     *
+     * @param call the hex call data
+     * @return the epoch
+     */
+    public static Epoch from(AttributesDepositedCall call) {
+        return new Epoch(call.number(), call.hash(), call.timestamp());
+    }
 }

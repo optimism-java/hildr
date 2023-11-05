@@ -24,12 +24,12 @@ package io.optimism.config;
  */
 public class ConfigLoadException extends RuntimeException {
 
-  /**
-   * Instantiates a new Config load exception.
-   *
-   * @param throwable the throwable
-   */
-  public ConfigLoadException(Throwable throwable) {
-    super(throwable);
-  }
+    /**
+     * Instantiates a new Config load exception.
+     *
+     * @param throwable the throwable
+     */
+    public ConfigLoadException(Throwable throwable) {
+        super(throwable);
+    }
 }

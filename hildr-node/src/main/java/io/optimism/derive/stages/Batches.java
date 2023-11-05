@@ -49,261 +49,253 @@ import org.web3j.rlp.RlpType;
  */
 public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableIterator<Batch> {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(Batches.class);
-  private final TreeMap<BigInteger, Batch> batches;
+    private static final Logger LOGGER = LoggerFactory.getLogger(Batches.class);
+    private final TreeMap<BigInteger, Batch> batches;
 
-  private final I channelIterator;
+    private final I channelIterator;
 
-  private final AtomicReference<State> state;
+    private final AtomicReference<State> state;
 
-  private final Config config;
+    private final Config config;
 
-  /**
-   * Instantiates a new Batches.
-   *
-   * @param batches the batches
-   * @param channelIterator the channel iterator
-   * @param state the state
-   * @param config the config
-   */
-  public Batches(
-      TreeMap<BigInteger, Batch> batches,
-      I channelIterator,
-      AtomicReference<State> state,
-      Config config) {
-    this.batches = batches;
-    this.channelIterator = channelIterator;
-    this.state = state;
-    this.config = config;
-  }
-
-  @Override
-  public void purge() {
-    this.channelIterator.purge();
-    this.batches.clear();
-  }
-
-  @Override
-  public Batch next() {
-    Channel channel = this.channelIterator.next();
-    if (channel != null) {
-      decodeBatches(channel).forEach(batch -> this.batches.put(batch.timestamp(), batch));
+    /**
+     * Instantiates a new Batches.
+     *
+     * @param batches the batches
+     * @param channelIterator the channel iterator
+     * @param state the state
+     * @param config the config
+     */
+    public Batches(TreeMap<BigInteger, Batch> batches, I channelIterator, AtomicReference<State> state, Config config) {
+        this.batches = batches;
+        this.channelIterator = channelIterator;
+        this.state = state;
+        this.config = config;
     }
 
-    Batch derivedBatch = null;
-    loop:
-    while (true) {
-      if (this.batches.firstEntry() != null) {
-        Batch batch = this.batches.firstEntry().getValue();
-        switch (batchStatus(batch)) {
-          case Accept:
-            derivedBatch = batch;
-            this.batches.remove(batch.timestamp());
-            break loop;
-          case Drop:
-            LOGGER.warn("dropping invalid batch");
-            this.batches.remove(batch.timestamp());
-            continue;
-          case Future, Undecided:
-            break loop;
-          default:
-            throw new IllegalStateException("Unexpected value: " + batchStatus(batch));
+    @Override
+    public void purge() {
+        this.channelIterator.purge();
+        this.batches.clear();
+    }
+
+    @Override
+    public Batch next() {
+        Channel channel = this.channelIterator.next();
+        if (channel != null) {
+            decodeBatches(channel).forEach(batch -> this.batches.put(batch.timestamp(), batch));
         }
-      } else {
-        break;
-      }
-    }
 
-    Batch batch = null;
-    if (derivedBatch != null) {
-      batch = derivedBatch;
-    } else {
-      State state = this.state.get();
-
-      BigInteger currentL1Block = state.getCurrentEpochNum();
-      BlockInfo safeHead = state.getSafeHead();
-      Epoch epoch = state.getSafeEpoch();
-      Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
-      BigInteger seqWindowSize = this.config.chainConfig().seqWindowSize();
-
-      if (nextEpoch != null) {
-        if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
-          BigInteger nextTimestamp =
-              safeHead.timestamp().add(this.config.chainConfig().blockTime());
-          Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
-          batch =
-              new Batch(
-                  safeHead.parentHash(),
-                  epochRes.number(),
-                  epochRes.hash(),
-                  nextTimestamp,
-                  Lists.newArrayList(),
-                  currentL1Block);
-        }
-      }
-    }
-
-    return batch;
-  }
-
-  /**
-   * Decode batches list.
-   *
-   * @param channel the channel
-   * @return the list
-   */
-  public static List<Batch> decodeBatches(Channel channel) {
-    byte[] channelData = decompressZlib(channel.data());
-    List<RlpType> batches = RlpDecoder.decode(channelData).getValues();
-    return batches.stream()
-        .map(
-            rlpType -> {
-              byte[] batchData =
-                  ArrayUtils.subarray(
-                      ((RlpString) rlpType).getBytes(), 1, ((RlpString) rlpType).getBytes().length);
-              RlpList rlpBatchData = (RlpList) RlpDecoder.decode(batchData).getValues().get(0);
-              return Batch.decode(rlpBatchData, channel.l1InclusionBlock());
-            })
-        .collect(Collectors.toList());
-  }
-
-  private static byte[] decompressZlib(byte[] data) {
-    try {
-      Inflater inflater = new Inflater();
-      inflater.setInput(data);
-      ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-      byte[] buffer = new byte[1024];
-      while (!inflater.finished()) {
-        int count = inflater.inflate(buffer);
-        outputStream.write(buffer, 0, count);
-      }
-
-      return outputStream.toByteArray();
-    } catch (DataFormatException e) {
-      throw new DecompressZlibException(e);
-    }
-  }
-
-  @SuppressWarnings("WhitespaceAround")
-  private BatchStatus batchStatus(Batch batch) {
-    State state = this.state.get();
-    Epoch epoch = state.getSafeEpoch();
-    Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
-    BlockInfo head = state.getSafeHead();
-    BigInteger nextTimestamp = head.timestamp().add(this.config.chainConfig().blockTime());
-
-    // check timestamp range
-    switch (batch.timestamp().compareTo(nextTimestamp)) {
-      case 1 -> {
-        return BatchStatus.Future;
-      }
-      case -1 -> {
-        return BatchStatus.Drop;
-      }
-      default -> {}
-    }
-
-    // check that block builds on existing chain
-    if (!batch.parentHash().equalsIgnoreCase(head.hash())) {
-      LOGGER.warn("invalid parent hash");
-      return BatchStatus.Drop;
-    }
-
-    // check the inclusion delay
-    if (batch
-            .epochNum()
-            .add(this.config.chainConfig().seqWindowSize())
-            .compareTo(batch.l1InclusionBlock())
-        < 0) {
-      LOGGER.warn("inclusion window elapsed");
-      return BatchStatus.Drop;
-    }
-
-    Epoch batchOrigin;
-    // check and set batch origin epoch
-    if (batch.epochNum().compareTo(epoch.number()) == 0) {
-      batchOrigin = epoch;
-    } else if (batch.epochNum().compareTo(epoch.number().add(BigInteger.ONE)) == 0) {
-      batchOrigin = nextEpoch;
-    } else {
-      LOGGER.warn("invalid batch origin epoch number");
-      return BatchStatus.Drop;
-    }
-
-    if (batchOrigin != null) {
-      if (!batch.epochHash().equalsIgnoreCase(batchOrigin.hash())) {
-        LOGGER.warn("invalid epoch hash");
-        return BatchStatus.Drop;
-      }
-
-      if (batch.timestamp().compareTo(batchOrigin.timestamp()) < 0) {
-        LOGGER.warn("batch too old");
-        return BatchStatus.Drop;
-      }
-
-      // handle sequencer drift
-      if (batch
-              .timestamp()
-              .compareTo(batchOrigin.timestamp().add(this.config.chainConfig().maxSeqDrift()))
-          > 0) {
-        if (batch.transactions().isEmpty()) {
-          if (epoch.number().compareTo(batch.epochNum()) == 0) {
-            if (nextEpoch != null) {
-              if (batch.timestamp().compareTo(nextEpoch.timestamp()) >= 0) {
-                LOGGER.warn("sequencer drift too large");
-                return BatchStatus.Drop;
-              }
+        Batch derivedBatch = null;
+        loop:
+        while (true) {
+            if (this.batches.firstEntry() != null) {
+                Batch batch = this.batches.firstEntry().getValue();
+                switch (batchStatus(batch)) {
+                    case Accept:
+                        derivedBatch = batch;
+                        this.batches.remove(batch.timestamp());
+                        break loop;
+                    case Drop:
+                        LOGGER.warn("dropping invalid batch");
+                        this.batches.remove(batch.timestamp());
+                        continue;
+                    case Future, Undecided:
+                        break loop;
+                    default:
+                        throw new IllegalStateException("Unexpected value: " + batchStatus(batch));
+                }
             } else {
-              LOGGER.debug("sequencer drift undecided");
-              return BatchStatus.Undecided;
+                break;
             }
-          }
-        } else {
-          LOGGER.warn("sequencer drift too large");
-          return BatchStatus.Drop;
         }
-      }
-    } else {
-      LOGGER.debug("batch origin not known");
-      return BatchStatus.Undecided;
+
+        Batch batch = null;
+        if (derivedBatch != null) {
+            batch = derivedBatch;
+        } else {
+            State state = this.state.get();
+
+            BigInteger currentL1Block = state.getCurrentEpochNum();
+            BlockInfo safeHead = state.getSafeHead();
+            Epoch epoch = state.getSafeEpoch();
+            Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
+            BigInteger seqWindowSize = this.config.chainConfig().seqWindowSize();
+
+            if (nextEpoch != null) {
+                if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
+                    BigInteger nextTimestamp =
+                            safeHead.timestamp().add(this.config.chainConfig().blockTime());
+                    Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
+                    batch = new Batch(
+                            safeHead.parentHash(),
+                            epochRes.number(),
+                            epochRes.hash(),
+                            nextTimestamp,
+                            Lists.newArrayList(),
+                            currentL1Block);
+                }
+            }
+        }
+
+        return batch;
     }
 
-    if (batch.hasInvalidTransactions()) {
-      LOGGER.warn("invalid transaction");
-      return BatchStatus.Drop;
+    /**
+     * Decode batches list.
+     *
+     * @param channel the channel
+     * @return the list
+     */
+    public static List<Batch> decodeBatches(Channel channel) {
+        byte[] channelData = decompressZlib(channel.data());
+        List<RlpType> batches = RlpDecoder.decode(channelData).getValues();
+        return batches.stream()
+                .map(rlpType -> {
+                    byte[] batchData = ArrayUtils.subarray(
+                            ((RlpString) rlpType).getBytes(), 1, ((RlpString) rlpType).getBytes().length);
+                    RlpList rlpBatchData =
+                            (RlpList) RlpDecoder.decode(batchData).getValues().get(0);
+                    return Batch.decode(rlpBatchData, channel.l1InclusionBlock());
+                })
+                .collect(Collectors.toList());
     }
 
-    return BatchStatus.Accept;
-  }
+    private static byte[] decompressZlib(byte[] data) {
+        try {
+            Inflater inflater = new Inflater();
+            inflater.setInput(data);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+            byte[] buffer = new byte[1024];
+            while (!inflater.finished()) {
+                int count = inflater.inflate(buffer);
+                outputStream.write(buffer, 0, count);
+            }
 
-  /**
-   * Create batches.
-   *
-   * @param <I> the type parameter
-   * @param channelIterator the channel iterator
-   * @param state the state
-   * @param config the config
-   * @return the batches
-   */
-  public static <I extends PurgeableIterator<Channel>> Batches<I> create(
-      I channelIterator, AtomicReference<State> state, Config config) {
-    return new Batches<>(new TreeMap<>(), channelIterator, state, config);
-  }
+            return outputStream.toByteArray();
+        } catch (DataFormatException e) {
+            throw new DecompressZlibException(e);
+        }
+    }
 
-  /**
-   * The enum BatchStatus.
-   *
-   * @author grapebaba
-   * @since 0.1.0
-   */
-  public enum BatchStatus {
-    /** Drop batch status. */
-    Drop,
-    /** Accept batch status. */
-    Accept,
-    /** Undecided batch status. */
-    Undecided,
-    /** Future batch status. */
-    Future,
-  }
+    @SuppressWarnings("WhitespaceAround")
+    private BatchStatus batchStatus(Batch batch) {
+        State state = this.state.get();
+        Epoch epoch = state.getSafeEpoch();
+        Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
+        BlockInfo head = state.getSafeHead();
+        BigInteger nextTimestamp =
+                head.timestamp().add(this.config.chainConfig().blockTime());
+
+        // check timestamp range
+        switch (batch.timestamp().compareTo(nextTimestamp)) {
+            case 1 -> {
+                return BatchStatus.Future;
+            }
+            case -1 -> {
+                return BatchStatus.Drop;
+            }
+            default -> {}
+        }
+
+        // check that block builds on existing chain
+        if (!batch.parentHash().equalsIgnoreCase(head.hash())) {
+            LOGGER.warn("invalid parent hash");
+            return BatchStatus.Drop;
+        }
+
+        // check the inclusion delay
+        if (batch.epochNum().add(this.config.chainConfig().seqWindowSize()).compareTo(batch.l1InclusionBlock()) < 0) {
+            LOGGER.warn("inclusion window elapsed");
+            return BatchStatus.Drop;
+        }
+
+        Epoch batchOrigin;
+        // check and set batch origin epoch
+        if (batch.epochNum().compareTo(epoch.number()) == 0) {
+            batchOrigin = epoch;
+        } else if (batch.epochNum().compareTo(epoch.number().add(BigInteger.ONE)) == 0) {
+            batchOrigin = nextEpoch;
+        } else {
+            LOGGER.warn("invalid batch origin epoch number");
+            return BatchStatus.Drop;
+        }
+
+        if (batchOrigin != null) {
+            if (!batch.epochHash().equalsIgnoreCase(batchOrigin.hash())) {
+                LOGGER.warn("invalid epoch hash");
+                return BatchStatus.Drop;
+            }
+
+            if (batch.timestamp().compareTo(batchOrigin.timestamp()) < 0) {
+                LOGGER.warn("batch too old");
+                return BatchStatus.Drop;
+            }
+
+            // handle sequencer drift
+            if (batch.timestamp()
+                            .compareTo(batchOrigin
+                                    .timestamp()
+                                    .add(this.config.chainConfig().maxSeqDrift()))
+                    > 0) {
+                if (batch.transactions().isEmpty()) {
+                    if (epoch.number().compareTo(batch.epochNum()) == 0) {
+                        if (nextEpoch != null) {
+                            if (batch.timestamp().compareTo(nextEpoch.timestamp()) >= 0) {
+                                LOGGER.warn("sequencer drift too large");
+                                return BatchStatus.Drop;
+                            }
+                        } else {
+                            LOGGER.debug("sequencer drift undecided");
+                            return BatchStatus.Undecided;
+                        }
+                    }
+                } else {
+                    LOGGER.warn("sequencer drift too large");
+                    return BatchStatus.Drop;
+                }
+            }
+        } else {
+            LOGGER.debug("batch origin not known");
+            return BatchStatus.Undecided;
+        }
+
+        if (batch.hasInvalidTransactions()) {
+            LOGGER.warn("invalid transaction");
+            return BatchStatus.Drop;
+        }
+
+        return BatchStatus.Accept;
+    }
+
+    /**
+     * Create batches.
+     *
+     * @param <I> the type parameter
+     * @param channelIterator the channel iterator
+     * @param state the state
+     * @param config the config
+     * @return the batches
+     */
+    public static <I extends PurgeableIterator<Channel>> Batches<I> create(
+            I channelIterator, AtomicReference<State> state, Config config) {
+        return new Batches<>(new TreeMap<>(), channelIterator, state, config);
+    }
+
+    /**
+     * The enum BatchStatus.
+     *
+     * @author grapebaba
+     * @since 0.1.0
+     */
+    public enum BatchStatus {
+        /** Drop batch status. */
+        Drop,
+        /** Accept batch status. */
+        Accept,
+        /** Undecided batch status. */
+        Undecided,
+        /** Future batch status. */
+        Future,
+    }
 }

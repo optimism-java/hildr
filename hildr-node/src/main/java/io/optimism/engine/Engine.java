@@ -35,59 +35,59 @@ import java.math.BigInteger;
  */
 public interface Engine {
 
-  /**
-   * This updates which L2 blocks the engine considers to be canonical {@code forkchoiceState}, and
-   * optionally initiates block production {@code payloadAttributes}.
-   *
-   * <p>Specification method: engine_forkchoiceUpdatedV1 params: - [ForkchoiceState] -
-   * [PayloadAttributes] timeout: 8s returns: - [ForkChoiceUpdate] potential errors: - code and
-   * message set in case an exception happens while the validating payload, updating the forkchoice
-   * or initiating the payload build process. Refer to <a
-   * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_forkchoiceupdatedv1">Optimism
-   * Specs</a>.
-   *
-   * @param forkchoiceState the forkchoice state
-   * @param payloadAttributes the payload attributes
-   * @return the fork choice update
-   * @throws IOException the io exception
-   * @see <a
-   *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1">engine_forkchoiceUpdatedV1</a>
-   */
-  OpEthForkChoiceUpdate forkchoiceUpdated(
-      ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes) throws IOException;
+    /**
+     * This updates which L2 blocks the engine considers to be canonical {@code forkchoiceState}, and
+     * optionally initiates block production {@code payloadAttributes}.
+     *
+     * <p>Specification method: engine_forkchoiceUpdatedV1 params: - [ForkchoiceState] -
+     * [PayloadAttributes] timeout: 8s returns: - [ForkChoiceUpdate] potential errors: - code and
+     * message set in case an exception happens while the validating payload, updating the forkchoice
+     * or initiating the payload build process. Refer to <a
+     * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_forkchoiceupdatedv1">Optimism
+     * Specs</a>.
+     *
+     * @param forkchoiceState the forkchoice state
+     * @param payloadAttributes the payload attributes
+     * @return the fork choice update
+     * @throws IOException the io exception
+     * @see <a
+     *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1">engine_forkchoiceUpdatedV1</a>
+     */
+    OpEthForkChoiceUpdate forkchoiceUpdated(ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes)
+            throws IOException;
 
-  /**
-   * Applies a L2 block to the engine state.
-   *
-   * <p>Specification method:engine_newPayloadV1 params: - [ExecutionPayload] timeout: 8s returns: -
-   * [PayloadStatus] potential errors: - code and message set in case an exception happens while
-   * processing the payload. Refer to <a
-   * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_newPayloadv1">Optimism
-   * Specs</a>
-   *
-   * @param executionPayload the execution payload
-   * @return the payload status
-   * @throws IOException the io exception
-   * @see <a
-   *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_newpayloadv1">engine_newPayloadV1</a>
-   */
-  OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException;
+    /**
+     * Applies a L2 block to the engine state.
+     *
+     * <p>Specification method:engine_newPayloadV1 params: - [ExecutionPayload] timeout: 8s returns: -
+     * [PayloadStatus] potential errors: - code and message set in case an exception happens while
+     * processing the payload. Refer to <a
+     * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_newPayloadv1">Optimism
+     * Specs</a>
+     *
+     * @param executionPayload the execution payload
+     * @return the payload status
+     * @throws IOException the io exception
+     * @see <a
+     *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_newpayloadv1">engine_newPayloadV1</a>
+     */
+    OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException;
 
-  /**
-   * Retrieves a payload by ID, prepared by {forkChoiceUpdated} when called with {@code
-   * payloadAttributes}.
-   *
-   * <p>Specification method: engine_getPayloadV1 params: - [PayloadId]: DATA, 8 Bytes - Identifier
-   * of the payload build process timeout: 1s returns: - [ExecutionPayload] potential errors: - code
-   * and message set in case an exception happens while getting the payload. Refer to <a
-   * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_getPayloadv1">Optimism
-   * Specs</a>
-   *
-   * @param payloadId the payload id
-   * @return the payload
-   * @throws IOException the io exception
-   * @see <a
-   *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_getpayloadv1">engine_getPayloadV1</a>
-   */
-  OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException;
+    /**
+     * Retrieves a payload by ID, prepared by {forkChoiceUpdated} when called with {@code
+     * payloadAttributes}.
+     *
+     * <p>Specification method: engine_getPayloadV1 params: - [PayloadId]: DATA, 8 Bytes - Identifier
+     * of the payload build process timeout: 1s returns: - [ExecutionPayload] potential errors: - code
+     * and message set in case an exception happens while getting the payload. Refer to <a
+     * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_getPayloadv1">Optimism
+     * Specs</a>
+     *
+     * @param payloadId the payload id
+     * @return the payload
+     * @throws IOException the io exception
+     * @see <a
+     *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_getpayloadv1">engine_getPayloadV1</a>
+     */
+    OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException;
 }

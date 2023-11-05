@@ -26,5 +26,4 @@ package io.optimism.rpc.internal.result;
  * @author thinkAfCod
  * @since 2023.06
  */
-public record OutputRootResult(
-    String outputRoot, String version, String stateRoot, String withdrawalStorageRoot) {}
+public record OutputRootResult(String outputRoot, String version, String stateRoot, String withdrawalStorageRoot) {}

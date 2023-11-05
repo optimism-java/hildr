@@ -24,12 +24,12 @@ package io.optimism.config;
  */
 public class InvalidSyncModeException extends RuntimeException {
 
-  /**
-   * Instantiates a new Invalid sync mode exception.
-   *
-   * @param message the message
-   */
-  public InvalidSyncModeException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Invalid sync mode exception.
+     *
+     * @param message the message
+     */
+    public InvalidSyncModeException(String message) {
+        super(message);
+    }
 }

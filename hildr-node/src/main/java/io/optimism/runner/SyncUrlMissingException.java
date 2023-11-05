@@ -24,17 +24,17 @@ package io.optimism.runner;
  */
 public class SyncUrlMissingException extends RuntimeException {
 
-  /** Instantiates a new Sync url missing exception. */
-  public SyncUrlMissingException() {
-    super("Sync url missing");
-  }
+    /** Instantiates a new Sync url missing exception. */
+    public SyncUrlMissingException() {
+        super("Sync url missing");
+    }
 
-  /**
-   * Instantiates a new Sync url missing exception.
-   *
-   * @param message the message
-   */
-  public SyncUrlMissingException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Sync url missing exception.
+     *
+     * @param message the message
+     */
+    public SyncUrlMissingException(String message) {
+        super(message);
+    }
 }

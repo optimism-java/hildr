@@ -26,20 +26,20 @@ import org.web3j.protocol.core.Response;
  */
 public class RollupConfigRes extends Response<RollupConfigResult> {
 
-  /** Constructor of RollupConfigRes. */
-  public RollupConfigRes() {}
+    /** Constructor of RollupConfigRes. */
+    public RollupConfigRes() {}
 
-  /**
-   * Returns RollupConfig.
-   *
-   * @return rollup config info
-   */
-  public RollupConfigResult getConfig() {
-    return getResult();
-  }
+    /**
+     * Returns RollupConfig.
+     *
+     * @return rollup config info
+     */
+    public RollupConfigResult getConfig() {
+        return getResult();
+    }
 
-  @Override
-  public void setResult(RollupConfigResult result) {
-    super.setResult(result);
-  }
+    @Override
+    public void setResult(RollupConfigResult result) {
+        super.setResult(result);
+    }
 }

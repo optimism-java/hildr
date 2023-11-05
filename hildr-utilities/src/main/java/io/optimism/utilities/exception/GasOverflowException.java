@@ -24,31 +24,31 @@ package io.optimism.utilities.exception;
  */
 public class GasOverflowException extends RuntimeException {
 
-  /**
-   * Instantiates a new GasOverflowException.
-   *
-   * @param message the message
-   */
-  public GasOverflowException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new GasOverflowException.
+     *
+     * @param message the message
+     */
+    public GasOverflowException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new GasOverflowException.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public GasOverflowException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new GasOverflowException.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public GasOverflowException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new GasOverflowException.
-   *
-   * @param cause the cause
-   */
-  public GasOverflowException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new GasOverflowException.
+     *
+     * @param cause the cause
+     */
+    public GasOverflowException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -27,16 +27,16 @@ import picocli.CommandLine;
  */
 public class HildrBatcher {
 
-  /** Constructor of HildrBatcher. */
-  public HildrBatcher() {}
+    /** Constructor of HildrBatcher. */
+    public HildrBatcher() {}
 
-  /**
-   * Main method of HildrBatcher.
-   *
-   * @param args Starts arguments
-   */
-  public static void main(String[] args) {
-    int exitCode = new CommandLine(new Cli()).execute(args);
-    System.exit(exitCode);
-  }
+    /**
+     * Main method of HildrBatcher.
+     *
+     * @param args Starts arguments
+     */
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new Cli()).execute(args);
+        System.exit(exitCode);
+    }
 }

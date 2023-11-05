@@ -24,31 +24,31 @@ package io.optimism.batcher.publisher;
  */
 public class NoDataPublishException extends RuntimeException {
 
-  /**
-   * Instantiates a new NoDataPublishException.
-   *
-   * @param message the message
-   */
-  public NoDataPublishException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new NoDataPublishException.
+     *
+     * @param message the message
+     */
+    public NoDataPublishException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new NoDataPublishException.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public NoDataPublishException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new NoDataPublishException.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public NoDataPublishException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new NoDataPublishException.
-   *
-   * @param cause the cause
-   */
-  public NoDataPublishException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new NoDataPublishException.
+     *
+     * @param cause the cause
+     */
+    public NoDataPublishException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -24,8 +24,8 @@ package io.optimism.l1;
  */
 public class BlockIsPreLondonException extends RuntimeException {
 
-  /** Instantiates a new Block is pre london exception. */
-  public BlockIsPreLondonException() {
-    super("block is pre london");
-  }
+    /** Instantiates a new Block is pre london exception. */
+    public BlockIsPreLondonException() {
+        super("block is pre london");
+    }
 }

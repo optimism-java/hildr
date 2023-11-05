@@ -25,27 +25,30 @@ import org.web3j.rlp.RlpString;
 import org.web3j.utils.Numeric;
 
 /**
+ * Tx decoder.
+ *
  * @author thinkAfCod
  * @since 0.1.1
  */
 public class TxDecoder {
 
-  public static DepositTransaction decodeToDeposit(final String hexTransaction) {
-    final byte[] transaction = Numeric.hexStringToByteArray(hexTransaction);
-    if (transaction.length > 0 && transaction[0] != ((byte) 0x01)) {
-      throw new RuntimeException("tx is not type of deposit tx");
+    public static DepositTransaction decodeToDeposit(final String hexTransaction) {
+        final byte[] transaction = Numeric.hexStringToByteArray(hexTransaction);
+        if (transaction.length > 0 && transaction[0] != ((byte) 0x01)) {
+            throw new RuntimeException("tx is not type of deposit tx");
+        }
+        final byte[] encodedTx = Arrays.copyOfRange(transaction, 1, transaction.length);
+        final RlpList rlpList = RlpDecoder.decode(encodedTx);
+        var values = ((RlpList) rlpList.getValues().get(0)).getValues();
+        final String sourceHash = ((RlpString) values.get(0)).asString();
+        final String from = ((RlpString) values.get(0)).asString();
+        final String to = ((RlpString) values.get(0)).asString();
+        final BigInteger mint = ((RlpString) values.get(0)).asPositiveBigInteger();
+        final BigInteger value = ((RlpString) values.get(0)).asPositiveBigInteger();
+        final BigInteger gas = ((RlpString) values.get(0)).asPositiveBigInteger();
+        final boolean isSystemTx =
+                ((RlpString) values.get(0)).asPositiveBigInteger().compareTo(BigInteger.ONE) == 0;
+        final String data = ((RlpString) values.get(0)).asString();
+        return new DepositTransaction(sourceHash, from, to, mint, value, gas, isSystemTx, data);
     }
-    final byte[] encodedTx = Arrays.copyOfRange(transaction, 1, transaction.length);
-    final RlpList rlpList = RlpDecoder.decode(encodedTx);
-    var values = ((RlpList) rlpList.getValues().get(0)).getValues();
-    final String sourceHash = ((RlpString) values.get(0)).asString();
-    final String from = ((RlpString) values.get(0)).asString();
-    final String to = ((RlpString) values.get(0)).asString();
-    final BigInteger mint = ((RlpString) values.get(0)).asPositiveBigInteger();
-    final BigInteger value = ((RlpString) values.get(0)).asPositiveBigInteger();
-    final BigInteger gas = ((RlpString) values.get(0)).asPositiveBigInteger();
-    final boolean isSystemTx = ((RlpString) values.get(0)).asPositiveBigInteger().compareTo(BigInteger.ONE) == 0;
-    final String data = ((RlpString) values.get(0)).asString();
-    return new DepositTransaction(sourceHash, from, to, mint, value, gas, isSystemTx, data);
-  }
 }

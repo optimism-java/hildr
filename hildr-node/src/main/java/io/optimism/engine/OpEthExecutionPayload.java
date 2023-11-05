@@ -27,20 +27,20 @@ import org.web3j.protocol.core.Response;
  */
 public class OpEthExecutionPayload extends Response<ExecutionPayloadRes> {
 
-  /** Instantiates a new Op eth execution payload. */
-  public OpEthExecutionPayload() {}
+    /** Instantiates a new Op eth execution payload. */
+    public OpEthExecutionPayload() {}
 
-  /**
-   * Gets execution payload.
-   *
-   * @return the execution payload
-   */
-  public ExecutionPayload getExecutionPayload() {
-    return getResult().toExecutionPayload();
-  }
+    /**
+     * Gets execution payload.
+     *
+     * @return the execution payload
+     */
+    public ExecutionPayload getExecutionPayload() {
+        return getResult().toExecutionPayload();
+    }
 
-  @Override
-  public void setResult(ExecutionPayloadRes result) {
-    super.setResult(result);
-  }
+    @Override
+    public void setResult(ExecutionPayloadRes result) {
+        super.setResult(result);
+    }
 }

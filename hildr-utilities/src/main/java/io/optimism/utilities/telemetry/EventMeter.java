@@ -28,24 +28,24 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class EventMeter {
 
-  private Counter total;
+    private Counter total;
 
-  private AtomicLong lastTime;
+    private AtomicLong lastTime;
 
-  /**
-   * The EventMeter constructor.
-   *
-   * @param total The total counter
-   * @param lastTime The last time record ref.
-   */
-  public EventMeter(Counter total, AtomicLong lastTime) {
-    this.total = total;
-    this.lastTime = lastTime;
-  }
+    /**
+     * The EventMeter constructor.
+     *
+     * @param total The total counter
+     * @param lastTime The last time record ref.
+     */
+    public EventMeter(Counter total, AtomicLong lastTime) {
+        this.total = total;
+        this.lastTime = lastTime;
+    }
 
-  /** Record event count and occur time. */
-  public void record() {
-    this.total.increment();
-    this.lastTime.getAndSet(Instant.now().getEpochSecond());
-  }
+    /** Record event count and occur time. */
+    public void record() {
+        this.total.increment();
+        this.lastTime.getAndSet(Instant.now().getEpochSecond());
+    }
 }

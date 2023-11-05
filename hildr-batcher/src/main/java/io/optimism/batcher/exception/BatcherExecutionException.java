@@ -24,31 +24,31 @@ package io.optimism.batcher.exception;
  */
 public class BatcherExecutionException extends RuntimeException {
 
-  /**
-   * Instantiates a new Hildr Batcher execution exception.
-   *
-   * @param message the message
-   */
-  public BatcherExecutionException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Hildr Batcher execution exception.
+     *
+     * @param message the message
+     */
+    public BatcherExecutionException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new Hildr Batcher execution exception.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public BatcherExecutionException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new Hildr Batcher execution exception.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public BatcherExecutionException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new Hildr Batcher execution exception.
-   *
-   * @param cause the cause
-   */
-  public BatcherExecutionException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new Hildr Batcher execution exception.
+     *
+     * @param cause the cause
+     */
+    public BatcherExecutionException(Throwable cause) {
+        super(cause);
+    }
 }

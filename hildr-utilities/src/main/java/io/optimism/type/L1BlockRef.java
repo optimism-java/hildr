@@ -32,78 +32,76 @@ import org.web3j.protocol.core.methods.response.EthBlock;
  */
 public record L1BlockRef(String hash, BigInteger number, String parentHash, BigInteger timestamp) {
 
-  public static final L1BlockRef emptyBlock =
-      new L1BlockRef(
-          "0x0000000000000000000000000000000000000000000000000000000000000000",
-          BigInteger.ZERO,
-          "0x0000000000000000000000000000000000000000000000000000000000000000",
-          BigInteger.ZERO);
+    public static final L1BlockRef emptyBlock = new L1BlockRef(
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            BigInteger.ZERO,
+            "0x0000000000000000000000000000000000000000000000000000000000000000",
+            BigInteger.ZERO);
 
-  /**
-   * L1BlockRef instance converts to BlockId instance.
-   *
-   * @return BlockId instance
-   */
-  public BlockId toId() {
-    return new BlockId(hash, number);
-  }
-
-  /**
-   * Create a L1BlockRef instance from EthBlock.Block instance.
-   *
-   * @param block EthBlock.Block instance.
-   * @return a L1BlockRef instance
-   */
-  public static L1BlockRef from(EthBlock.Block block) {
-    return new L1BlockRef(
-        block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || !(o instanceof L1BlockRef)) {
-      return false;
+    /**
+     * L1BlockRef instance converts to BlockId instance.
+     *
+     * @return BlockId instance
+     */
+    public BlockId toId() {
+        return new BlockId(hash, number);
     }
 
-    L1BlockRef that = (L1BlockRef) o;
-
-    if (!Objects.equals(hash, that.hash)) {
-      return false;
+    /**
+     * Create a L1BlockRef instance from EthBlock.Block instance.
+     *
+     * @param block EthBlock.Block instance.
+     * @return a L1BlockRef instance
+     */
+    public static L1BlockRef from(EthBlock.Block block) {
+        return new L1BlockRef(block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
     }
-    if (!Objects.equals(number, that.number)) {
-      return false;
-    }
-    if (!Objects.equals(parentHash, that.parentHash)) {
-      return false;
-    }
-    return Objects.equals(timestamp, that.timestamp);
-  }
 
-  @Override
-  public int hashCode() {
-    int result = hash != null ? hash.hashCode() : 0;
-    result = 31 * result + (number != null ? number.hashCode() : 0);
-    result = 31 * result + (parentHash != null ? parentHash.hashCode() : 0);
-    result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
-    return result;
-  }
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || !(o instanceof L1BlockRef)) {
+            return false;
+        }
 
-  @Override
-  public String toString() {
-    return "L1BlockRef{"
-        + "hash='"
-        + hash
-        + '\''
-        + ", number="
-        + number
-        + ", parentHash='"
-        + parentHash
-        + '\''
-        + ", timestamp="
-        + timestamp
-        + '}';
-  }
+        L1BlockRef that = (L1BlockRef) o;
+
+        if (!Objects.equals(hash, that.hash)) {
+            return false;
+        }
+        if (!Objects.equals(number, that.number)) {
+            return false;
+        }
+        if (!Objects.equals(parentHash, that.parentHash)) {
+            return false;
+        }
+        return Objects.equals(timestamp, that.timestamp);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hash != null ? hash.hashCode() : 0;
+        result = 31 * result + (number != null ? number.hashCode() : 0);
+        result = 31 * result + (parentHash != null ? parentHash.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "L1BlockRef{"
+                + "hash='"
+                + hash
+                + '\''
+                + ", number="
+                + number
+                + ", parentHash='"
+                + parentHash
+                + '\''
+                + ", timestamp="
+                + timestamp
+                + '}';
+    }
 }

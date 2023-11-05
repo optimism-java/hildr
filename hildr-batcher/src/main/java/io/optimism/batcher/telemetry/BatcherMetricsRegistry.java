@@ -27,21 +27,21 @@ import io.optimism.utilities.telemetry.MetricsServer;
  */
 @SuppressWarnings("ImmutableEnumChecker")
 public enum BatcherMetricsRegistry {
-  /** The instance of BatcherMetricsRegistry. */
-  INSTANCE;
+    /** The instance of BatcherMetricsRegistry. */
+    INSTANCE;
 
-  private final MeterRegistry prometheusRegistry;
+    private final MeterRegistry prometheusRegistry;
 
-  BatcherMetricsRegistry() {
-    this.prometheusRegistry = MetricsServer.createPrometheusRegistry();
-  }
+    BatcherMetricsRegistry() {
+        this.prometheusRegistry = MetricsServer.createPrometheusRegistry();
+    }
 
-  /**
-   * Get singleton meter registry.
-   *
-   * @return the meter registry
-   */
-  public MeterRegistry registry() {
-    return this.prometheusRegistry;
-  }
+    /**
+     * Get singleton meter registry.
+     *
+     * @return the meter registry
+     */
+    public MeterRegistry registry() {
+        return this.prometheusRegistry;
+    }
 }

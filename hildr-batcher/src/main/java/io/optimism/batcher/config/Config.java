@@ -38,91 +38,91 @@ import java.util.Objects;
  * @since 0.1.1
  */
 public record Config(
-    String l1RpcUrl,
-    String l2RpcUrl,
-    String rollupRpcUrl,
-    String l1Signer,
-    String batchInboxAddress,
-    Long subSafetyMargin,
-    Long pollInterval,
-    Long maxL1TxSize,
-    Integer targetFrameSize,
-    Integer targetNumFrames,
-    String approxComprRatio,
-    BatcherMetrics metrics) {
+        String l1RpcUrl,
+        String l2RpcUrl,
+        String rollupRpcUrl,
+        String l1Signer,
+        String batchInboxAddress,
+        Long subSafetyMargin,
+        Long pollInterval,
+        Long maxL1TxSize,
+        Integer targetFrameSize,
+        Integer targetNumFrames,
+        String approxComprRatio,
+        BatcherMetrics metrics) {
 
-  @Override
-  public boolean equals(Object obj) {
-    if (obj == this) {
-      return true;
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        }
+        if (!(obj instanceof Config that)) {
+            return false;
+        }
+        return Objects.equals(this.l1RpcUrl, that.l1RpcUrl)
+                && Objects.equals(this.l2RpcUrl, that.l2RpcUrl)
+                && Objects.equals(this.rollupRpcUrl, that.rollupRpcUrl)
+                && Objects.equals(this.l1Signer, that.l1Signer)
+                && Objects.equals(this.batchInboxAddress, that.batchInboxAddress)
+                && Objects.equals(this.subSafetyMargin, that.subSafetyMargin)
+                && Objects.equals(this.pollInterval, that.pollInterval)
+                && Objects.equals(this.maxL1TxSize, that.maxL1TxSize)
+                && Objects.equals(this.targetFrameSize, that.targetFrameSize)
+                && Objects.equals(this.targetNumFrames, that.targetNumFrames)
+                && Objects.equals(this.approxComprRatio, that.approxComprRatio);
     }
-    if (!(obj instanceof Config that)) {
-      return false;
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                l1RpcUrl,
+                l2RpcUrl,
+                rollupRpcUrl,
+                l1Signer,
+                batchInboxAddress,
+                subSafetyMargin,
+                pollInterval,
+                maxL1TxSize,
+                targetFrameSize,
+                targetNumFrames,
+                approxComprRatio);
     }
-    return Objects.equals(this.l1RpcUrl, that.l1RpcUrl)
-        && Objects.equals(this.l2RpcUrl, that.l2RpcUrl)
-        && Objects.equals(this.rollupRpcUrl, that.rollupRpcUrl)
-        && Objects.equals(this.l1Signer, that.l1Signer)
-        && Objects.equals(this.batchInboxAddress, that.batchInboxAddress)
-        && Objects.equals(this.subSafetyMargin, that.subSafetyMargin)
-        && Objects.equals(this.pollInterval, that.pollInterval)
-        && Objects.equals(this.maxL1TxSize, that.maxL1TxSize)
-        && Objects.equals(this.targetFrameSize, that.targetFrameSize)
-        && Objects.equals(this.targetNumFrames, that.targetNumFrames)
-        && Objects.equals(this.approxComprRatio, that.approxComprRatio);
-  }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(
-        l1RpcUrl,
-        l2RpcUrl,
-        rollupRpcUrl,
-        l1Signer,
-        batchInboxAddress,
-        subSafetyMargin,
-        pollInterval,
-        maxL1TxSize,
-        targetFrameSize,
-        targetNumFrames,
-        approxComprRatio);
-  }
-
-  @Override
-  public String toString() {
-    return "Config["
-        + "l1RpcUrl="
-        + l1RpcUrl
-        + ", "
-        + "l2RpcUrl="
-        + l2RpcUrl
-        + ", "
-        + "rollupRpcUrl="
-        + rollupRpcUrl
-        + ", "
-        + "l1Signer="
-        + l1Signer
-        + ", "
-        + "batchInboxAddress="
-        + batchInboxAddress
-        + ", "
-        + "subSafetyMargin="
-        + subSafetyMargin
-        + ", "
-        + "pollInterval="
-        + pollInterval
-        + ", "
-        + "maxL1TxSize="
-        + maxL1TxSize
-        + ", "
-        + "targetFrameSize="
-        + targetFrameSize
-        + ", "
-        + "targetNumFrames="
-        + targetNumFrames
-        + ", "
-        + "approxComprRatio="
-        + approxComprRatio
-        + ']';
-  }
+    @Override
+    public String toString() {
+        return "Config["
+                + "l1RpcUrl="
+                + l1RpcUrl
+                + ", "
+                + "l2RpcUrl="
+                + l2RpcUrl
+                + ", "
+                + "rollupRpcUrl="
+                + rollupRpcUrl
+                + ", "
+                + "l1Signer="
+                + l1Signer
+                + ", "
+                + "batchInboxAddress="
+                + batchInboxAddress
+                + ", "
+                + "subSafetyMargin="
+                + subSafetyMargin
+                + ", "
+                + "pollInterval="
+                + pollInterval
+                + ", "
+                + "maxL1TxSize="
+                + maxL1TxSize
+                + ", "
+                + "targetFrameSize="
+                + targetFrameSize
+                + ", "
+                + "targetNumFrames="
+                + targetNumFrames
+                + ", "
+                + "approxComprRatio="
+                + approxComprRatio
+                + ']';
+    }
 }

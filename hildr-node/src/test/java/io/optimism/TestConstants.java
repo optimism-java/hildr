@@ -27,38 +27,38 @@ import java.util.Map;
  */
 public class TestConstants {
 
-  private TestConstants() {}
+    private TestConstants() {}
 
-  /** The constant isConfiguredApiKeyEnv. */
-  public static boolean isConfiguredApiKeyEnv = false;
+    /** The constant isConfiguredApiKeyEnv. */
+    public static boolean isConfiguredApiKeyEnv = false;
 
-  private static final String ETH_API_ENV = "ETH_API_KEY";
-  private static final String OPT_API_ENV = "OPT_API_KEY";
+    private static final String ETH_API_ENV = "ETH_API_KEY";
+    private static final String OPT_API_ENV = "OPT_API_KEY";
 
-  /** The L 1 rpc url format. */
-  static String l1RpcUrlFormat = "https://eth-goerli.g.alchemy.com/v2/%s";
+    /** The L 1 rpc url format. */
+    static String l1RpcUrlFormat = "https://eth-goerli.g.alchemy.com/v2/%s";
 
-  static String l1RpcWsUrlFormat = "wss://eth-goerli.g.alchemy.com/v2/%s";
+    static String l1RpcWsUrlFormat = "wss://eth-goerli.g.alchemy.com/v2/%s";
 
-  /** The L 2 rpc url format. */
-  static String l2RpcUrlFormat = "https://opt-goerli.g.alchemy.com/v2/%s";
+    /** The L 2 rpc url format. */
+    static String l2RpcUrlFormat = "https://opt-goerli.g.alchemy.com/v2/%s";
 
-  /**
-   * Create config config.
-   *
-   * @return the config
-   */
-  public static Config createConfig() {
-    Map<String, String> envs = System.getenv();
-    isConfiguredApiKeyEnv = envs.containsKey(ETH_API_ENV) && envs.containsKey(OPT_API_ENV);
-    if (!isConfiguredApiKeyEnv) {
-      return null;
+    /**
+     * Create config config.
+     *
+     * @return the config
+     */
+    public static Config createConfig() {
+        Map<String, String> envs = System.getenv();
+        isConfiguredApiKeyEnv = envs.containsKey(ETH_API_ENV) && envs.containsKey(OPT_API_ENV);
+        if (!isConfiguredApiKeyEnv) {
+            return null;
+        }
+        var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
+        var l1WsRpcUrl = l1RpcWsUrlFormat.formatted(envs.get(ETH_API_ENV));
+        var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
+        Config.CliConfig cliConfig =
+                new Config.CliConfig(l1RpcUrl, l1WsRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
+        return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
     }
-    var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
-    var l1WsRpcUrl = l1RpcWsUrlFormat.formatted(envs.get(ETH_API_ENV));
-    var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
-    Config.CliConfig cliConfig =
-        new Config.CliConfig(l1WsRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
-    return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
-  }
 }

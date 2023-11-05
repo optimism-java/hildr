@@ -42,13 +42,13 @@ import io.optimism.type.L2BlockRef;
  * @since 0.1.1
  */
 public record SyncStatusResult(
-    BlockInfo currentL1,
-    BlockInfo currentL1Finalized,
-    BlockInfo headL1,
-    BlockInfo safeL1,
-    BlockInfo finalizedL1,
-    BlockInfo unsafeL2,
-    BlockInfo safeL2,
-    BlockInfo finalizedL2,
-    L2BlockRef unsafeL2SyncTarget,
-    BlockInfo engineSyncTarget) {}
+        BlockInfo currentL1,
+        BlockInfo currentL1Finalized,
+        BlockInfo headL1,
+        BlockInfo safeL1,
+        BlockInfo finalizedL1,
+        BlockInfo unsafeL2,
+        BlockInfo safeL2,
+        BlockInfo finalizedL2,
+        L2BlockRef unsafeL2SyncTarget,
+        BlockInfo engineSyncTarget) {}

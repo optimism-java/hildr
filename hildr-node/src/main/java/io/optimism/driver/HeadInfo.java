@@ -34,23 +34,23 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
  */
 public record HeadInfo(BlockInfo l2BlockInfo, Epoch l1Epoch, BigInteger sequenceNumber) {
 
-  /**
-   * From head info.
-   *
-   * @param block the block
-   * @return the head info
-   */
-  public static HeadInfo from(EthBlock.Block block) {
-    BlockInfo blockInfo = BlockInfo.from(block);
+    /**
+     * From head info.
+     *
+     * @param block the block
+     * @return the head info
+     */
+    public static HeadInfo from(EthBlock.Block block) {
+        BlockInfo blockInfo = BlockInfo.from(block);
 
-    if (block.getTransactions().isEmpty()) {
-      throw new L1AttributesDepositedTxNotFoundException();
+        if (block.getTransactions().isEmpty()) {
+            throw new L1AttributesDepositedTxNotFoundException();
+        }
+        String txCallData = ((TransactionObject) block.getTransactions().get(0)).getInput();
+
+        AttributesDepositedCall call = AttributesDepositedCall.from(txCallData);
+        Epoch epoch = Epoch.from(call);
+
+        return new HeadInfo(blockInfo, epoch, call.sequenceNumber());
     }
-    String txCallData = ((TransactionObject) block.getTransactions().get(0)).getInput();
-
-    AttributesDepositedCall call = AttributesDepositedCall.from(txCallData);
-    Epoch epoch = Epoch.from(call);
-
-    return new HeadInfo(blockInfo, epoch, call.sequenceNumber());
-  }
 }

@@ -53,93 +53,82 @@ import org.web3j.tuples.generated.Tuple2;
  */
 class BlockLoaderTest {
 
-  static LoaderConfig config;
-  static BigInteger blockNumber;
+    static LoaderConfig config;
+    static BigInteger blockNumber;
 
-  @BeforeAll
-  static void setUp() throws IOException {
-    BlockLoaderTest.config =
-        new LoaderConfig(
-            TestConstants.l2RpcUrl, TestConstants.rollupRpcUrl, mock(BatcherMetrics.class));
-  }
-
-  @AfterAll
-  static void tearDown() throws IOException {}
-
-  @Test
-  void calculateL2BlockRangeToStore() {
-    var config = new LoaderConfig("http://fakeurl", "http://fakeurl", mock(BatcherMetrics.class));
-    BlockLoader loader = spy(new BlockLoader(config, (unused) -> {}));
-    doReturn(
-            new OpEthSyncStatusRes.OpEthSyncStatus(
-                null,
-                null,
-                new L1BlockRef("0xhead", BigInteger.valueOf(20L), null, null), // headl1
-                null,
-                null,
-                new L2BlockRef(
-                    "0xunsafel2", BigInteger.valueOf(21L), null, null, null, null), // unsafeL2
-                new L2BlockRef(
-                    "0xsafel2", BigInteger.valueOf(20L), null, null, null, null), // safeL2
-                null,
-                null))
-        .doReturn(
-            new OpEthSyncStatusRes.OpEthSyncStatus(
-                null,
-                null,
-                new L1BlockRef("0xhead", BigInteger.valueOf(20L), null, null), // headl1
-                null,
-                null,
-                new L2BlockRef(
-                    "0xunsafel2", BigInteger.valueOf(20L), null, null, null, null), // unsafeL2
-                new L2BlockRef(
-                    "0xsafel2", BigInteger.valueOf(21L), null, null, null, null), // safeL2
-                null,
-                null))
-        .when(loader)
-        .requestSyncStatus();
-    Tuple2<BlockId, BlockId> res = loader.calculateL2BlockRangeToStore();
-
-    assertNotNull(res.component1(), "start block id should not be null");
-    assertNotNull(res.component2(), "end block id should not be null");
-    assertTrue(res.component1().number().compareTo(res.component2().number()) <= 0);
-
-    assertThrows(SyncStatusException.class, loader::calculateL2BlockRangeToStore);
-  }
-
-  @Test
-  public void testLoadBlock() throws IOException {
-    if (StringUtils.isEmpty(TestConstants.l2RpcUrl)
-        || StringUtils.isEmpty(TestConstants.rollupRpcUrl)) {
-      return;
+    @BeforeAll
+    static void setUp() throws IOException {
+        BlockLoaderTest.config =
+                new LoaderConfig(TestConstants.l2RpcUrl, TestConstants.rollupRpcUrl, mock(BatcherMetrics.class));
     }
 
-    Web3j l2RpcClient = Web3jProvider.createClient(TestConstants.l2RpcUrl);
-    BlockLoaderTest.blockNumber = l2RpcClient.ethBlockNumber().send().getBlockNumber();
-    l2RpcClient.shutdown();
+    @AfterAll
+    static void tearDown() throws IOException {}
 
-    var consumeCount = new AtomicInteger();
-    var blockConsumer =
-        (Consumer<EthBlock.Block>)
-            block -> {
-              consumeCount.addAndGet(1);
-            };
+    @Test
+    void calculateL2BlockRangeToStore() {
+        var config = new LoaderConfig("http://fakeurl", "http://fakeurl", mock(BatcherMetrics.class));
+        BlockLoader loader = spy(new BlockLoader(config, (unused) -> {}));
+        doReturn(new OpEthSyncStatusRes.OpEthSyncStatus(
+                        null,
+                        null,
+                        new L1BlockRef("0xhead", BigInteger.valueOf(20L), null, null), // headl1
+                        null,
+                        null,
+                        new L2BlockRef("0xunsafel2", BigInteger.valueOf(21L), null, null, null, null), // unsafeL2
+                        new L2BlockRef("0xsafel2", BigInteger.valueOf(20L), null, null, null, null), // safeL2
+                        null,
+                        null))
+                .doReturn(new OpEthSyncStatusRes.OpEthSyncStatus(
+                        null,
+                        null,
+                        new L1BlockRef("0xhead", BigInteger.valueOf(20L), null, null), // headl1
+                        null,
+                        null,
+                        new L2BlockRef("0xunsafel2", BigInteger.valueOf(20L), null, null, null, null), // unsafeL2
+                        new L2BlockRef("0xsafel2", BigInteger.valueOf(21L), null, null, null, null), // safeL2
+                        null,
+                        null))
+                .when(loader)
+                .requestSyncStatus();
+        Tuple2<BlockId, BlockId> res = loader.calculateL2BlockRangeToStore();
 
-    BlockLoader loader = spy(new BlockLoader(config, blockConsumer));
-    var mockedBlock = new EthBlock.Block();
-    mockedBlock.setHash("testHash");
-    mockedBlock.setNumber("0x123");
-    doReturn(mockedBlock).when(loader).getBlock(any());
-    doReturn(
-            new Tuple2<>(
-                new BlockId("", BlockLoaderTest.blockNumber.subtract(BigInteger.valueOf(100L))),
-                new BlockId("", BlockLoaderTest.blockNumber.subtract(BigInteger.valueOf(80L)))))
-        .when(loader)
-        .calculateL2BlockRangeToStore();
-    doReturn(null).when(loader).l2BlockToBlockRef(any(), any());
-    doReturn(new RollupConfigResult()).when(loader).getRollConfig();
-    loader.loadBlocksIntoState();
-    assertEquals(20, consumeCount.get());
-    assertEquals(loader.latestLoadedBlock.number(), mockedBlock.getNumber());
-  }
+        assertNotNull(res.component1(), "start block id should not be null");
+        assertNotNull(res.component2(), "end block id should not be null");
+        assertTrue(res.component1().number().compareTo(res.component2().number()) <= 0);
+
+        assertThrows(SyncStatusException.class, loader::calculateL2BlockRangeToStore);
+    }
+
+    @Test
+    public void testLoadBlock() throws IOException {
+        if (StringUtils.isEmpty(TestConstants.l2RpcUrl) || StringUtils.isEmpty(TestConstants.rollupRpcUrl)) {
+            return;
+        }
+
+        Web3j l2RpcClient = Web3jProvider.createClient(TestConstants.l2RpcUrl);
+        BlockLoaderTest.blockNumber = l2RpcClient.ethBlockNumber().send().getBlockNumber();
+        l2RpcClient.shutdown();
+
+        var consumeCount = new AtomicInteger();
+        var blockConsumer = (Consumer<EthBlock.Block>) block -> {
+            consumeCount.addAndGet(1);
+        };
+
+        BlockLoader loader = spy(new BlockLoader(config, blockConsumer));
+        var mockedBlock = new EthBlock.Block();
+        mockedBlock.setHash("testHash");
+        mockedBlock.setNumber("0x123");
+        doReturn(mockedBlock).when(loader).getBlock(any());
+        doReturn(new Tuple2<>(
+                        new BlockId("", BlockLoaderTest.blockNumber.subtract(BigInteger.valueOf(100L))),
+                        new BlockId("", BlockLoaderTest.blockNumber.subtract(BigInteger.valueOf(80L)))))
+                .when(loader)
+                .calculateL2BlockRangeToStore();
+        doReturn(null).when(loader).l2BlockToBlockRef(any(), any());
+        doReturn(new RollupConfigResult()).when(loader).getRollConfig();
+        loader.loadBlocksIntoState();
+        assertEquals(20, consumeCount.get());
+        assertEquals(loader.latestLoadedBlock.number(), mockedBlock.getNumber());
+    }
 }

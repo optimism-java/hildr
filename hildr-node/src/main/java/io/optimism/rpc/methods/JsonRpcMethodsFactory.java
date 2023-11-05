@@ -27,22 +27,22 @@ import java.util.Map;
  */
 public class JsonRpcMethodsFactory {
 
-  /** JsonRpcMethodsFactory constructor. */
-  public JsonRpcMethodsFactory() {}
+    /** JsonRpcMethodsFactory constructor. */
+    public JsonRpcMethodsFactory() {}
 
-  /**
-   * Methods map.
-   *
-   * @param config the config
-   * @return the map
-   */
-  public Map<String, JsonRpcMethod> methods(Config config) {
-    final Map<String, JsonRpcMethod> methods = new HashMap<>();
-    JsonRpcMethod outputAtBlock =
-        new OutputAtBlock(config.l2RpcUrl(), config.chainConfig().l2Tol1MessagePasser());
+    /**
+     * Methods map.
+     *
+     * @param config the config
+     * @return the map
+     */
+    public Map<String, JsonRpcMethod> methods(Config config) {
+        final Map<String, JsonRpcMethod> methods = new HashMap<>();
+        JsonRpcMethod outputAtBlock =
+                new OutputAtBlock(config.l2RpcUrl(), config.chainConfig().l2Tol1MessagePasser());
 
-    methods.put(outputAtBlock.getName(), outputAtBlock);
+        methods.put(outputAtBlock.getName(), outputAtBlock);
 
-    return methods;
-  }
+        return methods;
+    }
 }

@@ -32,20 +32,20 @@ import org.junit.jupiter.api.Test;
  */
 class HildrTest {
 
-  /**
-   * Hildr has greeting.
-   *
-   * @throws JsonProcessingException the json processing exception
-   */
-  @Test
-  void appHasGreeting() throws JsonProcessingException {
-    CliConfig cliConfig = new CliConfig("test", "test", "test", "test", null, null, false);
-    TomlMapper mapper = new TomlMapper();
-    String cliConfigStr = mapper.writerFor(CliConfig.class).writeValueAsString(cliConfig);
+    /**
+     * Hildr has greeting.
+     *
+     * @throws JsonProcessingException the json processing exception
+     */
+    @Test
+    void appHasGreeting() throws JsonProcessingException {
+        CliConfig cliConfig = new CliConfig("test", "test", "test", "test", "test", null, null, false);
+        TomlMapper mapper = new TomlMapper();
+        String cliConfigStr = mapper.writerFor(CliConfig.class).writeValueAsString(cliConfig);
 
-    CliConfig cliConfig1 = mapper.readerFor(CliConfig.class).readValue(cliConfigStr);
-    assertEquals("test", cliConfig1.jwtSecret());
-    Hildr classUnderTest = new Hildr();
-    assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
-  }
+        CliConfig cliConfig1 = mapper.readerFor(CliConfig.class).readValue(cliConfigStr);
+        assertEquals("test", cliConfig1.jwtSecret());
+        Hildr classUnderTest = new Hildr();
+        assertNotNull(classUnderTest.getGreeting(), "app should have a greeting");
+    }
 }

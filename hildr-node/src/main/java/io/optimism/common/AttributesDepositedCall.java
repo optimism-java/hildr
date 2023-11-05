@@ -40,46 +40,51 @@ import net.osslabz.evm.abi.decoder.DecodedFunctionCall;
  * @since 0.1.0
  */
 public record AttributesDepositedCall(
-    BigInteger number,
-    BigInteger timestamp,
-    BigInteger baseFee,
-    String hash,
-    BigInteger sequenceNumber,
-    String batcherHash,
-    BigInteger feeOverhead,
-    BigInteger feeScalar) {
+        BigInteger number,
+        BigInteger timestamp,
+        BigInteger baseFee,
+        String hash,
+        BigInteger sequenceNumber,
+        String batcherHash,
+        BigInteger feeOverhead,
+        BigInteger feeScalar) {
 
-  private static final AbiDecoder l1BlockAbi;
+    private static final AbiDecoder l1BlockAbi;
 
-  static {
-    try {
-      Path path =
-          Paths.get(Objects.requireNonNull(Epoch.class.getResource("/abi/L1Block.json")).toURI());
-      l1BlockAbi = new AbiDecoder(path.toString());
-    } catch (URISyntaxException | IOException e) {
-      throw new AbiFileLoadException(e);
+    static {
+        try {
+            Path path = Paths.get(Objects.requireNonNull(Epoch.class.getResource("/abi/L1Block.json"))
+                    .toURI());
+            l1BlockAbi = new AbiDecoder(path.toString());
+        } catch (URISyntaxException | IOException e) {
+            throw new AbiFileLoadException(e);
+        }
     }
-  }
 
-  /**
-   * From attributes deposited call.
-   *
-   * @param callData the call data
-   * @return the attributes deposited call
-   */
-  public static AttributesDepositedCall from(String callData) {
-    DecodedFunctionCall decodedFunctionCall = l1BlockAbi.decodeFunctionCall(callData);
-    BigInteger number = (BigInteger) decodedFunctionCall.getParam("_number").getValue();
-    BigInteger timestamp = (BigInteger) decodedFunctionCall.getParam("_timestamp").getValue();
-    BigInteger baseFee = (BigInteger) decodedFunctionCall.getParam("_basefee").getValue();
-    String hash = (String) decodedFunctionCall.getParam("_hash").getValue();
-    BigInteger sequenceNumber =
-        (BigInteger) decodedFunctionCall.getParam("_sequencenumber").getValue();
-    String batcherHash = (String) decodedFunctionCall.getParam("_batcherhash").getValue();
-    BigInteger feeOverhead = (BigInteger) decodedFunctionCall.getParam("_l1feeoverhead").getValue();
-    BigInteger feeScalar = (BigInteger) decodedFunctionCall.getParam("_l1feescalar").getValue();
+    /**
+     * From attributes deposited call.
+     *
+     * @param callData the call data
+     * @return the attributes deposited call
+     */
+    public static AttributesDepositedCall from(String callData) {
+        DecodedFunctionCall decodedFunctionCall = l1BlockAbi.decodeFunctionCall(callData);
+        BigInteger number = (BigInteger) decodedFunctionCall.getParam("_number").getValue();
+        BigInteger timestamp =
+                (BigInteger) decodedFunctionCall.getParam("_timestamp").getValue();
+        BigInteger baseFee =
+                (BigInteger) decodedFunctionCall.getParam("_basefee").getValue();
+        String hash = (String) decodedFunctionCall.getParam("_hash").getValue();
+        BigInteger sequenceNumber =
+                (BigInteger) decodedFunctionCall.getParam("_sequencenumber").getValue();
+        String batcherHash =
+                (String) decodedFunctionCall.getParam("_batcherhash").getValue();
+        BigInteger feeOverhead =
+                (BigInteger) decodedFunctionCall.getParam("_l1feeoverhead").getValue();
+        BigInteger feeScalar =
+                (BigInteger) decodedFunctionCall.getParam("_l1feescalar").getValue();
 
-    return new AttributesDepositedCall(
-        number, timestamp, baseFee, hash, sequenceNumber, batcherHash, feeOverhead, feeScalar);
-  }
+        return new AttributesDepositedCall(
+                number, timestamp, baseFee, hash, sequenceNumber, batcherHash, feeOverhead, feeScalar);
+    }
 }

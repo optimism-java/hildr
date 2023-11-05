@@ -10,11 +10,11 @@ plugins {
 	id 'java'
 	// Apply the application plugin to add support for building a CLI application in Java.
 	id 'application'
-	id "checkstyle"
+//	id "checkstyle"
 	id "jacoco"
-	id "com.diffplug.spotless" version "6.19.0"
+	id "com.diffplug.spotless" version "6.22.0"
 	id "net.ltgt.errorprone" version "3.1.0"
-	id 'org.graalvm.buildtools.native' version '0.9.22'
+	id 'org.graalvm.buildtools.native' version '0.9.28'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
@@ -40,6 +40,9 @@ repositories {
 	maven {
 		url "https://artifacts.consensys.net/public/maven/maven/"
 	}
+	maven { url "https://artifacts.consensys.net/public/maven/maven/" }
+	maven { url "https://jitpack.io" }
+	google()
 }
 
 
@@ -47,18 +50,18 @@ tasks.withType(JavaCompile).configureEach {
 	options.annotationProcessorPath = configurations.annotationProcessor
 	options.compilerArgs += "--enable-preview"
 	options.compilerArgs += "-Xlint:preview"
-	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
+//	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
 	options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
 tasks.withType(Test).configureEach {
 	jvmArgs += "--enable-preview"
-	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+//	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 tasks.withType(JavaExec).configureEach {
 	jvmArgs += "--enable-preview"
-	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+//	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 dependencies {
@@ -123,96 +126,32 @@ dependencies {
 	errorprone("com.google.errorprone:error_prone_core:2.18.0")
 
 //	implementation 'io.tmio:tuweni-devp2p:2.4.2'
-//	implementation 'io.tmio:tuweni-ssz:2.4.2'
-	implementation('tech.pegasys.teku.internal:p2p:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:metrics:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:async:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:storage:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:time:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:spec:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:serviceutils:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('tech.pegasys.teku.internal:unsigned:23.6.2'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('org.hyperledger.besu.internal:metrics-core:22.10.4'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('org.hyperledger.besu:plugin-api:22.10.4'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
-	implementation('io.libp2p:jvm-libp2p-minimal:0.10.0-RELEASE'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
+	implementation 'io.tmio:tuweni-ssz:2.4.2'
+	implementation('tech.pegasys.teku.internal:p2p:23.10.0')
+	implementation('tech.pegasys.teku.internal:metrics:23.10.0')
+	implementation('tech.pegasys.teku.internal:async:23.10.0')
+	implementation('tech.pegasys.teku.internal:storage:23.10.0')
+	implementation('tech.pegasys.teku.internal:time:23.10.0')
+	implementation('tech.pegasys.teku.internal:spec:23.10.0')
+	implementation('tech.pegasys.teku.internal:serviceutils:23.10.0')
+	implementation('tech.pegasys.teku.internal:unsigned:23.10.0')
+	implementation('tech.pegasys.teku.internal:statetransition:23.10.0')
+	implementation('org.hyperledger.besu.internal:metrics-core:22.10.4')
+	implementation('org.hyperledger.besu:plugin-api:22.10.4')
+	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE')
 	implementation 'io.tmio:tuweni-units:2.4.2'
 	implementation('io.tmio:tuweni-crypto:2.4.2'){
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 	implementation 'io.tmio:tuweni-rlp:2.4.2'
-	implementation('tech.pegasys.discovery:discovery:22.12.0'){
-		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-units'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-rlp'
-		exclude group: 'org.apache.tuweni', module: 'tuweni-crypto'
-	}
+	implementation('tech.pegasys.discovery:discovery:22.12.0')
+	implementation 'org.xerial.snappy:snappy-java:1.1.10.3'
+
+	implementation 'org.apache.logging.log4j:log4j-api:3.0.0-alpha1'
+//	implementation 'org.apache.logging.log4j:log4j-core:3.0.0-alpha1'
+//	implementation 'org.apache.logging.log4j:log4j-slf4j-impl:3.0.0-alpha1'
+//	implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:3.0.0-alpha1'
+	implementation 'org.apache.logging.log4j:log4j-to-slf4j:3.0.0-alpha1'
 //	implementation fileTree(dir: '../lib', include: '*.jar')
 	// Use JUnit Jupiter for testing.
 	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
@@ -231,7 +170,9 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(20)
+		languageVersion = JavaLanguageVersion.of(21)
+//		vendor = JvmVendorSpec.GRAAL_VM
+//		implementation = JvmImplementation.VENDOR_SPECIFIC
 	}
 }
 
@@ -271,17 +212,17 @@ jacocoTestCoverageVerification {
 	}
 }
 
-checkstyle {
-	toolVersion = '10.10.0'
-	// default checkstyle config -- specific to your team agreement
-	configFile = project(":").file("config/checkstyle/google_checks.xml")
-	// Google style (idiosyncratic to Google):
-	// configFile = project(":").file("config/checkstyle/google_checks.xml")
-	// SUN style (closest to modern Java styles) -- the basis for this project:
-	// configFile = project(":").file("config/checkstyle/sun_checks.xml")
-//	ignoreFailures = false
-//	maxWarnings = 0
-}
+//checkstyle {
+//	toolVersion = '10.10.0'
+//	// default checkstyle config -- specific to your team agreement
+//	configFile = project(":").file("config/checkstyle/google_checks.xml")
+//	// Google style (idiosyncratic to Google):
+//	// configFile = project(":").file("config/checkstyle/google_checks.xml")
+//	// SUN style (closest to modern Java styles) -- the basis for this project:
+//	// configFile = project(":").file("config/checkstyle/sun_checks.xml")
+////	ignoreFailures = false
+////	maxWarnings = 0
+//}
 
 spotless {
 	// optional: limit format enforcement to just the files changed by this feature branch
@@ -301,8 +242,7 @@ spotless {
 
 		// don't need to set target, it is inferred from java
 
-		// apply a specific flavor of google-java-format
-		googleJavaFormat('1.17.0')
+		palantirJavaFormat('2.38.0')
 		// fix formatting of type annotations
 		formatAnnotations()
 		// make sure every file has the following copyright header.
@@ -319,25 +259,25 @@ spotless {
 	}
 }
 
-checkstyleMain
-		.exclude('io/optimism/rpc/handler/TimeoutHandler.java')
-		.exclude('io/optimism/rpc/handler/JsonRpcExecutorHandler.java')
-		.exclude('io/optimism/rpc/handler/JsonRpcParseHandler.java')
-		.exclude('io/optimism/rpc/methods/JsonRpcMethod.java')
-		.exclude('io/optimism/rpc/methods/JsonRpcMethodsFactory.java')
-		.exclude('io/optimism/rpc/methods/JsonRpcProcessor.java')
-		.exclude('io/optimism/rpc/execution/LoggedJsonRpcProcessor.java')
-		.exclude('io/optimism/rpc/internal/JsonRpcRequest.java')
-		.exclude('io/optimism/rpc/internal/JsonRpcRequestContext.java')
-		.exclude('io/optimism/rpc/internal/JsonRpcRequestId.java')
-		.exclude('io/optimism/rpc/internal/response/JsonRpcResponse.java')
-		.exclude('io/optimism/rpc/internal/response/JsonRpcErrorResponse.java')
-		.exclude('io/optimism/rpc/internal/response/JsonRpcError.java')
-		.exclude('io/optimism/rpc/internal/response/JsonRpcResponseType.java')
-		.exclude('io/optimism/rpc/internal/response/JsonRpcSuccessResponse.java')
-		.exclude('io/optimism/rpc/internal/response/JsonRpcNoResponse.java')
-		.exclude('io/optimism/rpc/execution/BaseJsonRpcProcessor.java')
-		.exclude('io/optimism/rpc/execution/JsonRpcProcessor.java')
+//checkstyleMain
+//		.exclude('io/optimism/rpc/handler/TimeoutHandler.java')
+//		.exclude('io/optimism/rpc/handler/JsonRpcExecutorHandler.java')
+//		.exclude('io/optimism/rpc/handler/JsonRpcParseHandler.java')
+//		.exclude('io/optimism/rpc/methods/JsonRpcMethod.java')
+//		.exclude('io/optimism/rpc/methods/JsonRpcMethodsFactory.java')
+//		.exclude('io/optimism/rpc/methods/JsonRpcProcessor.java')
+//		.exclude('io/optimism/rpc/execution/LoggedJsonRpcProcessor.java')
+//		.exclude('io/optimism/rpc/internal/JsonRpcRequest.java')
+//		.exclude('io/optimism/rpc/internal/JsonRpcRequestContext.java')
+//		.exclude('io/optimism/rpc/internal/JsonRpcRequestId.java')
+//		.exclude('io/optimism/rpc/internal/response/JsonRpcResponse.java')
+//		.exclude('io/optimism/rpc/internal/response/JsonRpcErrorResponse.java')
+//		.exclude('io/optimism/rpc/internal/response/JsonRpcError.java')
+//		.exclude('io/optimism/rpc/internal/response/JsonRpcResponseType.java')
+//		.exclude('io/optimism/rpc/internal/response/JsonRpcSuccessResponse.java')
+//		.exclude('io/optimism/rpc/internal/response/JsonRpcNoResponse.java')
+//		.exclude('io/optimism/rpc/execution/BaseJsonRpcProcessor.java')
+//		.exclude('io/optimism/rpc/execution/JsonRpcProcessor.java')
 //testSets {
 //    integrationTest
 //}
@@ -374,8 +314,8 @@ javadoc {
 		options.addBooleanOption('html5', true)
 	}
 	options.addBooleanOption('-enable-preview', true)
-	options.addStringOption('-release', '20')
-	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
+	options.addStringOption('-release', '21')
+//	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
 
 jar {
@@ -389,6 +329,7 @@ jar {
 
 shadowJar {
 	archiveFileName = "${project.name}-${project.version}.jar"
+	transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
 }
 
 task copyJarToBinaryDir {
@@ -412,7 +353,7 @@ task buildBinary {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -427,7 +368,7 @@ task buildBinaryStaticNoG1GC {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -442,7 +383,7 @@ task buildBinaryStatic {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -457,7 +398,7 @@ task buildBinaryG1GC {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -479,6 +420,10 @@ task buildJarForDocker {
 	println(out.toString())
 }
 
+tasks.named("nativeCompile") {
+	classpathJar = new File("build/libs/${project.name}-${project.version}.jar")
+}
+
 graalvmNative {
 	metadataRepository {
 		enabled = true
@@ -488,19 +433,19 @@ graalvmNative {
 		main {
 			imageName = 'hildr-node'
 
-//			javaLauncher = javaToolchains.launcherFor {
-//				languageVersion = JavaLanguageVersion.of(20)
-//				vendor = JvmVendorSpec.matching("GraalVM")
-//			}
+			javaLauncher = javaToolchains.launcherFor {
+				languageVersion = JavaLanguageVersion.of(21)
+				vendor = JvmVendorSpec.matching("Oracle Corporation")
+			}
 
 //			buildArgs.add('-J--enable-preview')
 //			buildArgs.add('-J--add-modules=jdk.incubator.concurrent')
 			buildArgs.add('--initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor$1,ch.qos.logback.core.model.processor.ImplicitModelHandler$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer$1,ch.qos.logback.core.pattern.parser.TokenStream$1,ch.qos.logback.core.subst.Tokenizer$1')
-			buildArgs.add('--initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config')
+			buildArgs.add('--initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config,org.apache.logging.log4j.spi.Provider')
 			buildArgs.add('--enable-http')
 			buildArgs.add('--enable-https')
 			buildArgs.add('--enable-preview')
-			buildArgs.add('--add-modules=jdk.incubator.concurrent')
+//			buildArgs.add('--add-modules=jdk.incubator.concurrent')
 //			buildArgs.add('--gc=G1')
 //			buildArgs.add('--report-unsupported-elements-at-runtime')
 //			buildArgs.add('--features=okhttp3.internal.graal.OkHttpFeature')

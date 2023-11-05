@@ -76,7 +76,6 @@ public class RollupConfigResult {
      * RegolithTime sets the activation time of the Regolith network-upgrade: a
      * pre-mainnet Bedrock change that addresses findings of the Sherlock contest related to
      * deposit attributes. "Regolith" is the loose deposited rock that sits on top of Bedrock.
-     *
      */
     @JsonProperty("regolith_time")
     private BigInteger regolithTime;
@@ -192,21 +191,30 @@ public class RollupConfigResult {
         if (this == o) return true;
         if (!(o instanceof RollupConfigResult that)) return false;
         return Objects.equals(genesis, that.genesis)
-            && Objects.equals(blockTime, that.blockTime)
-            && Objects.equals(maxSequencerDrift, that.maxSequencerDrift)
-            && Objects.equals(seqWindowSize, that.seqWindowSize)
-            && Objects.equals(channelTimeout, that.channelTimeout)
-            && Objects.equals(l1ChainId, that.l1ChainId)
-            && Objects.equals(l2ChainId, that.l2ChainId)
-            && Objects.equals(regolithTime, that.regolithTime)
-            && Objects.equals(batchInboxAddress, that.batchInboxAddress)
-            && Objects.equals(depositContractAddress, that.depositContractAddress)
-            && Objects.equals(l1SystemConfigAddress, that.l1SystemConfigAddress);
+                && Objects.equals(blockTime, that.blockTime)
+                && Objects.equals(maxSequencerDrift, that.maxSequencerDrift)
+                && Objects.equals(seqWindowSize, that.seqWindowSize)
+                && Objects.equals(channelTimeout, that.channelTimeout)
+                && Objects.equals(l1ChainId, that.l1ChainId)
+                && Objects.equals(l2ChainId, that.l2ChainId)
+                && Objects.equals(regolithTime, that.regolithTime)
+                && Objects.equals(batchInboxAddress, that.batchInboxAddress)
+                && Objects.equals(depositContractAddress, that.depositContractAddress)
+                && Objects.equals(l1SystemConfigAddress, that.l1SystemConfigAddress);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(genesis, blockTime, maxSequencerDrift, seqWindowSize, channelTimeout,
-            l1ChainId, l2ChainId, regolithTime, batchInboxAddress, l1SystemConfigAddress);
+        return Objects.hash(
+                genesis,
+                blockTime,
+                maxSequencerDrift,
+                seqWindowSize,
+                channelTimeout,
+                l1ChainId,
+                l2ChainId,
+                regolithTime,
+                batchInboxAddress,
+                l1SystemConfigAddress);
     }
 }

@@ -24,12 +24,12 @@ package io.optimism.driver;
  */
 public class ForkchoiceUpdateException extends RuntimeException {
 
-  /**
-   * Instantiates a new Forkchoice update exception.
-   *
-   * @param message the message
-   */
-  public ForkchoiceUpdateException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Forkchoice update exception.
+     *
+     * @param message the message
+     */
+    public ForkchoiceUpdateException(String message) {
+        super(message);
+    }
 }

@@ -24,12 +24,12 @@ package io.optimism.utilities.derive.stages;
  */
 public class InvalidFrameSizeException extends RuntimeException {
 
-  /**
-   * Instantiates a new Invalid frame size exception.
-   *
-   * @param message the message
-   */
-  public InvalidFrameSizeException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Invalid frame size exception.
+     *
+     * @param message the message
+     */
+    public InvalidFrameSizeException(String message) {
+        super(message);
+    }
 }

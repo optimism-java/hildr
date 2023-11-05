@@ -38,58 +38,58 @@ import java.util.Collections;
 @SuppressWarnings({"ImmutableEnumChecker", "checkstyle:AbbreviationAsWordInName"})
 public enum Logging {
 
-  /** Logging single instance. */
-  INSTANCE;
+    /** Logging single instance. */
+    INSTANCE;
 
-  private final Slf4JEventListener slf4JEventListener;
-  private final Slf4JBaggageEventListener slf4JBaggageEventListener;
+    private final Slf4JEventListener slf4JEventListener;
+    private final Slf4JBaggageEventListener slf4JBaggageEventListener;
 
-  @SuppressWarnings("AbbreviationAsWordInName")
-  Logging() {
-    initializeOpenTelemetry();
+    @SuppressWarnings("AbbreviationAsWordInName")
+    Logging() {
+        initializeOpenTelemetry();
 
-    this.slf4JEventListener = new Slf4JEventListener();
-    this.slf4JBaggageEventListener = new Slf4JBaggageEventListener(Collections.emptyList());
-  }
+        this.slf4JEventListener = new Slf4JEventListener();
+        this.slf4JBaggageEventListener = new Slf4JBaggageEventListener(Collections.emptyList());
+    }
 
-  /**
-   * Gets tracer.
-   *
-   * @return the tracer
-   */
-  public Tracer getTracer() {
-    return this.getTracer(Thread.currentThread().getName());
-  }
+    /**
+     * Gets tracer.
+     *
+     * @return the tracer
+     */
+    public Tracer getTracer() {
+        return this.getTracer(Thread.currentThread().getName());
+    }
 
-  /**
-   * get Tracer single instance.
-   *
-   * @param tracerName the tracer name
-   * @return Tracer single instance
-   */
-  public Tracer getTracer(String tracerName) {
-    var otelTracer = GlobalOpenTelemetry.getTracer(tracerName);
-    OtelCurrentTraceContext otelCurrentTraceContext = new OtelCurrentTraceContext();
-    return new OtelTracer(
-        otelTracer,
-        otelCurrentTraceContext,
-        event -> {
-          slf4JEventListener.onEvent(event);
-          slf4JBaggageEventListener.onEvent(event);
-        },
-        new OtelBaggageManager(
-            otelCurrentTraceContext, Collections.emptyList(), Collections.emptyList()));
-  }
+    /**
+     * get Tracer single instance.
+     *
+     * @param tracerName the tracer name
+     * @return Tracer single instance
+     */
+    public Tracer getTracer(String tracerName) {
+        var otelTracer = GlobalOpenTelemetry.getTracer(tracerName);
+        OtelCurrentTraceContext otelCurrentTraceContext = new OtelCurrentTraceContext();
+        return new OtelTracer(
+                otelTracer,
+                otelCurrentTraceContext,
+                event -> {
+                    slf4JEventListener.onEvent(event);
+                    slf4JBaggageEventListener.onEvent(event);
+                },
+                new OtelBaggageManager(otelCurrentTraceContext, Collections.emptyList(), Collections.emptyList()));
+    }
 
-  private static void initializeOpenTelemetry() {
-    OpenTelemetrySdk sdk =
-        OpenTelemetrySdk.builder()
-            .setTracerProvider(SdkTracerProvider.builder().setSampler(Sampler.alwaysOn()).build())
-            .setLoggerProvider(SdkLoggerProvider.builder().build())
-            .build();
+    private static void initializeOpenTelemetry() {
+        OpenTelemetrySdk sdk = OpenTelemetrySdk.builder()
+                .setTracerProvider(SdkTracerProvider.builder()
+                        .setSampler(Sampler.alwaysOn())
+                        .build())
+                .setLoggerProvider(SdkLoggerProvider.builder().build())
+                .build();
 
-    GlobalOpenTelemetry.set(sdk);
-    // Add hook to close SDK, which flushes logs
-    Runtime.getRuntime().addShutdownHook(new Thread(sdk::close));
-  }
+        GlobalOpenTelemetry.set(sdk);
+        // Add hook to close SDK, which flushes logs
+        Runtime.getRuntime().addShutdownHook(new Thread(sdk::close));
+    }
 }

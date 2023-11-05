@@ -26,61 +26,61 @@ import java.math.BigInteger;
  */
 public abstract class BlockUpdate {
 
-  /** not public constructor. */
-  private BlockUpdate() {}
+    /** not public constructor. */
+    private BlockUpdate() {}
 
-  /** update new Block. */
-  public static class NewBlock extends BlockUpdate {
+    /** update new Block. */
+    public static class NewBlock extends BlockUpdate {
 
-    private L1Info l1Info;
+        private L1Info l1Info;
 
-    /**
-     * NewBlock constructor.
-     *
-     * @param l1Info update l1Info
-     */
-    public NewBlock(L1Info l1Info) {
-      this.l1Info = l1Info;
+        /**
+         * NewBlock constructor.
+         *
+         * @param l1Info update l1Info
+         */
+        public NewBlock(L1Info l1Info) {
+            this.l1Info = l1Info;
+        }
+
+        /**
+         * get update L1Info.
+         *
+         * @return l1Info
+         */
+        public L1Info get() {
+            return l1Info;
+        }
     }
 
-    /**
-     * get update L1Info.
-     *
-     * @return l1Info
-     */
-    public L1Info get() {
-      return l1Info;
+    /** update finalized Block. */
+    public static class FinalityUpdate extends BlockUpdate {
+
+        private BigInteger finalizedBlock;
+
+        /**
+         * FinalityUpdate constructor.
+         *
+         * @param finalizedBlock finalized block
+         */
+        public FinalityUpdate(BigInteger finalizedBlock) {
+            this.finalizedBlock = finalizedBlock;
+        }
+
+        /**
+         * get finalized block.
+         *
+         * @return finalized block
+         */
+        public BigInteger get() {
+            return finalizedBlock;
+        }
     }
-  }
 
-  /** update finalized Block. */
-  public static class FinalityUpdate extends BlockUpdate {
+    /** update Reorg. */
+    public static class Reorg extends BlockUpdate {
 
-    private BigInteger finalizedBlock;
-
-    /**
-     * FinalityUpdate constructor.
-     *
-     * @param finalizedBlock finalized block
-     */
-    public FinalityUpdate(BigInteger finalizedBlock) {
-      this.finalizedBlock = finalizedBlock;
+        /** Reorg constructor. */
+        public Reorg() {}
     }
-
-    /**
-     * get finalized block.
-     *
-     * @return finalized block
-     */
-    public BigInteger get() {
-      return finalizedBlock;
-    }
-  }
-
-  /** update Reorg. */
-  public static class Reorg extends BlockUpdate {
-
-    /** Reorg constructor. */
-    public Reorg() {}
-  }
 }

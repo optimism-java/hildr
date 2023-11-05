@@ -22,20 +22,20 @@ import org.web3j.protocol.core.Response;
 /** The type OpEthPayloadStatus. */
 public class OpEthPayloadStatus extends Response<PayloadStatus> {
 
-  /** Instantiates a new Op eth payload status. */
-  public OpEthPayloadStatus() {}
+    /** Instantiates a new Op eth payload status. */
+    public OpEthPayloadStatus() {}
 
-  /**
-   * Gets payload status.
-   *
-   * @return the payload status
-   */
-  public PayloadStatus getPayloadStatus() {
-    return getResult();
-  }
+    /**
+     * Gets payload status.
+     *
+     * @return the payload status
+     */
+    public PayloadStatus getPayloadStatus() {
+        return getResult();
+    }
 
-  @Override
-  public void setResult(PayloadStatus result) {
-    super.setResult(result);
-  }
+    @Override
+    public void setResult(PayloadStatus result) {
+        super.setResult(result);
+    }
 }

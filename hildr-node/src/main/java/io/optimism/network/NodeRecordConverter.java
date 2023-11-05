@@ -31,25 +31,23 @@ import tech.pegasys.teku.networking.p2p.discovery.DiscoveryPeer;
  */
 public class NodeRecordConverter {
 
-  /** Instantiates a new Node record converter. */
-  public NodeRecordConverter() {}
+    /** Instantiates a new Node record converter. */
+    public NodeRecordConverter() {}
 
-  /**
-   * Convert to discovery peer optional.
-   *
-   * @param nodeRecord the node record
-   * @return the optional
-   */
-  public Optional<DiscoveryPeer> convertToDiscoveryPeer(final NodeRecord nodeRecord) {
-    return nodeRecord
-        .getTcpAddress()
-        .map(address -> socketAddressToDiscoveryPeer(nodeRecord, address));
-  }
+    /**
+     * Convert to discovery peer optional.
+     *
+     * @param nodeRecord the node record
+     * @return the optional
+     */
+    public Optional<DiscoveryPeer> convertToDiscoveryPeer(final NodeRecord nodeRecord) {
+        return nodeRecord.getTcpAddress().map(address -> socketAddressToDiscoveryPeer(nodeRecord, address));
+    }
 
-  private static DiscoveryPeer socketAddressToDiscoveryPeer(
-      final NodeRecord nodeRecord, final InetSocketAddress address) {
+    private static DiscoveryPeer socketAddressToDiscoveryPeer(
+            final NodeRecord nodeRecord, final InetSocketAddress address) {
 
-    return new DiscoveryPeer(
-        ((Bytes) nodeRecord.get(EnrField.PKEY_SECP256K1)), address, Optional.empty(), null, null);
-  }
+        return new DiscoveryPeer(
+                ((Bytes) nodeRecord.get(EnrField.PKEY_SECP256K1)), address, Optional.empty(), null, null);
+    }
 }
