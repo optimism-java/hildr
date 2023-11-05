@@ -1,15 +1,15 @@
 FROM ubuntu:latest as builder
 RUN apt-get update && apt-get install -y wget curl tar build-essential libz-dev zlib1g-dev musl-tools
-ENV JAVA_PKG=https://download.oracle.com/graalvm/20/latest/graalvm-jdk-20_linux-x64_bin.tar.gz \
-JAVA_HOME=/usr/java/jdk-20
+ENV JAVA_PKG=https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-x64_bin.tar.gz \
+JAVA_HOME=/usr/java/jdk-21
 #RUN curl --output /tmp/jdk.tgz $JAVA_PKG
 RUN wget -c $JAVA_PKG -O /tmp/jdk.tar.gz
 RUN mkdir -p $JAVA_HOME
 RUN tar -zxvf /tmp/jdk.tar.gz --directory $JAVA_HOME --strip-components 1
-RUN /usr/java/jdk-20/bin/gu install native-image
+#RUN /usr/java/jdk-20/bin/gu install native-image
 ENV PATH=$JAVA_HOME/bin:$PATH
 RUN java -version
-RUN /usr/java/jdk-20/bin/native-image --version
+RUN native-image --version
 WORKDIR /root/hildr
 COPY . .
 #RUN ./gradlew -Pagent run --args="--network optimism-goerli --jwt-secret bf549f5188556ce0951048ef467ec93067bc4ea21acebe46ef675cd4e8e015ff --l1-rpc-url https://eth-goerli.g.alchemy.com/v2/4fUcO9-bSvCtGYwwibuWbz7ktjWwuoN3 --l2-rpc-url http://192.168.3.230:8545 --l2-engine-url http://192.168.3.230:8551 --rpc-port 9545 --sync-mode full"

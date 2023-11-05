@@ -59,15 +59,15 @@ import org.web3j.utils.Numeric;
  * @since 0.1.0
  */
 public record Config(
-    String l1RpcUrl,
-    String l1WsRpcUrl,
-    String l2RpcUrl,
-    String l2EngineUrl,
-    String jwtSecret,
-    String checkpointSyncUrl,
-    Integer rpcPort,
-    Boolean devnet,
-    ChainConfig chainConfig) {
+        String l1RpcUrl,
+        String l1WsRpcUrl,
+        String l2RpcUrl,
+        String l2EngineUrl,
+        String jwtSecret,
+        String checkpointSyncUrl,
+        Integer rpcPort,
+        Boolean devnet,
+        ChainConfig chainConfig) {
 
     /**
      * Create Config.
@@ -104,8 +104,7 @@ public record Config(
             Gestalt gestalt;
             if (configPath != null) {
                 FileConfigSource tomlConfigSource = new FileConfigSource(configPath);
-                gestalt =
-                    new GestaltBuilder()
+                gestalt = new GestaltBuilder()
                         .addConfigLoader(environmentVarsLoader)
                         .addConfigLoader(mapConfigLoader)
                         .addConfigLoader(tomlLoader)
@@ -116,8 +115,7 @@ public record Config(
                         .addSource(cliConfigSource)
                         .build();
             } else {
-                gestalt =
-                    new GestaltBuilder()
+                gestalt = new GestaltBuilder()
                         .addConfigLoader(environmentVarsLoader)
                         .addConfigLoader(mapConfigLoader)
                         .addConfigLoader(tomlLoader)
@@ -148,14 +146,14 @@ public record Config(
      * @param devnet The devnet flag.
      */
     public record CliConfig(
-        String l1RpcUrl,
-        String l1WsRpcUrl,
-        String l2RpcUrl,
-        String l2EngineUrl,
-        String jwtSecret,
-        String checkpointSyncUrl,
-        Integer rpcPort,
-        Boolean devnet) {
+            String l1RpcUrl,
+            String l1WsRpcUrl,
+            String l2RpcUrl,
+            String l2EngineUrl,
+            String jwtSecret,
+            String checkpointSyncUrl,
+            Integer rpcPort,
+            Boolean devnet) {
 
         /**
          * To configMap.
@@ -213,22 +211,22 @@ public record Config(
      * @since 0.1.0
      */
     public record ChainConfig(
-        String network,
-        BigInteger l1ChainId,
-        BigInteger l2ChainId,
-        Epoch l1StartEpoch,
-        BlockInfo l2Genesis,
-        SystemConfig systemConfig,
-        String batchInbox,
-        String depositContract,
-        String systemConfigContract,
-        BigInteger maxChannelSize,
-        BigInteger channelTimeout,
-        BigInteger seqWindowSize,
-        BigInteger maxSeqDrift,
-        BigInteger regolithTime,
-        BigInteger blockTime,
-        String l2Tol1MessagePasser) {
+            String network,
+            BigInteger l1ChainId,
+            BigInteger l2ChainId,
+            Epoch l1StartEpoch,
+            BlockInfo l2Genesis,
+            SystemConfig systemConfig,
+            String batchInbox,
+            String depositContract,
+            String systemConfigContract,
+            BigInteger maxChannelSize,
+            BigInteger channelTimeout,
+            BigInteger seqWindowSize,
+            BigInteger maxSeqDrift,
+            BigInteger regolithTime,
+            BigInteger blockTime,
+            String l2Tol1MessagePasser) {
 
         /**
          * Optimism chain config.
@@ -237,34 +235,34 @@ public record Config(
          */
         public static ChainConfig optimism() {
             return new ChainConfig(
-                "optimism",
-                BigInteger.valueOf(1L),
-                BigInteger.valueOf(10L),
-                new Epoch(
-                    BigInteger.valueOf(17422590L),
-                    "0x438335a20d98863a4c0c97999eb2481921ccd28553eac6f913af7c12aec04108",
-                    BigInteger.valueOf(1686068903L)),
-                new BlockInfo(
-                    "0xdbf6a80fef073de06add9b0d14026d6e5a86c85f6d102c36d3d8e9cf89c2afd3",
-                    BigInteger.valueOf(105235063L),
-                    "0x21a168dfa5e727926063a28ba16fd5ee84c814e847c81a699c7a0ea551e4ca50",
-                    BigInteger.valueOf(1686068903L)),
-                new SystemConfig(
-                    "0x6887246668a3b87f54deb3b94ba47a6f63f32985",
-                    BigInteger.valueOf(30_000_000L),
-                    BigInteger.valueOf(188L),
-                    BigInteger.valueOf(684000L),
-                    "0xAAAA45d9549EDA09E70937013520214382Ffc4A2"),
-                "0xff00000000000000000000000000000000000010",
-                "0xbEb5Fc579115071764c7423A4f12eDde41f106Ed",
-                "0x229047fed2591dbec1eF1118d64F7aF3dB9EB290",
-                BigInteger.valueOf(100_000_000L),
-                BigInteger.valueOf(300L),
-                BigInteger.valueOf(3600L),
-                BigInteger.valueOf(600L),
-                BigInteger.ZERO,
-                BigInteger.valueOf(2L),
-                "0x4200000000000000000000000000000000000016");
+                    "optimism",
+                    BigInteger.valueOf(1L),
+                    BigInteger.valueOf(10L),
+                    new Epoch(
+                            BigInteger.valueOf(17422590L),
+                            "0x438335a20d98863a4c0c97999eb2481921ccd28553eac6f913af7c12aec04108",
+                            BigInteger.valueOf(1686068903L)),
+                    new BlockInfo(
+                            "0xdbf6a80fef073de06add9b0d14026d6e5a86c85f6d102c36d3d8e9cf89c2afd3",
+                            BigInteger.valueOf(105235063L),
+                            "0x21a168dfa5e727926063a28ba16fd5ee84c814e847c81a699c7a0ea551e4ca50",
+                            BigInteger.valueOf(1686068903L)),
+                    new SystemConfig(
+                            "0x6887246668a3b87f54deb3b94ba47a6f63f32985",
+                            BigInteger.valueOf(30_000_000L),
+                            BigInteger.valueOf(188L),
+                            BigInteger.valueOf(684000L),
+                            "0xAAAA45d9549EDA09E70937013520214382Ffc4A2"),
+                    "0xff00000000000000000000000000000000000010",
+                    "0xbEb5Fc579115071764c7423A4f12eDde41f106Ed",
+                    "0x229047fed2591dbec1eF1118d64F7aF3dB9EB290",
+                    BigInteger.valueOf(100_000_000L),
+                    BigInteger.valueOf(300L),
+                    BigInteger.valueOf(3600L),
+                    BigInteger.valueOf(600L),
+                    BigInteger.ZERO,
+                    BigInteger.valueOf(2L),
+                    "0x4200000000000000000000000000000000000016");
         }
 
         /**
@@ -274,34 +272,34 @@ public record Config(
          */
         public static ChainConfig base() {
             return new ChainConfig(
-                "base",
-                BigInteger.valueOf(1L),
-                BigInteger.valueOf(8453L),
-                new Epoch(
-                    BigInteger.valueOf(17481768L),
-                    "0x5c13d307623a926cd31415036c8b7fa14572f9dac64528e857a470511fc30771",
-                    BigInteger.valueOf(1686789347L)),
-                new BlockInfo(
-                    "0xf712aa9241cc24369b143cf6dce85f0902a9731e70d66818a3a5845b296c73dd",
-                    BigInteger.valueOf(0L),
-                    Numeric.toHexString(new byte[32]),
-                    BigInteger.valueOf(1686789347L)),
-                new SystemConfig(
-                    "0x5050f69a9786f081509234f1a7f4684b5e5b76c9",
-                    BigInteger.valueOf(30_000_000L),
-                    BigInteger.valueOf(188),
-                    BigInteger.valueOf(684000),
-                    "0xAf6E19BE0F9cE7f8afd49a1824851023A8249e8a"),
-                "0xff00000000000000000000000000000000008453",
-                "0x49048044d57e1c92a77f79988d21fa8faf74e97e",
-                "0x73a79fab69143498ed3712e519a88a918e1f4072",
-                BigInteger.valueOf(100_000_000L),
-                BigInteger.valueOf(300L),
-                BigInteger.valueOf(3600L),
-                BigInteger.valueOf(600L),
-                BigInteger.ZERO,
-                BigInteger.valueOf(2L),
-                "0x4200000000000000000000000000000000000016");
+                    "base",
+                    BigInteger.valueOf(1L),
+                    BigInteger.valueOf(8453L),
+                    new Epoch(
+                            BigInteger.valueOf(17481768L),
+                            "0x5c13d307623a926cd31415036c8b7fa14572f9dac64528e857a470511fc30771",
+                            BigInteger.valueOf(1686789347L)),
+                    new BlockInfo(
+                            "0xf712aa9241cc24369b143cf6dce85f0902a9731e70d66818a3a5845b296c73dd",
+                            BigInteger.valueOf(0L),
+                            Numeric.toHexString(new byte[32]),
+                            BigInteger.valueOf(1686789347L)),
+                    new SystemConfig(
+                            "0x5050f69a9786f081509234f1a7f4684b5e5b76c9",
+                            BigInteger.valueOf(30_000_000L),
+                            BigInteger.valueOf(188),
+                            BigInteger.valueOf(684000),
+                            "0xAf6E19BE0F9cE7f8afd49a1824851023A8249e8a"),
+                    "0xff00000000000000000000000000000000008453",
+                    "0x49048044d57e1c92a77f79988d21fa8faf74e97e",
+                    "0x73a79fab69143498ed3712e519a88a918e1f4072",
+                    BigInteger.valueOf(100_000_000L),
+                    BigInteger.valueOf(300L),
+                    BigInteger.valueOf(3600L),
+                    BigInteger.valueOf(600L),
+                    BigInteger.ZERO,
+                    BigInteger.valueOf(2L),
+                    "0x4200000000000000000000000000000000000016");
         }
 
         /**
@@ -311,34 +309,34 @@ public record Config(
          */
         public static ChainConfig optimismGoerli() {
             return new ChainConfig(
-                "optimism-goerli",
-                BigInteger.valueOf(5L),
-                BigInteger.valueOf(420L),
-                new Epoch(
-                    BigInteger.valueOf(8300214L),
-                    "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
-                    BigInteger.valueOf(1673550516L)),
-                new BlockInfo(
-                    "0x0f783549ea4313b784eadd9b8e8a69913b368b7366363ea814d7707ac505175f",
-                    BigInteger.valueOf(4061224L),
-                    "0x31267a44f1422f4cab59b076548c075e79bd59e691a23fbce027f572a2a49dc9",
-                    BigInteger.valueOf(1673550516L)),
-                new SystemConfig(
-                    "0x7431310e026b69bfc676c0013e12a1a11411eec9",
-                    BigInteger.valueOf(25_000_000L),
-                    BigInteger.valueOf(2100),
-                    BigInteger.valueOf(1000000),
-                    "0x715b7219D986641DF9eFd9C7Ef01218D528e19ec"),
-                "0xff00000000000000000000000000000000000420",
-                "0x5b47E1A08Ea6d985D6649300584e6722Ec4B1383",
-                "0xAe851f927Ee40dE99aaBb7461C00f9622ab91d60",
-                BigInteger.valueOf(100_000_000L),
-                BigInteger.valueOf(300L),
-                BigInteger.valueOf(3600L),
-                BigInteger.valueOf(600L),
-                BigInteger.valueOf(1679079600L),
-                BigInteger.valueOf(2L),
-                "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a");
+                    "optimism-goerli",
+                    BigInteger.valueOf(5L),
+                    BigInteger.valueOf(420L),
+                    new Epoch(
+                            BigInteger.valueOf(8300214L),
+                            "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
+                            BigInteger.valueOf(1673550516L)),
+                    new BlockInfo(
+                            "0x0f783549ea4313b784eadd9b8e8a69913b368b7366363ea814d7707ac505175f",
+                            BigInteger.valueOf(4061224L),
+                            "0x31267a44f1422f4cab59b076548c075e79bd59e691a23fbce027f572a2a49dc9",
+                            BigInteger.valueOf(1673550516L)),
+                    new SystemConfig(
+                            "0x7431310e026b69bfc676c0013e12a1a11411eec9",
+                            BigInteger.valueOf(25_000_000L),
+                            BigInteger.valueOf(2100),
+                            BigInteger.valueOf(1000000),
+                            "0x715b7219D986641DF9eFd9C7Ef01218D528e19ec"),
+                    "0xff00000000000000000000000000000000000420",
+                    "0x5b47E1A08Ea6d985D6649300584e6722Ec4B1383",
+                    "0xAe851f927Ee40dE99aaBb7461C00f9622ab91d60",
+                    BigInteger.valueOf(100_000_000L),
+                    BigInteger.valueOf(300L),
+                    BigInteger.valueOf(3600L),
+                    BigInteger.valueOf(600L),
+                    BigInteger.valueOf(1679079600L),
+                    BigInteger.valueOf(2L),
+                    "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a");
         }
 
         /**
@@ -348,34 +346,34 @@ public record Config(
          */
         public static ChainConfig optimismSepolia() {
             return new ChainConfig(
-                "base-goerli",
-                BigInteger.valueOf(11155111L),
-                BigInteger.valueOf(11155420L),
-                new Epoch(
-                    BigInteger.valueOf(4071408L),
-                    "0x48f520cf4ddaf34c8336e6e490632ea3cf1e5e93b0b2bc6e917557e31845371b",
-                    BigInteger.valueOf(1691802540L)),
-                new BlockInfo(
-                    "0x102de6ffb001480cc9b8b548fd05c34cd4f46ae4aa91759393db90ea0409887d",
-                    BigInteger.valueOf(0L),
-                    Numeric.toHexString(new byte[32]),
-                    BigInteger.valueOf(1691802540L)),
-                new SystemConfig(
-                    "0x8F23BB38F531600e5d8FDDaAEC41F13FaB46E98c",
-                    BigInteger.valueOf(30_000_000L),
-                    BigInteger.valueOf(188),
-                    BigInteger.valueOf(684000),
-                    "0x0000000000000000000000000000000000000000"),
-                "0xff00000000000000000000000000000011155420",
-                "0x16fc5058f25648194471939df75cf27a2fdc48bc",
-                "0x034edd2a225f7f429a63e0f1d2084b9e0a93b538",
-                BigInteger.valueOf(100_000_000L),
-                BigInteger.valueOf(300L),
-                BigInteger.valueOf(3600L),
-                BigInteger.valueOf(600L),
-                BigInteger.ZERO,
-                BigInteger.valueOf(2L),
-                "0x4200000000000000000000000000000000000016");
+                    "base-goerli",
+                    BigInteger.valueOf(11155111L),
+                    BigInteger.valueOf(11155420L),
+                    new Epoch(
+                            BigInteger.valueOf(4071408L),
+                            "0x48f520cf4ddaf34c8336e6e490632ea3cf1e5e93b0b2bc6e917557e31845371b",
+                            BigInteger.valueOf(1691802540L)),
+                    new BlockInfo(
+                            "0x102de6ffb001480cc9b8b548fd05c34cd4f46ae4aa91759393db90ea0409887d",
+                            BigInteger.valueOf(0L),
+                            Numeric.toHexString(new byte[32]),
+                            BigInteger.valueOf(1691802540L)),
+                    new SystemConfig(
+                            "0x8F23BB38F531600e5d8FDDaAEC41F13FaB46E98c",
+                            BigInteger.valueOf(30_000_000L),
+                            BigInteger.valueOf(188),
+                            BigInteger.valueOf(684000),
+                            "0x0000000000000000000000000000000000000000"),
+                    "0xff00000000000000000000000000000011155420",
+                    "0x16fc5058f25648194471939df75cf27a2fdc48bc",
+                    "0x034edd2a225f7f429a63e0f1d2084b9e0a93b538",
+                    BigInteger.valueOf(100_000_000L),
+                    BigInteger.valueOf(300L),
+                    BigInteger.valueOf(3600L),
+                    BigInteger.valueOf(600L),
+                    BigInteger.ZERO,
+                    BigInteger.valueOf(2L),
+                    "0x4200000000000000000000000000000000000016");
         }
 
         /**
@@ -385,34 +383,34 @@ public record Config(
          */
         public static ChainConfig baseGoerli() {
             return new ChainConfig(
-                "base-goerli",
-                BigInteger.valueOf(5L),
-                BigInteger.valueOf(84531L),
-                new Epoch(
-                    BigInteger.valueOf(8410981L),
-                    "0x73d89754a1e0387b89520d989d3be9c37c1f32495a88faf1ea05c61121ab0d19",
-                    BigInteger.valueOf(1675193616L)),
-                new BlockInfo(
-                    "0xa3ab140f15ea7f7443a4702da64c10314eb04d488e72974e02e2d728096b4f76",
-                    BigInteger.valueOf(0L),
-                    Numeric.toHexString(new byte[32]),
-                    BigInteger.valueOf(1675193616L)),
-                new SystemConfig(
-                    "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
-                    BigInteger.valueOf(25_000_000L),
-                    BigInteger.valueOf(2100),
-                    BigInteger.valueOf(1000000),
-                    "0x32a4e99A72c11E9DD3dC159909a2D7BD86C1Bc51"),
-                "0x8453100000000000000000000000000000000000",
-                "0xe93c8cd0d409341205a592f8c4ac1a5fe5585cfa",
-                "0xb15eea247ece011c68a614e4a77ad648ff495bc1",
-                BigInteger.valueOf(100_000_000L),
-                BigInteger.valueOf(100L),
-                BigInteger.valueOf(3600L),
-                BigInteger.valueOf(600L),
-                BigInteger.valueOf(1683219600L),
-                BigInteger.valueOf(2L),
-                "0x4200000000000000000000000000000000000016");
+                    "base-goerli",
+                    BigInteger.valueOf(5L),
+                    BigInteger.valueOf(84531L),
+                    new Epoch(
+                            BigInteger.valueOf(8410981L),
+                            "0x73d89754a1e0387b89520d989d3be9c37c1f32495a88faf1ea05c61121ab0d19",
+                            BigInteger.valueOf(1675193616L)),
+                    new BlockInfo(
+                            "0xa3ab140f15ea7f7443a4702da64c10314eb04d488e72974e02e2d728096b4f76",
+                            BigInteger.valueOf(0L),
+                            Numeric.toHexString(new byte[32]),
+                            BigInteger.valueOf(1675193616L)),
+                    new SystemConfig(
+                            "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
+                            BigInteger.valueOf(25_000_000L),
+                            BigInteger.valueOf(2100),
+                            BigInteger.valueOf(1000000),
+                            "0x32a4e99A72c11E9DD3dC159909a2D7BD86C1Bc51"),
+                    "0x8453100000000000000000000000000000000000",
+                    "0xe93c8cd0d409341205a592f8c4ac1a5fe5585cfa",
+                    "0xb15eea247ece011c68a614e4a77ad648ff495bc1",
+                    BigInteger.valueOf(100_000_000L),
+                    BigInteger.valueOf(100L),
+                    BigInteger.valueOf(3600L),
+                    BigInteger.valueOf(600L),
+                    BigInteger.valueOf(1683219600L),
+                    BigInteger.valueOf(2L),
+                    "0x4200000000000000000000000000000000000016");
         }
 
         /**
@@ -424,10 +422,8 @@ public record Config(
         public static ChainConfig fromJson(String filePath) {
             ObjectMapper mapper = new ObjectMapper();
             try {
-                ExternalChainConfig externalChainConfig =
-                    mapper.readValue(
-                        Files.readString(Path.of(filePath), StandardCharsets.UTF_8),
-                        ExternalChainConfig.class);
+                ExternalChainConfig externalChainConfig = mapper.readValue(
+                        Files.readString(Path.of(filePath), StandardCharsets.UTF_8), ExternalChainConfig.class);
                 return ChainConfig.fromExternal(externalChainConfig);
             } catch (IOException e) {
                 throw new ConfigLoadException(e);
@@ -442,31 +438,31 @@ public record Config(
          */
         public static ChainConfig fromExternal(ExternalChainConfig external) {
             return new ChainConfig(
-                "external",
-                external.l1ChainId,
-                external.l2ChainId,
-                new Epoch(external.genesis.l1.number, external.genesis.l1.hash, BigInteger.ZERO),
-                new BlockInfo(
-                    external.genesis.l2.hash,
-                    external.genesis.l2.number,
-                    Numeric.toHexString(new byte[32]),
-                    external.genesis.l2Time),
-                new SystemConfig(
-                    external.genesis.systemConfig.batcherAddr,
-                    external.genesis.systemConfig.gasLimit,
-                    Numeric.toBigInt(external.genesis.systemConfig.overhead),
-                    Numeric.toBigInt(external.genesis.systemConfig.scalar),
-                    Numeric.toHexString(new byte[32])),
-                external.batchInboxAddress,
-                external.depositContractAddress,
-                external.l1SystemConfigAddress,
-                BigInteger.valueOf(100_000_000L),
-                external.channelTimeout,
-                external.seqWindowSize,
-                external.maxSequencerDrift,
-                external.regolithTime,
-                external.blockTime,
-                "0x4200000000000000000000000000000000000016");
+                    "external",
+                    external.l1ChainId,
+                    external.l2ChainId,
+                    new Epoch(external.genesis.l1.number, external.genesis.l1.hash, BigInteger.ZERO),
+                    new BlockInfo(
+                            external.genesis.l2.hash,
+                            external.genesis.l2.number,
+                            Numeric.toHexString(new byte[32]),
+                            external.genesis.l2Time),
+                    new SystemConfig(
+                            external.genesis.systemConfig.batcherAddr,
+                            external.genesis.systemConfig.gasLimit,
+                            Numeric.toBigInt(external.genesis.systemConfig.overhead),
+                            Numeric.toBigInt(external.genesis.systemConfig.scalar),
+                            Numeric.toHexString(new byte[32])),
+                    external.batchInboxAddress,
+                    external.depositContractAddress,
+                    external.l1SystemConfigAddress,
+                    BigInteger.valueOf(100_000_000L),
+                    external.channelTimeout,
+                    external.seqWindowSize,
+                    external.maxSequencerDrift,
+                    external.regolithTime,
+                    external.blockTime,
+                    "0x4200000000000000000000000000000000000016");
         }
 
         /**
@@ -476,40 +472,45 @@ public record Config(
          */
         public Map<String, String> toConfigMap() {
             return Map.ofEntries(
-                entry("config.chainConfig.network", this.network),
-                entry("config.chainConfig.l1ChainId", this.l1ChainId.toString()),
-                entry("config.chainConfig.l2ChainId", this.l2ChainId.toString()),
-                entry("config.chainConfig.l1StartEpoch.number", this.l1StartEpoch.number().toString()),
-                entry(
-                    "config.chainConfig.l1StartEpoch.timestamp",
-                    this.l1StartEpoch.timestamp().toString()),
-                entry("config.chainConfig.l1StartEpoch.hash", this.l1StartEpoch.hash()),
-                entry("config.chainConfig.l2Genesis.hash", this.l2Genesis.hash()),
-                entry("config.chainConfig.l2Genesis.parentHash", this.l2Genesis.parentHash()),
-                entry("config.chainConfig.l2Genesis.number", this.l2Genesis.number().toString()),
-                entry("config.chainConfig.l2Genesis.timestamp", this.l2Genesis.timestamp().toString()),
-                entry("config.chainConfig.systemConfig.batchSender", this.systemConfig.batchSender()),
-                entry(
-                    "config.chainConfig.systemConfig.gasLimit", this.systemConfig.gasLimit().toString()),
-                entry(
-                    "config.chainConfig.systemConfig.l1FeeOverhead",
-                    this.systemConfig.l1FeeOverhead().toString()),
-                entry(
-                    "config.chainConfig.systemConfig.l1FeeScalar",
-                    this.systemConfig.l1FeeScalar().toString()),
-                entry(
-                    "config.chainConfig.systemConfig.unsafeBlockSigner",
-                    this.systemConfig.unsafeBlockSigner()),
-                entry("config.chainConfig.batchInbox", this.batchInbox),
-                entry("config.chainConfig.depositContract", this.depositContract),
-                entry("config.chainConfig.systemConfigContract", this.systemConfigContract),
-                entry("config.chainConfig.maxChannelSize", this.maxChannelSize.toString()),
-                entry("config.chainConfig.channelTimeout", this.channelTimeout.toString()),
-                entry("config.chainConfig.seqWindowSize", this.seqWindowSize.toString()),
-                entry("config.chainConfig.maxSeqDrift", this.maxSeqDrift.toString()),
-                entry("config.chainConfig.regolithTime", this.regolithTime.toString()),
-                entry("config.chainConfig.blockTime", this.blockTime.toString()),
-                entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
+                    entry("config.chainConfig.network", this.network),
+                    entry("config.chainConfig.l1ChainId", this.l1ChainId.toString()),
+                    entry("config.chainConfig.l2ChainId", this.l2ChainId.toString()),
+                    entry(
+                            "config.chainConfig.l1StartEpoch.number",
+                            this.l1StartEpoch.number().toString()),
+                    entry(
+                            "config.chainConfig.l1StartEpoch.timestamp",
+                            this.l1StartEpoch.timestamp().toString()),
+                    entry("config.chainConfig.l1StartEpoch.hash", this.l1StartEpoch.hash()),
+                    entry("config.chainConfig.l2Genesis.hash", this.l2Genesis.hash()),
+                    entry("config.chainConfig.l2Genesis.parentHash", this.l2Genesis.parentHash()),
+                    entry(
+                            "config.chainConfig.l2Genesis.number",
+                            this.l2Genesis.number().toString()),
+                    entry(
+                            "config.chainConfig.l2Genesis.timestamp",
+                            this.l2Genesis.timestamp().toString()),
+                    entry("config.chainConfig.systemConfig.batchSender", this.systemConfig.batchSender()),
+                    entry(
+                            "config.chainConfig.systemConfig.gasLimit",
+                            this.systemConfig.gasLimit().toString()),
+                    entry(
+                            "config.chainConfig.systemConfig.l1FeeOverhead",
+                            this.systemConfig.l1FeeOverhead().toString()),
+                    entry(
+                            "config.chainConfig.systemConfig.l1FeeScalar",
+                            this.systemConfig.l1FeeScalar().toString()),
+                    entry("config.chainConfig.systemConfig.unsafeBlockSigner", this.systemConfig.unsafeBlockSigner()),
+                    entry("config.chainConfig.batchInbox", this.batchInbox),
+                    entry("config.chainConfig.depositContract", this.depositContract),
+                    entry("config.chainConfig.systemConfigContract", this.systemConfigContract),
+                    entry("config.chainConfig.maxChannelSize", this.maxChannelSize.toString()),
+                    entry("config.chainConfig.channelTimeout", this.channelTimeout.toString()),
+                    entry("config.chainConfig.seqWindowSize", this.seqWindowSize.toString()),
+                    entry("config.chainConfig.maxSeqDrift", this.maxSeqDrift.toString()),
+                    entry("config.chainConfig.regolithTime", this.regolithTime.toString()),
+                    entry("config.chainConfig.blockTime", this.blockTime.toString()),
+                    entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
         }
     }
 
@@ -555,8 +556,7 @@ public record Config(
      * @author grapebaba
      * @since 0.1.0
      */
-    public record SystemAccounts(
-        String attributesDepositor, String attributesPreDeploy, String feeVault) {
+    public record SystemAccounts(String attributesDepositor, String attributesPreDeploy, String feeVault) {
 
         /**
          * Create default SystemAccounts instance.
@@ -565,9 +565,9 @@ public record Config(
          */
         public static SystemAccounts defaultSystemAccounts() {
             return new SystemAccounts(
-                "0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001",
-                "0x4200000000000000000000000000000000000015",
-                "0x4200000000000000000000000000000000000011");
+                    "0xdeaddeaddeaddeaddeaddeaddeaddeaddead0001",
+                    "0x4200000000000000000000000000000000000015",
+                    "0x4200000000000000000000000000000000000011");
         }
     }
 
@@ -583,11 +583,11 @@ public record Config(
      * @since 0.1.0
      */
     public record SystemConfig(
-        String batchSender,
-        BigInteger gasLimit,
-        BigInteger l1FeeOverhead,
-        BigInteger l1FeeScalar,
-        String unsafeBlockSigner) {
+            String batchSender,
+            BigInteger gasLimit,
+            BigInteger l1FeeOverhead,
+            BigInteger l1FeeScalar,
+            String unsafeBlockSigner) {
 
         /**
          * Batch hash string.
@@ -620,17 +620,17 @@ public record Config(
     @JsonSerialize
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public record ExternalChainConfig(
-        ExternalGenesisInfo genesis,
-        BigInteger blockTime,
-        BigInteger maxSequencerDrift,
-        BigInteger seqWindowSize,
-        BigInteger channelTimeout,
-        BigInteger l1ChainId,
-        BigInteger l2ChainId,
-        BigInteger regolithTime,
-        String batchInboxAddress,
-        String depositContractAddress,
-        String l1SystemConfigAddress) {}
+            ExternalGenesisInfo genesis,
+            BigInteger blockTime,
+            BigInteger maxSequencerDrift,
+            BigInteger seqWindowSize,
+            BigInteger channelTimeout,
+            BigInteger l1ChainId,
+            BigInteger l2ChainId,
+            BigInteger regolithTime,
+            String batchInboxAddress,
+            String depositContractAddress,
+            String l1SystemConfigAddress) {}
 
     /**
      * External Genesis Info.
@@ -642,7 +642,7 @@ public record Config(
      */
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
     public record ExternalGenesisInfo(
-        ChainGenesisInfo l1, ChainGenesisInfo l2, BigInteger l2Time, SystemConfigInfo systemConfig) {}
+            ChainGenesisInfo l1, ChainGenesisInfo l2, BigInteger l2Time, SystemConfigInfo systemConfig) {}
 
     /**
      * system config info.
@@ -653,8 +653,7 @@ public record Config(
      * @param gasLimit gas limit
      */
     @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
-    public record SystemConfigInfo(
-        String batcherAddr, String overhead, String scalar, BigInteger gasLimit) {}
+    public record SystemConfigInfo(String batcherAddr, String overhead, String scalar, BigInteger gasLimit) {}
 
     /**
      * chain genesis info.

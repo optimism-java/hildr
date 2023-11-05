@@ -17,26 +17,26 @@ import org.junit.jupiter.api.Test;
  */
 class RatioCompressorTest {
 
-  @Test
-  public void testCompressor() throws DataFormatException, IOException {
-    var cprsConfig = new CompressorConfig(10_000, 1, "0.4", Compressors.RatioKind);
-    var cprr = new RatioCompressor(cprsConfig);
+    @Test
+    public void testCompressor() throws DataFormatException, IOException {
+        var cprsConfig = new CompressorConfig(10_000, 1, "0.4", Compressors.RatioKind);
+        var cprr = new RatioCompressor(cprsConfig);
 
-    final String source = "test compressor data 123456789987654321";
-    byte[] sourceBytes = source.getBytes(StandardCharsets.UTF_8);
-    cprr.write(sourceBytes);
-    byte[] tmp = new byte[100];
-    int n = cprr.read(tmp);
-    cprr.close();
+        final String source = "test compressor data 123456789987654321";
+        byte[] sourceBytes = source.getBytes(StandardCharsets.UTF_8);
+        cprr.write(sourceBytes);
+        byte[] tmp = new byte[100];
+        int n = cprr.read(tmp);
+        cprr.close();
 
-    Inflater inflater = new Inflater();
-    inflater.setInput(Arrays.copyOf(tmp, n));
+        Inflater inflater = new Inflater();
+        inflater.setInput(Arrays.copyOf(tmp, n));
 
-    byte[] uncompressed = new byte[sourceBytes.length];
-    inflater.inflate(uncompressed);
-    inflater.finished();
-    inflater.end();
+        byte[] uncompressed = new byte[sourceBytes.length];
+        inflater.inflate(uncompressed);
+        inflater.finished();
+        inflater.end();
 
-    assertEquals(source, new String(uncompressed));
-  }
+        assertEquals(source, new String(uncompressed, StandardCharsets.UTF_8));
+    }
 }

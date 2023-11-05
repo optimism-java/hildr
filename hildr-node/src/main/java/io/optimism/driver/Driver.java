@@ -59,11 +59,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import jdk.incubator.concurrent.StructuredTaskScope;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 import org.jetbrains.annotations.NotNull;
@@ -126,6 +125,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param rpcServer        the rpc server
      * @param latch            the close notifier
      * @param config           the chain config
+     * @param opStackNetwork   the op stack network
+     *
      */
     @SuppressWarnings("preview")
     public Driver(
@@ -181,12 +182,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         EthBlock finalizedBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> finalizedBlockFuture = scope.fork(TracerTaskWrapper.wrap(
+            StructuredTaskScope.Subtask<EthBlock> finalizedBlockFuture = scope.fork(TracerTaskWrapper.wrap(
                     () -> provider.ethGetBlockByNumber(FINALIZED, true).send()));
             scope.join();
             scope.throwIfFailed();
 
-            finalizedBlock = finalizedBlockFuture.resultNow();
+            finalizedBlock = finalizedBlockFuture.get();
         }
 
         HeadInfo head;
@@ -396,7 +397,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
             scope.join();
             scope.throwIfFailed();
-            voidFuture.resultNow();
+            voidFuture.get();
         }
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -406,7 +407,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             }));
             scope.join();
             scope.throwIfFailed();
-            voidFuture.resultNow();
+            voidFuture.get();
         }
         this.updateFinalized();
         this.updateMetrics();

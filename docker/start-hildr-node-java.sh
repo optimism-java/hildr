@@ -3,7 +3,7 @@ set -e
 
 if [ $SYNC_MODE = "full" ]
 then
-    exec java --enable-preview --add-modules jdk.incubator.concurrent \
+    exec java --enable-preview \
         -cp $HILDR_JAR $HILDR_MAIN_CLASS \
         --network $NETWORK \
         --jwt-secret $JWT_SECRET \
@@ -15,7 +15,7 @@ then
         --sync-mode $SYNC_MODE
 elif [ $SYNC_MODE = "checkpoint"]
 then
-    exec java --enable-preview --add-modules jdk.incubator.concurrent \
+    exec java --enable-preview \
         -cp $HILDR_JAR $HILDR_MAIN_CLASS \
         --network $NETWORK \
         --jwt-secret $JWT_SECRET \

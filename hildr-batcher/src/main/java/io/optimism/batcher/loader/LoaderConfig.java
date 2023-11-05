@@ -30,13 +30,13 @@ import io.optimism.batcher.telemetry.BatcherMetrics;
  */
 public record LoaderConfig(String l2RpcUrl, String rollupUrl, BatcherMetrics metrics) {
 
-  /**
-   * Create a LoaderConfig instance from Config instance.
-   *
-   * @param config Config instance
-   * @return LoaderConfig instance
-   */
-  public static LoaderConfig from(Config config) {
-    return new LoaderConfig(config.l2RpcUrl(), config.rollupRpcUrl(), config.metrics());
-  }
+    /**
+     * Create a LoaderConfig instance from Config instance.
+     *
+     * @param config Config instance
+     * @return LoaderConfig instance
+     */
+    public static LoaderConfig from(Config config) {
+        return new LoaderConfig(config.l2RpcUrl(), config.rollupRpcUrl(), config.metrics());
+    }
 }

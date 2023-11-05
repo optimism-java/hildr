@@ -38,8 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import jdk.incubator.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -110,11 +109,12 @@ public class Runner extends AbstractExecutionThreadService {
         boolean isAvailable;
         while (!Thread.interrupted()) {
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                Future<Boolean> isAvailableFuture = scope.fork(TracerTaskWrapper.wrap(engineApi::isAvailable));
+                StructuredTaskScope.Subtask<Boolean> isAvailableFuture =
+                        scope.fork(TracerTaskWrapper.wrap(engineApi::isAvailable));
 
                 scope.join();
                 scope.throwIfFailed();
-                isAvailable = isAvailableFuture.resultNow();
+                isAvailable = isAvailableFuture.get();
             }
             if (isAvailable) {
                 break;
@@ -203,7 +203,7 @@ public class Runner extends AbstractExecutionThreadService {
             LOGGER.info("finding the latest epoch boundary to use as checkpoint");
             BigInteger blockNumber;
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                Future<BigInteger> blockNumberFuture = scope.fork(TracerTaskWrapper.wrap(
+                StructuredTaskScope.Subtask<BigInteger> blockNumberFuture = scope.fork(TracerTaskWrapper.wrap(
                         () -> checkpointSyncUrl.ethBlockNumber().send().getBlockNumber()));
                 scope.join();
                 scope.throwIfFailed();
@@ -233,12 +233,12 @@ public class Runner extends AbstractExecutionThreadService {
 
         EthBlock l2CheckpointBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> l2CheckpointBlockFuture = scope.fork(TracerTaskWrapper.wrap(
+            StructuredTaskScope.Subtask<EthBlock> l2CheckpointBlockFuture = scope.fork(TracerTaskWrapper.wrap(
                     () -> l2Provider.ethGetBlockByHash(checkpointHash, true).send()));
 
             scope.join();
             scope.throwIfFailed();
-            l2CheckpointBlock = l2CheckpointBlockFuture.resultNow();
+            l2CheckpointBlock = l2CheckpointBlockFuture.get();
         }
         if (l2CheckpointBlock != null) {
             LOGGER.warn("finalized head is above the checkpoint block");
@@ -250,11 +250,11 @@ public class Runner extends AbstractExecutionThreadService {
         // TODO: use a list of whitelisted bootnodes instead
         LOGGER.info("adding trusted peer to the execution layer");
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<BooleanResponse> isPeerAddedFuture = scope.fork(TracerTaskWrapper.wrap(
+            StructuredTaskScope.Subtask<BooleanResponse> isPeerAddedFuture = scope.fork(TracerTaskWrapper.wrap(
                     () -> l2Provider.adminAddPeer(TRUSTED_PEER_ENODE).send()));
             scope.join();
             scope.throwIfFailed();
-            BooleanResponse isPeerAdded = isPeerAddedFuture.resultNow();
+            BooleanResponse isPeerAdded = isPeerAddedFuture.get();
             if (!isPeerAdded.success()) {
                 throw new TrustedPeerAddedException("could not add peer");
             }
@@ -263,11 +263,11 @@ public class Runner extends AbstractExecutionThreadService {
         ExecutionPayload checkpointPayload = ExecutionPayload.from(checkpointBlock.getBlock());
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<OpEthPayloadStatus> payloadStatusFuture =
+            StructuredTaskScope.Subtask<OpEthPayloadStatus> payloadStatusFuture =
                     scope.fork(TracerTaskWrapper.wrap(() -> engineApi.newPayload(checkpointPayload)));
             scope.join();
             scope.throwIfFailed();
-            OpEthPayloadStatus payloadStatus = payloadStatusFuture.resultNow();
+            OpEthPayloadStatus payloadStatus = payloadStatusFuture.get();
             if (payloadStatus.getPayloadStatus().getStatus() == Status.INVALID
                     || payloadStatus.getPayloadStatus().getStatus() == Status.INVALID_BLOCK_HASH) {
                 LOGGER.error("the provided checkpoint payload is invalid, exiting");
@@ -277,12 +277,12 @@ public class Runner extends AbstractExecutionThreadService {
 
         ForkchoiceState forkchoiceState = ForkchoiceState.fromSingleHead(checkpointHash);
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
+            StructuredTaskScope.Subtask<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
                     scope.fork(TracerTaskWrapper.wrap(() -> engineApi.forkchoiceUpdated(forkchoiceState, null)));
 
             scope.join();
             scope.throwIfFailed();
-            OpEthForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.resultNow();
+            OpEthForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.get();
 
             if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus() == Status.INVALID
                     || forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
@@ -296,12 +296,12 @@ public class Runner extends AbstractExecutionThreadService {
         while (isRunning() && !this.isShutdownTriggered) {
             BigInteger blockNumber;
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                Future<BigInteger> blockNumberFuture = scope.fork(TracerTaskWrapper.wrap(
+                StructuredTaskScope.Subtask<BigInteger> blockNumberFuture = scope.fork(TracerTaskWrapper.wrap(
                         () -> l2Provider.ethBlockNumber().send().getBlockNumber()));
 
                 scope.join();
                 scope.throwIfFailed();
-                blockNumber = blockNumberFuture.resultNow();
+                blockNumber = blockNumberFuture.get();
             }
             if (blockNumber.compareTo(checkpointPayload.blockNumber()) >= 0) {
                 break;
@@ -323,7 +323,7 @@ public class Runner extends AbstractExecutionThreadService {
             throws InterruptedException, ExecutionException {
         EthBlock block;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(
+            StructuredTaskScope.Subtask<EthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(
                     () -> checkpointSyncUrl.ethGetBlockByHash(blockHash, true).send()));
             scope.join();
             scope.throwIfFailed();
@@ -340,7 +340,7 @@ public class Runner extends AbstractExecutionThreadService {
             throws InterruptedException, ExecutionException {
         EthBlock block;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(() ->
+            StructuredTaskScope.Subtask<EthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(() ->
                     checkpointSyncUrl.ethGetBlockByNumber(blockParameter, true).send()));
             scope.join();
             scope.throwIfFailed();

@@ -12,9 +12,9 @@ plugins {
 	id 'application'
 //	id "checkstyle"
 	id "jacoco"
-	id "com.diffplug.spotless" version "6.19.0"
+	id "com.diffplug.spotless" version "6.22.0"
 	id "net.ltgt.errorprone" version "3.1.0"
-	id 'org.graalvm.buildtools.native' version '0.9.22'
+	id 'org.graalvm.buildtools.native' version '0.9.28'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
@@ -50,18 +50,18 @@ tasks.withType(JavaCompile).configureEach {
 	options.annotationProcessorPath = configurations.annotationProcessor
 	options.compilerArgs += "--enable-preview"
 	options.compilerArgs += "-Xlint:preview"
-	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
+//	options.compilerArgs += ["--add-modules", "jdk.incubator.concurrent"]
 	options.compilerArgs += ["-Aproject=${project.group}/${project.name}"]
 }
 
 tasks.withType(Test).configureEach {
 	jvmArgs += "--enable-preview"
-	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+//	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 tasks.withType(JavaExec).configureEach {
 	jvmArgs += "--enable-preview"
-	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
+//	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
 dependencies {
@@ -170,7 +170,9 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(20)
+		languageVersion = JavaLanguageVersion.of(21)
+//		vendor = JvmVendorSpec.GRAAL_VM
+//		implementation = JvmImplementation.VENDOR_SPECIFIC
 	}
 }
 
@@ -240,7 +242,7 @@ spotless {
 
 		// don't need to set target, it is inferred from java
 
-		palantirJavaFormat()
+		palantirJavaFormat('2.38.0')
 		// fix formatting of type annotations
 		formatAnnotations()
 		// make sure every file has the following copyright header.
@@ -312,8 +314,8 @@ javadoc {
 		options.addBooleanOption('html5', true)
 	}
 	options.addBooleanOption('-enable-preview', true)
-	options.addStringOption('-release', '20')
-	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
+	options.addStringOption('-release', '21')
+//	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
 
 jar {
@@ -351,7 +353,7 @@ task buildBinary {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -366,7 +368,7 @@ task buildBinaryStaticNoG1GC {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -381,7 +383,7 @@ task buildBinaryStatic {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --static --libc=musl --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -396,7 +398,7 @@ task buildBinaryG1GC {
 		exec {
 			workingDir buildBinaryDir
 			executable "sh"
-			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --no-fallback --enable-http --enable-https --enable-preview --add-modules jdk.incubator.concurrent -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
+			args "-c", "native-image -jar ${project.name}.jar --gc=G1 --no-fallback --enable-http --enable-https --enable-preview -H:EnableURLProtocols=http,https  --initialize-at-build-time=org.slf4j.LoggerFactory,ch.qos.logback.core.CoreConstants,ch.qos.logback.core.util.Loader,ch.qos.logback.core.util.StatusPrinter,ch.qos.logback.core.status.InfoStatus,ch.qos.logback.classic.Logger,ch.qos.logback.core.rolling.helper.FileNamePattern,ch.qos.logback.classic.Level,ch.qos.logback.core.status.StatusBase,io.opentelemetry.api.trace.ArrayBasedTraceStateBuilder,io.opentelemetry.context.LazyStorage,ch.qos.logback.core.util.FileSize,ch.qos.logback.core.rolling.helper.RollingCalendar,io.opentelemetry.api.internal.ImmutableSpanContext,io.opentelemetry.api.internal.OtelEncodingUtils,ch.qos.logback.classic.PatternLayout,io.opentelemetry.context.ThreadLocalContextStorage,io.opentelemetry.api.trace.PropagatedSpan,io.opentelemetry.context.ContextStorageWrappers,ch.qos.logback.core.rolling.helper.Compressor\$1,io.opentelemetry.api.trace.ImmutableTraceFlags,ch.qos.logback.core.rolling.helper.RollingCalendar\$1,ch.qos.logback.classic.model.ConfigurationModel,ch.qos.logback.core.model.processor.DefaultProcessor\$1,ch.qos.logback.core.model.processor.ImplicitModelHandler\$1,ch.qos.logback.core.subst.Token,ch.qos.logback.core.pattern.parser.Parser,ch.qos.logback.core.subst.Parser\$1,ch.qos.logback.core.util.Duration,ch.qos.logback.core.model.processor.ChainedModelFilter\$1,ch.qos.logback.classic.model.processor.ConfigurationModelHandler,ch.qos.logback.classic.model.processor.LogbackClassicDefaultNestedComponentRules,ch.qos.logback.core.subst.NodeToStringTransformer\$1,ch.qos.logback.core.pattern.parser.TokenStream\$1,ch.qos.logback.core.subst.Tokenizer\$1 --initialize-at-run-time=io.netty.channel.AbstractChannel,io.netty.channel.socket.nio.SelectorProviderUtil,io.netty.util.concurrent.DefaultPromise,io.netty,org.slf4j.MDC,org.github.gestalt.config ${project.name}"
 			standardOutput out
 		}
 	}
@@ -431,10 +433,10 @@ graalvmNative {
 		main {
 			imageName = 'hildr-node'
 
-//			javaLauncher = javaToolchains.launcherFor {
-//				languageVersion = JavaLanguageVersion.of(20)
-//				vendor = JvmVendorSpec.matching("GraalVM")
-//			}
+			javaLauncher = javaToolchains.launcherFor {
+				languageVersion = JavaLanguageVersion.of(21)
+				vendor = JvmVendorSpec.matching("Oracle Corporation")
+			}
 
 //			buildArgs.add('-J--enable-preview')
 //			buildArgs.add('-J--add-modules=jdk.incubator.concurrent')
@@ -443,7 +445,7 @@ graalvmNative {
 			buildArgs.add('--enable-http')
 			buildArgs.add('--enable-https')
 			buildArgs.add('--enable-preview')
-			buildArgs.add('--add-modules=jdk.incubator.concurrent')
+//			buildArgs.add('--add-modules=jdk.incubator.concurrent')
 //			buildArgs.add('--gc=G1')
 //			buildArgs.add('--report-unsupported-elements-at-runtime')
 //			buildArgs.add('--features=okhttp3.internal.graal.OkHttpFeature')

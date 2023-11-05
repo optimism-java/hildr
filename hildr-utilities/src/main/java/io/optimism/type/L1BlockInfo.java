@@ -38,56 +38,55 @@ import org.web3j.utils.Numeric;
  * @since 0.1.1
  */
 public record L1BlockInfo(
-    BigInteger number,
-    BigInteger time,
-    BigInteger baseFee,
-    String blockHash,
-    BigInteger sequenceNumber,
-    String batcherAddr,
-    BigInteger l1FeeOverhead,
-    BigInteger l1FeeScalar) {
+        BigInteger number,
+        BigInteger time,
+        BigInteger baseFee,
+        String blockHash,
+        BigInteger sequenceNumber,
+        String batcherAddr,
+        BigInteger l1FeeOverhead,
+        BigInteger l1FeeScalar) {
 
-  private static final String L1_INFO_FUNC_SIGNATURE =
-      "setL1BlockValues(uint64,uint64,uint256,bytes32,uint64,bytes32,uint256,uint256)";
+    private static final String L1_INFO_FUNC_SIGNATURE =
+            "setL1BlockValues(uint64,uint64,uint256,bytes32,uint64,bytes32,uint256,uint256)";
 
-  private static final int L1_INFO_LENGTH = 4 + 32 * 8;
+    private static final int L1_INFO_LENGTH = 4 + 32 * 8;
 
-  private static final byte[] SIGNATURE_BYTES =
-      ArrayUtils.subarray(
-          Hash.sha3(L1_INFO_FUNC_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
+    private static final byte[] SIGNATURE_BYTES =
+            ArrayUtils.subarray(Hash.sha3(L1_INFO_FUNC_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
 
-  /**
-   * Parse tx data to L1BlockInfo.
-   *
-   * @param data bytes of tx data
-   * @return L1BlockInfo Object
-   */
-  public static L1BlockInfo from(byte[] data) {
-    if (data == null || data.length != L1_INFO_LENGTH) {
-      throw new ParseBlockException(
-          String.format("data is unexpected length: %d", data == null ? 0 : data.length));
+    /**
+     * Parse tx data to L1BlockInfo.
+     *
+     * @param data bytes of tx data
+     * @return L1BlockInfo Object
+     */
+    public static L1BlockInfo from(byte[] data) {
+        if (data == null || data.length != L1_INFO_LENGTH) {
+            throw new ParseBlockException(
+                    String.format("data is unexpected length: %d", data == null ? 0 : data.length));
+        }
+        if (!Objects.deepEquals(ArrayUtils.subarray(data, 0, 4), SIGNATURE_BYTES)) {
+            throw new ParseBlockException("not equals signature bytes");
+        }
+        BigInteger number = Numeric.toBigInt(data, 4, 32);
+        BigInteger time = Numeric.toBigInt(data, 36, 32);
+        BigInteger baseFee = Numeric.toBigInt(data, 68, 32);
+        String blockHash = Numeric.toHexString(ArrayUtils.subarray(data, 100, 32));
+        BigInteger sequenceNumber = Numeric.toBigInt(data, 132, 32);
+        String batcherAddr = Numeric.toHexString(ArrayUtils.subarray(data, 176, 20));
+        BigInteger l1FeeOverhead = Numeric.toBigInt(data, 196, 32);
+        BigInteger l1FeeScalar = Numeric.toBigInt(data, 228, 32);
+        return new L1BlockInfo(
+                number, time, baseFee, blockHash, sequenceNumber, batcherAddr, l1FeeOverhead, l1FeeScalar);
     }
-    if (!Objects.deepEquals(ArrayUtils.subarray(data, 0, 4), SIGNATURE_BYTES)) {
-      throw new ParseBlockException("not equals signature bytes");
-    }
-    BigInteger number = Numeric.toBigInt(data, 4, 32);
-    BigInteger time = Numeric.toBigInt(data, 36, 32);
-    BigInteger baseFee = Numeric.toBigInt(data, 68, 32);
-    String blockHash = Numeric.toHexString(ArrayUtils.subarray(data, 100, 32));
-    BigInteger sequenceNumber = Numeric.toBigInt(data, 132, 32);
-    String batcherAddr = Numeric.toHexString(ArrayUtils.subarray(data, 176, 20));
-    BigInteger l1FeeOverhead = Numeric.toBigInt(data, 196, 32);
-    BigInteger l1FeeScalar = Numeric.toBigInt(data, 228, 32);
-    return new L1BlockInfo(
-        number, time, baseFee, blockHash, sequenceNumber, batcherAddr, l1FeeOverhead, l1FeeScalar);
-  }
 
-  /**
-   * L1BlockInfo instance converts to BlockId instance.
-   *
-   * @return BlockId instance
-   */
-  public BlockId toId() {
-    return new BlockId(blockHash, number);
-  }
+    /**
+     * L1BlockInfo instance converts to BlockId instance.
+     *
+     * @return BlockId instance
+     */
+    public BlockId toId() {
+        return new BlockId(blockHash, number);
+    }
 }

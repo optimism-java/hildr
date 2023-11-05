@@ -5,7 +5,7 @@
 
 # Hildr
 
-Hildr is an OP Stack rollup client written in the Java 20 with GraalVM native.
+Hildr is an OP Stack rollup client written in the Java 21 with GraalVM native.
 
 Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/specs/rollup-node.md)
 

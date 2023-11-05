@@ -35,9 +35,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.StructuredTaskScope;
 import java.util.function.Function;
-import jdk.incubator.concurrent.StructuredTaskScope;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -83,31 +82,28 @@ public class RpcServerTest {
         try {
             rpcServer.start();
 
-            OkHttpClient okHttpClient =
-                new OkHttpClient.Builder()
+            OkHttpClient okHttpClient = new OkHttpClient.Builder()
                     .readTimeout(Duration.ofMinutes(5))
                     .callTimeout(Duration.ofMinutes(5))
                     .build();
 
             ObjectMapper mapper = new ObjectMapper();
-            JsonRpcRequest jsonRpcRequest =
-                new JsonRpcRequest(
+            JsonRpcRequest jsonRpcRequest = new JsonRpcRequest(
                     "2.0", RpcMethod.OP_OUTPUT_AT_BLOCK.getRpcMethodName(), new Object[] {"7900000"});
             jsonRpcRequest.setId(new JsonRpcRequestId("1"));
             var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
             RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
 
-            final Request request =
-                new Request.Builder().url("http://127.0.0.1:9545").post(requestBody).build();
+            final Request request = new Request.Builder()
+                    .url("http://127.0.0.1:9545")
+                    .post(requestBody)
+                    .build();
 
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                Future<Response> fork =
-                    scope.fork(
-                        TracerTaskWrapper.wrap(
-                            () -> {
-                                logger.info("test: {}", Thread.currentThread().getName());
-                                return okHttpClient.newCall(request).execute();
-                            }));
+                StructuredTaskScope.Subtask<Response> fork = scope.fork(TracerTaskWrapper.wrap(() -> {
+                    logger.info("test: {}", Thread.currentThread().getName());
+                    return okHttpClient.newCall(request).execute();
+                }));
                 scope.join();
                 Response response = fork.get();
                 assertEquals(200, response.code());
@@ -115,8 +111,7 @@ public class RpcServerTest {
                 Map jsonRpcResp = mapper.readValue(response.body().string(), Map.class);
                 assertEquals(jsonRpcResp.get("id"), "1");
                 OutputRootResult outputRootResult =
-                    mapper.readValue(
-                        mapper.writeValueAsString(jsonRpcResp.get("result")), OutputRootResult.class);
+                        mapper.readValue(mapper.writeValueAsString(jsonRpcResp.get("result")), OutputRootResult.class);
                 assertNotNull(outputRootResult);
             }
         } finally {
@@ -126,25 +121,14 @@ public class RpcServerTest {
 
     @Test
     void testRpcServerRegister() throws IOException, InterruptedException, ExecutionException {
-        RpcServer rpcServer =
-            createRpcServer(
-                new Config(
-                    null,
-                    null,
-                    "http://fakeurl",
-                    null,
-                    null,
-                    null,
-                    9545,
-                    false,
-                    Config.ChainConfig.optimism()));
+        RpcServer rpcServer = createRpcServer(
+                new Config(null, null, "http://fakeurl", null, null, null, 9545, false, Config.ChainConfig.optimism()));
         rpcServer.start();
         HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);
         rpcHandler.put("test_url", unused -> "response data");
         rpcServer.register(rpcHandler);
 
-        OkHttpClient okHttpClient =
-            new OkHttpClient.Builder()
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .readTimeout(Duration.ofMinutes(5))
                 .callTimeout(Duration.ofMinutes(5))
                 .build();
@@ -162,20 +146,19 @@ public class RpcServerTest {
     }
 
     private Response sendRequest(OkHttpClient okHttpClient, JsonRpcRequest jsonRpcRequest)
-        throws JsonProcessingException, InterruptedException, ExecutionException {
+            throws JsonProcessingException, InterruptedException, ExecutionException {
         var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
         RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
 
-        final Request request =
-            new Request.Builder().url("http://127.0.0.1:9545").post(requestBody).build();
+        final Request request = new Request.Builder()
+                .url("http://127.0.0.1:9545")
+                .post(requestBody)
+                .build();
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<Response> fork =
-                scope.fork(
-                    TracerTaskWrapper.wrap(
-                        () -> {
-                            logger.info("test: {}", Thread.currentThread().getName());
-                            return okHttpClient.newCall(request).execute();
-                        }));
+            StructuredTaskScope.Subtask<Response> fork = scope.fork(TracerTaskWrapper.wrap(() -> {
+                logger.info("test: {}", Thread.currentThread().getName());
+                return okHttpClient.newCall(request).execute();
+            }));
             scope.join();
             return fork.get();
         }

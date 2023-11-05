@@ -1561,7 +1561,7 @@
   "queryAllPublicMethods" : true,
   "allPublicClasses" : true
 }, {
-  "name" : "io.optimism.telemetry.LazyInitRollingFileAppender",
+  "name" : "io.optimism.utilities.telemetry.LazyInitRollingFileAppender",
   "allDeclaredClasses" : true,
   "queryAllDeclaredConstructors" : true,
   "queryAllPublicConstructors" : true,
@@ -2001,12 +2001,12 @@
 }, {
   "name" : "javax.smartcardio.CardPermission"
 }, {
-  "name" : "jdk.incubator.concurrent.StructuredTaskScope",
+  "name" : "java.util.concurrent.StructuredTaskScope",
   "fields" : [ {
     "name" : "futures"
   } ]
 }, {
-  "name" : "jdk.incubator.concurrent.StructuredTaskScope$ShutdownOnFailure",
+  "name" : "java.util.concurrent.StructuredTaskScope$ShutdownOnFailure",
   "fields" : [ {
     "name" : "future"
   } ]

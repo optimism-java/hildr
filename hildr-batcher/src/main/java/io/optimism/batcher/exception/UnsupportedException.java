@@ -24,31 +24,31 @@ package io.optimism.batcher.exception;
  */
 public class UnsupportedException extends RuntimeException {
 
-  /**
-   * Instantiates a new UnsupportedException.
-   *
-   * @param message the message
-   */
-  public UnsupportedException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new UnsupportedException.
+     *
+     * @param message the message
+     */
+    public UnsupportedException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new UnsupportedException.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public UnsupportedException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new UnsupportedException.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public UnsupportedException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new UnsupportedException.
-   *
-   * @param cause the cause
-   */
-  public UnsupportedException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new UnsupportedException.
+     *
+     * @param cause the cause
+     */
+    public UnsupportedException(Throwable cause) {
+        super(cause);
+    }
 }

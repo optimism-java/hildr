@@ -24,31 +24,31 @@ package io.optimism.batcher.publisher;
  */
 public class PublishException extends RuntimeException {
 
-  /**
-   * Instantiates a new PublishException.
-   *
-   * @param message the message
-   */
-  public PublishException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new PublishException.
+     *
+     * @param message the message
+     */
+    public PublishException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new PublishException.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public PublishException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new PublishException.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public PublishException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new PublishException.
-   *
-   * @param cause the cause
-   */
-  public PublishException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new PublishException.
+     *
+     * @param cause the cause
+     */
+    public PublishException(Throwable cause) {
+        super(cause);
+    }
 }

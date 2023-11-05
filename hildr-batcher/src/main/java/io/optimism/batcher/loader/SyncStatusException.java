@@ -24,31 +24,31 @@ package io.optimism.batcher.loader;
  */
 public class SyncStatusException extends RuntimeException {
 
-  /**
-   * Instantiates a new sync status exception.
-   *
-   * @param message the message
-   */
-  public SyncStatusException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new sync status exception.
+     *
+     * @param message the message
+     */
+    public SyncStatusException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new sync status exception.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public SyncStatusException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new sync status exception.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public SyncStatusException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new sync status exception.
-   *
-   * @param cause the cause
-   */
-  public SyncStatusException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new sync status exception.
+     *
+     * @param cause the cause
+     */
+    public SyncStatusException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -26,23 +26,23 @@ import io.optimism.batcher.exception.UnsupportedException;
  */
 public class Compressors {
 
-  /** Kind type of ratio. */
-  public static final String RatioKind = "ratio";
+    /** Kind type of ratio. */
+    public static final String RatioKind = "ratio";
 
-  private Compressors() {}
+    private Compressors() {}
 
-  /**
-   * Create Compressor by kind.
-   *
-   * @param config Config of compressor
-   * @return a compressor
-   */
-  public static Compressor create(final CompressorConfig config) {
-    String kind = config.kind();
-    if (kind.equalsIgnoreCase(RatioKind)) {
-      return new RatioCompressor(config);
-    } else {
-      throw new UnsupportedException(String.format("unsupported kind: %s", kind));
+    /**
+     * Create Compressor by kind.
+     *
+     * @param config Config of compressor
+     * @return a compressor
+     */
+    public static Compressor create(final CompressorConfig config) {
+        String kind = config.kind();
+        if (kind.equalsIgnoreCase(RatioKind)) {
+            return new RatioCompressor(config);
+        } else {
+            throw new UnsupportedException(String.format("unsupported kind: %s", kind));
+        }
     }
-  }
 }

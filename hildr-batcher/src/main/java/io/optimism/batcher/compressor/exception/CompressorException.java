@@ -25,12 +25,12 @@ package io.optimism.batcher.compressor.exception;
  */
 public class CompressorException extends RuntimeException {
 
-  /**
-   * Constructor of CompressorFullException.
-   *
-   * @param message error message
-   */
-  public CompressorException(String message) {
-    super(message);
-  }
+    /**
+     * Constructor of CompressorFullException.
+     *
+     * @param message error message
+     */
+    public CompressorException(String message) {
+        super(message);
+    }
 }

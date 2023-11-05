@@ -33,20 +33,20 @@ import io.optimism.batcher.telemetry.BatcherMetrics;
  * @since 0.1.1
  */
 public record ChannelConfig(
-    long channelTimeout,
-    long maxChannelDuration,
-    int maxFrameSize,
-    long seqWindowSize,
-    long subSafetyMargin,
-    BatcherMetrics metrics) {
+        long channelTimeout,
+        long maxChannelDuration,
+        int maxFrameSize,
+        long seqWindowSize,
+        long subSafetyMargin,
+        BatcherMetrics metrics) {
 
-  /**
-   * Create a ChannelConfig instance from Config instance.
-   *
-   * @param config Config instance
-   * @return ChannelConfig instance
-   */
-  public static ChannelConfig from(Config config) {
-    return new ChannelConfig(30000, 0, 120_000, 3600, 10, config.metrics());
-  }
+    /**
+     * Create a ChannelConfig instance from Config instance.
+     *
+     * @param config Config instance
+     * @return ChannelConfig instance
+     */
+    public static ChannelConfig from(Config config) {
+        return new ChannelConfig(30000, 0, 120_000, 3600, 10, config.metrics());
+    }
 }

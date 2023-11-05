@@ -45,88 +45,85 @@ import org.slf4j.LoggerFactory;
 @SuppressWarnings("checkstyle:AnnotationLocationMostCases")
 public class RetryRateLimitInterceptor implements Interceptor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(RetryRateLimitInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RetryRateLimitInterceptor.class);
 
-  private static final String HEADER_NOT_FOUND = "header not found";
+    private static final String HEADER_NOT_FOUND = "header not found";
 
-  private static final String RATE_LIMIT_MSG = "rate limit";
+    private static final String RATE_LIMIT_MSG = "rate limit";
 
-  private static final String DAILY_REQUEST_COUNT_EXCEEDED_REQUEST_RATE_LIMITED =
-      "daily request count exceeded, request rate limited";
+    private static final String DAILY_REQUEST_COUNT_EXCEEDED_REQUEST_RATE_LIMITED =
+            "daily request count exceeded, request rate limited";
 
-  private static final String RPC_CODE = "code";
-  private static final String RPC_MESSAGE = "message";
+    private static final String RPC_CODE = "code";
+    private static final String RPC_MESSAGE = "message";
 
-  private static final String RPC_ERROR_CODE = "429";
-  private static final String EXCEEDS_BLOCK_GAS_LIMIT = "-32005";
-  private static final String RATE_LIMIT_ERROR_CODE = "-32016";
+    private static final String RPC_ERROR_CODE = "429";
+    private static final String EXCEEDS_BLOCK_GAS_LIMIT = "-32005";
+    private static final String RATE_LIMIT_ERROR_CODE = "-32016";
 
-  private final RateLimiter rateLimiter;
+    private final RateLimiter rateLimiter;
 
-  private final Retryer<Response> retryer;
+    private final Retryer<Response> retryer;
 
-  private final ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
-  /** the RetryRateLimitInterceptor constructor. */
-  public RetryRateLimitInterceptor() {
-    this.rateLimiter = RateLimiter.create(200, Duration.ofMillis(50L));
-    this.retryer =
-        RetryerBuilder.<Response>newBuilder()
-            .withWaitStrategy(WaitStrategies.randomWait(100, TimeUnit.MILLISECONDS))
-            .withStopStrategy(StopStrategies.stopAfterAttempt(100))
-            .retryIfResult(this::shouldRetry)
-            .retryIfException(e -> e instanceof IOException)
-            .build();
-  }
+    /** the RetryRateLimitInterceptor constructor. */
+    public RetryRateLimitInterceptor() {
+        this.rateLimiter = RateLimiter.create(200, Duration.ofMillis(50L));
+        this.retryer = RetryerBuilder.<Response>newBuilder()
+                .withWaitStrategy(WaitStrategies.randomWait(100, TimeUnit.MILLISECONDS))
+                .withStopStrategy(StopStrategies.stopAfterAttempt(100))
+                .retryIfResult(this::shouldRetry)
+                .retryIfException(e -> e instanceof IOException)
+                .build();
+    }
 
-  @NotNull @Override
-  public Response intercept(@NotNull final Chain chain) throws IOException {
-    try {
-      return this.retryer.call(
-          () -> {
-            if (!this.rateLimiter.tryAcquire()) {
-              return new Response.Builder()
-                  .request(chain.request())
-                  .protocol(Protocol.HTTP_1_1)
-                  .code(429)
-                  .build();
+    @NotNull @Override
+    public Response intercept(@NotNull final Chain chain) throws IOException {
+        try {
+            return this.retryer.call(() -> {
+                if (!this.rateLimiter.tryAcquire()) {
+                    return new Response.Builder()
+                            .request(chain.request())
+                            .protocol(Protocol.HTTP_1_1)
+                            .code(429)
+                            .build();
+                }
+                return chain.proceed(chain.request());
+            });
+        } catch (ExecutionException | RetryException e) {
+            LOGGER.error("request failed", e);
+            return new Response.Builder().request(chain.request()).code(-1).build();
+        }
+    }
+
+    private boolean shouldRetry(Response res) {
+        var httpCode = res.code();
+        if (httpCode == 429) {
+            return true;
+        }
+
+        try {
+            if (res.body() == null) {
+                return false;
             }
-            return chain.proceed(chain.request());
-          });
-    } catch (ExecutionException | RetryException e) {
-      LOGGER.error("request failed", e);
-      return new Response.Builder().request(chain.request()).code(-1).build();
-    }
-  }
+            String jsonRpcRes = res.peekBody(Long.MAX_VALUE).string();
+            Map<String, Object> rpcRes = mapper.readValue(jsonRpcRes, new TypeReference<>() {});
+            String rpcCode = (String) rpcRes.get(RPC_CODE);
+            String rpcMsg = (String) rpcRes.getOrDefault(RPC_MESSAGE, "");
+            if (RPC_ERROR_CODE.equals(rpcCode)
+                    || EXCEEDS_BLOCK_GAS_LIMIT.equals(rpcCode)
+                    || (RATE_LIMIT_ERROR_CODE.equals(rpcCode) && RATE_LIMIT_MSG.contains(rpcMsg))) {
+                return true;
+            }
+            if (HEADER_NOT_FOUND.equals(rpcMsg) || DAILY_REQUEST_COUNT_EXCEEDED_REQUEST_RATE_LIMITED.equals(rpcMsg)) {
+                return true;
+            }
 
-  private boolean shouldRetry(Response res) {
-    var httpCode = res.code();
-    if (httpCode == 429) {
-      return true;
-    }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
-    try {
-      if (res.body() == null) {
         return false;
-      }
-      String jsonRpcRes = res.peekBody(Long.MAX_VALUE).string();
-      Map<String, Object> rpcRes = mapper.readValue(jsonRpcRes, new TypeReference<>() {});
-      String rpcCode = (String) rpcRes.get(RPC_CODE);
-      String rpcMsg = (String) rpcRes.getOrDefault(RPC_MESSAGE, "");
-      if (RPC_ERROR_CODE.equals(rpcCode)
-          || EXCEEDS_BLOCK_GAS_LIMIT.equals(rpcCode)
-          || (RATE_LIMIT_ERROR_CODE.equals(rpcCode) && RATE_LIMIT_MSG.contains(rpcMsg))) {
-        return true;
-      }
-      if (HEADER_NOT_FOUND.equals(rpcMsg)
-          || DAILY_REQUEST_COUNT_EXCEEDED_REQUEST_RATE_LIMITED.equals(rpcMsg)) {
-        return true;
-      }
-
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
-
-    return false;
-  }
 }

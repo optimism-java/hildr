@@ -34,9 +34,8 @@ import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.StructuredTaskScope;
 import java.util.stream.Collectors;
-import jdk.incubator.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -217,7 +216,7 @@ public class EngineDriver<E extends Engine> {
             var res = scope.fork(
                     TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, null)));
             scope.join();
-            return scope.exception().isEmpty() && !res.resultNow().hasError();
+            return scope.exception().isEmpty() && !res.get().hasError();
         }
     }
 
@@ -253,14 +252,14 @@ public class EngineDriver<E extends Engine> {
         BigInteger blockNumber = this.finalizedHead.number().add(blocks);
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> ethBlockFuture = scope.fork(TracerTaskWrapper.wrap(
+            StructuredTaskScope.Subtask<EthBlock> ethBlockFuture = scope.fork(TracerTaskWrapper.wrap(
                     () -> web3j.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
                             .send()));
 
             scope.join();
             scope.throwIfFailed();
 
-            return ethBlockFuture.resultNow();
+            return ethBlockFuture.get();
         }
     }
 
@@ -282,13 +281,12 @@ public class EngineDriver<E extends Engine> {
         ForkchoiceState forkchoiceState = createForkchoiceState();
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture = scope.fork(
+            StructuredTaskScope.Subtask<OpEthForkChoiceUpdate> forkChoiceUpdateFuture = scope.fork(
                     TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, null)));
 
             scope.join();
             scope.throwIfFailed();
-            ForkChoiceUpdate forkChoiceUpdate =
-                    forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
+            ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.get().getForkChoiceUpdate();
 
             if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
                 throw new ForkchoiceUpdateException(String.format(
@@ -300,12 +298,12 @@ public class EngineDriver<E extends Engine> {
 
     private void pushPayload(ExecutionPayload payload) throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<OpEthPayloadStatus> payloadStatusFuture =
+            StructuredTaskScope.Subtask<OpEthPayloadStatus> payloadStatusFuture =
                     scope.fork(TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.newPayload(payload)));
 
             scope.join();
             scope.throwIfFailed();
-            PayloadStatus payloadStatus = payloadStatusFuture.resultNow().getPayloadStatus();
+            PayloadStatus payloadStatus = payloadStatusFuture.get().getPayloadStatus();
 
             if (payloadStatus.getStatus() != Status.VALID && payloadStatus.getStatus() != Status.ACCEPTED) {
                 throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
@@ -319,12 +317,13 @@ public class EngineDriver<E extends Engine> {
 
         ForkChoiceUpdate forkChoiceUpdate;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<OpEthForkChoiceUpdate> forkChoiceUpdateFuture = scope.fork(TracerTaskWrapper.wrap(
-                    () -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, attributes)));
+            StructuredTaskScope.Subtask<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
+                    scope.fork(TracerTaskWrapper.wrap(
+                            () -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, attributes)));
 
             scope.join();
             scope.throwIfFailed();
-            forkChoiceUpdate = forkChoiceUpdateFuture.resultNow().getForkChoiceUpdate();
+            forkChoiceUpdate = forkChoiceUpdateFuture.get().getForkChoiceUpdate();
         }
 
         if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
@@ -338,12 +337,12 @@ public class EngineDriver<E extends Engine> {
 
         OpEthExecutionPayload res;
         try (var scope1 = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<OpEthExecutionPayload> payloadFuture =
+            StructuredTaskScope.Subtask<OpEthExecutionPayload> payloadFuture =
                     scope1.fork(TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.getPayload(payloadId)));
 
             scope1.join();
             scope1.throwIfFailed();
-            res = payloadFuture.resultNow();
+            res = payloadFuture.get();
         }
         return res;
     }

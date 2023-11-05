@@ -24,31 +24,31 @@ package io.optimism.batcher.exception;
  */
 public class Web3jCallException extends RuntimeException {
 
-  /**
-   * Instantiates a new Web3jCallException.
-   *
-   * @param message the message
-   */
-  public Web3jCallException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new Web3jCallException.
+     *
+     * @param message the message
+     */
+    public Web3jCallException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new Web3jCallException.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public Web3jCallException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new Web3jCallException.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public Web3jCallException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new Web3jCallException.
-   *
-   * @param cause the cause
-   */
-  public Web3jCallException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new Web3jCallException.
+     *
+     * @param cause the cause
+     */
+    public Web3jCallException(Throwable cause) {
+        super(cause);
+    }
 }

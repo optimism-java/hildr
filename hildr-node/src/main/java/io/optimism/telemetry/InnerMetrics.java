@@ -71,7 +71,7 @@ public class InnerMetrics {
      */
     public static void setFinalizedHead(BigInteger finalizedHead) {
         if (FINALIZED_HEAD != null) {
-          FINALIZED_HEAD.getAndSet(finalizedHead);
+            FINALIZED_HEAD.getAndSet(finalizedHead);
         }
     }
 

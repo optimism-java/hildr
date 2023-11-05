@@ -31,109 +31,109 @@ import org.web3j.rlp.RlpType;
  */
 public class DepositTransaction {
 
-  /**
-   * Uniquely identifies the source of the deposit
-   */
-  private String sourceHash;
+    /**
+     * Uniquely identifies the source of the deposit
+     */
+    private String sourceHash;
 
-  /**
-   * Exposed through the types.Signer, not through TxData
-   */
-  private String from;
+    /**
+     * Exposed through the types.Signer, not through TxData
+     */
+    private String from;
 
-  /**
-   * Means contract creation
-   */
-  private String to;
+    /**
+     * Means contract creation
+     */
+    private String to;
 
-  /**
-   * Minted on L2, locked on L1, null if no minting.
-   */
-  private BigInteger mint;
+    /**
+     * Minted on L2, locked on L1, null if no minting.
+     */
+    private BigInteger mint;
 
-  /**
-   * Transferred from L2 balance, executed after Mint (if any)
-   */
-  private BigInteger value;
+    /**
+     * Transferred from L2 balance, executed after Mint (if any)
+     */
+    private BigInteger value;
 
-  /**
-   * Gas limit
-   */
-  private BigInteger gas;
+    /**
+     * Gas limit
+     */
+    private BigInteger gas;
 
-  /**
-   * Field indicating if this transaction is exempt from the L2 gas limit.
-   */
-  private boolean isSystemTransaction;
+    /**
+     * Field indicating if this transaction is exempt from the L2 gas limit.
+     */
+    private boolean isSystemTransaction;
 
-  /**
-   * Normal Tx data
-   */
-  private String data;
+    /**
+     * Normal Tx data
+     */
+    private String data;
 
-  public DepositTransaction() {}
+    public DepositTransaction() {}
 
-  public DepositTransaction(
-      String sourceHash,
-      String from,
-      String to,
-      BigInteger mint,
-      BigInteger value,
-      BigInteger gas,
-      boolean isSystemTransaction,
-      String data) {
-    this.sourceHash = sourceHash;
-    this.from = from;
-    this.to = to;
-    this.mint = mint;
-    this.value = value;
-    this.gas = gas;
-    this.isSystemTransaction = isSystemTransaction;
-    this.data = data;
-  }
+    public DepositTransaction(
+            String sourceHash,
+            String from,
+            String to,
+            BigInteger mint,
+            BigInteger value,
+            BigInteger gas,
+            boolean isSystemTransaction,
+            String data) {
+        this.sourceHash = sourceHash;
+        this.from = from;
+        this.to = to;
+        this.mint = mint;
+        this.value = value;
+        this.gas = gas;
+        this.isSystemTransaction = isSystemTransaction;
+        this.data = data;
+    }
 
-  public String getSourceHash() {
-    return sourceHash;
-  }
+    public String getSourceHash() {
+        return sourceHash;
+    }
 
-  public String getFrom() {
-    return from;
-  }
+    public String getFrom() {
+        return from;
+    }
 
-  public String getTo() {
-    return to;
-  }
+    public String getTo() {
+        return to;
+    }
 
-  public BigInteger getMint() {
-    return mint;
-  }
+    public BigInteger getMint() {
+        return mint;
+    }
 
-  public BigInteger getValue() {
-    return value;
-  }
+    public BigInteger getValue() {
+        return value;
+    }
 
-  public BigInteger getGas() {
-    return gas;
-  }
+    public BigInteger getGas() {
+        return gas;
+    }
 
-  public boolean isSystemTransaction() {
-    return isSystemTransaction;
-  }
+    public boolean isSystemTransaction() {
+        return isSystemTransaction;
+    }
 
-  public String getData() {
-    return data;
-  }
+    public String getData() {
+        return data;
+    }
 
-  public List<RlpType> asRlpValues() {
-    List<RlpType> result = new ArrayList<>();
-    result.add(RlpString.create(getSourceHash()));
-    result.add(RlpString.create(getFrom()));
-    result.add(RlpString.create(getTo()));
-    result.add(RlpString.create(getMint()));
-    result.add(RlpString.create(getValue()));
-    result.add(RlpString.create(getGas()));
-    result.add(RlpString.create(isSystemTransaction() ? 1 : 0));
-    result.add(RlpString.create(getData()));
-    return result;
-  }
+    public List<RlpType> asRlpValues() {
+        List<RlpType> result = new ArrayList<>();
+        result.add(RlpString.create(getSourceHash()));
+        result.add(RlpString.create(getFrom()));
+        result.add(RlpString.create(getTo()));
+        result.add(RlpString.create(getMint()));
+        result.add(RlpString.create(getValue()));
+        result.add(RlpString.create(getGas()));
+        result.add(RlpString.create(isSystemTransaction() ? 1 : 0));
+        result.add(RlpString.create(getData()));
+        return result;
+    }
 }

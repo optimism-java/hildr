@@ -75,20 +75,14 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InnerWatcher.class);
 
-    private static final String CONFIG_UPDATE_TOPIC =
-        EventEncoder.encode(
-            new Event(
-                "ConfigUpdate",
-                Arrays.asList(
-                    new TypeReference<Uint256>() {},
-                    new TypeReference<Uint8>() {},
-                    new TypeReference<Bytes>() {})));
+    private static final String CONFIG_UPDATE_TOPIC = EventEncoder.encode(new Event(
+            "ConfigUpdate",
+            Arrays.asList(
+                    new TypeReference<Uint256>() {}, new TypeReference<Uint8>() {}, new TypeReference<Bytes>() {})));
 
-    private static final String TRANSACTION_DEPOSITED_TOPIC =
-        EventEncoder.encode(
-            new Event(
-                "TransactionDeposited",
-                Arrays.asList(
+    private static final String TRANSACTION_DEPOSITED_TOPIC = EventEncoder.encode(new Event(
+            "TransactionDeposited",
+            Arrays.asList(
                     new TypeReference<Address>() {},
                     new TypeReference<Address>() {},
                     new TypeReference<Uint256>() {},
@@ -164,11 +158,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
      * @param executor the executor for async request
      */
     public InnerWatcher(
-        Config config,
-        MessagePassingQueue<BlockUpdate> queue,
-        BigInteger l1StartBlock,
-        BigInteger l2StartBlock,
-        ExecutorService executor) {
+            Config config,
+            MessagePassingQueue<BlockUpdate> queue,
+            BigInteger l1StartBlock,
+            BigInteger l2StartBlock,
+            ExecutorService executor) {
         this.executor = executor;
         this.config = config;
         this.provider = Web3jProvider.createClient(config.l1RpcUrl());
@@ -202,15 +196,14 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             throw new L1AttributesDepositedTxNotFoundException();
         }
         EthBlock.TransactionObject tx =
-            (EthBlock.TransactionObject) block.getTransactions().get(0).get();
+                (EthBlock.TransactionObject) block.getTransactions().get(0).get();
         final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
 
         final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
         var l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, 196, 228));
         var l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, 228, 260));
         var gasLimit = block.getGasLimit();
-        this.systemConfig =
-            new Config.SystemConfig(
+        this.systemConfig = new Config.SystemConfig(
                 batchSender,
                 gasLimit,
                 l1FeeOverhead,
@@ -220,23 +213,22 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private Disposable subscribeL1NewHeads() {
-        this.l1HeadListener =
-            this.wsProvider
+        this.l1HeadListener = this.wsProvider
                 .newHeadsNotifications()
                 .subscribe(
-                    notification -> {
-                        NewHead header = notification.getParams().getResult();
-                        String hash = header.getHash();
-                        BigInteger number = Numeric.toBigInt(header.getNumber());
-                        String parentHash = header.getParentHash();
-                        BigInteger time = Numeric.toBigInt(header.getTimestamp());
-                        l1Head = new BlockInfo(hash, number, parentHash, time);
-                    },
-                    t -> {
-                        if (t instanceof WebsocketNotConnectedException) {
-                            this.subscribeL1NewHeads();
-                        }
-                    });
+                        notification -> {
+                            NewHead header = notification.getParams().getResult();
+                            String hash = header.getHash();
+                            BigInteger number = Numeric.toBigInt(header.getNumber());
+                            String parentHash = header.getParentHash();
+                            BigInteger time = Numeric.toBigInt(header.getTimestamp());
+                            l1Head = new BlockInfo(hash, number, parentHash, time);
+                        },
+                        t -> {
+                            if (t instanceof WebsocketNotConnectedException) {
+                                this.subscribeL1NewHeads();
+                            }
+                        });
         return this.l1HeadListener;
     }
 
@@ -252,39 +244,32 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
         if (this.currentBlock.compareTo(this.finalizedBlock) > 0) {
             LOGGER.debug(
-                "will get finalized block: currentBlock({}) > finalizedBlock({})",
-                this.currentBlock,
-                this.finalizedBlock);
+                    "will get finalized block: currentBlock({}) > finalizedBlock({})",
+                    this.currentBlock,
+                    this.finalizedBlock);
             var finalizedBlockDetail = this.getFinalized();
             this.finalizedBlock = finalizedBlockDetail.getNumber();
             this.l1Finalized = BlockInfo.from(finalizedBlockDetail);
             this.putBlockUpdate(new FinalityUpdate(finalizedBlock));
-            this.unfinalizedBlocks =
-                this.unfinalizedBlocks.stream()
-                    .filter(
-                        blockInfo -> blockInfo.number().compareTo(InnerWatcher.this.finalizedBlock) > 0)
+            this.unfinalizedBlocks = this.unfinalizedBlocks.stream()
+                    .filter(blockInfo -> blockInfo.number().compareTo(InnerWatcher.this.finalizedBlock) > 0)
                     .collect(Collectors.toList());
         }
 
         if (this.currentBlock.compareTo(this.headBlock) > 0) {
-            LOGGER.debug(
-                "will get head block: currentBlock({}) > headBlock({})",
-                this.currentBlock,
-                this.headBlock);
+            LOGGER.debug("will get head block: currentBlock({}) > headBlock({})", this.currentBlock, this.headBlock);
             this.headBlock = this.getHead().getNumber();
         }
 
         if (this.currentBlock.compareTo(this.headBlock) <= 0) {
             LOGGER.debug(
-                "will update system config with newest log: currentBlock({}) <= headBlock({})",
-                this.currentBlock,
-                this.headBlock);
+                    "will update system config with newest log: currentBlock({}) <= headBlock({})",
+                    this.currentBlock,
+                    this.headBlock);
             updateSystemConfigWithNewestLog();
         } else {
             LOGGER.debug(
-                "will sleep 250 milliseconds: currentBlock({}) > headBlock({})",
-                this.currentBlock,
-                this.headBlock);
+                    "will sleep 250 milliseconds: currentBlock({}) > headBlock({})", this.currentBlock, this.headBlock);
             try {
                 Thread.sleep(Duration.ofMillis(250L));
             } catch (InterruptedException e) {
@@ -301,12 +286,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
         boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
         L1Info l1Info =
-            L1Info.create(
-                blockResp,
-                userDeposits,
-                config.chainConfig().batchInbox(),
-                finalized,
-                this.systemConfig);
+                L1Info.create(blockResp, userDeposits, config.chainConfig().batchInbox(), finalized, this.systemConfig);
 
         if (l1Info.blockInfo().number().compareTo(this.finalizedBlock) >= 0) {
             BlockInfo blockInfo = BlockInfo.from(blockResp);
@@ -314,8 +294,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             this.currentBlockInfo = blockInfo;
         }
 
-        BlockUpdate update =
-            this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
+        BlockUpdate update = this.checkReorg() ? new BlockUpdate.Reorg() : new BlockUpdate.NewBlock(l1Info);
         this.putBlockUpdate(update);
         LOGGER.debug("current block will add one: {}", this.currentBlock);
         this.currentBlock = this.currentBlock.add(BigInteger.ONE);
@@ -335,8 +314,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         if (preLastUpdateBlock.compareTo(this.currentBlock) < 0) {
             BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(1000L));
 
-            EthLog updates =
-                this.getLog(
+            EthLog updates = this.getLog(
                     preLastUpdateBlock.add(BigInteger.ONE),
                     toBlock,
                     InnerWatcher.this.config.chainConfig().systemConfigContract(),
@@ -368,32 +346,28 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     private Config.SystemConfig parseSystemConfigUpdate(SystemConfigUpdate configUpdate) {
         Config.SystemConfig updateSystemConfig = null;
         if (configUpdate instanceof SystemConfigUpdate.BatchSender) {
-            updateSystemConfig =
-                new Config.SystemConfig(
+            updateSystemConfig = new Config.SystemConfig(
                     ((SystemConfigUpdate.BatchSender) configUpdate).getAddress(),
                     this.systemConfig.gasLimit(),
                     this.systemConfig.l1FeeOverhead(),
                     this.systemConfig.l1FeeScalar(),
                     this.systemConfig.unsafeBlockSigner());
         } else if (configUpdate instanceof SystemConfigUpdate.Fees) {
-            updateSystemConfig =
-                new Config.SystemConfig(
+            updateSystemConfig = new Config.SystemConfig(
                     this.systemConfig.batchSender(),
                     this.systemConfig.gasLimit(),
                     ((SystemConfigUpdate.Fees) configUpdate).getFeeOverhead(),
                     ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar(),
                     this.systemConfig.unsafeBlockSigner());
         } else if (configUpdate instanceof SystemConfigUpdate.Gas) {
-            updateSystemConfig =
-                new Config.SystemConfig(
+            updateSystemConfig = new Config.SystemConfig(
                     this.systemConfig.batchSender(),
                     ((SystemConfigUpdate.Gas) configUpdate).getGas(),
                     this.systemConfig.l1FeeOverhead(),
                     this.systemConfig.l1FeeScalar(),
                     this.systemConfig.unsafeBlockSigner());
         } else if (configUpdate instanceof SystemConfigUpdate.UnsafeBlockSigner) {
-            updateSystemConfig =
-                new Config.SystemConfig(
+            updateSystemConfig = new Config.SystemConfig(
                     this.systemConfig.batchSender(),
                     this.systemConfig.gasLimit(),
                     this.systemConfig.l1FeeOverhead(),
@@ -418,8 +392,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private EthBlock.Block getFinalized() throws ExecutionException, InterruptedException {
-        var parameter =
-            this.devnet ? DefaultBlockParameterName.LATEST : DefaultBlockParameterName.FINALIZED;
+        var parameter = this.devnet ? DefaultBlockParameterName.LATEST : DefaultBlockParameterName.FINALIZED;
         return this.pollBlock(this.provider, parameter, false);
     }
 
@@ -428,16 +401,16 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private EthBlock.Block pollBlockByNumber(final Web3j client, final BigInteger blockNum)
-        throws ExecutionException, InterruptedException {
+            throws ExecutionException, InterruptedException {
         return pollBlock(client, DefaultBlockParameter.valueOf(blockNum), true);
     }
 
     private EthBlock.Block pollBlock(
-        final Web3j client, final DefaultBlockParameter parameter, final boolean fullTxObjectFlag)
-        throws ExecutionException, InterruptedException {
-        EthBlock.Block block =
-            this.executor
-                .submit(() -> client.ethGetBlockByNumber(parameter, fullTxObjectFlag).send())
+            final Web3j client, final DefaultBlockParameter parameter, final boolean fullTxObjectFlag)
+            throws ExecutionException, InterruptedException {
+        EthBlock.Block block = this.executor
+                .submit(() ->
+                        client.ethGetBlockByNumber(parameter, fullTxObjectFlag).send())
                 .get()
                 .getBlock();
         if (block == null) {
@@ -450,51 +423,40 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private EthLog getLog(BigInteger fromBlock, BigInteger toBlock, String contract, String topic)
-        throws ExecutionException, InterruptedException {
-        final EthFilter ethFilter =
-            new EthFilter(
-                DefaultBlockParameter.valueOf(fromBlock),
-                DefaultBlockParameter.valueOf(toBlock),
-                contract)
+            throws ExecutionException, InterruptedException {
+        final EthFilter ethFilter = new EthFilter(
+                        DefaultBlockParameter.valueOf(fromBlock), DefaultBlockParameter.valueOf(toBlock), contract)
                 .addSingleTopic(topic);
 
-        return this.executor.submit(() -> this.provider.ethGetLogs(ethFilter).send()).get();
+        return this.executor
+                .submit(() -> this.provider.ethGetLogs(ethFilter).send())
+                .get();
     }
 
     private List<Attributes.UserDeposited> getDeposits(BigInteger blockNum)
-        throws ExecutionException, InterruptedException {
+            throws ExecutionException, InterruptedException {
         final List<Attributes.UserDeposited> removed = this.deposits.remove(blockNum);
         if (removed != null) {
             return removed;
         }
         final BigInteger endBlock = this.headBlock.min(blockNum.add(BigInteger.valueOf(1000L)));
 
-        EthLog result =
-            this.getLog(
-                blockNum,
-                endBlock,
-                this.config.chainConfig().depositContract(),
-                TRANSACTION_DEPOSITED_TOPIC);
+        EthLog result = this.getLog(
+                blockNum, endBlock, this.config.chainConfig().depositContract(), TRANSACTION_DEPOSITED_TOPIC);
 
-        result
-            .getLogs()
-            .forEach(
-                log -> {
-                    if (log instanceof LogObject) {
-                        var userDeposited = UserDeposited.fromLog((LogObject) log);
-                        final var num = userDeposited.l1BlockNum();
-                        var userDepositeds =
-                            InnerWatcher.this.deposits.computeIfAbsent(num, k -> new ArrayList<>());
-                        userDepositeds.add(userDeposited);
-                    } else {
-                        throw new IllegalStateException(
-                            "Unexpected result type: " + log.get() + " required LogObject");
-                    }
-                });
+        result.getLogs().forEach(log -> {
+            if (log instanceof LogObject) {
+                var userDeposited = UserDeposited.fromLog((LogObject) log);
+                final var num = userDeposited.l1BlockNum();
+                var userDepositeds = InnerWatcher.this.deposits.computeIfAbsent(num, k -> new ArrayList<>());
+                userDepositeds.add(userDeposited);
+            } else {
+                throw new IllegalStateException("Unexpected result type: " + log.get() + " required LogObject");
+            }
+        });
         var max = (int) endBlock.subtract(blockNum).longValue();
         for (int i = 0; i < max; i++) {
-            InnerWatcher.this.deposits.putIfAbsent(
-                blockNum.add(BigInteger.valueOf(i)), new ArrayList<>());
+            InnerWatcher.this.deposits.putIfAbsent(blockNum.add(BigInteger.valueOf(i)), new ArrayList<>());
         }
         var remv = InnerWatcher.this.deposits.remove(blockNum);
         if (remv == null) {

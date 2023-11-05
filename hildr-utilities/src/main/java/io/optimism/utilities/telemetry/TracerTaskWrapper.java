@@ -29,44 +29,44 @@ import java.util.function.Function;
  */
 public class TracerTaskWrapper {
 
-  private static String DEFAULT_TRACER_NAME = "structure-task-scope";
+    private static String DEFAULT_TRACER_NAME = "structure-task-scope";
 
-  private static Function<String, Tracer> tracerSupplier;
+    private static Function<String, Tracer> tracerSupplier;
 
-  /** Instantiates a new Tracer task wrapper. */
-  private TracerTaskWrapper() {}
+    /** Instantiates a new Tracer task wrapper. */
+    private TracerTaskWrapper() {}
 
-  public static void setTracerSupplier(Function<String, Tracer> supplier) {
-    TracerTaskWrapper.tracerSupplier = supplier;
-  }
+    public static void setTracerSupplier(Function<String, Tracer> supplier) {
+        TracerTaskWrapper.tracerSupplier = supplier;
+    }
 
-  /**
-   * Wrap callable. It Will use default tracer name for tracer.
-   *
-   * @param <T> the type parameter
-   * @param call the call
-   * @return the callable
-   */
-  public static <T> Callable<T> wrap(Callable<T> call) {
-    return TracerTaskWrapper.wrap(DEFAULT_TRACER_NAME, call);
-  }
+    /**
+     * Wrap callable. It Will use default tracer name for tracer.
+     *
+     * @param <T> the type parameter
+     * @param call the call
+     * @return the callable
+     */
+    public static <T> Callable<T> wrap(Callable<T> call) {
+        return TracerTaskWrapper.wrap(DEFAULT_TRACER_NAME, call);
+    }
 
-  /**
-   * Wrap callable.
-   *
-   * @param <T> the type parameter
-   * @param call the call
-   * @return the callable
-   */
-  public static <T> Callable<T> wrap(final String tracerName, final Callable<T> call) {
-    return () -> {
-      Tracer tracer = TracerTaskWrapper.tracerSupplier.apply(tracerName);
-      Span span = tracer.nextSpan().name("call").start();
-      try (var ignored = tracer.withSpan(span)) {
-        return call.call();
-      } finally {
-        span.end();
-      }
-    };
-  }
+    /**
+     * Wrap callable.
+     *
+     * @param <T> the type parameter
+     * @param call the call
+     * @return the callable
+     */
+    public static <T> Callable<T> wrap(final String tracerName, final Callable<T> call) {
+        return () -> {
+            Tracer tracer = TracerTaskWrapper.tracerSupplier.apply(tracerName);
+            Span span = tracer.nextSpan().name("call").start();
+            try (var ignored = tracer.withSpan(span)) {
+                return call.call();
+            } finally {
+                span.end();
+            }
+        };
+    }
 }

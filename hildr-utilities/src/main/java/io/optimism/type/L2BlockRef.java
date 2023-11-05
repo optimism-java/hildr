@@ -33,79 +33,79 @@ import org.web3j.protocol.core.methods.response.EthBlock;
  * @since 0.1.1
  */
 public record L2BlockRef(
-    String hash,
-    BigInteger number,
-    String parentHash,
-    BigInteger timestamp,
-    BlockId l1origin,
-    BigInteger sequenceNumber) {
+        String hash,
+        BigInteger number,
+        String parentHash,
+        BigInteger timestamp,
+        BlockId l1origin,
+        BigInteger sequenceNumber) {
 
-  public final static L2BlockRef EMPTY = new L2BlockRef(null, null, null, null, null, null);
+    public static final L2BlockRef EMPTY = new L2BlockRef(null, null, null, null, null, null);
 
-  /**
-   * L2BlockRef instance converts to BlockId instance.
-   *
-   * @return BlockId instance
-   */
-  public BlockId toId() {
-    return new BlockId(hash, number);
-  }
-
-  /**
-   * Create a L2BlockRef instance from EthBlock.Block and L1BlockInfo
-   *
-   * @param block block info
-   * @param l1Info l1 block info
-   * @return L2BlockRef instance
-   */
-  public static L2BlockRef fromBlockAndL1Info(EthBlock.Block block, L1BlockInfo l1Info) {
-    return new L2BlockRef(
-        block.getHash(),
-        block.getNumber(),
-        block.getParentHash(),
-        block.getTimestamp(),
-        new BlockId(l1Info.blockHash(), l1Info.number()),
-        l1Info.sequenceNumber());
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
+    /**
+     * L2BlockRef instance converts to BlockId instance.
+     *
+     * @return BlockId instance
+     */
+    public BlockId toId() {
+        return new BlockId(hash, number);
     }
 
-    if (o == null || !(o instanceof L2BlockRef)) {
-      return false;
+    /**
+     * Create a L2BlockRef instance from EthBlock.Block and L1BlockInfo
+     *
+     * @param block block info
+     * @param l1Info l1 block info
+     * @return L2BlockRef instance
+     */
+    public static L2BlockRef fromBlockAndL1Info(EthBlock.Block block, L1BlockInfo l1Info) {
+        return new L2BlockRef(
+                block.getHash(),
+                block.getNumber(),
+                block.getParentHash(),
+                block.getTimestamp(),
+                new BlockId(l1Info.blockHash(), l1Info.number()),
+                l1Info.sequenceNumber());
     }
 
-    L2BlockRef that = (L2BlockRef) o;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
 
-    if (!Objects.equals(hash, that.hash)) {
-      return false;
-    }
-    if (!Objects.equals(number, that.number)) {
-      return false;
-    }
-    if (!Objects.equals(parentHash, that.parentHash)) {
-      return false;
-    }
-    if (!Objects.equals(timestamp, that.timestamp)) {
-      return false;
-    }
-    if (!Objects.equals(l1origin, that.l1origin)) {
-      return false;
-    }
-    return Objects.equals(sequenceNumber, that.sequenceNumber);
-  }
+        if (o == null || !(o instanceof L2BlockRef)) {
+            return false;
+        }
 
-  @Override
-  public int hashCode() {
-    int result = hash != null ? hash.hashCode() : 0;
-    result = 31 * result + (number != null ? number.hashCode() : 0);
-    result = 31 * result + (parentHash != null ? parentHash.hashCode() : 0);
-    result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
-    result = 31 * result + (l1origin != null ? l1origin.hashCode() : 0);
-    result = 31 * result + (sequenceNumber != null ? sequenceNumber.hashCode() : 0);
-    return result;
-  }
+        L2BlockRef that = (L2BlockRef) o;
+
+        if (!Objects.equals(hash, that.hash)) {
+            return false;
+        }
+        if (!Objects.equals(number, that.number)) {
+            return false;
+        }
+        if (!Objects.equals(parentHash, that.parentHash)) {
+            return false;
+        }
+        if (!Objects.equals(timestamp, that.timestamp)) {
+            return false;
+        }
+        if (!Objects.equals(l1origin, that.l1origin)) {
+            return false;
+        }
+        return Objects.equals(sequenceNumber, that.sequenceNumber);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = hash != null ? hash.hashCode() : 0;
+        result = 31 * result + (number != null ? number.hashCode() : 0);
+        result = 31 * result + (parentHash != null ? parentHash.hashCode() : 0);
+        result = 31 * result + (timestamp != null ? timestamp.hashCode() : 0);
+        result = 31 * result + (l1origin != null ? l1origin.hashCode() : 0);
+        result = 31 * result + (sequenceNumber != null ? sequenceNumber.hashCode() : 0);
+        return result;
+    }
 }

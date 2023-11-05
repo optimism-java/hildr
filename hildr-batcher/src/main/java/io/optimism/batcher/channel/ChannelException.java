@@ -24,31 +24,31 @@ package io.optimism.batcher.channel;
  */
 public class ChannelException extends RuntimeException {
 
-  /**
-   * Instantiates a new ChannelException.
-   *
-   * @param message the message
-   */
-  public ChannelException(String message) {
-    super(message);
-  }
+    /**
+     * Instantiates a new ChannelException.
+     *
+     * @param message the message
+     */
+    public ChannelException(String message) {
+        super(message);
+    }
 
-  /**
-   * Instantiates a new ChannelException.
-   *
-   * @param message the message
-   * @param cause the cause
-   */
-  public ChannelException(String message, Throwable cause) {
-    super(message, cause);
-  }
+    /**
+     * Instantiates a new ChannelException.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public ChannelException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-  /**
-   * Instantiates a new ChannelException.
-   *
-   * @param cause the cause
-   */
-  public ChannelException(Throwable cause) {
-    super(cause);
-  }
+    /**
+     * Instantiates a new ChannelException.
+     *
+     * @param cause the cause
+     */
+    public ChannelException(Throwable cause) {
+        super(cause);
+    }
 }

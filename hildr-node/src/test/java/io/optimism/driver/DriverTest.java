@@ -34,16 +34,14 @@ import org.web3j.protocol.http.HttpService;
 class DriverTest {
 
     @Test
-    void testNewDriverFromFinalizedHead()
-        throws IOException, ExecutionException, InterruptedException {
+    void testNewDriverFromFinalizedHead() throws IOException, ExecutionException, InterruptedException {
         if (System.getenv("L2_TEST_RPC_URL") == null || System.getenv("L1_TEST_RPC_URL") == null) {
             return;
         }
         String l1rpc = System.getenv("L1_TEST_RPC_URL");
         String l1WsRpc = System.getenv("L1_TEST_WS_RPC_URL");
         String l2rpc = System.getenv("L2_TEST_RPC_URL");
-        CliConfig cliConfig =
-            new CliConfig(
+        CliConfig cliConfig = new CliConfig(
                 l1rpc,
                 l1WsRpc,
                 l2rpc,
@@ -59,7 +57,7 @@ class DriverTest {
         Driver<EngineApi> driver = Driver.from(config, new CountDownLatch(1));
 
         assertEquals(
-            driver.getEngineDriver().getFinalizedHead().number(),
-            finalizedBlock.getBlock().getNumber());
+                driver.getEngineDriver().getFinalizedHead().number(),
+                finalizedBlock.getBlock().getNumber());
     }
 }

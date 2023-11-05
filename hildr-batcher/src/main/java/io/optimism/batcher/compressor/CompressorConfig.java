@@ -33,20 +33,16 @@ import io.optimism.batcher.config.Config;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public record CompressorConfig(
-    int targetFrameSize, int targetNumFrames, String approxComprRatio, String kind) {
+public record CompressorConfig(int targetFrameSize, int targetNumFrames, String approxComprRatio, String kind) {
 
-  /**
-   * Create CompressorConfig instance from Config instance.
-   *
-   * @param config Config instance
-   * @return CompressorConfig instance
-   */
-  public static CompressorConfig from(Config config) {
-    return new CompressorConfig(
-        config.targetFrameSize(),
-        config.targetNumFrames(),
-        config.approxComprRatio(),
-        Compressors.RatioKind);
-  }
+    /**
+     * Create CompressorConfig instance from Config instance.
+     *
+     * @param config Config instance
+     * @return CompressorConfig instance
+     */
+    public static CompressorConfig from(Config config) {
+        return new CompressorConfig(
+                config.targetFrameSize(), config.targetNumFrames(), config.approxComprRatio(), Compressors.RatioKind);
+    }
 }

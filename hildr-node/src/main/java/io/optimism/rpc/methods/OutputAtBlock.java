@@ -29,8 +29,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import jdk.incubator.concurrent.StructuredTaskScope;
+import java.util.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.web3j.protocol.Web3j;
@@ -116,28 +115,27 @@ public class OutputAtBlock implements JsonRpcMethod {
 
     private EthBlock.Block getBlock(final BigInteger blockNumber) throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthBlock> ethBlockFuture = scope.fork(TracerTaskWrapper.wrap(
+            StructuredTaskScope.Subtask<EthBlock> ethBlockFuture = scope.fork(TracerTaskWrapper.wrap(
                     () -> client.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
                             .send()));
             scope.join();
             scope.throwIfFailed();
-            return ethBlockFuture.resultNow().getBlock();
+            return ethBlockFuture.get().getBlock();
         }
     }
 
     private EthGetProof.Proof getProof(String blockHash) throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            Future<EthGetProof> ehtGetProofFuture = scope.fork(TracerTaskWrapper.wrap(() -> {
-                return new Request<>(
-                                ETH_GET_PROOF,
-                                Arrays.asList(this.l2ToL1MessagePasser, Collections.<String>emptyList(), blockHash),
-                                this.service,
-                                EthGetProof.class)
-                        .send();
-            }));
+            StructuredTaskScope.Subtask<EthGetProof> ehtGetProofFuture =
+                    scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
+                                    ETH_GET_PROOF,
+                                    Arrays.asList(this.l2ToL1MessagePasser, Collections.<String>emptyList(), blockHash),
+                                    this.service,
+                                    EthGetProof.class)
+                            .send()));
             scope.join();
             scope.throwIfFailed();
-            return ehtGetProofFuture.resultNow().getProof();
+            return ehtGetProofFuture.get().getProof();
         }
     }
 }
