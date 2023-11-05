@@ -57,7 +57,8 @@ public class TestConstants {
         var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
         var l1WsRpcUrl = l1RpcWsUrlFormat.formatted(envs.get(ETH_API_ENV));
         var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
-        Config.CliConfig cliConfig = new Config.CliConfig(l1WsRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
+        Config.CliConfig cliConfig =
+            new Config.CliConfig(l1RpcUrl, l1WsRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
         return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
     }
 }

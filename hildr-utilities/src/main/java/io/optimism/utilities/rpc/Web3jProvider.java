@@ -17,8 +17,10 @@
 package io.optimism.utilities.rpc;
 
 import java.net.ConnectException;
+import java.util.function.Consumer;
 import okhttp3.OkHttpClient;
 import org.apache.commons.lang3.StringUtils;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.http.HttpService;
@@ -59,18 +61,27 @@ public class Web3jProvider {
           new OkHttpClient.Builder().addInterceptor(new RetryRateLimitInterceptor()).build();
       web3Srv = new HttpService(url, okHttpClient);
     } else if (Web3jProvider.isWs(url)) {
-      web3Srv = new WebSocketService(url, true);
-      try {
-        ((WebSocketService) web3Srv).connect();
-      } catch (ConnectException e) {
-        throw new IllegalStateException(e);
-      }
+      final var web3finalSrv = new WebSocketService(url, true);
+      wsConnect(web3finalSrv);
+      web3Srv = web3finalSrv;
     } else {
       throw new IllegalArgumentException("not supported scheme:" + url);
     }
     return new Tuple2<>(Web3j.build(web3Srv), web3Srv);
   }
 
+  private static void wsConnect(final WebSocketService wss) {
+    final Consumer<Throwable> onError = t -> {
+      if (t instanceof WebsocketNotConnectedException) {
+        wsConnect(wss);
+      }
+    };
+    try {
+      wss.connect(s -> {}, onError, () -> {});
+    } catch (ConnectException e) {
+      throw new IllegalStateException(e);
+    }
+  }
 
 
   private static boolean isHttp(final String url) {
