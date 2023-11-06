@@ -50,7 +50,7 @@ public class Cli implements Runnable {
     @Option(
             names = "--network",
             defaultValue = "optimism",
-            description = "network type, support: optimism-goerli, base-goerli")
+            description = "network type, or rollup.json file path, support: optimism-goerli, base-goerli")
     String network;
 
     @Option(names = "--l1-rpc-url", required = true, description = "The base chain RPC URL")
@@ -165,7 +165,7 @@ public class Cli implements Runnable {
                     case "base-goerli" -> Config.ChainConfig.baseGoerli();
                     default -> {
                         if (network.endsWith(".json")) {
-                            Config.ChainConfig.fromJson(network);
+                            yield Config.ChainConfig.fromJson(network);
                         }
                         throw new RuntimeException("network not recognized");
                     }
