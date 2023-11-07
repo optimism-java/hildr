@@ -5,6 +5,8 @@
 
 # Hildr
 
+This work is support by an [Optimism governance grant](https://app.charmverse.io/op-grants/proposals?id=e5613e76-a26f-41e4-9f0d-4e2dbfccf5b8).
+
 Hildr is an OP Stack services written in the Java 21 with GraalVM native.
 
 Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/specs/rollup-node.md)
