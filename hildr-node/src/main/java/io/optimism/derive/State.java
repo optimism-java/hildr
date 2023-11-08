@@ -232,6 +232,7 @@ public class State {
     private void prune() {
         BigInteger pruneUntil =
                 this.safeEpoch.number().subtract(config.chainConfig().seqWindowSize());
+        pruneUntil = pruneUntil.compareTo(BigInteger.ZERO) < 0 ? BigInteger.ZERO : pruneUntil;
         Entry<BigInteger, String> blockNumAndHash;
         while ((blockNumAndHash = this.l1Hashes.firstEntry()) != null) {
             if (blockNumAndHash.getKey().compareTo(pruneUntil) >= 0) {

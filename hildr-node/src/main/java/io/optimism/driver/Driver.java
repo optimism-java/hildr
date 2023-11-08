@@ -210,9 +210,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         BigInteger finalizedSeq = head.sequenceNumber();
 
         LOGGER.info("starting from head: {}", finalizedHead.hash());
-
+        BigInteger l1StartBlock =
+                finalizedEpoch.number().subtract(config.chainConfig().channelTimeout());
         ChainWatcher watcher = new ChainWatcher(
-                finalizedEpoch.number().subtract(config.chainConfig().channelTimeout()),
+                l1StartBlock.compareTo(BigInteger.ZERO) < 0 ? BigInteger.ZERO : l1StartBlock,
                 finalizedHead.number(),
                 config);
 

@@ -256,7 +256,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                     .collect(Collectors.toList());
         }
 
-        if (this.currentBlock.compareTo(this.headBlock) > 0) {
+        if (this.currentBlock.compareTo(this.headBlock) > 0 || this.headBlock.equals(BigInteger.ZERO)) {
             LOGGER.debug("will get head block: currentBlock({}) > headBlock({})", this.currentBlock, this.headBlock);
             this.headBlock = this.getHead().getNumber();
         }
@@ -313,7 +313,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         BigInteger preLastUpdateBlock = this.systemConfigUpdate.component1();
         if (preLastUpdateBlock.compareTo(this.currentBlock) < 0) {
             BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(1000L));
-
+            LOGGER.debug(
+                    "will get system update eth log: fromBlock={} -> toBlock={}; contract={}",
+                    preLastUpdateBlock.add(BigInteger.ONE),
+                    toBlock,
+                    InnerWatcher.this.config.chainConfig().systemConfigContract());
             EthLog updates = this.getLog(
                     preLastUpdateBlock.add(BigInteger.ONE),
                     toBlock,
@@ -388,7 +392,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private EthBlock.Block getSafe() throws ExecutionException, InterruptedException {
-        return this.pollBlock(this.provider, DefaultBlockParameterName.SAFE, false);
+        var parameter = this.devnet ? DefaultBlockParameterName.LATEST : DefaultBlockParameterName.SAFE;
+        return this.pollBlock(this.provider, parameter, false);
     }
 
     private EthBlock.Block getFinalized() throws ExecutionException, InterruptedException {
@@ -408,6 +413,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     private EthBlock.Block pollBlock(
             final Web3j client, final DefaultBlockParameter parameter, final boolean fullTxObjectFlag)
             throws ExecutionException, InterruptedException {
+        LOGGER.debug("will poll block: {}", parameter.getValue());
         EthBlock.Block block = this.executor
                 .submit(() ->
                         client.ethGetBlockByNumber(parameter, fullTxObjectFlag).send())
@@ -440,6 +446,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             return removed;
         }
         final BigInteger endBlock = this.headBlock.min(blockNum.add(BigInteger.valueOf(1000L)));
+        LOGGER.debug(
+                "will get deposit eth logs: fromBlock={} -> toBlock={};contract={}",
+                blockNum,
+                endBlock,
+                this.config.chainConfig().depositContract());
 
         EthLog result = this.getLog(
                 blockNum, endBlock, this.config.chainConfig().depositContract(), TRANSACTION_DEPOSITED_TOPIC);
@@ -454,7 +465,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 throw new IllegalStateException("Unexpected result type: " + log.get() + " required LogObject");
             }
         });
-        var max = (int) endBlock.subtract(blockNum).longValue();
+        var max = (int) endBlock.subtract(blockNum).add(BigInteger.ONE).longValue();
         for (int i = 0; i < max; i++) {
             InnerWatcher.this.deposits.putIfAbsent(blockNum.add(BigInteger.valueOf(i)), new ArrayList<>());
         }
@@ -489,6 +500,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new HildrServiceExecutionException(e);
+            } catch (Exception e) {
+                LOGGER.error(String.format("excepted error while fetching L1 data for block %d", currentBlock), e);
             } finally {
                 span.end();
             }

@@ -83,10 +83,12 @@ public class RetryRateLimitInterceptor implements Interceptor {
         try {
             return this.retryer.call(() -> {
                 if (!this.rateLimiter.tryAcquire()) {
+                    LOGGER.warn("there has reached rate limit, but will retry again later");
                     return new Response.Builder()
                             .request(chain.request())
                             .protocol(Protocol.HTTP_1_1)
                             .code(429)
+                            .message("there has reached rate limit, but will retry")
                             .build();
                 }
                 return chain.proceed(chain.request());
