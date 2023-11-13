@@ -34,7 +34,7 @@ public class TxDecoder {
 
     public static DepositTransaction decodeToDeposit(final String hexTransaction) {
         final byte[] transaction = Numeric.hexStringToByteArray(hexTransaction);
-        if (transaction.length > 0 && transaction[0] != ((byte) 0x01)) {
+        if (transaction.length > 0 && transaction[0] != ((byte) 0x7E)) {
             throw new RuntimeException("tx is not type of deposit tx");
         }
         final byte[] encodedTx = Arrays.copyOfRange(transaction, 1, transaction.length);
