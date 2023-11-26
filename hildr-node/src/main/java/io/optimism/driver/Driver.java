@@ -18,6 +18,7 @@ package io.optimism.driver;
 
 import static java.lang.Thread.sleep;
 import static org.web3j.protocol.core.DefaultBlockParameterName.FINALIZED;
+import static org.web3j.protocol.core.DefaultBlockParameterName.LATEST;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -69,6 +70,8 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.utils.Numeric;
 
@@ -182,8 +185,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         EthBlock finalizedBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            var parameter = config.devnet() != null && config.devnet() ? LATEST : FINALIZED;
             StructuredTaskScope.Subtask<EthBlock> finalizedBlockFuture = scope.fork(TracerTaskWrapper.wrap(
-                    () -> provider.ethGetBlockByNumber(FINALIZED, true).send()));
+                    () -> provider.ethGetBlockByNumber(parameter, true).send()));
             scope.join();
             scope.throwIfFailed();
 
