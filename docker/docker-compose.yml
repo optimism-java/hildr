@@ -33,7 +33,7 @@ services:
     <<: *logging
 
   op-geth:
-    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101105.2
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101304.1
     container_name: op-geth
     profiles:
       - op-geth
@@ -49,7 +49,7 @@ services:
     volumes:
       - ./:/scripts
       - data:/data
-      - ${OP_GENESIS_JSON_FILEPATH:-.}:/genesis-l2.json
+      - ${OP_GENESIS_JSON_FILEPATH:-.}:/genesis-l2-attached.json
     <<: *logging
 
   op-erigon:
@@ -66,6 +66,23 @@ services:
       - ${EXECUTION_CLIENT_AUTH_RPC_PORT}:8551
       - ${EXECUTION_CLIENT_RPC_PORT}:8545
       - ${EXECUTION_CLIENT_WS_PORT}:8546
+    volumes:
+      - ./:/scripts
+      - data:/data
+    <<: *logging
+
+  op-challenger:
+    image: merklefruit/op-challenger:latest
+    container_name: op-challenger
+    profiles:
+      - challenger
+    restart: unless-stopped
+    stop_grace_period: 3m
+    entrypoint: /scripts/start-op-challenger.sh
+    env_file:
+      - .env
+    ports:
+      - 9201:9201
     volumes:
       - ./:/scripts
       - data:/data
