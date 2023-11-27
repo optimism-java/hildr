@@ -346,7 +346,7 @@ public record Config(
          */
         public static ChainConfig optimismSepolia() {
             return new ChainConfig(
-                    "base-goerli",
+                    "optimism-sepolia",
                     BigInteger.valueOf(11155111L),
                     BigInteger.valueOf(11155420L),
                     new Epoch(
