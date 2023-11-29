@@ -285,9 +285,6 @@ public record ExecutionPayload(
          * @param transactions the transactions
          * @param noTxPool the no tx pool
          * @param gasLimit the gas limit
-         * @param epoch the epoch
-         * @param l1InclusionBlock the l 1 inclusion block
-         * @param seqNumber the seq number
          */
         public record PayloadAttributesReq(
                 String timestamp,
@@ -295,10 +292,7 @@ public record ExecutionPayload(
                 String suggestedFeeRecipient,
                 List<String> transactions,
                 boolean noTxPool,
-                String gasLimit,
-                EpochReq epoch,
-                String l1InclusionBlock,
-                String seqNumber) {}
+                String gasLimit) {}
 
         /**
          * To req payload attributes req.
@@ -312,13 +306,7 @@ public record ExecutionPayload(
                     suggestedFeeRecipient,
                     transactions,
                     noTxPool,
-                    Numeric.encodeQuantity(gasLimit),
-                    new EpochReq(
-                            Numeric.encodeQuantity(epoch.number()),
-                            epoch.hash(),
-                            Numeric.encodeQuantity(epoch.timestamp())),
-                    Numeric.encodeQuantity(l1InclusionBlock),
-                    Numeric.encodeQuantity(seqNumber));
+                    Numeric.encodeQuantity(gasLimit));
         }
     }
 
