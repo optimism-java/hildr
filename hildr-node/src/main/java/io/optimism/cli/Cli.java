@@ -16,7 +16,9 @@
 
 package io.optimism.cli;
 
+import ch.qos.logback.classic.Level;
 import io.micrometer.tracing.Tracer;
+import io.optimism.cli.typeconverter.LogLevelConverter;
 import io.optimism.cli.typeconverter.SyncModeConverter;
 import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
@@ -112,13 +114,22 @@ public class Cli implements Runnable {
     Integer metricsPort;
 
     @Option(names = "--devnet", description = "Dev net flag")
-    private Boolean devnet;
+    Boolean devnet;
+
+    @Option(
+            names = "--log-level",
+            defaultValue = "DEBUG",
+            converter = LogLevelConverter.class,
+            description = "Log level")
+    Level logLevel;
 
     /** the Cli constructor. */
     public Cli() {}
 
     @Override
     public void run() {
+        var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        logger.setLevel(logLevel);
         TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
         if (Boolean.TRUE.equals(metricsEnable)) {
             var metricsPort = this.metricsPort;
