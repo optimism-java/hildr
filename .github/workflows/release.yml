@@ -226,7 +226,7 @@ jobs:
 
   release:
     name: 🚰 Release new version.
-    needs: [ native-build-osx, native-build-musl, native-build-linux, native-build-windows ]
+    needs: [ native-build-osx, native-build-musl, native-build-linux, native-build-windows, push_image_to_github ]
     runs-on: ubuntu-latest
 
     steps:
