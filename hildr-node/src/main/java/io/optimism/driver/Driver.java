@@ -113,7 +113,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private RollupConfigResult cachedRollConfig;
 
-    private OpStackNetwork opStackNetwork;
+    private final OpStackNetwork opStackNetwork;
+
+    private volatile boolean isP2PNetworkStarted;
 
     /**
      * Instantiates a new Driver.
@@ -127,7 +129,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param latch            the close notifier
      * @param config           the chain config
      * @param opStackNetwork   the op stack network
-     *
      */
     @SuppressWarnings("preview")
     public Driver(
@@ -371,11 +372,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         LOGGER.info("engineDriver shut down.");
         this.rpcServer.stop();
         LOGGER.info("driver stopped.");
-        if (this.opStackNetwork != null) {
+        if (this.opStackNetwork != null && this.isP2PNetworkStarted) {
             this.opStackNetwork.stop();
             LOGGER.info("opStackNetwork stopped.");
         }
-        this.tryStartNetwork();
     }
 
     @Override
@@ -414,6 +414,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         }
         this.updateFinalized();
         this.updateMetrics();
+
+        this.tryStartNetwork();
     }
 
     private void advanceSafeHead() throws ExecutionException, InterruptedException {
@@ -563,7 +565,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void tryStartNetwork() {
-        if (this.synced() && this.opStackNetwork != null) {
+        if (this.synced() && this.opStackNetwork != null && !this.isP2PNetworkStarted) {
             this.opStackNetwork.start();
         }
     }
