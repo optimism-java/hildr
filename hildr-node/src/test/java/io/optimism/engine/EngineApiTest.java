@@ -105,6 +105,7 @@ public class EngineApiTest {
                 "123123",
                 "123123",
                 "sdfasdf12312312",
+                null,
                 List.of(""));
     }
 
@@ -127,7 +128,8 @@ public class EngineApiTest {
                 "123123",
                 "123",
                 List.of(""),
-                false,
+                null,
+                true,
                 new BigInteger("1"),
                 new Epoch(new BigInteger("12"), "123", new BigInteger("1233145")),
                 new BigInteger("1334"),

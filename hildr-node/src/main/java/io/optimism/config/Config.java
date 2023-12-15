@@ -46,14 +46,14 @@ import org.web3j.utils.Numeric;
 /**
  * The type Config.
  *
- * @param l1RpcUrl L1 chain rpc url.
- * @param l1WsRpcUrl L1 chain websocket rpc url.
- * @param l2RpcUrl L2 chain rpc url.
- * @param l2EngineUrl L2 engine API url.
- * @param jwtSecret L2 engine API jwt secret.
- * @param chainConfig The chain config.
- * @param rpcPort The rpc port.
- * @param devnet The flag of devnet.
+ * @param l1RpcUrl          L1 chain rpc url.
+ * @param l1WsRpcUrl        L1 chain websocket rpc url.
+ * @param l2RpcUrl          L2 chain rpc url.
+ * @param l2EngineUrl       L2 engine API url.
+ * @param jwtSecret         L2 engine API jwt secret.
+ * @param chainConfig       The chain config.
+ * @param rpcPort           The rpc port.
+ * @param devnet            The flag of devnet.
  * @param checkpointSyncUrl The checkpoint sync url.
  * @author grapebaba
  * @since 0.1.0
@@ -72,8 +72,8 @@ public record Config(
     /**
      * Create Config.
      *
-     * @param configPath the config path
-     * @param cliConfig the cli config
+     * @param configPath  the config path
+     * @param cliConfig   the cli config
      * @param chainConfig the chain config
      * @return the config
      */
@@ -85,15 +85,7 @@ public record Config(
             TomlLoader tomlLoader = new TomlLoader();
             PropertyLoader propertyLoader = new PropertyLoader();
 
-            Map<String, String> defaultProvider = new HashMap<>();
-            defaultProvider.put("config.l2RpcUrl", "http://127.0.0.1:8545");
-            defaultProvider.put("config.l2EngineUrl", "http://127.0.0.1:8551");
-            defaultProvider.put("config.l1RpcUrl", "");
-            defaultProvider.put("config.l1WsRpcUrl", "");
-            defaultProvider.put("config.jwtSecret", "");
-            defaultProvider.put("config.checkpointSyncUrl", "");
-            defaultProvider.put("config.rpcPort", "9545");
-            MapConfigSource defaultProviderConfigSource = new MapConfigSource(defaultProvider);
+            MapConfigSource defaultProviderConfigSource = getMapConfigSource();
 
             Map<String, String> chainProvider = chainConfig.toConfigMap();
             MapConfigSource chainConfigSource = new MapConfigSource(chainProvider);
@@ -133,17 +125,29 @@ public record Config(
         }
     }
 
+    private static MapConfigSource getMapConfigSource() {
+        Map<String, String> defaultProvider = new HashMap<>();
+        defaultProvider.put("config.l2RpcUrl", "http://127.0.0.1:8545");
+        defaultProvider.put("config.l2EngineUrl", "http://127.0.0.1:8551");
+        defaultProvider.put("config.l1RpcUrl", "");
+        defaultProvider.put("config.l1WsRpcUrl", "");
+        defaultProvider.put("config.jwtSecret", "");
+        defaultProvider.put("config.checkpointSyncUrl", "");
+        defaultProvider.put("config.rpcPort", "9545");
+        return new MapConfigSource(defaultProvider);
+    }
+
     /**
      * The type Cli config.
      *
-     * @param l1RpcUrl L1 chain rpc url.
-     * @param l1WsRpcUrl L1 chain websocket rpc url.
-     * @param l2RpcUrl L2 chain rpc url.
-     * @param l2EngineUrl L2 engine API url.
-     * @param jwtSecret L2 engine API jwt secret.
+     * @param l1RpcUrl          L1 chain rpc url.
+     * @param l1WsRpcUrl        L1 chain websocket rpc url.
+     * @param l2RpcUrl          L2 chain rpc url.
+     * @param l2EngineUrl       L2 engine API url.
+     * @param jwtSecret         L2 engine API jwt secret.
      * @param checkpointSyncUrl The checkpoint sync url.
-     * @param rpcPort The rpc port.
-     * @param devnet The devnet flag.
+     * @param rpcPort           The rpc port.
+     * @param devnet            The devnet flag.
      */
     public record CliConfig(
             String l1RpcUrl,
@@ -191,22 +195,23 @@ public record Config(
     /**
      * The type ChainConfig.
      *
-     * @param network The network name.
-     * @param l1StartEpoch The L1 block referenced by the L2 chainConfig.
-     * @param l2Genesis The L2 genesis block info.
-     * @param systemConfig The initial system config value.
-     * @param batchInbox The batch inbox address.
-     * @param depositContract The deposit contract address.
+     * @param network              The network name.
+     * @param l1StartEpoch         The L1 block referenced by the L2 chainConfig.
+     * @param l2Genesis            The L2 genesis block info.
+     * @param systemConfig         The initial system config value.
+     * @param batchInbox           The batch inbox address.
+     * @param depositContract      The deposit contract address.
      * @param systemConfigContract The L1 system config contract.
-     * @param maxChannelSize The maximum byte size of all pending channels.
-     * @param channelTimeout The max timeout for a channel (as measured by the frame L1 block number).
-     * @param seqWindowSize Number of L1 blocks in a sequence window.
-     * @param maxSeqDrift Maximum timestamp drift.
-     * @param regolithTime Timestamp of the regolith hardfork.
-     * @param blockTime Network blocktime.
-     * @param l2Tol1MessagePasser L2 To L1 Message passer address.
-     * @param l1ChainId The L1 chain id.
-     * @param l2ChainId The L2 chain id.
+     * @param maxChannelSize       The maximum byte size of all pending channels.
+     * @param channelTimeout       The max timeout for a channel (as measured by the frame L1 block number).
+     * @param seqWindowSize        Number of L1 blocks in a sequence window.
+     * @param maxSeqDrift          Maximum timestamp drift.
+     * @param regolithTime         Timestamp of the regolith hardfork.
+     * @param canyonTime           Timestamp of the canyon hardfork.
+     * @param blockTime            Network blocktime.
+     * @param l2Tol1MessagePasser  L2 To L1 Message passer address.
+     * @param l1ChainId            The L1 chain id.
+     * @param l2ChainId            The L2 chain id.
      * @author grapebaba
      * @since 0.1.0
      */
@@ -225,6 +230,7 @@ public record Config(
             BigInteger seqWindowSize,
             BigInteger maxSeqDrift,
             BigInteger regolithTime,
+            BigInteger canyonTime,
             BigInteger blockTime,
             String l2Tol1MessagePasser) {
 
@@ -261,6 +267,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -298,6 +305,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -335,6 +343,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.valueOf(1679079600L),
+                    BigInteger.valueOf(1699981200L),
                     BigInteger.valueOf(2L),
                     "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a");
         }
@@ -372,6 +381,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
+                    BigInteger.valueOf(1699981200L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -409,6 +419,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.valueOf(1683219600L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -461,6 +472,7 @@ public record Config(
                     external.seqWindowSize,
                     external.maxSequencerDrift,
                     external.regolithTime,
+                    external.canyonTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }
@@ -509,6 +521,7 @@ public record Config(
                     entry("config.chainConfig.seqWindowSize", this.seqWindowSize.toString()),
                     entry("config.chainConfig.maxSeqDrift", this.maxSeqDrift.toString()),
                     entry("config.chainConfig.regolithTime", this.regolithTime.toString()),
+                    entry("config.chainConfig.canyonTime", this.canyonTime.toString()),
                     entry("config.chainConfig.blockTime", this.blockTime.toString()),
                     entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
         }
@@ -521,13 +534,21 @@ public record Config(
      * @since 0.1.0
      */
     public enum SyncMode {
-        /** Fast sync mode. */
+        /**
+         * Fast sync mode.
+         */
         Fast,
-        /** Challenge sync mode. */
+        /**
+         * Challenge sync mode.
+         */
         Challenge,
-        /** Full sync mode. */
+        /**
+         * Full sync mode.
+         */
         Full,
-        /** Checkpoint sync mode. */
+        /**
+         * Checkpoint sync mode.
+         */
         Checkpoint;
 
         /**
@@ -552,7 +573,7 @@ public record Config(
      *
      * @param attributesDepositor attributes depositor.
      * @param attributesPreDeploy attributes preDeploy.
-     * @param feeVault fee vault.
+     * @param feeVault            fee vault.
      * @author grapebaba
      * @since 0.1.0
      */
@@ -574,10 +595,10 @@ public record Config(
     /**
      * The type SystemConfig.
      *
-     * @param batchSender batch sender address.
-     * @param gasLimit gas limit.
-     * @param l1FeeOverhead L1 fee overhead.
-     * @param l1FeeScalar L1 fee scalar.
+     * @param batchSender       batch sender address.
+     * @param gasLimit          gas limit.
+     * @param l1FeeOverhead     L1 fee overhead.
+     * @param l1FeeScalar       L1 fee scalar.
      * @param unsafeBlockSigner unsafe block signer address.
      * @author grapebaba
      * @since 0.1.0
@@ -605,17 +626,18 @@ public record Config(
      * <p>This is used to parse external chain configs from JSON. This interface corresponds to the
      * default output of the `op-node`
      *
-     * @param genesis external genesis info
-     * @param blockTime block time
-     * @param maxSequencerDrift max sequencer drift
-     * @param seqWindowSize seq window size
-     * @param channelTimeout channel timeout
-     * @param l1ChainId l1 chain id
-     * @param l2ChainId l2 chain id
-     * @param regolithTime regolith time
-     * @param batchInboxAddress batch inbox address
+     * @param genesis                external genesis info
+     * @param blockTime              block time
+     * @param maxSequencerDrift      max sequencer drift
+     * @param seqWindowSize          seq window size
+     * @param channelTimeout         channel timeout
+     * @param l1ChainId              l1 chain id
+     * @param l2ChainId              l2 chain id
+     * @param regolithTime           regolith time
+     * @param canyonTime             canyon time
+     * @param batchInboxAddress      batch inbox address
      * @param depositContractAddress deposit contract address
-     * @param l1SystemConfigAddress l1 system config address
+     * @param l1SystemConfigAddress  l1 system config address
      */
     @JsonSerialize
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -628,6 +650,7 @@ public record Config(
             BigInteger l1ChainId,
             BigInteger l2ChainId,
             BigInteger regolithTime,
+            BigInteger canyonTime,
             String batchInboxAddress,
             String depositContractAddress,
             String l1SystemConfigAddress) {}
@@ -635,9 +658,9 @@ public record Config(
     /**
      * External Genesis Info.
      *
-     * @param l1 L1 chain genesis info
-     * @param l2 L2 chain genesis info
-     * @param l2Time L2 time
+     * @param l1           L1 chain genesis info
+     * @param l2           L2 chain genesis info
+     * @param l2Time       L2 time
      * @param systemConfig system config
      */
     @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
@@ -648,9 +671,9 @@ public record Config(
      * system config info.
      *
      * @param batcherAddr batcher address
-     * @param overhead overhead
-     * @param scalar scalar
-     * @param gasLimit gas limit
+     * @param overhead    overhead
+     * @param scalar      scalar
+     * @param gasLimit    gas limit
      */
     @JsonNaming(PropertyNamingStrategies.LowerCamelCaseStrategy.class)
     public record SystemConfigInfo(String batcherAddr, String overhead, String scalar, BigInteger gasLimit) {}
@@ -658,7 +681,7 @@ public record Config(
     /**
      * chain genesis info.
      *
-     * @param hash chain hash
+     * @param hash   chain hash
      * @param number chain number
      */
     public record ChainGenesisInfo(String hash, BigInteger number) {}

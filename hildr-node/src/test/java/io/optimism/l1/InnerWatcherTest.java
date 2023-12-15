@@ -30,7 +30,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * test case of InnerWatcher.
+ * Test case of InnerWatcher.
  *
  * @author thinkAfCod
  * @since 2023.05
