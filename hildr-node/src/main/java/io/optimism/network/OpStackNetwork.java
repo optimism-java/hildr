@@ -78,12 +78,12 @@ public class OpStackNetwork {
 
     private final P2PNetwork<?> p2pNetwork;
 
-    private final TopicHandler topicHandler;
+    private final List<TopicHandler> topicHandlers;
 
     /**
      * Instantiates a new OpStackNetwork.
      *
-     * @param config the config
+     * @param config           the config
      * @param unsafeBlockQueue the unsafe block queue
      */
     public OpStackNetwork(Config.ChainConfig config, MessagePassingQueue<ExecutionPayload> unsafeBlockQueue) {
@@ -108,12 +108,19 @@ public class OpStackNetwork {
         final AsyncRunner gossipAsyncRunner = AsyncRunnerFactory.createDefault(
                         new MetricTrackingExecutorFactory(metricsSystem))
                 .create("hildr_node_gossip", 20);
-        this.topicHandler = new BlockTopicHandler(
-                new SnappyPreparedGossipMessageFactory(),
-                gossipAsyncRunner,
-                chainId,
-                config.systemConfig().unsafeBlockSigner(),
-                unsafeBlockQueue);
+        this.topicHandlers = List.of(
+                new BlockV1TopicHandler(
+                        new SnappyPreparedGossipMessageFactory(),
+                        gossipAsyncRunner,
+                        chainId,
+                        config.systemConfig().unsafeBlockSigner(),
+                        unsafeBlockQueue),
+                new BlockV2TopicHandler(
+                        new SnappyPreparedGossipMessageFactory(),
+                        gossipAsyncRunner,
+                        chainId,
+                        config.systemConfig().unsafeBlockSigner(),
+                        unsafeBlockQueue));
         final AsyncRunner p2pAsyncRunner = AsyncRunnerFactory.createDefault(
                         new MetricTrackingExecutorFactory(metricsSystem))
                 .create("hildr_node_p2p", 20);
@@ -149,12 +156,17 @@ public class OpStackNetwork {
                 .build();
     }
 
-    /** Start. */
+    /**
+     * Start.
+     */
     public void start() {
         this.p2pNetwork
                 .start()
-                .thenAccept((Consumer<Object>)
-                        o -> p2pNetwork.subscribe(((BlockTopicHandler) topicHandler).getTopic(), topicHandler))
+                .thenAccept((Consumer<Object>) o -> {
+                    LOGGER.info("P2P network started");
+                    this.topicHandlers.forEach(topicHandler ->
+                            this.p2pNetwork.subscribe(((NamedTopicHandler) topicHandler).getTopic(), topicHandler));
+                })
                 .finish(error -> {
                     if (error != null) {
                         LOGGER.error("Error starting p2p network", error);
@@ -163,7 +175,9 @@ public class OpStackNetwork {
                 });
     }
 
-    /** Stop. */
+    /**
+     * Stop.
+     */
     public void stop() {
         this.p2pNetwork.stop().finish(error -> {
             if (error != null) {

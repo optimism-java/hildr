@@ -26,8 +26,6 @@ import java.util.List;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.jctools.queues.MessagePassingQueue;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * The type BatcherTransactions.
@@ -36,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * @since 0.1.0
  */
 public class BatcherTransactions implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(BatcherTransactions.class);
     private Deque<BatcherTransaction> txs;
 
     private MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;

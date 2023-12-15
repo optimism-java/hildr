@@ -17,7 +17,7 @@
 package io.optimism.engine;
 
 import io.optimism.common.Epoch;
-import io.optimism.network.BlockTopicHandler;
+import io.optimism.network.ExecutionPayloadSSZ;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +43,7 @@ import org.web3j.utils.Numeric;
  * @param baseFeePerGas 256 bits for the base fee per gas.
  * @param blockHash The 32 byte block hash.
  * @param transactions An array of transaction objects where each object is a byte list.
+ * @param withdrawals An array of withdrawal objects where each object is a byte list.
  * @author grapebaba
  * @since 0.1.0
  */
@@ -60,6 +61,7 @@ public record ExecutionPayload(
         String extraData,
         BigInteger baseFeePerGas,
         String blockHash,
+        List<EthBlock.Withdrawal> withdrawals,
         List<String> transactions) {
 
     /**
@@ -78,6 +80,7 @@ public record ExecutionPayload(
      * @param extraData 0 to 32 byte value for extra data.
      * @param baseFeePerGas 256 bits for the base fee per gas.
      * @param blockHash The 32 byte block hash.
+     * @param withdrawals An array of withdrawal objects where each object is a byte list.
      * @param transactions An array of transaction objects where each object is a byte list.
      */
     public record ExecutionPayloadRes(
@@ -94,6 +97,7 @@ public record ExecutionPayload(
             String extraData,
             String baseFeePerGas,
             String blockHash,
+            List<EthBlock.Withdrawal> withdrawals,
             List<String> transactions) {
 
         /**
@@ -116,6 +120,7 @@ public record ExecutionPayload(
                     extraData,
                     Numeric.decodeQuantity(baseFeePerGas),
                     blockHash,
+                    withdrawals,
                     transactions);
         }
     }
@@ -145,6 +150,7 @@ public record ExecutionPayload(
                 block.getExtraData(),
                 block.getBaseFeePerGas(),
                 block.getHash(),
+                block.getWithdrawals(),
                 encodedTxs);
     }
 
@@ -154,7 +160,7 @@ public record ExecutionPayload(
      * @param payload the ExecutionPayloadSSZ
      * @return the ExecutionPayload
      */
-    public static ExecutionPayload from(BlockTopicHandler.ExecutionPayloadSSZ payload) {
+    public static ExecutionPayload from(ExecutionPayloadSSZ payload) {
         return new ExecutionPayload(
                 Numeric.toHexString(payload.parentHash().toArray()),
                 Numeric.toHexString(payload.feeRecipient().toArray()),
@@ -169,6 +175,7 @@ public record ExecutionPayload(
                 Numeric.toHexString(payload.extraData().toArray()),
                 payload.baseFeePerGas().toBigInteger(),
                 Numeric.toHexString(payload.blockHash().toArray()),
+                payload.withdrawals(),
                 payload.transactions().stream()
                         .map(bytes -> Numeric.toHexString(bytes.toArray()))
                         .collect(Collectors.toList()));
@@ -242,6 +249,7 @@ public record ExecutionPayload(
      * @param suggestedFeeRecipient 20 bytes suggested value for the feeRecipient field of the new
      *     payload.
      * @param transactions List of transactions to be included in the new payload.
+     * @param withdrawals List of withdrawals to be included in the new payload.
      * @param noTxPool Boolean value indicating whether the payload should be built without including
      *     transactions from the txpool.
      * @param gasLimit 64 bit value for the gasLimit field of the new payload.The gasLimit is optional
@@ -261,6 +269,7 @@ public record ExecutionPayload(
             String prevRandao,
             String suggestedFeeRecipient,
             List<String> transactions,
+            List<EthBlock.Withdrawal> withdrawals,
             boolean noTxPool,
             BigInteger gasLimit,
             Epoch epoch,
@@ -283,6 +292,7 @@ public record ExecutionPayload(
          * @param prevRandao the prev randao
          * @param suggestedFeeRecipient the suggested fee recipient
          * @param transactions the transactions
+         * @param withdrawals the withdrawals
          * @param noTxPool the no tx pool
          * @param gasLimit the gas limit
          */
@@ -291,6 +301,7 @@ public record ExecutionPayload(
                 String prevRandao,
                 String suggestedFeeRecipient,
                 List<String> transactions,
+                List<EthBlock.Withdrawal> withdrawals,
                 boolean noTxPool,
                 String gasLimit) {}
 
@@ -305,6 +316,7 @@ public record ExecutionPayload(
                     prevRandao,
                     suggestedFeeRecipient,
                     transactions,
+                    withdrawals,
                     noTxPool,
                     Numeric.encodeQuantity(gasLimit));
         }

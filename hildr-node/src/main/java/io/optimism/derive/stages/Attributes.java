@@ -28,6 +28,7 @@ import io.optimism.utilities.derive.stages.Batch;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -42,6 +43,7 @@ import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.crypto.Hash;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
@@ -112,11 +114,21 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         String suggestedFeeRecipient = SystemAccounts.defaultSystemAccounts().feeVault();
         BigInteger gasLimit = l1Info.systemConfig().gasLimit();
 
+        List<EthBlock.Withdrawal> withdrawals = null;
+        // check chain config canyonTime is greater than zero
+        if (config.chainConfig().canyonTime().compareTo(BigInteger.ZERO) >= 0) {
+            // check batch timestamp is greater than canyonTime
+            if (batch.timestamp().compareTo(config.chainConfig().canyonTime()) >= 0) {
+                withdrawals = Collections.emptyList();
+            }
+        }
+
         return new PayloadAttributes(
                 timestamp,
                 prevRandao,
                 suggestedFeeRecipient,
                 transactions,
+                withdrawals,
                 true,
                 gasLimit,
                 epoch,

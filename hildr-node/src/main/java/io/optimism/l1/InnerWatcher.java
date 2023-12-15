@@ -98,8 +98,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private final Web3j wsProvider;
 
-    private BigInteger l1StartBlock;
-
     private BigInteger l2StartBlock;
 
     /** Channel to send block updates. */
@@ -167,7 +165,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         this.config = config;
         this.provider = Web3jProvider.createClient(config.l1RpcUrl());
         this.wsProvider = Web3jProvider.createClient(config.l1WsRpcUrl());
-        this.l1StartBlock = l1StartBlock;
         this.l2StartBlock = l2StartBlock;
         this.devnet = config.devnet() != null && config.devnet();
 

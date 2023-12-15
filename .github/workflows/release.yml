@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '21.0.1' ]
+        version: [ '22.3.2' ]
         java-version: [ '21' ]
         os: [ macos-latest ]
 
@@ -58,16 +58,18 @@ jobs:
       - name: 🏗️ Native Image Build & Test
         id: native-build
         run: |
-          ./gradlew nativeCompile
-          mv hildr-node/build/native/nativeCompile/hildr-node hildr-node/build/native/nativeCompile/hildr-node-osx
-          ls -ltrh hildr-node/build/native/nativeCompile/hildr-node-osx
+          echo $JAVA_HOME
+          echo $GRAALVM_HOME
+          ./gradlew buildBinary
+          mv hildr-node/build/binary/hildr-node hildr-node/build/binary/hildr-node-osx
+          ls -ltrh hildr-node/build/binary/hildr-node-osx
 
       - name: 📤 Upload ${{ matrix.os }} native image
         uses: actions/upload-artifact@v3
         with:
           name: hildr-node-osx
           path: |
-            hildr-node/build/native/nativeCompile/hildr-node-osx
+            hildr-node/build/binary/hildr-node-osx
           if-no-files-found: error
 
   native-build-windows:
@@ -76,7 +78,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '21.0.1' ]
+        version: [ '22.3.2' ]
         java-version: [ '21' ]
         os: [ windows-latest ]
 
@@ -103,15 +105,15 @@ jobs:
       - name: 🏗️ Native Image Build & Test
         id: native-build
         run: |
-          ./gradlew nativeCompile
-          ls -ltrh hildr-node/build/native/nativeCompile/hildr-node.exe
+          ./gradlew buildBinary
+          ls -ltrh hildr-node/build/binary/hildr-node.exe
 
       - name: 📤 Upload ${{ matrix.os }} native image
         uses: actions/upload-artifact@v3
         with:
           name: hildr-node-windows
           path: |
-            hildr-node/build/native/nativeCompile/hildr-node.exe
+            hildr-node/build/binary/hildr-node.exe
           if-no-files-found: error
 
   native-build-linux:
@@ -120,7 +122,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '21.0.1' ]
+        version: [ '22.3.2' ]
         java-version: [ '21' ]
         os: [ ubuntu-latest ]
 
@@ -172,14 +174,14 @@ jobs:
       - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '21.0.1'
+          version: '22.3.2'
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cache: 'gradle'
           native-image-musl: 'true'
-          set-java-home: 'true'
           native-image-job-reports: 'true'
+          set-java-home: 'true'
 
       - name: 🏗️ Build static image with musl libc
         id: native-build
@@ -199,11 +201,12 @@ jobs:
   push_image_to_github:
     name: Push Docker image to Github
     runs-on: ubuntu-latest
+    permissions: write-all
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
       - name: Log in to Docker Hub
-        uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -211,18 +214,28 @@ jobs:
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
+        uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/jvm.dock
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+
+      - name: Build and push graalvm native Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}-native
+          labels: ${{ steps.meta.outputs.labels }}-native
+
 
   release:
     name: 🚰 Release new version.

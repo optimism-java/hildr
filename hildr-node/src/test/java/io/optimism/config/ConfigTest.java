@@ -37,7 +37,9 @@ import org.web3j.utils.Numeric;
  */
 class ConfigTest {
 
-    /** Create. */
+    /**
+     * Create.
+     */
     @Test
     void create() {
         CliConfig cliConfig = new CliConfig(null, null, null, null, "testjwt", null, null, false);
@@ -96,119 +98,103 @@ class ConfigTest {
         assertEquals(BigInteger.valueOf(3600L), config.chainConfig().seqWindowSize());
         assertEquals(BigInteger.valueOf(600L), config.chainConfig().maxSeqDrift());
         assertEquals(BigInteger.valueOf(1679079600L), config.chainConfig().regolithTime());
+        assertEquals(BigInteger.valueOf(1699981200L), config.chainConfig().canyonTime());
         assertEquals(BigInteger.valueOf(2L), config.chainConfig().blockTime());
     }
 
-    /**
-     * The type ChainConfig test.
-     *
-     * @author grapebaba
-     * @since 0.1.0
-     */
-    static class ChainConfigTest {
-
-        /** Optimism goerli. */
-        @Test
-        void baseGoerli() {
-            ChainConfig chainConfig = ChainConfig.baseGoerli();
-            assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(1683219600L));
-        }
-
-        /** Base goerli. */
-        @Test
-        void optimismGoerli() {
-            ChainConfig chainConfig = ChainConfig.optimismGoerli();
-            assertEquals(chainConfig.regolithTime(), new BigInteger("1679079600"));
-        }
+    @Test
+    void baseGoerli() {
+        ChainConfig chainConfig = ChainConfig.baseGoerli();
+        assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(1683219600L));
     }
 
     /**
-     * The type SystemConfig test.
-     *
-     * @author grapebaba
-     * @since 0.1.0
+     * Base goerli.
      */
-    static class SystemConfigTest {
-
-        /** Batch hash. */
-        @Test
-        void batchHash() {
-            SystemConfig systemConfig = new SystemConfig(
-                    "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
-                    BigInteger.valueOf(25_000_000L),
-                    BigInteger.valueOf(2100),
-                    BigInteger.valueOf(1000000),
-                    "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7");
-
-            assertTrue(systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
-        }
+    @Test
+    void optimismGoerli() {
+        ChainConfig chainConfig = ChainConfig.optimismGoerli();
+        assertEquals(chainConfig.regolithTime(), new BigInteger("1679079600"));
     }
 
-    static class ExternalChainConfigTest {
-        @Test
-        void readExternalChainFromJson() {
-            var devnetJson = "{\n"
-                    + "\"genesis\": {\n"
-                    + "  \"l1\": {\n"
-                    + "    \"hash\": \"0xdb52a58e7341447d1a9525d248ea"
-                    + "07dbca7dfa0e105721dee1aa5a86163c088d\",\n"
-                    + "    \"number\": 0\n"
-                    + "  },\n"
-                    + "  \"l2\": {\n"
-                    + "    \"hash\": \"0xf85bca315a08237644b06a8350cda3"
-                    + "bc0de1593745a91be93daeadb28fb3a32e\",\n"
-                    + "    \"number\": 0\n"
-                    + "  },\n"
-                    + "  \"l2_time\": 1685710775,\n"
-                    + "  \"system_config\": {\n"
-                    + "    \"batcherAddr\": \"0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc\",\n"
-                    + "    \"overhead\":\n"
-                    + "         \"0x0000000000000000000000000000000000000000000000000000000000000834\",\n"
-                    + "    \"scalar\": \"0x000000000000000000000000000000"
-                    + "00000000000000000000000000000f4240\",\n"
-                    + "    \"gasLimit\": 30000000\n"
-                    + "  }\n"
-                    + "},\n"
-                    + "\"block_time\": 2,\n"
-                    + "\"max_sequencer_drift\": 300,\n"
-                    + "\"seq_window_size\": 200,\n"
-                    + "\"channel_timeout\": 120,\n"
-                    + "\"l1_chain_id\": 900,\n"
-                    + "\"l2_chain_id\": 901,\n"
-                    + "\"regolith_time\": 0,\n"
-                    + "\"batch_inbox_address\": \"0xff00000000000000000000000000000000000000\",\n"
-                    + "\"deposit_contract_address\": \"0x6900000000000000000000000000000000000001\",\n"
-                    + "\"l1_system_config_address\": \"0x6900000000000000000000000000000000000009\"\n"
-                    + "}";
-            var external = assertDoesNotThrow(
-                    () -> {
-                        var mapper = new ObjectMapper();
-                        return mapper.readValue(devnetJson, Config.ExternalChainConfig.class);
-                    },
-                    "parse json content should not throws but it does");
-            var chain = Config.ChainConfig.fromExternal(external);
-            assertEquals(chain.network(), "external");
-            assertEquals(chain.l1ChainId(), BigInteger.valueOf(900L));
-            assertEquals(chain.l2ChainId(), BigInteger.valueOf(901L));
-            assertEquals(chain.l1StartEpoch().number(), BigInteger.ZERO);
-            assertEquals(
-                    chain.l1StartEpoch().hash(), "0xdb52a58e7341447d1a9525d248ea07dbca7dfa0e105721dee1aa5a86163c088d");
-            assertEquals(
-                    chain.l2Genesis().hash(), "0xf85bca315a08237644b06a8350cda3bc0de1593745a91be93daeadb28fb3a32e");
-            assertEquals(chain.systemConfig().gasLimit(), BigInteger.valueOf(30_000_000L));
-            assertEquals(chain.systemConfig().l1FeeOverhead(), BigInteger.valueOf(2100L));
-            assertEquals(chain.systemConfig().l1FeeScalar(), BigInteger.valueOf(1_000_000L));
-            assertEquals(chain.systemConfig().batchSender(), "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc");
-            assertEquals(chain.batchInbox(), "0xff00000000000000000000000000000000000000");
-            assertEquals(chain.depositContract(), "0x6900000000000000000000000000000000000001");
-            assertEquals(chain.systemConfigContract(), "0x6900000000000000000000000000000000000009");
+    /**
+     * Batch hash.
+     */
+    @Test
+    void batchHash() {
+        SystemConfig systemConfig = new SystemConfig(
+                "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
+                BigInteger.valueOf(25_000_000L),
+                BigInteger.valueOf(2100),
+                BigInteger.valueOf(1000000),
+                "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7");
 
-            assertEquals(chain.maxChannelSize(), BigInteger.valueOf(100_000_000L));
-            assertEquals(chain.channelTimeout(), BigInteger.valueOf(120L));
-            assertEquals(chain.seqWindowSize(), BigInteger.valueOf(200L));
-            assertEquals(chain.maxSeqDrift(), BigInteger.valueOf(300L));
-            assertEquals(chain.regolithTime(), BigInteger.ZERO);
-            assertEquals(chain.blockTime(), BigInteger.TWO);
-        }
+        assertTrue(systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
+    }
+
+    @Test
+    void readExternalChainFromJson() {
+        var devnetJson = "{\n"
+                + "\"genesis\": {\n"
+                + "  \"l1\": {\n"
+                + "    \"hash\": \"0xdb52a58e7341447d1a9525d248ea"
+                + "07dbca7dfa0e105721dee1aa5a86163c088d\",\n"
+                + "    \"number\": 0\n"
+                + "  },\n"
+                + "  \"l2\": {\n"
+                + "    \"hash\": \"0xf85bca315a08237644b06a8350cda3"
+                + "bc0de1593745a91be93daeadb28fb3a32e\",\n"
+                + "    \"number\": 0\n"
+                + "  },\n"
+                + "  \"l2_time\": 1685710775,\n"
+                + "  \"system_config\": {\n"
+                + "    \"batcherAddr\": \"0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc\",\n"
+                + "    \"overhead\":\n"
+                + "         \"0x0000000000000000000000000000000000000000000000000000000000000834\",\n"
+                + "    \"scalar\": \"0x000000000000000000000000000000"
+                + "00000000000000000000000000000f4240\",\n"
+                + "    \"gasLimit\": 30000000\n"
+                + "  }\n"
+                + "},\n"
+                + "\"block_time\": 2,\n"
+                + "\"max_sequencer_drift\": 300,\n"
+                + "\"seq_window_size\": 200,\n"
+                + "\"channel_timeout\": 120,\n"
+                + "\"l1_chain_id\": 900,\n"
+                + "\"l2_chain_id\": 901,\n"
+                + "\"regolith_time\": 0,\n"
+                + "\"canyon_time\": -1,\n"
+                + "\"batch_inbox_address\": \"0xff00000000000000000000000000000000000000\",\n"
+                + "\"deposit_contract_address\": \"0x6900000000000000000000000000000000000001\",\n"
+                + "\"l1_system_config_address\": \"0x6900000000000000000000000000000000000009\"\n"
+                + "}";
+        var external = assertDoesNotThrow(
+                () -> {
+                    var mapper = new ObjectMapper();
+                    return mapper.readValue(devnetJson, Config.ExternalChainConfig.class);
+                },
+                "parse json content should not throws but it does");
+        var chain = Config.ChainConfig.fromExternal(external);
+        assertEquals(chain.network(), "external");
+        assertEquals(chain.l1ChainId(), BigInteger.valueOf(900L));
+        assertEquals(chain.l2ChainId(), BigInteger.valueOf(901L));
+        assertEquals(chain.l1StartEpoch().number(), BigInteger.ZERO);
+        assertEquals(chain.l1StartEpoch().hash(), "0xdb52a58e7341447d1a9525d248ea07dbca7dfa0e105721dee1aa5a86163c088d");
+        assertEquals(chain.l2Genesis().hash(), "0xf85bca315a08237644b06a8350cda3bc0de1593745a91be93daeadb28fb3a32e");
+        assertEquals(chain.systemConfig().gasLimit(), BigInteger.valueOf(30_000_000L));
+        assertEquals(chain.systemConfig().l1FeeOverhead(), BigInteger.valueOf(2100L));
+        assertEquals(chain.systemConfig().l1FeeScalar(), BigInteger.valueOf(1_000_000L));
+        assertEquals(chain.systemConfig().batchSender(), "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc");
+        assertEquals(chain.batchInbox(), "0xff00000000000000000000000000000000000000");
+        assertEquals(chain.depositContract(), "0x6900000000000000000000000000000000000001");
+        assertEquals(chain.systemConfigContract(), "0x6900000000000000000000000000000000000009");
+
+        assertEquals(chain.maxChannelSize(), BigInteger.valueOf(100_000_000L));
+        assertEquals(chain.channelTimeout(), BigInteger.valueOf(120L));
+        assertEquals(chain.seqWindowSize(), BigInteger.valueOf(200L));
+        assertEquals(chain.maxSeqDrift(), BigInteger.valueOf(300L));
+        assertEquals(chain.regolithTime(), BigInteger.ZERO);
+        assertEquals(chain.blockTime(), BigInteger.TWO);
+        assertEquals(chain.canyonTime(), BigInteger.valueOf(-1L));
     }
 }

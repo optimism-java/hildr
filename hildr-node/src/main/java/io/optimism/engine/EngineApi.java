@@ -47,13 +47,13 @@ public class EngineApi implements Engine {
     private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EngineApi.class);
 
     /** The forkchoice updated method string. */
-    public static final String ENGINE_FORKCHOICE_UPDATED_V1 = "engine_forkchoiceUpdatedV1";
+    public static final String ENGINE_FORKCHOICE_UPDATED_V2 = "engine_forkchoiceUpdatedV2";
 
     /** The new payload method string. */
-    public static final String ENGINE_NEW_PAYLOAD_V1 = "engine_newPayloadV1";
+    public static final String ENGINE_NEW_PAYLOAD_V2 = "engine_newPayloadV2";
 
     /** The get payload method string. */
-    public static final String ENGINE_GET_PAYLOAD_V1 = "engine_getPayloadV1";
+    public static final String ENGINE_GET_PAYLOAD_V2 = "engine_getPayloadV2";
 
     /** The default engine api authentication port. */
     public static final Integer DEFAULT_AUTH_PORT = 8851;
@@ -138,7 +138,7 @@ public class EngineApi implements Engine {
             throws IOException {
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthForkChoiceUpdate> r = new Request<>(
-                ENGINE_FORKCHOICE_UPDATED_V1,
+                ENGINE_FORKCHOICE_UPDATED_V2,
                 Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
                 web3jService,
                 OpEthForkChoiceUpdate.class);
@@ -149,7 +149,7 @@ public class EngineApi implements Engine {
     public OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException {
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthPayloadStatus> r = new Request<>(
-                ENGINE_NEW_PAYLOAD_V1,
+                ENGINE_NEW_PAYLOAD_V2,
                 Collections.singletonList(executionPayload != null ? executionPayload.toReq() : null),
                 web3jService,
                 OpEthPayloadStatus.class);
@@ -160,7 +160,7 @@ public class EngineApi implements Engine {
     public OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException {
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthExecutionPayload> r = new Request<>(
-                ENGINE_GET_PAYLOAD_V1,
+                ENGINE_GET_PAYLOAD_V2,
                 Collections.singletonList(
                         payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
                 web3jService,
