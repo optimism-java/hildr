@@ -197,6 +197,7 @@ public record ExecutionPayload(
      * @param extraData 0 to 32 byte value for extra data.
      * @param baseFeePerGas 256 bits for the base fee per gas.
      * @param blockHash The 32 byte block hash.
+     * @param withdrawals The withdrawals list.
      * @param transactions An array of transaction objects where each object is a byte list.
      */
     public record ExecutionPayloadReq(

@@ -80,14 +80,13 @@ public interface Engine {
      * <p>Specification method: engine_getPayloadV2 params: - [PayloadId]: DATA, 8 Bytes - Identifier
      * of the payload build process timeout: 1s returns: - [ExecutionPayload] potential errors: - code
      * and message set in case an exception happens while getting the payload. Refer to <a
-     * href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_getpayloadv2">Optimism
-     * Specs</a>
+     *     href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_getpayloadv2">Optimism Specs</a>
      *
      * @param payloadId the payload id
      * @return the payload v2
      * @throws IOException the io exception
      * @see <a
-     *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/shanghai.md#engine_getpayloadv2</a>
+     *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/shanghai.md#engine_getpayloadv2"></a>
      */
     OpEthExecutionPayload getPayloadV2(BigInteger payloadId) throws IOException;
 }

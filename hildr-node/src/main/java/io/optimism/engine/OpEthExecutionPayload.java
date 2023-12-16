@@ -53,20 +53,41 @@ public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.Execut
         super.setResult(result);
     }
 
+    /**
+     * The type Execution payload obj.
+     * @since 0.2.6
+     */
     public static class ExecutionPayloadObj {
 
+        /** The Execution payload result. */
         private ExecutionPayload.ExecutionPayloadRes executionPayload;
 
+        /** Instantiates a new Execution payload obj. */
         public ExecutionPayloadObj() {}
 
+        /**
+         * Instantiates a new Execution payload obj.
+         *
+         * @param executionPayload the execution payload result
+         */
         public ExecutionPayloadObj(ExecutionPayload.ExecutionPayloadRes executionPayload) {
             this.executionPayload = executionPayload;
         }
 
+        /**
+         * Gets execution payload result.
+         *
+         * @return the execution payload result
+         */
         public ExecutionPayload.ExecutionPayloadRes getExecutionPayload() {
             return executionPayload;
         }
 
+        /**
+         * Sets execution payload.
+         *
+         * @param executionPayload the execution payload result
+         */
         public void setExecutionPayload(ExecutionPayload.ExecutionPayloadRes executionPayload) {
             this.executionPayload = executionPayload;
         }
