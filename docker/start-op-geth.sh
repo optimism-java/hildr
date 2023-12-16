@@ -56,7 +56,7 @@ then
     if [ ! -d $DATADIR ]
     then
         mkdir $DATADIR
-        geth init --datadir=$DATADIR ./genesis-l2.json
+        geth init --datadir=$DATADIR ./genesis-l2-attached.json
     fi
 else
     echo "Network not recognized. Available options are optimism-goerli and base-goerli"

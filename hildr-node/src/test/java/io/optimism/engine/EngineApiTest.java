@@ -112,7 +112,7 @@ public class EngineApiTest {
     String initExecutionPayloadJson() throws JsonProcessingException {
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         OpEthExecutionPayload opEthExecutionPayload = new OpEthExecutionPayload();
-        opEthExecutionPayload.setResult(initExecutionPayload());
+        opEthExecutionPayload.setResult(new OpEthExecutionPayload.ExecutionPayloadObj(initExecutionPayload()));
         return ow.writeValueAsString(opEthExecutionPayload);
     }
 
@@ -158,7 +158,7 @@ public class EngineApiTest {
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initExecutionPayloadJson()));
         EngineApi engineApi = new EngineApi(baseUrl, SECRET);
-        OpEthExecutionPayload executionPayload = engineApi.getPayload(new BigInteger("123"));
+        OpEthExecutionPayload executionPayload = engineApi.getPayloadV2(new BigInteger("123"));
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         assertEquals(initExecutionPayloadJson(), ow.writeValueAsString(executionPayload));
     }

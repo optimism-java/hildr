@@ -73,20 +73,20 @@ public class EngineApi implements Engine {
         if (StringUtils.isBlank(baseUrlParm)) {
             throw new RuntimeException(
                     """
-              ENGINE_API_URL environment variable not set.
-              Please set this to the base url of the engine api
-              """);
+          ENGINE_API_URL environment variable not set.
+          Please set this to the base url of the engine api
+          """);
         }
         String secretKey = System.getenv("JWT_SECRET");
         if (StringUtils.isBlank(secretKey)) {
             throw new RuntimeException(
                     """
-              JWT_SECRET environment variable not set.
-              Please set this to the 256 bit hex-encoded secret key
-               used to authenticate with the engine api.
-              This should be the same as set in the `--auth.secret`
-               flag when executing go-ethereum.
-              """);
+          JWT_SECRET environment variable not set.
+          Please set this to the 256 bit hex-encoded secret key
+           used to authenticate with the engine api.
+          This should be the same as set in the `--auth.secret`
+           flag when executing go-ethereum.
+          """);
         }
         String baseUrlFormat = authUrlFromAddr(baseUrlParm, null);
         return new EngineApi(baseUrlFormat, secretKey);
@@ -157,7 +157,7 @@ public class EngineApi implements Engine {
     }
 
     @Override
-    public OpEthExecutionPayload getPayload(BigInteger payloadId) throws IOException {
+    public OpEthExecutionPayload getPayloadV2(BigInteger payloadId) throws IOException {
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthExecutionPayload> r = new Request<>(
                 ENGINE_GET_PAYLOAD_V2,

@@ -16,7 +16,15 @@
 
 package io.optimism.engine;
 
-import io.optimism.engine.ExecutionPayload.ExecutionPayloadRes;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.ObjectReader;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import java.io.IOException;
+import java.util.Objects;
+import org.web3j.protocol.ObjectMapperFactory;
 import org.web3j.protocol.core.Response;
 
 /**
@@ -25,7 +33,7 @@ import org.web3j.protocol.core.Response;
  * @author grapebaba
  * @since 0.1.0
  */
-public class OpEthExecutionPayload extends Response<ExecutionPayloadRes> {
+public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.ExecutionPayloadObj> {
 
     /** Instantiates a new Op eth execution payload. */
     public OpEthExecutionPayload() {}
@@ -36,11 +44,68 @@ public class OpEthExecutionPayload extends Response<ExecutionPayloadRes> {
      * @return the execution payload
      */
     public ExecutionPayload getExecutionPayload() {
-        return getResult().toExecutionPayload();
+        return getResult().getExecutionPayload().toExecutionPayload();
     }
 
     @Override
-    public void setResult(ExecutionPayloadRes result) {
+    @JsonDeserialize(using = ResponseDeserializer.class)
+    public void setResult(ExecutionPayloadObj result) {
         super.setResult(result);
+    }
+
+    public static class ExecutionPayloadObj {
+
+        private ExecutionPayload.ExecutionPayloadRes executionPayload;
+
+        public ExecutionPayloadObj() {}
+
+        public ExecutionPayloadObj(ExecutionPayload.ExecutionPayloadRes executionPayload) {
+            this.executionPayload = executionPayload;
+        }
+
+        public ExecutionPayload.ExecutionPayloadRes getExecutionPayload() {
+            return executionPayload;
+        }
+
+        public void setExecutionPayload(ExecutionPayload.ExecutionPayloadRes executionPayload) {
+            this.executionPayload = executionPayload;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof ExecutionPayloadObj that)) {
+                return false;
+            }
+            return Objects.equals(executionPayload, that.executionPayload);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(executionPayload);
+        }
+    }
+
+    /** Json Deserializer of ExecutionPayloadObj. */
+    public static class ResponseDeserializer extends JsonDeserializer<ExecutionPayloadObj> {
+
+        private final ObjectReader objectReader;
+
+        /** Instantiates a new Response deserializer. */
+        public ResponseDeserializer() {
+            this.objectReader = ObjectMapperFactory.getObjectReader();
+        }
+
+        @Override
+        public ExecutionPayloadObj deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
+                throws IOException {
+            if (jsonParser.getCurrentToken() != JsonToken.VALUE_NULL) {
+                return objectReader.readValue(jsonParser, ExecutionPayloadObj.class);
+            } else {
+                return null; // null is wrapped by Optional in above getter
+            }
+        }
     }
 }

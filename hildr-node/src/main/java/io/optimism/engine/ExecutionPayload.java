@@ -213,6 +213,7 @@ public record ExecutionPayload(
             String extraData,
             String baseFeePerGas,
             String blockHash,
+            List<EthBlock.Withdrawal> withdrawals,
             List<String> transactions) {}
 
     /**
@@ -235,6 +236,7 @@ public record ExecutionPayload(
                 extraData,
                 Numeric.toHexStringWithPrefix(baseFeePerGas),
                 blockHash,
+                withdrawals,
                 transactions);
     }
 
