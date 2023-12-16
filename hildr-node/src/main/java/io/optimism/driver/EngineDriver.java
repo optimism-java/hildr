@@ -338,7 +338,7 @@ public class EngineDriver<E extends Engine> {
         OpEthExecutionPayload res;
         try (var scope1 = new StructuredTaskScope.ShutdownOnFailure()) {
             StructuredTaskScope.Subtask<OpEthExecutionPayload> payloadFuture =
-                    scope1.fork(TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.getPayload(payloadId)));
+                    scope1.fork(TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.getPayloadV2(payloadId)));
 
             scope1.join();
             scope1.throwIfFailed();
