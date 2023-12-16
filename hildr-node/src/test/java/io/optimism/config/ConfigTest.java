@@ -102,10 +102,22 @@ class ConfigTest {
         assertEquals(BigInteger.valueOf(2L), config.chainConfig().blockTime());
     }
 
+    /**
+     * Base goerli.
+     */
     @Test
     void baseGoerli() {
         ChainConfig chainConfig = ChainConfig.baseGoerli();
         assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(1683219600L));
+    }
+
+    /**
+     * Base sepolia.
+     */
+    @Test
+    void baseSepolia() {
+        ChainConfig chainConfig = ChainConfig.baseSepolia();
+        assertEquals(chainConfig.canyonTime(), BigInteger.valueOf(1699981200L));
     }
 
     /**
@@ -115,6 +127,12 @@ class ConfigTest {
     void optimismGoerli() {
         ChainConfig chainConfig = ChainConfig.optimismGoerli();
         assertEquals(chainConfig.regolithTime(), new BigInteger("1679079600"));
+    }
+
+    @Test
+    void optimismSepolia() {
+        ChainConfig chainConfig = ChainConfig.optimismSepolia();
+        assertEquals(chainConfig.canyonTime(), BigInteger.valueOf(1699981200L));
     }
 
     /**
@@ -132,6 +150,9 @@ class ConfigTest {
         assertTrue(systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
     }
 
+    /**
+     * Read external chain from json.
+     */
     @Test
     void readExternalChainFromJson() {
         var devnetJson = "{\n"

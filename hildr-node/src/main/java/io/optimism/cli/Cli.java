@@ -174,6 +174,7 @@ public class Cli implements Runnable {
                     case "optimism-sepolia" -> Config.ChainConfig.optimismSepolia();
                     case "base" -> Config.ChainConfig.base();
                     case "base-goerli" -> Config.ChainConfig.baseGoerli();
+                    case "base-sepolia" -> Config.ChainConfig.baseSepolia();
                     default -> {
                         if (network.endsWith(".json")) {
                             yield Config.ChainConfig.fromJson(network);

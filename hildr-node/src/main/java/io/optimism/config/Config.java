@@ -267,7 +267,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1704992401L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -305,7 +305,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1704992401L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -408,18 +408,51 @@ public record Config(
                     new SystemConfig(
                             "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
                             BigInteger.valueOf(25_000_000L),
-                            BigInteger.valueOf(2100),
-                            BigInteger.valueOf(1000000),
+                            BigInteger.valueOf(2100L),
+                            BigInteger.valueOf(1000000L),
                             "0x32a4e99A72c11E9DD3dC159909a2D7BD86C1Bc51"),
                     "0x8453100000000000000000000000000000000000",
                     "0xe93c8cd0d409341205a592f8c4ac1a5fe5585cfa",
                     "0xb15eea247ece011c68a614e4a77ad648ff495bc1",
                     BigInteger.valueOf(100_000_000L),
-                    BigInteger.valueOf(100L),
+                    BigInteger.valueOf(300L),
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.valueOf(1683219600L),
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(2L),
+                    "0x4200000000000000000000000000000000000016");
+        }
+
+        public static ChainConfig baseSepolia() {
+            return new ChainConfig(
+                    "base-sepolia",
+                    BigInteger.valueOf(11155111L),
+                    BigInteger.valueOf(84532L),
+                    new Epoch(
+                            BigInteger.valueOf(4370868L),
+                            "0xcac9a83291d4dec146d6f7f69ab2304f23f5be87b1789119a0c5b1e4482444ed",
+                            BigInteger.valueOf(1695768288L)),
+                    new BlockInfo(
+                            "0x0dcc9e089e30b90ddfc55be9a37dd15bc551aeee999d2e2b51414c54eaf934e4",
+                            BigInteger.valueOf(0L),
+                            Numeric.toHexString(new byte[32]),
+                            BigInteger.valueOf(1695768288L)),
+                    new SystemConfig(
+                            "0x6cdebe940bc0f26850285caca097c11c33103e47",
+                            BigInteger.valueOf(25_000_000L),
+                            BigInteger.valueOf(2100L),
+                            BigInteger.valueOf(1000000L),
+                            "0xb830b99c95Ea32300039624Cb567d324D4b1D83C"),
+                    "0xff00000000000000000000000000000000084532",
+                    "0x49f53e41452C74589E85cA1677426Ba426459e85",
+                    "0xf272670eb55e895584501d564AfEB048bEd26194",
+                    BigInteger.valueOf(100_000_000L),
+                    BigInteger.valueOf(300L),
+                    BigInteger.valueOf(3600L),
+                    BigInteger.valueOf(600L),
+                    BigInteger.ZERO,
+                    BigInteger.valueOf(1699981200L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -472,7 +505,7 @@ public record Config(
                     external.seqWindowSize,
                     external.maxSequencerDrift,
                     external.regolithTime,
-                    external.canyonTime,
+                    external.canyonTime == null ? BigInteger.valueOf(-1L) : external.canyonTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }

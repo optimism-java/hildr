@@ -1,12 +1,8 @@
 name: GraalVM Native Image
 
 on:
-  push:
-    tags:
-    - '*'
-    paths-ignore:
-      - LICENSE
-      - '*.md'
+  release:
+    types: [created]
 
 defaults:
   run:
@@ -31,7 +27,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '22.3.2' ]
         java-version: [ '21' ]
         os: [ macos-latest ]
 
@@ -47,7 +42,6 @@ jobs:
       - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ matrix.version }}
           java-version: ${{ matrix.java-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           distribution: 'graalvm'
@@ -58,8 +52,6 @@ jobs:
       - name: 🏗️ Native Image Build & Test
         id: native-build
         run: |
-          echo $JAVA_HOME
-          echo $GRAALVM_HOME
           ./gradlew buildBinary
           mv hildr-node/build/binary/hildr-node hildr-node/build/binary/hildr-node-osx
           ls -ltrh hildr-node/build/binary/hildr-node-osx
@@ -78,7 +70,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '22.3.2' ]
         java-version: [ '21' ]
         os: [ windows-latest ]
 
@@ -94,7 +85,6 @@ jobs:
       - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ matrix.version }}
           java-version: ${{ matrix.java-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           distribution: 'graalvm'
@@ -105,7 +95,7 @@ jobs:
       - name: 🏗️ Native Image Build & Test
         id: native-build
         run: |
-          ./gradlew buildBinary
+          ./gradlew buildBinaryOnWindows
           ls -ltrh hildr-node/build/binary/hildr-node.exe
 
       - name: 📤 Upload ${{ matrix.os }} native image
@@ -122,7 +112,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: [ '22.3.2' ]
         java-version: [ '21' ]
         os: [ ubuntu-latest ]
 
@@ -138,7 +127,6 @@ jobs:
       - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
-          version: ${{ matrix.version }}
           java-version: ${{ matrix.java-version }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           distribution: 'graalvm'
@@ -174,7 +162,6 @@ jobs:
       - name: ☕ Setup GraalVM Build
         uses: graalvm/setup-graalvm@v1
         with:
-          version: '22.3.2'
           java-version: '21'
           distribution: 'graalvm'
           github-token: ${{ secrets.GITHUB_TOKEN }}
