@@ -202,7 +202,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             try {
                 head = HeadInfo.from(finalizedBlock.getBlock());
             } catch (Throwable throwable) {
-                LOGGER.warn("could not get head info. Falling back to the genesis head.");
+                LOGGER.warn("could not parse head info. Falling back to the genesis head.", throwable);
                 head = new HeadInfo(
                         config.chainConfig().l2Genesis(), config.chainConfig().l1StartEpoch(), BigInteger.ZERO);
             }
@@ -212,7 +212,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         Epoch finalizedEpoch = head.l1Epoch();
         BigInteger finalizedSeq = head.sequenceNumber();
 
-        LOGGER.info("starting from head: {}", finalizedHead.hash());
+        LOGGER.info("starting from head: number{}, hash{}", finalizedHead.number(), finalizedHead.hash());
         BigInteger l1StartBlock =
                 finalizedEpoch.number().subtract(config.chainConfig().channelTimeout());
         ChainWatcher watcher = new ChainWatcher(

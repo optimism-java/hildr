@@ -16,11 +16,7 @@
 
 package io.optimism.common;
 
-import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Objects;
 import net.osslabz.evm.abi.decoder.AbiDecoder;
 import net.osslabz.evm.abi.decoder.DecodedFunctionCall;
@@ -52,13 +48,7 @@ public record AttributesDepositedCall(
     private static final AbiDecoder l1BlockAbi;
 
     static {
-        try {
-            Path path = Paths.get(Objects.requireNonNull(Epoch.class.getResource("/abi/L1Block.json"))
-                    .toURI());
-            l1BlockAbi = new AbiDecoder(path.toString());
-        } catch (URISyntaxException | IOException e) {
-            throw new AbiFileLoadException(e);
-        }
+        l1BlockAbi = new AbiDecoder(Objects.requireNonNull(Epoch.class.getResourceAsStream("/abi/L1Block.json")));
     }
 
     /**
