@@ -61,6 +61,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -115,7 +116,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private final OpStackNetwork opStackNetwork;
 
-    private volatile boolean isP2PNetworkStarted;
+    private final AtomicBoolean isP2PNetworkStarted;
 
     /**
      * Instantiates a new Driver.
@@ -158,6 +159,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         rpcHandler.put(RpcMethod.OP_SYNC_STATUS.getRpcMethodName(), unused -> this.getSyncStatus());
         rpcHandler.put(RpcMethod.OP_ROLLUP_CONFIG.getRpcMethodName(), unused -> this.getRollupConfig());
         this.rpcServer.register(rpcHandler);
+        this.isP2PNetworkStarted = new AtomicBoolean(false);
     }
 
     /**
@@ -372,7 +374,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         LOGGER.info("engineDriver shut down.");
         this.rpcServer.stop();
         LOGGER.info("driver stopped.");
-        if (this.opStackNetwork != null && this.isP2PNetworkStarted) {
+        if (this.opStackNetwork != null && this.isP2PNetworkStarted.compareAndExchange(true, false)) {
             this.opStackNetwork.stop();
             LOGGER.info("opStackNetwork stopped.");
         }
@@ -565,7 +567,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void tryStartNetwork() {
-        if (this.synced() && this.opStackNetwork != null && !this.isP2PNetworkStarted) {
+        if (this.synced() && this.opStackNetwork != null && !this.isP2PNetworkStarted.compareAndExchange(false, true)) {
             this.opStackNetwork.start();
         }
     }

@@ -25,7 +25,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -39,27 +38,18 @@ public class InnerWatcherTest {
 
     private static Config config;
 
-    private static ExecutorService executor;
-
     @BeforeAll
     static void setUp() {
         config = TestConstants.createConfig();
-        executor = Executors.newSingleThreadExecutor();
     }
 
-    @AfterAll
-    static void tearDown() {
-        executor.shutdownNow();
-    }
-
-    InnerWatcher createWatcher(
-            BigInteger l2StartBlock, MessagePassingQueue<BlockUpdate> queue, ExecutorService executor) {
+    InnerWatcher createWatcher(BigInteger l2StartBlock, MessagePassingQueue<BlockUpdate> queue) {
         var watcherl2StartBlock = l2StartBlock;
         if (l2StartBlock == null) {
             watcherl2StartBlock = config.chainConfig().l2Genesis().number();
         }
         return new InnerWatcher(
-                config, queue, config.chainConfig().l1StartEpoch().number(), watcherl2StartBlock, executor);
+                config, queue, config.chainConfig().l1StartEpoch().number(), watcherl2StartBlock);
     }
 
     @Test
@@ -68,8 +58,8 @@ public class InnerWatcherTest {
             return;
         }
         var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
-        var unused = this.createWatcher(null, queue, executor);
-        unused = this.createWatcher(config.chainConfig().l2Genesis().number().add(BigInteger.TEN), queue, executor);
+        var unused = this.createWatcher(null, queue);
+        unused = this.createWatcher(config.chainConfig().l2Genesis().number().add(BigInteger.TEN), queue);
     }
 
     @Test
@@ -79,7 +69,7 @@ public class InnerWatcherTest {
         }
         ExecutorService executor = Executors.newSingleThreadExecutor();
         var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
-        var watcher = this.createWatcher(null, queue, executor);
+        var watcher = this.createWatcher(null, queue);
         watcher.startUp();
         watcher.tryIngestBlock();
         assertEquals(2, queue.size());

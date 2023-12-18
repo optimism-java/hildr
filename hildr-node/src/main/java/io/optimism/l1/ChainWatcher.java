@@ -19,7 +19,6 @@ package io.optimism.l1;
 import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
 import java.math.BigInteger;
-import java.util.concurrent.Executors;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
 
@@ -55,12 +54,7 @@ public class ChainWatcher {
     public ChainWatcher(BigInteger l1StartBlock, BigInteger l2StartBlock, Config config) {
         this.config = config;
         this.blockUpdateQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
-        this.innerWatcher = new InnerWatcher(
-                this.config,
-                this.blockUpdateQueue,
-                l1StartBlock,
-                l2StartBlock,
-                Executors.newVirtualThreadPerTaskExecutor());
+        this.innerWatcher = new InnerWatcher(this.config, this.blockUpdateQueue, l1StartBlock, l2StartBlock);
     }
 
     /** start ChainWatcher. */
@@ -82,12 +76,7 @@ public class ChainWatcher {
     public void restart(BigInteger l1StartBlock, BigInteger l2StartBlock) {
         this.stop();
         this.blockUpdateQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
-        this.innerWatcher = new InnerWatcher(
-                this.config,
-                this.blockUpdateQueue,
-                l1StartBlock,
-                l2StartBlock,
-                Executors.newVirtualThreadPerTaskExecutor());
+        this.innerWatcher = new InnerWatcher(this.config, this.blockUpdateQueue, l1StartBlock, l2StartBlock);
         this.start();
     }
 
