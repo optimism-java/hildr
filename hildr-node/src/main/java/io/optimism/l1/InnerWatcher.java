@@ -30,6 +30,7 @@ import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.BlockUpdate.FinalityUpdate;
 import io.optimism.utilities.rpc.Web3jProvider;
 import io.optimism.utilities.telemetry.Logging;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import io.reactivex.disposables.Disposable;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -38,8 +39,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.StructuredTaskScope;
 import java.util.stream.Collectors;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.jctools.queues.MessagePassingQueue;
@@ -87,8 +87,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                     new TypeReference<Address>() {},
                     new TypeReference<Uint256>() {},
                     new TypeReference<Bytes>() {})));
-
-    private final ExecutorService executor;
 
     /** Global Config. */
     private final Config config;
@@ -153,15 +151,9 @@ public class InnerWatcher extends AbstractExecutionThreadService {
      * @param queue the Queue to send block updates
      * @param l1StartBlock the start block number of l1
      * @param l2StartBlock the start block number of l2
-     * @param executor the executor for async request
      */
     public InnerWatcher(
-            Config config,
-            MessagePassingQueue<BlockUpdate> queue,
-            BigInteger l1StartBlock,
-            BigInteger l2StartBlock,
-            ExecutorService executor) {
-        this.executor = executor;
+            Config config, MessagePassingQueue<BlockUpdate> queue, BigInteger l1StartBlock, BigInteger l2StartBlock) {
         this.config = config;
         this.provider = Web3jProvider.createClient(config.l1RpcUrl());
         this.wsProvider = Web3jProvider.createClient(config.l1WsRpcUrl());
@@ -411,18 +403,20 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             final Web3j client, final DefaultBlockParameter parameter, final boolean fullTxObjectFlag)
             throws ExecutionException, InterruptedException {
         LOGGER.debug("will poll block: {}", parameter.getValue());
-        EthBlock.Block block = this.executor
-                .submit(() ->
-                        client.ethGetBlockByNumber(parameter, fullTxObjectFlag).send())
-                .get()
-                .getBlock();
-        if (block == null) {
-            throw new BlockNotIncludedException();
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            var fork = scope.fork(TracerTaskWrapper.wrap(() ->
+                    client.ethGetBlockByNumber(parameter, fullTxObjectFlag).send()));
+            scope.join();
+            scope.throwIfFailed();
+            var block = fork.get().getBlock();
+            if (block == null) {
+                throw new BlockNotIncludedException();
+            }
+            if (block.getNumber() == null) {
+                throw new BlockNotIncludedException();
+            }
+            return block;
         }
-        if (block.getNumber() == null) {
-            throw new BlockNotIncludedException();
-        }
-        return block;
     }
 
     private EthLog getLog(BigInteger fromBlock, BigInteger toBlock, String contract, String topic)
@@ -430,10 +424,13 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         final EthFilter ethFilter = new EthFilter(
                         DefaultBlockParameter.valueOf(fromBlock), DefaultBlockParameter.valueOf(toBlock), contract)
                 .addSingleTopic(topic);
-
-        return this.executor
-                .submit(() -> this.provider.ethGetLogs(ethFilter).send())
-                .get();
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            var fork = scope.fork(TracerTaskWrapper.wrap(
+                    () -> this.provider.ethGetLogs(ethFilter).send()));
+            scope.join();
+            scope.throwIfFailed();
+            return fork.get();
+        }
     }
 
     private List<Attributes.UserDeposited> getDeposits(BigInteger blockNum)
@@ -506,13 +503,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     @Override
-    protected Executor executor() {
-        return this.executor;
-    }
-
-    @Override
     protected void shutDown() {
-        this.executor.shutdown();
         this.provider.shutdown();
         if (!this.l1HeadListener.isDisposed()) {
             this.l1HeadListener.dispose();
