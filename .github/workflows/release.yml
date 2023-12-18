@@ -217,7 +217,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
   push_native_image_to_github:
-    name: Push Docker image to Github
+    name: Push Docker Native image to Github
     runs-on: ubuntu-latest
     permissions: write-all
     steps:
@@ -234,11 +234,11 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
+          flavor: |
+            suffix=-native,onlatest=true
           images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
-            type=semver,pattern={{raw}}-native
-            type=raw,value=latest,enable=false
-            type=raw,value=latest-native
+            type=semver,pattern={{raw}}
 
       - name: Build and push graalvm native Docker image
         uses: docker/build-push-action@v5
