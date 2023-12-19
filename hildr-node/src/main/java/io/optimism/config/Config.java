@@ -424,6 +424,11 @@ public record Config(
                     "0x4200000000000000000000000000000000000016");
         }
 
+        /**
+         * Base sepolia chain config.
+         *
+         * @return the chain config
+         */
         public static ChainConfig baseSepolia() {
             return new ChainConfig(
                     "base-sepolia",
