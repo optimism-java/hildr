@@ -20,9 +20,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.optimism.TestConstants;
 import io.optimism.config.Config;
+import io.optimism.utilities.telemetry.Logging;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
 import org.junit.jupiter.api.BeforeAll;
@@ -67,7 +67,7 @@ public class InnerWatcherTest {
         if (!TestConstants.isConfiguredApiKeyEnv) {
             return;
         }
-        ExecutorService executor = Executors.newSingleThreadExecutor();
+        TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
         var queue = new MpscGrowableArrayQueue<BlockUpdate>(1024 * 4, 1024 * 64);
         var watcher = this.createWatcher(null, queue);
         watcher.startUp();
