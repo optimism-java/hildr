@@ -372,7 +372,7 @@ public record Config(
                             BigInteger.valueOf(30_000_000L),
                             BigInteger.valueOf(188),
                             BigInteger.valueOf(684000),
-                            "0x0000000000000000000000000000000000000000"),
+                            "0x57CACBB0d30b01eb2462e5dC940c161aff3230D3"),
                     "0xff00000000000000000000000000000011155420",
                     "0x16fc5058f25648194471939df75cf27a2fdc48bc",
                     "0x034edd2a225f7f429a63e0f1d2084b9e0a93b538",
