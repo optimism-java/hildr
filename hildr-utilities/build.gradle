@@ -59,7 +59,7 @@ dependencies {
 
 	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
 	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
-	api('org.web3j:core:4.9.8') {
+	api('org.web3j:core:4.10.3') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
 		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
@@ -79,16 +79,21 @@ dependencies {
 	implementation 'ch.qos.logback:logback-core:1.4.7'
 	implementation 'ch.qos.logback:logback-classic:1.4.7'
 
+
+	implementation 'com.google.protobuf:protobuf-java:3.25.1'
+	implementation 'io.tmio:tuweni-units:2.4.2'
 	implementation 'io.tmio:tuweni-rlp:2.4.2'
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
 	implementation 'org.slf4j:slf4j-api:2.0.7'
 	implementation 'io.libp2p:jvm-libp2p:1.0.1-RELEASE'
+	implementation('org.hyperledger.besu.internal:core:23.10.2')
+	implementation('org.hyperledger.besu.internal:algorithms:23.10.2')
+	implementation('org.hyperledger.besu.internal:rlp:23.10.2')
+	implementation('org.hyperledger.besu:besu-datatypes:23.10.2')
+	implementation('org.hyperledger.besu:plugin-api:23.10.2')
 
 	testImplementation platform('org.junit:junit-bom:5.9.1')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
-
-	testImplementation 'io.tmio:tuweni-ssz:2.4.2'
-	testImplementation 'io.tmio:tuweni-units:2.4.2'
 	testImplementation('io.tmio:tuweni-crypto:2.4.2'){
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}

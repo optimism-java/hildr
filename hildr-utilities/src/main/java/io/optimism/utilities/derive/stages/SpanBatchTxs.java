@@ -1,31 +1,28 @@
 package io.optimism.utilities.derive.stages;
 
-import static org.web3j.crypto.transaction.type.TransactionType.EIP1559;
-import static org.web3j.crypto.transaction.type.TransactionType.EIP2930;
-import static org.web3j.crypto.transaction.type.TransactionType.LEGACY;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
 
-import io.libp2p.etc.types.ByteBufExtKt;
+import com.google.common.primitives.Longs;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import java.math.BigInteger;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
-import org.web3j.crypto.Keys;
-import org.web3j.crypto.Sign;
-import org.web3j.crypto.SignedRawTransaction;
-import org.web3j.crypto.TransactionDecoder;
-import org.web3j.crypto.transaction.type.ITransaction;
-import org.web3j.crypto.transaction.type.Transaction1559;
-import org.web3j.crypto.transaction.type.Transaction2930;
-import org.web3j.crypto.transaction.type.TransactionType;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.jetbrains.annotations.NotNull;
 import org.web3j.utils.Numeric;
 
 public class SpanBatchTxs {
 
-    private Long totalBlockTxCount;
+    private static final long MaxSpanBatchSize = 10000000L;
+    private long totalBlockTxCount;
     private BigInteger contractCreationBits;
     private BigInteger yParityBits;
     private List<SpanBatchSignature> txSigs;
@@ -33,7 +30,11 @@ public class SpanBatchTxs {
     private List<BigInteger> txGases;
     private List<String> txTos;
     private List<String> txDatas;
-    private List<Integer> txTypes;
+    private List<Byte> txTypes;
+
+    private long totalLegacyTxCount;
+
+    private BigInteger protectedBits;
 
     public SpanBatchTxs() {}
 
@@ -46,7 +47,9 @@ public class SpanBatchTxs {
             List<BigInteger> txGases,
             List<String> txTos,
             List<String> txDatas,
-            List<Integer> txTypes) {
+            List<Byte> txTypes,
+            long totalLegacyTxCount,
+            BigInteger protectedBits) {
         this.totalBlockTxCount = totalBlockTxCount;
         this.contractCreationBits = contractCreationBits;
         this.yParityBits = yParityBits;
@@ -56,28 +59,17 @@ public class SpanBatchTxs {
         this.txTos = txTos;
         this.txDatas = txDatas;
         this.txTypes = txTypes;
+        this.totalLegacyTxCount = totalLegacyTxCount;
+        this.protectedBits = protectedBits;
     }
 
+    /**
+     * contractCreationBits is bitlist right-padded to a multiple of 8 bits.
+     *
+     * @return encoded contract creation bits.
+     */
     public byte[] encodeContractCreationBits() {
-        Long contractCreationBitBufferLen = this.totalBlockTxCount / 8;
-        if (this.totalBlockTxCount % 8 != 0) {
-            contractCreationBitBufferLen = contractCreationBitBufferLen + 1;
-        }
-        byte[] contractCreationBitBuffer = new byte[contractCreationBitBufferLen.intValue()];
-        for (int i = 0; i < this.totalBlockTxCount; i += 8) {
-            int end = i + 8;
-            if (end < this.totalBlockTxCount.intValue()) {
-                end = this.totalBlockTxCount.intValue();
-            }
-            int bits = 0;
-            for (int j = i; j < end; j++) {
-                if (this.contractCreationBits.testBit(j)) {
-                    bits |= 1 << (j - i);
-                }
-            }
-            contractCreationBitBuffer[i / 8] = (byte) bits;
-        }
-        return contractCreationBitBuffer;
+        return encodeSpanBatchBits((int) this.totalBlockTxCount, this.contractCreationBits);
     }
 
     /**
@@ -86,30 +78,26 @@ public class SpanBatchTxs {
      * @param contractCreationBit encoded contract creation bits.
      */
     public void decodeContractCreationBits(byte[] contractCreationBit) {
-        Long contractCreationBitBufferLen = this.totalBlockTxCount / 8;
-        if (this.totalBlockTxCount % 8 != 0) {
-            contractCreationBitBufferLen = contractCreationBitBufferLen + 1;
-        }
-        if (contractCreationBitBufferLen > 10000000) {
-            throw new RuntimeException("span batch size limit reached");
-        }
-        byte[] contractCreationBitBuffer = new byte[contractCreationBitBufferLen.intValue()];
-        System.arraycopy(contractCreationBit, 0, contractCreationBitBuffer, 0, contractCreationBit.length);
-        BigInteger contractCreationbits = BigInteger.ZERO;
-        for (int i = 0; i < this.totalBlockTxCount; i += 8) {
-            int end = i + 8;
-            if (end < this.totalBlockTxCount.intValue()) {
-                end = this.totalBlockTxCount.intValue();
-            }
-            byte bits = contractCreationBitBuffer[i / 8];
-            for (int j = i; j < end; j++) {
-                int bit = (bits >> (j - i)) & 1;
-                if (bit != 0) {
-                    contractCreationbits = contractCreationbits.setBit(j);
-                }
-            }
-        }
-        this.contractCreationBits = contractCreationbits;
+        this.contractCreationBits =
+                decodeSpanBatchBits(Unpooled.wrappedBuffer(contractCreationBit), (int) this.totalBlockTxCount);
+    }
+
+    /**
+     * protectedBits is bitlist right-padded to a multiple of 8 bits.
+     *
+     * @return encoded protected bits.
+     */
+    public byte[] encodeProtectedBits() {
+        return encodeSpanBatchBits((int) this.totalLegacyTxCount, this.protectedBits);
+    }
+
+    /**
+     * protectedBits is bitlist right-padded to a multiple of 8 bits.
+     *
+     * @param protectedBit encoded protected bits.
+     */
+    public void decodeProtectedBits(byte[] protectedBit) {
+        this.protectedBits = decodeSpanBatchBits(Unpooled.wrappedBuffer(protectedBit), (int) this.totalLegacyTxCount);
     }
 
     /**
@@ -117,11 +105,11 @@ public class SpanBatchTxs {
      *
      * @return the number of contract creations in the batch.
      */
-    public Long contractCreationCount() {
+    public long contractCreationCount() {
         if (contractCreationBits == null) {
             throw new RuntimeException("dev error: contract creation bits not set");
         }
-        Long result = 0L;
+        long result = 0L;
         for (int i = 0; i < this.totalBlockTxCount; i++) {
             if (contractCreationBits.testBit(i)) {
                 result++;
@@ -130,134 +118,116 @@ public class SpanBatchTxs {
         return result;
     }
 
+    /**
+     * yParityBits is bitlist right-padded to a multiple of 8 bits.
+     *
+     * @return encoded y parity bits.
+     */
     public byte[] encodeYParityBits() {
-        Long yParityBitBufferLen = this.totalBlockTxCount / 8;
-        if (this.totalBlockTxCount % 8 != 0) {
-            yParityBitBufferLen++;
-        }
-        byte[] yParityBitBuffer = new byte[yParityBitBufferLen.intValue()];
-        for (int i = 0; i < this.totalBlockTxCount; i += 8) {
-            int end = i + 8;
-            if (end < this.totalBlockTxCount.intValue()) {
-                end = this.totalBlockTxCount.intValue();
-            }
-            int bits = 0;
-            for (int j = i; j < end; j++) {
-                if (yParityBits.testBit(j)) {
-                    bits |= 1 << (j - i);
-                }
-            }
-            yParityBitBuffer[i / 8] = (byte) bits;
-        }
-        return yParityBitBuffer;
+        return encodeSpanBatchBits((int) this.totalBlockTxCount, this.yParityBits);
     }
 
+    /**
+     * yParityBits is bitlist right-padded to a multiple of 8 bits.
+     *
+     * @param yParityBit encoded y parity bits.
+     */
     public void decodeYParityBits(byte[] yParityBit) {
-        Long yParityBitBufferLen = this.totalBlockTxCount / 8;
-        if (this.totalBlockTxCount % 8 != 0) {
-            yParityBitBufferLen++;
-        }
-        if (yParityBitBufferLen > 10000000L) {
-            throw new RuntimeException("span batch size limit reached");
-        }
-
-        BigInteger yParityBits = BigInteger.ZERO;
-        for (int i = 0; i < this.totalBlockTxCount; i += 8) {
-            int end = i + 8;
-            if (end < this.totalBlockTxCount.intValue()) {
-                end = this.totalBlockTxCount.intValue();
-            }
-            byte bits = yParityBit[i / 8];
-            for (int j = i; j < end; j++) {
-                int bit = (bits >> (j - i)) & 1;
-                if (bit != 0) {
-                    yParityBits = yParityBits.setBit(j);
-                }
-            }
-        }
-        this.yParityBits = yParityBits;
+        this.yParityBits = decodeSpanBatchBits(Unpooled.wrappedBuffer(yParityBit), (int) this.totalBlockTxCount);
     }
 
     public byte[] encodeTxSigsRS() {
-        ByteBuffer result = ByteBuffer.allocate(64 * this.totalBlockTxCount.intValue());
-        for (SpanBatchSignature signature : txSigs) {
-            byte[] rBytes = Numeric.toBytesPadded(signature.r(), 32);
-            result.put(rBytes);
-            byte[] sBytes = Numeric.toBytesPadded(signature.s(), 32);
-            result.put(sBytes);
+        ByteBuf result = PooledByteBufAllocator.DEFAULT.buffer(64 * txSigs.size());
+        for (SpanBatchSignature txSig : txSigs) {
+            byte[] rBytes = Numeric.toBytesPadded(txSig.r(), 32);
+            byte[] sBytes = Numeric.toBytesPadded(txSig.s(), 32);
+            result.writeBytes(rBytes);
+            result.writeBytes(sBytes);
         }
-        return result.array();
+        return ByteBufUtil.getBytes(result);
     }
 
     public void decodeTxSigsRS(byte[] txSigsBuffer) {
+        this.txSigs = decodeSpanBatchTxSigsRS(txSigsBuffer);
+    }
+
+    public static List<SpanBatchSignature> decodeSpanBatchTxSigsRS(byte[] txSigsBuffer) {
         List<SpanBatchSignature> txSigs = new ArrayList<>();
-        for (int i = 0; i < this.totalBlockTxCount.intValue(); i++) {
-            byte[] r = new byte[32];
-            System.arraycopy(txSigsBuffer, i * 64, r, 0, 32);
-            byte[] s = new byte[32];
-            System.arraycopy(txSigsBuffer, 32 + i * 64, s, 0, 32);
+        ByteBuf buffer = Unpooled.wrappedBuffer(txSigsBuffer);
+        while (buffer.readableBytes() > 0) {
+            var r = ByteBufUtil.getBytes(buffer.readBytes(32));
+            var s = ByteBufUtil.getBytes(buffer.readBytes(32));
             BigInteger rInt = Numeric.toBigInt(r);
             BigInteger sInt = Numeric.toBigInt(s);
             txSigs.add(new SpanBatchSignature(BigInteger.ZERO, rInt, sInt));
         }
-        this.txSigs = txSigs;
+        return txSigs;
     }
 
-    public Bytes encodeTxNonces() {
-        ByteBuf buffer = Unpooled.buffer(10);
+    public byte[] encodeTxNonces() {
+        ByteBuf buffer = Unpooled.buffer((int) (10 * totalBlockTxCount));
         for (BigInteger txNonce : txNonces) {
-            ByteBufExtKt.writeUvarint(buffer, txNonce.longValue());
+            putVarLong(txNonce.longValue(), buffer);
         }
-        return Bytes.wrap(ByteBufUtil.getBytes(buffer));
+        return ByteBufUtil.getBytes(buffer);
     }
 
-    public void decodeTxNonces(Bytes bytes) {
-        List<BigInteger> txNonces = new ArrayList<>();
-        ByteBuf buffer = Unpooled.wrappedBuffer(bytes.toArrayUnsafe());
-        for (int i = 0; i < this.totalBlockTxCount.intValue(); i++) {
-            BigInteger txNonce = BigInteger.valueOf(ByteBufExtKt.readUvarint(buffer));
-            txNonces.add(txNonce);
-        }
-        this.txNonces = txNonces;
+    public void decodeTxNonces(byte[] txNoncesBuffer) {
+        this.txNonces = decodeSpanBatchTxNonces(txNoncesBuffer);
     }
 
-    public Bytes encodeTxGases() {
-        ByteBuf buffer = Unpooled.buffer(10);
+    public static List<BigInteger> decodeSpanBatchTxNonces(byte[] nonces) {
+        return getBigIntegers(nonces);
+    }
+
+    public byte[] encodeTxGases() {
+        ByteBuf buffer = Unpooled.buffer(10 * txGases.size());
         for (BigInteger txGas : txGases) {
-            ByteBufExtKt.writeUvarint(buffer, txGas.longValue());
+            putVarLong(txGas.longValue(), buffer);
         }
-        return Bytes.wrap(ByteBufUtil.getBytes(buffer));
+        return ByteBufUtil.getBytes(buffer);
     }
 
     public void decodeTxGases(Bytes bytes) {
-        List<BigInteger> txGases = new ArrayList<>();
-        ByteBuf buffer = Unpooled.wrappedBuffer(bytes.toArrayUnsafe());
-        for (int i = 0; i < this.totalBlockTxCount.intValue(); i++) {
-            BigInteger txNonce = BigInteger.valueOf(ByteBufExtKt.readUvarint(buffer));
-            txGases.add(txNonce);
-        }
-        this.txGases = txGases;
+        this.txGases = decodeSpanBatchTxGases(bytes.toArray());
+    }
+
+    public static List<BigInteger> decodeSpanBatchTxGases(byte[] gases) {
+        return getBigIntegers(gases);
     }
 
     public byte[] encodeTxTos() {
-        ByteBuffer result = ByteBuffer.allocate(20 * this.totalBlockTxCount.intValue());
+        ByteBuf result = PooledByteBufAllocator.DEFAULT.buffer(20 * txTos.size());
         for (String txTo : txTos) {
-            byte[] addressBytes = Numeric.hexStringToByteArray(txTo.substring(2));
-            result.put(addressBytes);
+            byte[] addressBytes = Numeric.hexStringToByteArray(txTo);
+            result.writeBytes(addressBytes);
         }
-        return result.array();
+        return ByteBufUtil.getBytes(result);
     }
 
     public void decodeTxTos(byte[] txTosBuffer) {
+        this.txTos = decodeSpanBatchTxTos(txTosBuffer);
+    }
+
+    public static List<String> decodeSpanBatchTxTos(byte[] txTosBuffer) {
         List<String> txTos = new ArrayList<>();
-        for (int i = 0; i < this.totalBlockTxCount.intValue(); i++) {
-            byte[] addBytes = new byte[20];
-            System.arraycopy(txTosBuffer, i * 20, addBytes, 0, 20);
-            String address = Keys.toChecksumAddress(Numeric.toHexStringNoPrefix(addBytes))
-                    .toLowerCase();
-            txTos.add(address);
+        ByteBuf buffer = Unpooled.wrappedBuffer(txTosBuffer);
+        while (buffer.readableBytes() > 0) {
+            ByteBuf addressBuf = buffer.readBytes(20);
+            txTos.add(Numeric.toHexString(ByteBufUtil.getBytes(addressBuf)));
         }
-        this.txTos = txTos;
+        return txTos;
+    }
+
+    public static List<String> decodeSpanBatchTxDatas(byte[] txDatasBuffer) {
+        TransactionDecoder.decodeOpaqueBytes(Bytes.wrap(txDatasBuffer), EncodingContext.BLOCK_BODY);
+        List<String> txTos = new ArrayList<>();
+        ByteBuf buffer = Unpooled.wrappedBuffer(txDatasBuffer);
+        while (buffer.readableBytes() > 0) {
+            ByteBuf addressBuf = buffer.readBytes(20);
+            txTos.add(Numeric.toHexString(ByteBufUtil.getBytes(addressBuf)));
+        }
+        return txTos;
     }
 
     // No Test
@@ -267,83 +237,81 @@ public class SpanBatchTxs {
         }
         for (int i = 0; i < this.txTypes.size(); i++) {
             BigInteger bit = this.yParityBits.testBit(i) ? BigInteger.ONE : BigInteger.ZERO;
-            BigInteger v;
-            int type = this.txTypes.get(i);
-            switch (type) {
-                case 0:
-                    v = chainId.multiply(new BigInteger("2"))
-                            .add(BigInteger.valueOf(35))
-                            .add(bit);
-                    break;
-                case 1, 2:
-                    v = bit;
-                    break;
-                default:
-                    throw new RuntimeException("invalid tx type:" + this.txTypes.get(i));
-            }
-            SpanBatchSignature old = this.txSigs.get(i);
-            SpanBatchSignature newTxSig = new SpanBatchSignature(v, old.r(), old.s());
+            SpanBatchSignature newTxSig = getSpanBatchSignature(chainId, i, bit);
             this.txSigs.set(i, newTxSig);
         }
     }
 
-    public static SpanBatchTxs newSpanBatchTxs(List<String> txs, int chainId) {
-        Long totalBlockTxCount = Long.valueOf(txs.size());
+    @NotNull private SpanBatchSignature getSpanBatchSignature(BigInteger chainId, int i, BigInteger bit) {
+        BigInteger v;
+        int type = this.txTypes.get(i);
+        v = switch (type) {
+            case 0 -> chainId.multiply(new BigInteger("2"))
+                    .add(BigInteger.valueOf(35))
+                    .add(bit);
+            case 1, 2 -> bit;
+            default -> throw new RuntimeException("invalid tx type:%d".formatted(this.txTypes.get(i)));};
+        SpanBatchSignature old = this.txSigs.get(i);
+        return new SpanBatchSignature(v, old.r(), old.s());
+    }
+
+    public static SpanBatchTxs newSpanBatchTxs(List<String> txs, BigInteger chainId) {
+        long totalBlockTxCount = txs.size();
         BigInteger contractCreationBits = BigInteger.ZERO;
         BigInteger yParityBits = BigInteger.ZERO;
+        BigInteger protectedBits = BigInteger.ZERO;
         List<SpanBatchSignature> txSigs = new ArrayList<>();
         List<String> txTos = new ArrayList<>();
         List<BigInteger> txNonces = new ArrayList<>();
         List<BigInteger> txGases = new ArrayList<>();
         List<String> txDatas = new ArrayList<>();
-        List<Integer> txTypes = new ArrayList<>();
-        for (int idx = 0; idx < totalBlockTxCount.intValue(); idx++) {
+        List<Byte> txTypes = new ArrayList<>();
+        long totalLegacyTxCount = 0;
+        for (int idx = 0; idx < totalBlockTxCount; idx++) {
             String tx = txs.get(idx);
-            SignedRawTransaction rawTransaction = (SignedRawTransaction) TransactionDecoder.decode(tx);
-            ITransaction transaction = rawTransaction.getTransaction();
-            if (EIP1559.equals(rawTransaction.getType())) {
-                Transaction1559 transaction1559 = (Transaction1559) transaction;
-                if (transaction1559.getChainId() != chainId) {
-                    throw new RuntimeException("chainId mismatch. tx has chain ID:" + transaction1559.getChainId()
-                            + ", expected:" + chainId + ", but expected chain ID:" + chainId);
+            Bytes txnBytes = Bytes.fromHexString(tx);
+            Transaction rawTransaction = TransactionDecoder.decodeOpaqueBytes(txnBytes, EncodingContext.BLOCK_BODY);
+            if (rawTransaction.getType() == TransactionType.FRONTIER) {
+                if (rawTransaction.getChainId().isPresent()) {
+                    protectedBits = protectedBits.setBit((int) totalLegacyTxCount);
+                } else {
+                    protectedBits = protectedBits.clearBit((int) totalLegacyTxCount);
                 }
+                totalLegacyTxCount++;
             }
-            if (EIP2930.equals(rawTransaction.getType())) {
-                Transaction2930 transaction2930 = (Transaction2930) transaction;
-                if (transaction2930.getChainId() != chainId) {
-                    throw new RuntimeException("chainId mismatch. tx has chain ID:" + transaction2930.getChainId()
-                            + ", expected:" + chainId + ", but expected chain ID:" + chainId);
-                }
+            if (rawTransaction.getChainId().isPresent()
+                    && rawTransaction.getChainId().get().compareTo(chainId) != 0) {
+                throw new RuntimeException("chainId mismatch. tx has chain ID:%d, expected:%d, but expected chain ID:%d"
+                        .formatted(rawTransaction.getChainId().get(), chainId, chainId));
             }
 
-            Sign.SignatureData signatureData = rawTransaction.getSignatureData();
-            BigInteger v = new BigInteger(1, signatureData.getV());
-            BigInteger r = new BigInteger(1, signatureData.getR());
-            BigInteger s = new BigInteger(1, signatureData.getS());
-
-            SpanBatchSignature txSig = new SpanBatchSignature(v, r, s);
+            SpanBatchSignature txSig = new SpanBatchSignature(
+                    rawTransaction.getType() == TransactionType.FRONTIER
+                            ? rawTransaction.getV()
+                            : rawTransaction.getYParity(),
+                    rawTransaction.getR(),
+                    rawTransaction.getS());
             txSigs.add(txSig);
-            BigInteger contractCreationBit = BigInteger.ONE;
-            if (transaction.getTo() != null) {
-                txTos.add(transaction.getTo());
+            if (rawTransaction.getTo().isPresent()) {
+                txTos.add(rawTransaction.getTo().get().toHexString());
+                contractCreationBits = contractCreationBits.clearBit(idx);
             } else {
-                contractCreationBit = contractCreationBit.setBit(idx);
+                contractCreationBits = contractCreationBits.setBit(idx);
             }
-            BigInteger yParityBit = convertVToYParity(txSig.v(), transaction.getType());
-            if (yParityBit.testBit(idx)) {
-                yParityBit = yParityBit.setBit(idx);
+            BigInteger yParityBit = convertVToYParity(rawTransaction);
+            if (yParityBit.equals(BigInteger.ONE)) {
+                yParityBits = yParityBits.setBit(idx);
+            } else if (yParityBit.equals(BigInteger.ZERO)) {
+                yParityBits = yParityBits.clearBit(idx);
+            } else {
+                throw new RuntimeException("invalid y parity bit:%d".formatted(yParityBit));
             }
-            txNonces.add(transaction.getNonce());
-            txGases.add(transaction.getGasLimit());
-            SpanBatchTx stx = SpanBatchTx.newSpanBatchTx(transaction);
+            txNonces.add(Numeric.toBigInt(Longs.toByteArray(rawTransaction.getNonce())));
+            txGases.add(Numeric.toBigInt(Longs.toByteArray(rawTransaction.getGasLimit())));
+            SpanBatchTx stx = SpanBatchTx.newSpanBatchTx(rawTransaction);
             byte[] stxByte = stx.marshalBinary();
             txDatas.add(Numeric.toHexString(stxByte));
-            if (transaction.getType() == null || transaction.getType().getRlpType() == null) {
-                txTypes.add(0);
-            } else {
-                String hex = Integer.toHexString(transaction.getType().getRlpType() & 0xFF);
-                txTypes.add(Integer.parseInt(hex, 10));
-            }
+            txTypes.add(rawTransaction.getType().getEthSerializedType());
         }
         return new SpanBatchTxs(
                 totalBlockTxCount,
@@ -354,18 +322,9 @@ public class SpanBatchTxs {
                 txGases,
                 txTos,
                 txDatas,
-                txTypes);
-    }
-
-    public static BigInteger convertVToYParity(BigInteger v, TransactionType txType) {
-        if (EIP1559 == txType || EIP2930 == txType) {
-            return v;
-        }
-        if (LEGACY == txType) {
-            int res = (v.intValue() - 35) & 1;
-            return BigInteger.valueOf(res);
-        }
-        return null;
+                txTypes,
+                totalLegacyTxCount,
+                protectedBits);
     }
 
     public Long getTotalBlockTxCount() {
@@ -432,11 +391,152 @@ public class SpanBatchTxs {
         this.txDatas = txDatas;
     }
 
-    public List<Integer> getTxTypes() {
+    public List<Byte> getTxTypes() {
         return txTypes;
     }
 
-    public void setTxTypes(List<Integer> txTypes) {
+    public void setTxTypes(List<Byte> txTypes) {
         this.txTypes = txTypes;
+    }
+
+    public static BigInteger convertVToYParity(Transaction transaction) {
+        switch (transaction.getType()) {
+            case FRONTIER -> {
+                if (transaction.getChainId().isPresent()) {
+                    return transaction.getV().subtract(REPLAY_PROTECTED_V_BASE).and(BigInteger.ONE);
+                } else {
+                    return transaction.getV().subtract(REPLAY_UNPROTECTED_V_BASE);
+                }
+            }
+            case EIP1559, ACCESS_LIST -> {
+                return transaction.getYParity();
+            }
+            default -> throw new RuntimeException("invalid tx type:%s".formatted(transaction.getType()));
+        }
+    }
+
+    public static BigInteger decodeSpanBatchBits(ByteBuf source, int bitLength) {
+        var bufLen = bitLength / 8;
+        if (bitLength % 8 != 0) {
+            bufLen++;
+        }
+        if (bufLen > MaxSpanBatchSize) {
+            throw new RuntimeException("span batch size limit reached");
+        }
+        byte[] buf = new byte[(int) bufLen];
+        try {
+            source.readBytes(buf);
+        } catch (Exception e) {
+            throw new RuntimeException("read error");
+        }
+        var res = Numeric.toBigInt(buf);
+        if (res.bitLength() > bitLength) {
+            throw new RuntimeException("invalid bit length");
+        }
+        return res;
+    }
+
+    public static byte[] encodeSpanBatchBits(int bitLength, BigInteger bits) {
+        if (bits.bitLength() > bitLength) {
+            throw new RuntimeException(
+                    "bitfield is larger than bitLength: %d > %d".formatted(bits.bitLength(), bitLength));
+        }
+
+        var bufLen = bitLength / 8;
+        if (bitLength % 8 != 0) {
+            bufLen++;
+        }
+        if (bufLen > MaxSpanBatchSize) {
+            throw new RuntimeException("span batch size limit reached");
+        }
+        return Numeric.toBytesPadded(bits, bufLen);
+    }
+
+    private static List<BigInteger> getBigIntegers(byte[] gases) {
+        List<BigInteger> txNonces = new ArrayList<>();
+        ByteBuf buffer = Unpooled.wrappedBuffer(gases);
+        while (buffer.readableBytes() > 0) {
+            txNonces.add(Numeric.toBigInt(Longs.toByteArray(getVarLong(buffer))));
+        }
+        return txNonces;
+    }
+
+    /**
+     * Reads an up to 64 bit long varint from the current position of the
+     * given ByteBuffer and returns the decoded value as long.
+     *
+     * <p>The position of the buffer is advanced to the first byte after the
+     * decoded varint.
+     *
+     * @param src the ByteBuffer to get the var int from
+     * @return The integer value of the decoded long varint
+     */
+    public static long getVarLong(ByteBuf src) {
+        long tmp;
+        if ((tmp = src.readByte()) >= 0) {
+            return tmp;
+        }
+        long result = tmp & 0x7f;
+        if ((tmp = src.readByte()) >= 0) {
+            result |= tmp << 7;
+        } else {
+            result |= (tmp & 0x7f) << 7;
+            if ((tmp = src.readByte()) >= 0) {
+                result |= tmp << 14;
+            } else {
+                result |= (tmp & 0x7f) << 14;
+                if ((tmp = src.readByte()) >= 0) {
+                    result |= tmp << 21;
+                } else {
+                    result |= (tmp & 0x7f) << 21;
+                    if ((tmp = src.readByte()) >= 0) {
+                        result |= tmp << 28;
+                    } else {
+                        result |= (tmp & 0x7f) << 28;
+                        if ((tmp = src.readByte()) >= 0) {
+                            result |= tmp << 35;
+                        } else {
+                            result |= (tmp & 0x7f) << 35;
+                            if ((tmp = src.readByte()) >= 0) {
+                                result |= tmp << 42;
+                            } else {
+                                result |= (tmp & 0x7f) << 42;
+                                if ((tmp = src.readByte()) >= 0) {
+                                    result |= tmp << 49;
+                                } else {
+                                    result |= (tmp & 0x7f) << 49;
+                                    if ((tmp = src.readByte()) >= 0) {
+                                        result |= tmp << 56;
+                                    } else {
+                                        result |= (tmp & 0x7f) << 56;
+                                        result |= ((long) src.readByte()) << 63;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Encodes a long integer in a variable-length encoding, 7 bits per byte, to a
+     * ByteBuffer sink.
+     *
+     * @param v    the value to encode
+     * @param sink the ByteBuffer to add the encoded value
+     */
+    public static void putVarLong(long v, ByteBuf sink) {
+        while (true) {
+            int bits = ((int) v) & 0x7f;
+            v >>>= 7;
+            if (v == 0) {
+                sink.writeByte((byte) bits);
+                return;
+            }
+            sink.writeByte((byte) (bits | 0x80));
+        }
     }
 }

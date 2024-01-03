@@ -99,7 +99,7 @@ public class SpanBatch implements IBatch {
      * @param singularBatch SingularBatch
      */
     public void AppendSingularBatch(SingularBatch singularBatch) {
-        if (batches.size() == 0) {
+        if (batches.isEmpty()) {
             this.parentCheck = singularBatch.parentHash().substring(0, 20);
         }
         this.batches.add(SpanBatchElement.singularBatchToElement(singularBatch)); // add the batch to the list
