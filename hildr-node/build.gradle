@@ -136,8 +136,8 @@ dependencies {
 	implementation('tech.pegasys.teku.internal:serviceutils:23.10.0')
 	implementation('tech.pegasys.teku.internal:unsigned:23.10.0')
 	implementation('tech.pegasys.teku.internal:statetransition:23.10.0')
-	implementation('org.hyperledger.besu.internal:metrics-core:22.10.4')
-	implementation('org.hyperledger.besu:plugin-api:22.10.4')
+	implementation('org.hyperledger.besu.internal:metrics-core:23.10.2')
+	implementation('org.hyperledger.besu:plugin-api:23.10.2')
 	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE')
 	implementation 'io.tmio:tuweni-units:2.4.2'
 	implementation('io.tmio:tuweni-crypto:2.4.2'){

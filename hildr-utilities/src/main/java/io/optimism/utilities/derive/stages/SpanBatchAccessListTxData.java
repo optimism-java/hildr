@@ -1,57 +1,68 @@
 package io.optimism.utilities.derive.stages;
 
-import java.math.BigInteger;
-import java.util.ArrayList;
+import static org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder.writeAccessList;
+
 import java.util.List;
-import java.util.stream.Collectors;
-import org.web3j.crypto.AccessListObject;
-import org.web3j.crypto.transaction.type.TransactionType;
-import org.web3j.rlp.RlpEncoder;
-import org.web3j.rlp.RlpList;
-import org.web3j.rlp.RlpString;
-import org.web3j.rlp.RlpType;
+import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 /**
- * EIP-2930.
+ * The type SpanBatchAccessListTxData.
  *
+ * @author grapebaba
+ * @since 0.2.4
  */
-public record SpanBatchAccessListTxData(
-        BigInteger value, BigInteger gasPrice, String data, List<AccessListObject> accessList)
+public record SpanBatchAccessListTxData(Wei value, Wei gasPrice, Bytes data, List<AccessListEntry> accessList)
         implements SpanBatchTxData {
 
     @Override
-    public byte txType() {
-        return TransactionType.EIP2930.getRlpType();
+    public TransactionType txType() {
+        return TransactionType.ACCESS_LIST;
     }
 
+    /**
+     * Encode byte [ ].
+     *
+     * @return the byte [ ]
+     */
     public byte[] encode() {
-        List<RlpType> rlpList = new ArrayList<>();
-        for (AccessListObject access : accessList) {
-            rlpList.add(RlpString.create(access.getAddress()));
-            rlpList.add(new RlpList(
-                    access.getStorageKeys().stream().map(RlpString::create).collect(Collectors.toList())));
-        }
-        return RlpEncoder.encode(new RlpList(
-                RlpString.create(value()),
-                RlpString.create(gasPrice()),
-                RlpString.create(data()),
-                new RlpList(rlpList)));
+        BytesValueRLPOutput out = new BytesValueRLPOutput();
+        out.writeByte(txType().getEthSerializedType());
+        out.startList();
+        out.writeUInt256Scalar(value());
+        out.writeUInt256Scalar(gasPrice());
+        out.writeBytes(data());
+        writeAccessList(out, Optional.ofNullable(accessList()));
+        out.endList();
+        return out.encoded().toArrayUnsafe();
     }
 
-    public static SpanBatchAccessListTxData decode(RlpList rlp) {
-        BigInteger value = ((RlpString) rlp.getValues().get(0)).asPositiveBigInteger();
-        BigInteger gasPrice = ((RlpString) rlp.getValues().get(1)).asPositiveBigInteger();
-        String data = ((RlpString) rlp.getValues().get(2)).asString();
-        List<AccessListObject> accessObjList = new ArrayList<>();
-        ((RlpList) rlp.getValues().get(3)).getValues().forEach(rlpType -> {
-            RlpList rlpList = (RlpList) rlpType;
-            String address = ((RlpString) rlpList.getValues().get(0)).asString();
-            List<String> storageKeys = ((RlpList) rlpList.getValues().get(1))
-                    .getValues().stream()
-                            .map(stKey -> ((RlpString) stKey).asString())
-                            .collect(Collectors.toList());
-            accessObjList.add(new AccessListObject(address, storageKeys));
+    /**
+     * Decode span batch access list tx data.
+     *
+     * @param input the input
+     * @return the span batch access list tx data
+     */
+    public static SpanBatchAccessListTxData decode(RLPInput input) {
+        input.enterList();
+        Wei value = Wei.of(input.readUInt256Scalar());
+        Wei gasPrice = Wei.of(input.readUInt256Scalar());
+        Bytes data = input.readBytes();
+        List<AccessListEntry> accessList = input.readList(accessListEntryRLPInput -> {
+            accessListEntryRLPInput.enterList();
+            final AccessListEntry accessListEntry = new AccessListEntry(
+                    Address.wrap(accessListEntryRLPInput.readBytes()),
+                    accessListEntryRLPInput.readList(RLPInput::readBytes32));
+            accessListEntryRLPInput.leaveList();
+            return accessListEntry;
         });
-        return new SpanBatchAccessListTxData(value, gasPrice, data, accessObjList);
+        input.leaveList();
+        return new SpanBatchAccessListTxData(value, gasPrice, data, accessList);
     }
 }
