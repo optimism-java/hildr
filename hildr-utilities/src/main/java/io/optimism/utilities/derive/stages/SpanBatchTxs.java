@@ -454,6 +454,14 @@ public class SpanBatchTxs {
         this.totalBlockTxCount = totalBlockTxCount;
     }
 
+    public long getTotalBlockTxCount() {
+        return totalBlockTxCount;
+    }
+
+    public BigInteger getProtectedBits() {
+        return protectedBits;
+    }
+
     public long getTotalLegacyTxCount() {
         return totalLegacyTxCount;
     }

@@ -9,7 +9,10 @@ import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
 
@@ -134,6 +137,143 @@ public class SpanBatchTxsTest {
         txs.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(test)));
         var res = txs.encode();
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
+    }
+
+    @Test
+    void recoveryVUnprotected() throws IOException {
+        SpanBatchTxs txs = new SpanBatchTxs();
+        txs.setTotalBlockTxCount(37L);
+
+        URL url = Resources.getResource("recunprotectedsigs.txt");
+        String recunprotectedsigs = Resources.toString(url, Charsets.UTF_8);
+        txs.decodeTxSigsRS(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedsigs)));
+
+        URL url2 = Resources.getResource("recunprotectedyparity.txt");
+        String recunprotectedyparity = Resources.toString(url2, Charsets.UTF_8);
+        txs.decodeYParityBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedyparity)));
+
+        URL url3 = Resources.getResource("recunprotectedprotectedbits.txt");
+        String recunprotectedprotectedbits = Resources.toString(url3, Charsets.UTF_8);
+        txs.decodeProtectedBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedprotectedbits)));
+        List<TransactionType> txTypes = new ArrayList<>();
+        for (int i = 0; i < txs.getTotalBlockTxCount(); i++) {
+            txTypes.add(TransactionType.FRONTIER);
+        }
+        txs.setTxTypes(txTypes);
+        txs.recoverV(BigInteger.valueOf(108L));
+        long[] vs = new long[] {
+            27, 28, 27, 27, 28, 28, 28, 27, 28, 27, 28, 28, 28, 27, 28, 27, 27, 28, 28, 28, 27, 28, 28, 28, 27, 27, 28,
+            27, 28, 28, 27, 28, 28, 27, 28, 27, 27
+        };
+        long[] res = txs.getTxSigs().stream()
+                .map(spanBatchSignature -> spanBatchSignature.v().longValue())
+                .mapToLong(Long::longValue)
+                .toArray();
+
+        assertArrayEquals(vs, res);
+    }
+
+    @Test
+    void recoveryVLegacy() throws IOException {
+        SpanBatchTxs txs = new SpanBatchTxs();
+        txs.setTotalBlockTxCount(37L);
+        txs.setTotalLegacyTxCount(37L);
+
+        URL url = Resources.getResource("reclegcysigs.txt");
+        String recunprotectedsigs = Resources.toString(url, Charsets.UTF_8);
+        txs.decodeTxSigsRS(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedsigs)));
+
+        URL url2 = Resources.getResource("reclegcyyparity.txt");
+        String recunprotectedyparity = Resources.toString(url2, Charsets.UTF_8);
+        txs.decodeYParityBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedyparity)));
+
+        URL url3 = Resources.getResource("reclegcyprotectedbits.txt");
+        String recunprotectedprotectedbits = Resources.toString(url3, Charsets.UTF_8);
+        txs.decodeProtectedBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedprotectedbits)));
+        List<TransactionType> txTypes = new ArrayList<>();
+        for (int i = 0; i < txs.getTotalBlockTxCount(); i++) {
+            txTypes.add(TransactionType.FRONTIER);
+        }
+        txs.setTxTypes(txTypes);
+        txs.recoverV(BigInteger.valueOf(108L));
+        long[] vs = new long[] {
+            251, 252, 251, 251, 251, 251, 252, 251, 252, 251, 251, 252, 252, 251, 252, 251, 251, 251, 251, 251, 252,
+            252, 252, 251, 252, 251, 252, 251, 252, 252, 252, 252, 251, 251, 252, 252, 251
+        };
+        long[] res = txs.getTxSigs().stream()
+                .map(spanBatchSignature -> spanBatchSignature.v().longValue())
+                .mapToLong(Long::longValue)
+                .toArray();
+
+        assertArrayEquals(vs, res);
+    }
+
+    @Test
+    void recoveryVAccessList() throws IOException {
+        SpanBatchTxs txs = new SpanBatchTxs();
+        txs.setTotalBlockTxCount(37L);
+
+        URL url = Resources.getResource("recaccsigs.txt");
+        String recunprotectedsigs = Resources.toString(url, Charsets.UTF_8);
+        txs.decodeTxSigsRS(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedsigs)));
+
+        URL url2 = Resources.getResource("recaccyparity.txt");
+        String recunprotectedyparity = Resources.toString(url2, Charsets.UTF_8);
+        txs.decodeYParityBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedyparity)));
+
+        URL url3 = Resources.getResource("recaccprotectedbits.txt");
+        String recunprotectedprotectedbits = Resources.toString(url3, Charsets.UTF_8);
+        txs.decodeProtectedBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedprotectedbits)));
+        List<TransactionType> txTypes = new ArrayList<>();
+        for (int i = 0; i < txs.getTotalBlockTxCount(); i++) {
+            txTypes.add(TransactionType.ACCESS_LIST);
+        }
+        txs.setTxTypes(txTypes);
+        txs.recoverV(BigInteger.valueOf(108L));
+        long[] vs = new long[] {
+            1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 1,
+            0
+        };
+        long[] res = txs.getTxSigs().stream()
+                .map(spanBatchSignature -> spanBatchSignature.v().longValue())
+                .mapToLong(Long::longValue)
+                .toArray();
+
+        assertArrayEquals(vs, res);
+    }
+
+    @Test
+    void recoveryVE1559() throws IOException {
+        SpanBatchTxs txs = new SpanBatchTxs();
+        txs.setTotalBlockTxCount(37L);
+
+        URL url = Resources.getResource("rece1559sigs.txt");
+        String recunprotectedsigs = Resources.toString(url, Charsets.UTF_8);
+        txs.decodeTxSigsRS(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedsigs)));
+
+        URL url2 = Resources.getResource("rece1559yparity.txt");
+        String recunprotectedyparity = Resources.toString(url2, Charsets.UTF_8);
+        txs.decodeYParityBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedyparity)));
+
+        URL url3 = Resources.getResource("rece1559protectedbits.txt");
+        String recunprotectedprotectedbits = Resources.toString(url3, Charsets.UTF_8);
+        txs.decodeProtectedBits(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(recunprotectedprotectedbits)));
+        List<TransactionType> txTypes = new ArrayList<>();
+        for (int i = 0; i < txs.getTotalBlockTxCount(); i++) {
+            txTypes.add(TransactionType.EIP1559);
+        }
+        txs.setTxTypes(txTypes);
+        txs.recoverV(BigInteger.valueOf(108L));
+        long[] vs = new long[] {
+            0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            0
+        };
+        long[] res = txs.getTxSigs().stream()
+                .map(spanBatchSignature -> spanBatchSignature.v().longValue())
+                .mapToLong(Long::longValue)
+                .toArray();
+
+        assertArrayEquals(vs, res);
     }
 
     //
