@@ -16,9 +16,23 @@
 
 package io.optimism.utilities.derive.stages;
 
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_PROTECTED_V_MIN;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE;
+import static org.hyperledger.besu.ethereum.core.Transaction.REPLAY_UNPROTECTED_V_BASE_PLUS_1;
+import static org.hyperledger.besu.ethereum.core.Transaction.TWO;
+
+import com.google.common.base.Suppliers;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.crypto.SECPSignature;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -31,6 +45,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
  * @since 0.2.4
  */
 public class SpanBatchTx {
+
+    private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+            Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
     private final SpanBatchTxData spanBatchTxData;
 
     /**
@@ -84,7 +101,7 @@ public class SpanBatchTx {
      * @return the span batch tx data
      */
     public byte[] marshalBinary() {
-        if (spanBatchTxData.txType() == TransactionType.FRONTIER) {
+        if (TransactionType.FRONTIER == spanBatchTxData.txType()) {
             SpanBatchLegacyTxData spanBatchLegacyTxData = (SpanBatchLegacyTxData) this.spanBatchTxData;
             return spanBatchLegacyTxData.encode();
         }
@@ -96,7 +113,7 @@ public class SpanBatchTx {
             SpanBatchAccessListTxData spanBatchAccessListTxData = (SpanBatchAccessListTxData) this.spanBatchTxData;
             return spanBatchAccessListTxData.encode();
         }
-        return null;
+        throw new RuntimeException("invalid typed transaction type");
     }
 
     /**
@@ -105,23 +122,112 @@ public class SpanBatchTx {
      * @param b the b
      * @return the span batch tx data
      */
-    public static SpanBatchTxData unmarshalBinary(byte[] b) {
+    public static SpanBatchTx unmarshalBinary(byte[] b) {
         if (b.length <= 1) {
             throw new RuntimeException("typed transaction too short");
         }
         if ((b[0] & 0xFF) > 0x7F) {
             RLPInput input = new BytesValueRLPInput(Bytes.wrap(b), false);
-            return SpanBatchLegacyTxData.decode(input);
+            return new SpanBatchTx(SpanBatchLegacyTxData.decode(input));
         }
 
         byte[] spanBatchData = ArrayUtils.subarray(b, 1, b.length);
         RLPInput input = new BytesValueRLPInput(Bytes.wrap(spanBatchData), false);
         if (TransactionType.ACCESS_LIST.getEthSerializedType() == b[0]) {
-            return SpanBatchAccessListTxData.decode(input);
+            return new SpanBatchTx(SpanBatchAccessListTxData.decode(input));
         }
         if (TransactionType.EIP1559.getEthSerializedType() == b[0]) {
-            return SpanBatchDynamicFeeTxData.decode(input);
+            return new SpanBatchTx(SpanBatchDynamicFeeTxData.decode(input));
         }
-        return null;
+
+        throw new RuntimeException("invalid typed transaction type");
+    }
+
+    public SpanBatchTxData getSpanBatchTxData() {
+        return spanBatchTxData;
+    }
+
+    public Transaction convertToFullTx(
+            BigInteger nonce, BigInteger gas, String to, BigInteger chainId, BigInteger v, BigInteger r, BigInteger s) {
+
+        switch (txType()) {
+            case FRONTIER -> {
+                SpanBatchLegacyTxData spanBatchLegacyTxData = (SpanBatchLegacyTxData) this.spanBatchTxData;
+
+                var recIdAndProtectedTx = getRecId(chainId, v);
+                byte recId = recIdAndProtectedTx.getLeft();
+                boolean protectedTx = recIdAndProtectedTx.getRight();
+                final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
+
+                var builder = Transaction.builder()
+                        .type(TransactionType.FRONTIER)
+                        .nonce(nonce.longValue())
+                        .gasPrice(spanBatchLegacyTxData.gasPrice())
+                        .gasLimit(gas.longValue())
+                        .to(to == null ? null : Address.fromHexString(to))
+                        .value(spanBatchLegacyTxData.value())
+                        .payload(spanBatchLegacyTxData.data())
+                        .signature(signature);
+
+                if (protectedTx) {
+                    builder.chainId(chainId);
+                }
+
+                return builder.build();
+            }
+            case EIP1559 -> {
+                SpanBatchDynamicFeeTxData spanBatchDynamicFeeTxData = (SpanBatchDynamicFeeTxData) this.spanBatchTxData;
+                final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, v.byteValueExact());
+
+                return Transaction.builder()
+                        .type(TransactionType.EIP1559)
+                        .nonce(nonce.longValue())
+                        .maxPriorityFeePerGas(spanBatchDynamicFeeTxData.gasTipCap())
+                        .maxFeePerGas(spanBatchDynamicFeeTxData.gasFeeCap())
+                        .gasLimit(gas.longValue())
+                        .to(to == null ? null : Address.fromHexString(to))
+                        .value(spanBatchDynamicFeeTxData.value())
+                        .payload(spanBatchDynamicFeeTxData.data())
+                        .accessList(spanBatchDynamicFeeTxData.accessList())
+                        .chainId(chainId)
+                        .signature(signature)
+                        .build();
+            }
+            case ACCESS_LIST -> {
+                SpanBatchAccessListTxData spanBatchAccessListTxData = (SpanBatchAccessListTxData) this.spanBatchTxData;
+                final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, v.byteValueExact());
+
+                return Transaction.builder()
+                        .type(TransactionType.ACCESS_LIST)
+                        .nonce(nonce.longValue())
+                        .gasPrice(spanBatchAccessListTxData.gasPrice())
+                        .gasLimit(gas.longValue())
+                        .to(to == null ? null : Address.fromHexString(to))
+                        .value(spanBatchAccessListTxData.value())
+                        .payload(spanBatchAccessListTxData.data())
+                        .accessList(spanBatchAccessListTxData.accessList())
+                        .chainId(chainId)
+                        .signature(signature)
+                        .build();
+            }
+            case BLOB -> throw new RuntimeException("blob tx not supported");
+            default -> throw new IllegalStateException("unexpected value: %s".formatted(txType()));
+        }
+    }
+
+    private static Pair<Byte, Boolean> getRecId(BigInteger chainId, BigInteger v) {
+        byte recId;
+        boolean protectedTx;
+        if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
+            recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
+            protectedTx = false;
+        } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
+            recId = v.subtract(TWO.multiply(chainId).add(REPLAY_PROTECTED_V_BASE))
+                    .byteValueExact();
+            protectedTx = true;
+        } else {
+            throw new RuntimeException(String.format("An unsupported encoded `v` value of %s was found", v));
+        }
+        return Pair.of(recId, protectedTx);
     }
 }

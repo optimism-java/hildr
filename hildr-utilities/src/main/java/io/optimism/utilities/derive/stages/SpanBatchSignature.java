@@ -39,11 +39,10 @@ public class SpanBatchSignature {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-        if (obj == null || obj.getClass() != this.getClass()) return false;
-        var that = (SpanBatchSignature) obj;
-        return Objects.equals(this.v, that.v) && Objects.equals(this.r, that.r) && Objects.equals(this.s, that.s);
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SpanBatchSignature that)) return false;
+        return Objects.equals(v, that.v) && Objects.equals(r, that.r) && Objects.equals(s, that.s);
     }
 
     @Override
@@ -53,6 +52,6 @@ public class SpanBatchSignature {
 
     @Override
     public String toString() {
-        return "SpanBatchSignature[" + "v=" + v + ", " + "r=" + r + ", " + "s=" + s + ']';
+        return "SpanBatchSignature[v=%s, r=%s, s=%s]".formatted(v, r, s);
     }
 }

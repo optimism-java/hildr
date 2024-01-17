@@ -11,6 +11,7 @@ import java.math.BigInteger;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.junit.jupiter.api.Test;
@@ -274,6 +275,66 @@ public class SpanBatchTxsTest {
                 .toArray();
 
         assertArrayEquals(vs, res);
+    }
+
+    @Test
+    void fullTxUnprotected() throws IOException {
+        URL url = Resources.getResource("fulltxunprotected.txt");
+        List<String> txs = Resources.readLines(url, Charsets.UTF_8);
+
+        SpanBatchTxs spanBatchTxs = SpanBatchTxs.newSpanBatchTxs(
+                txs.stream().map(Numeric::hexStringToByteArray).collect(Collectors.toList()), BigInteger.valueOf(697L));
+
+        List<String> txs1 = spanBatchTxs.fullTxs(BigInteger.valueOf(697L)).stream()
+                .map(Numeric::toHexString)
+                .collect(Collectors.toList());
+
+        assertEquals(txs, txs1);
+    }
+
+    @Test
+    void fullTxLegacy() throws IOException {
+        URL url = Resources.getResource("fulltxlegacy.txt");
+        List<String> txs = Resources.readLines(url, Charsets.UTF_8);
+
+        SpanBatchTxs spanBatchTxs = SpanBatchTxs.newSpanBatchTxs(
+                txs.stream().map(Numeric::hexStringToByteArray).collect(Collectors.toList()), BigInteger.valueOf(697L));
+
+        List<String> txs1 = spanBatchTxs.fullTxs(BigInteger.valueOf(697L)).stream()
+                .map(Numeric::toHexString)
+                .collect(Collectors.toList());
+
+        assertEquals(txs, txs1);
+    }
+
+    @Test
+    void fullTxAccessList() throws IOException {
+        URL url = Resources.getResource("fulltxacc.txt");
+        List<String> txs = Resources.readLines(url, Charsets.UTF_8);
+
+        SpanBatchTxs spanBatchTxs = SpanBatchTxs.newSpanBatchTxs(
+                txs.stream().map(Numeric::hexStringToByteArray).collect(Collectors.toList()), BigInteger.valueOf(697L));
+
+        List<String> txs1 = spanBatchTxs.fullTxs(BigInteger.valueOf(697L)).stream()
+                .map(Numeric::toHexString)
+                .collect(Collectors.toList());
+
+        assertEquals(txs, txs1);
+    }
+
+    @Test
+    void fullTxDynamic() throws IOException {
+        URL url = Resources.getResource("fulltxdyn.txt");
+        List<String> txs = Resources.readLines(url, Charsets.UTF_8);
+
+        SpanBatchTxs spanBatchTxs = SpanBatchTxs.newSpanBatchTxs(
+                txs.stream().map(Numeric::hexStringToByteArray).collect(Collectors.toList()), BigInteger.valueOf(697L));
+
+        List<String> txs1 = spanBatchTxs.fullTxs(BigInteger.valueOf(697L)).stream()
+                .map(Numeric::toHexString)
+                .collect(Collectors.toList());
+
+        assertEquals(txs, txs1);
     }
 
     //
