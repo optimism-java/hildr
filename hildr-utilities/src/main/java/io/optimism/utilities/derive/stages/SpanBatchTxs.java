@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.web3j.utils.Numeric;
@@ -314,7 +315,33 @@ public class SpanBatchTxs {
         decodeProtectedBits(buffer);
     }
 
-    public static SpanBatchTxs newSpanBatchTxs(List<String> txs, BigInteger chainId) {
+    public List<byte[]> fullTxs(BigInteger chainId) {
+        List<byte[]> fullTxs = new ArrayList<>();
+        int toIdx = 0;
+        for (int i = 0; i < this.totalBlockTxCount; i++) {
+            SpanBatchTx spanBatchTx =
+                    SpanBatchTx.unmarshalBinary(this.txDatas.get(i).toArrayUnsafe());
+            BigInteger nonce = this.txNonces.get(i);
+            BigInteger gas = this.txGases.get(i);
+            String to = null;
+            if (!this.contractCreationBits.testBit(i)) {
+                if (this.txTos.size() <= toIdx) {
+                    throw new RuntimeException("tx to not enough");
+                }
+                to = this.txTos.get(toIdx);
+                toIdx++;
+            }
+            BigInteger v = this.txSigs.get(i).v();
+            BigInteger r = this.txSigs.get(i).r();
+            BigInteger s = this.txSigs.get(i).s();
+            Transaction tx = spanBatchTx.convertToFullTx(nonce, gas, to, chainId, v, r, s);
+            Bytes txBytes = TransactionEncoder.encodeOpaqueBytes(tx, EncodingContext.BLOCK_BODY);
+            fullTxs.add(txBytes.toArrayUnsafe());
+        }
+        return fullTxs;
+    }
+
+    public static SpanBatchTxs newSpanBatchTxs(List<byte[]> txs, BigInteger chainId) {
         long totalBlockTxCount = txs.size();
         BigInteger contractCreationBits = BigInteger.ZERO;
         BigInteger yParityBits = BigInteger.ZERO;
@@ -327,8 +354,8 @@ public class SpanBatchTxs {
         List<TransactionType> txTypes = new ArrayList<>();
         long totalLegacyTxCount = 0;
         for (int idx = 0; idx < totalBlockTxCount; idx++) {
-            String tx = txs.get(idx);
-            Bytes txnBytes = Bytes.fromHexString(tx);
+            byte[] tx = txs.get(idx);
+            Bytes txnBytes = Bytes.wrap(tx);
             Transaction rawTransaction = TransactionDecoder.decodeOpaqueBytes(txnBytes, EncodingContext.BLOCK_BODY);
             if (rawTransaction.getType() == TransactionType.FRONTIER) {
                 if (rawTransaction.getChainId().isPresent()) {

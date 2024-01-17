@@ -89,7 +89,8 @@ class SpanBatchTxTest {
     @Test
     void unmarshalBinaryInterOp() {
         SpanBatchTxData txData = SpanBatchTx.unmarshalBinary(
-                Numeric.hexStringToByteArray("0xda8853444835ec5800008502540be4008aba457aba24bbd63f5670"));
+                        Numeric.hexStringToByteArray("0xda8853444835ec5800008502540be4008aba457aba24bbd63f5670"))
+                .getSpanBatchTxData();
 
         assertNotNull(txData);
         assertEquals(TransactionType.FRONTIER, txData.txType());
@@ -98,8 +99,9 @@ class SpanBatchTxTest {
         assertEquals(Bytes.fromHexString("0xba457aba24bbd63f5670"), ((SpanBatchLegacyTxData) txData).data());
 
         SpanBatchTxData txData1 = SpanBatchTx.unmarshalBinary(
-                Numeric.hexStringToByteArray(
-                        "0x01f8548853444835ec5800008502540be4008aba457aba24bbd63f5670f838f794f1d2f39c58427be48c5ecda1e0cc7a930ae1ca50e1a00000000000000000000000000000000000000000000000000000000000000001"));
+                        Numeric.hexStringToByteArray(
+                                "0x01f8548853444835ec5800008502540be4008aba457aba24bbd63f5670f838f794f1d2f39c58427be48c5ecda1e0cc7a930ae1ca50e1a00000000000000000000000000000000000000000000000000000000000000001"))
+                .getSpanBatchTxData();
         assertNotNull(txData1);
         assertEquals(TransactionType.ACCESS_LIST, txData1.txType());
         assertEquals(Wei.of(new BigInteger("6000000000000000000")), ((SpanBatchAccessListTxData) txData1).value());
@@ -112,8 +114,9 @@ class SpanBatchTxTest {
                 ((SpanBatchAccessListTxData) txData1).accessList());
 
         SpanBatchTxData txData2 = SpanBatchTx.unmarshalBinary(
-                Numeric.hexStringToByteArray(
-                        "0x02f85a8853444835ec5800008502540be4008502540be4008aba457aba24bbd63f5670f838f794f1d2f39c58427be48c5ecda1e0cc7a930ae1ca50e1a00000000000000000000000000000000000000000000000000000000000000001"));
+                        Numeric.hexStringToByteArray(
+                                "0x02f85a8853444835ec5800008502540be4008502540be4008aba457aba24bbd63f5670f838f794f1d2f39c58427be48c5ecda1e0cc7a930ae1ca50e1a00000000000000000000000000000000000000000000000000000000000000001"))
+                .getSpanBatchTxData();
         assertNotNull(txData2);
         assertEquals(TransactionType.EIP1559, txData2.txType());
         assertEquals(Wei.of(new BigInteger("6000000000000000000")), ((SpanBatchDynamicFeeTxData) txData2).value());
