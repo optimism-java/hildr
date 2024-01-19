@@ -101,19 +101,22 @@ public class SpanBatchTx {
      * @return the span batch tx data
      */
     public byte[] marshalBinary() {
-        if (TransactionType.FRONTIER == spanBatchTxData.txType()) {
-            SpanBatchLegacyTxData spanBatchLegacyTxData = (SpanBatchLegacyTxData) this.spanBatchTxData;
-            return spanBatchLegacyTxData.encode();
+        switch (txType()) {
+            case FRONTIER -> {
+                SpanBatchLegacyTxData spanBatchLegacyTxData = (SpanBatchLegacyTxData) this.spanBatchTxData;
+                return spanBatchLegacyTxData.encode();
+            }
+            case EIP1559 -> {
+                SpanBatchDynamicFeeTxData spanBatchDynamicFeeTxData = (SpanBatchDynamicFeeTxData) this.spanBatchTxData;
+                return spanBatchDynamicFeeTxData.encode();
+            }
+            case ACCESS_LIST -> {
+                SpanBatchAccessListTxData spanBatchAccessListTxData = (SpanBatchAccessListTxData) this.spanBatchTxData;
+                return spanBatchAccessListTxData.encode();
+            }
+            case BLOB -> throw new RuntimeException("blob tx not supported");
+            default -> throw new IllegalStateException("unexpected value: %s".formatted(txType()));
         }
-        if (TransactionType.EIP1559 == spanBatchTxData.txType()) {
-            SpanBatchDynamicFeeTxData spanBatchDynamicFeeTxData = (SpanBatchDynamicFeeTxData) this.spanBatchTxData;
-            return spanBatchDynamicFeeTxData.encode();
-        }
-        if (TransactionType.ACCESS_LIST == spanBatchTxData.txType()) {
-            SpanBatchAccessListTxData spanBatchAccessListTxData = (SpanBatchAccessListTxData) this.spanBatchTxData;
-            return spanBatchAccessListTxData.encode();
-        }
-        throw new RuntimeException("invalid typed transaction type");
     }
 
     /**
@@ -143,10 +146,27 @@ public class SpanBatchTx {
         throw new RuntimeException("invalid typed transaction type");
     }
 
+    /**
+     * Gets span batch tx data.
+     *
+     * @return the span batch tx data
+     */
     public SpanBatchTxData getSpanBatchTxData() {
         return spanBatchTxData;
     }
 
+    /**
+     * Convert to full tx transaction.
+     *
+     * @param nonce   the nonce
+     * @param gas     the gas
+     * @param to      the to
+     * @param chainId the chain id
+     * @param v       the v
+     * @param r       the r
+     * @param s       the s
+     * @return the transaction
+     */
     public Transaction convertToFullTx(
             BigInteger nonce, BigInteger gas, String to, BigInteger chainId, BigInteger v, BigInteger r, BigInteger s) {
 

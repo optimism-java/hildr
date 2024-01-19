@@ -71,8 +71,23 @@ public class DepositTransaction {
      */
     private String data;
 
+    /**
+     * Instantiates a new Deposit transaction.
+     */
     public DepositTransaction() {}
 
+    /**
+     * Instantiates a new Deposit transaction.
+     *
+     * @param sourceHash          the source hash
+     * @param from                the from
+     * @param to                  the to
+     * @param mint                the mint
+     * @param value               the value
+     * @param gas                 the gas
+     * @param isSystemTransaction the is system transaction
+     * @param data                the data
+     */
     public DepositTransaction(
             String sourceHash,
             String from,
@@ -92,38 +107,83 @@ public class DepositTransaction {
         this.data = data;
     }
 
+    /**
+     * Gets source hash.
+     *
+     * @return the source hash
+     */
     public String getSourceHash() {
         return sourceHash;
     }
 
+    /**
+     * Gets from.
+     *
+     * @return the from
+     */
     public String getFrom() {
         return from;
     }
 
+    /**
+     * Gets to.
+     *
+     * @return the to
+     */
     public String getTo() {
         return to;
     }
 
+    /**
+     * Gets mint.
+     *
+     * @return the mint
+     */
     public BigInteger getMint() {
         return mint;
     }
 
+    /**
+     * Gets value.
+     *
+     * @return the value
+     */
     public BigInteger getValue() {
         return value;
     }
 
+    /**
+     * Gets gas.
+     *
+     * @return the gas
+     */
     public BigInteger getGas() {
         return gas;
     }
 
+    /**
+     * Is system transaction boolean.
+     *
+     * @return the boolean
+     */
     public boolean isSystemTransaction() {
         return isSystemTransaction;
     }
 
+    /**
+     * Gets data.
+     *
+     * @return the data
+     */
     public String getData() {
         return data;
     }
 
+    /**
+     * As rlp values list.
+     *
+     * @return the list
+     */
     public List<RlpType> asRlpValues() {
         List<RlpType> result = new ArrayList<>();
         result.add(RlpString.create(getSourceHash()));

@@ -32,6 +32,17 @@ import org.web3j.utils.Numeric;
  */
 public class TxDecoder {
 
+    /**
+     * Instantiates a new Tx decoder.
+     */
+    public TxDecoder() {}
+
+    /**
+     * Decode to deposit deposit transaction.
+     *
+     * @param hexTransaction the hex transaction
+     * @return the deposit transaction
+     */
     public static DepositTransaction decodeToDeposit(final String hexTransaction) {
         final byte[] transaction = Numeric.hexStringToByteArray(hexTransaction);
         if (transaction.length > 0 && transaction[0] != ((byte) 0x7E)) {

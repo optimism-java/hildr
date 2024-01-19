@@ -9,14 +9,35 @@ import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
 
+/**
+ * The type SingularBatch.
+ *
+ * @param epochHash    the epoch hash
+ * @param epochNum     the epoch num
+ * @param parentHash   the parent hash
+ * @param timestamp    the timestamp
+ * @param transactions the transactions
+ * @author grapebaba
+ * @since 0.2.4
+ */
 public record SingularBatch(
         String parentHash, BigInteger epochNum, String epochHash, BigInteger timestamp, List<String> transactions)
         implements IBatch {
 
+    /**
+     * Epoch block id.
+     *
+     * @return the block id
+     */
     public BlockId epoch() {
         return new BlockId(epochHash(), epochNum());
     }
 
+    /**
+     * Encode byte [ ].
+     *
+     * @return the byte [ ]
+     */
     public byte[] encode() {
         List<RlpType> collect = transactions().stream()
                 .map(tx -> (RlpType) RlpString.create(tx))
@@ -48,8 +69,8 @@ public record SingularBatch(
     }
 
     @Override
-    public int getBatchType() {
-        return BatchType.SINGULAR_BATCH_TYPE.getCode();
+    public BatchType getBatchType() {
+        return BatchType.SINGULAR_BATCH_TYPE;
     }
 
     @Override
@@ -57,6 +78,11 @@ public record SingularBatch(
         return timestamp();
     }
 
+    /**
+     * Gets epoch num.
+     *
+     * @return the epoch num
+     */
     public BigInteger getEpochNum() {
         return epochNum();
     }

@@ -22,9 +22,9 @@ public class SpanBatchTxsTest {
     void decodeAndEncodeSpanBatchBits() {
         String test =
                 "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-        BigInteger res = SpanBatchTxs.decodeSpanBatchBits(
+        BigInteger res = SpanBatchUtils.decodeSpanBatchBits(
                 Unpooled.wrappedBuffer(Bytes.fromHexString(test).toArray()), 544);
-        var res1 = SpanBatchTxs.encodeSpanBatchBits(544, res);
+        var res1 = SpanBatchUtils.encodeSpanBatchBits(544, res);
         assertArrayEquals(Numeric.hexStringToByteArray(test), res1);
     }
 
