@@ -56,7 +56,8 @@ public class MetricsServer {
     /**
      * start a http server for prometheus to access.
      *
-     * @param port custom http server port
+     * @param registry prometheus registry instance
+     * @param port     custom http server port
      */
     public static void start(MeterRegistry registry, int port) {
         if (!(registry instanceof PrometheusMeterRegistry)) {
@@ -90,7 +91,9 @@ public class MetricsServer {
         }
     }
 
-    /** stop the http server. */
+    /**
+     * stop the http server.
+     */
     public static void stop() {
         if (!isActive()) {
             return;
@@ -117,6 +120,11 @@ public class MetricsServer {
         }
     }
 
+    /**
+     * Is active boolean.
+     *
+     * @return the boolean
+     */
     public static boolean isActive() {
         return serverFuture != null && !(serverFuture.isDone() || serverFuture.isCancelled());
     }

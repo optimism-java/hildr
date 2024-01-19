@@ -3,37 +3,80 @@ package io.optimism.utilities.derive.stages;
 import java.math.BigInteger;
 import java.util.Objects;
 
+/**
+ * The type SpanBatchSignature.
+ *
+ * @author grapebaba
+ * @since 0.2.4
+ */
 public class SpanBatchSignature {
     private BigInteger v;
     private BigInteger r;
     private BigInteger s;
 
+    /**
+     * Instantiates a new Span batch signature.
+     *
+     * @param v the v
+     * @param r the r
+     * @param s the s
+     */
     public SpanBatchSignature(BigInteger v, BigInteger r, BigInteger s) {
         this.v = v;
         this.r = r;
         this.s = s;
     }
 
+    /**
+     * V big integer.
+     *
+     * @return the big integer
+     */
     public BigInteger v() {
         return v;
     }
 
+    /**
+     * R big integer.
+     *
+     * @return the big integer
+     */
     public BigInteger r() {
         return r;
     }
 
+    /**
+     * S big integer.
+     *
+     * @return the big integer
+     */
     public BigInteger s() {
         return s;
     }
 
+    /**
+     * Sets v.
+     *
+     * @param v the v
+     */
     public void setV(BigInteger v) {
         this.v = v;
     }
 
+    /**
+     * Sets r.
+     *
+     * @param r the r
+     */
     public void setR(BigInteger r) {
         this.r = r;
     }
 
+    /**
+     * Sets s.
+     *
+     * @param s the s
+     */
     public void setS(BigInteger s) {
         this.s = s;
     }

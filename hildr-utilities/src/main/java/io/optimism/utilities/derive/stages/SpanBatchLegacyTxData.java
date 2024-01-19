@@ -25,6 +25,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 /**
  * The type SpanBatchLegacyTxData.
  *
+ * @param value    the value
+ * @param gasPrice the gas price
+ * @param data     the data
  * @author zhouop0
  * @since 0.2.4
  */

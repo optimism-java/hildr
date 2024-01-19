@@ -15,6 +15,10 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 /**
  * The type SpanBatchAccessListTxData.
  *
+ * @param value      the value
+ * @param gasPrice   the gas price
+ * @param data       the data
+ * @param accessList the access list
  * @author grapebaba
  * @since 0.2.4
  */

@@ -15,6 +15,11 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 /**
  * The type SpanBatchDynamicFeeTxData.
  *
+ * @param value      the value
+ * @param gasTipCap  the gas tip cap
+ * @param gasFeeCap  the gas fee cap
+ * @param data       the data
+ * @param accessList the access list
  * @author grapebaba
  * @since 0.2.4
  */

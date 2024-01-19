@@ -1,7 +1,16 @@
 package io.optimism.utilities.derive.stages;
 
+/**
+ * The enum Batch type.
+ */
 public enum BatchType {
+    /**
+     * Singular batch type batch type.
+     */
     SINGULAR_BATCH_TYPE(0, "SingularBatchType"),
+    /**
+     * Span batch type batch type.
+     */
     SPAN_BATCH_TYPE(1, "SpanBatchType");
     private final int code;
     private final String name;
@@ -11,14 +20,30 @@ public enum BatchType {
         this.name = name;
     }
 
+    /**
+     * Gets code.
+     *
+     * @return the code
+     */
     public int getCode() {
         return code;
     }
 
+    /**
+     * Gets name.
+     *
+     * @return the name
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * From batch type.
+     *
+     * @param code the code
+     * @return the batch type
+     */
     public static BatchType from(int code) {
         for (BatchType batchType : BatchType.values()) {
             if (batchType.getCode() == code) {

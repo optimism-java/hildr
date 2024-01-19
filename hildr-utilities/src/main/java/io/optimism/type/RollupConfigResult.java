@@ -98,90 +98,205 @@ public class RollupConfigResult {
     @JsonProperty("l1_system_config_address")
     private String l1SystemConfigAddress;
 
+    /**
+     * Instantiates a new Rollup config result.
+     */
+    public RollupConfigResult() {}
+
+    /**
+     * Gets genesis.
+     *
+     * @return the genesis
+     */
     public Genesis getGenesis() {
         return genesis;
     }
 
+    /**
+     * Sets genesis.
+     *
+     * @param genesis the genesis
+     */
     public void setGenesis(Genesis genesis) {
         this.genesis = genesis;
     }
 
+    /**
+     * Gets block time.
+     *
+     * @return the block time
+     */
     public BigInteger getBlockTime() {
         return blockTime;
     }
 
+    /**
+     * Sets block time.
+     *
+     * @param blockTime the block time
+     */
     public void setBlockTime(BigInteger blockTime) {
         this.blockTime = blockTime;
     }
 
+    /**
+     * Gets max sequencer drift.
+     *
+     * @return the max sequencer drift
+     */
     public BigInteger getMaxSequencerDrift() {
         return maxSequencerDrift;
     }
 
+    /**
+     * Sets max sequencer drift.
+     *
+     * @param maxSequencerDrift the max sequencer drift
+     */
     public void setMaxSequencerDrift(BigInteger maxSequencerDrift) {
         this.maxSequencerDrift = maxSequencerDrift;
     }
 
+    /**
+     * Gets seq window size.
+     *
+     * @return the seq window size
+     */
     public BigInteger getSeqWindowSize() {
         return seqWindowSize;
     }
 
+    /**
+     * Sets seq window size.
+     *
+     * @param seqWindowSize the seq window size
+     */
     public void setSeqWindowSize(BigInteger seqWindowSize) {
         this.seqWindowSize = seqWindowSize;
     }
 
+    /**
+     * Gets channel timeout.
+     *
+     * @return the channel timeout
+     */
     public BigInteger getChannelTimeout() {
         return channelTimeout;
     }
 
+    /**
+     * Sets channel timeout.
+     *
+     * @param channelTimeout the channel timeout
+     */
     public void setChannelTimeout(BigInteger channelTimeout) {
         this.channelTimeout = channelTimeout;
     }
 
+    /**
+     * Gets l 1 chain id.
+     *
+     * @return the l 1 chain id
+     */
     public BigInteger getL1ChainId() {
         return l1ChainId;
     }
 
+    /**
+     * Sets l 1 chain id.
+     *
+     * @param l1ChainId the l 1 chain id
+     */
     public void setL1ChainId(BigInteger l1ChainId) {
         this.l1ChainId = l1ChainId;
     }
 
+    /**
+     * Gets l 2 chain id.
+     *
+     * @return the l 2 chain id
+     */
     public BigInteger getL2ChainId() {
         return l2ChainId;
     }
 
+    /**
+     * Sets l 2 chain id.
+     *
+     * @param l2ChainId the l 2 chain id
+     */
     public void setL2ChainId(BigInteger l2ChainId) {
         this.l2ChainId = l2ChainId;
     }
 
+    /**
+     * Gets regolith time.
+     *
+     * @return the regolith time
+     */
     public BigInteger getRegolithTime() {
         return regolithTime;
     }
 
+    /**
+     * Sets regolith time.
+     *
+     * @param regolithTime the regolith time
+     */
     public void setRegolithTime(BigInteger regolithTime) {
         this.regolithTime = regolithTime;
     }
 
+    /**
+     * Gets batch inbox address.
+     *
+     * @return the batch inbox address
+     */
     public String getBatchInboxAddress() {
         return batchInboxAddress;
     }
 
+    /**
+     * Sets batch inbox address.
+     *
+     * @param batchInboxAddress the batch inbox address
+     */
     public void setBatchInboxAddress(String batchInboxAddress) {
         this.batchInboxAddress = batchInboxAddress;
     }
 
+    /**
+     * Gets deposit contract address.
+     *
+     * @return the deposit contract address
+     */
     public String getDepositContractAddress() {
         return depositContractAddress;
     }
 
+    /**
+     * Sets deposit contract address.
+     *
+     * @param depositContractAddress the deposit contract address
+     */
     public void setDepositContractAddress(String depositContractAddress) {
         this.depositContractAddress = depositContractAddress;
     }
 
+    /**
+     * Gets l 1 system config address.
+     *
+     * @return the l 1 system config address
+     */
     public String getL1SystemConfigAddress() {
         return l1SystemConfigAddress;
     }
 
+    /**
+     * Sets l 1 system config address.
+     *
+     * @param l1SystemConfigAddress the l 1 system config address
+     */
     public void setL1SystemConfigAddress(String l1SystemConfigAddress) {
         this.l1SystemConfigAddress = l1SystemConfigAddress;
     }

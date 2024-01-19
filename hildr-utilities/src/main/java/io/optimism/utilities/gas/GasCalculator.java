@@ -32,16 +32,34 @@ public class GasCalculator {
      */
     private GasCalculator() {}
 
+    /**
+     * The constant TX_GAS_CONTRACT_CREATION.
+     */
     public static final long TX_GAS_CONTRACT_CREATION = 53000L;
 
+    /**
+     * The constant TX_GAS.
+     */
     public static final long TX_GAS = 21000L;
 
+    /**
+     * The constant TX_DATA_NON_ZERO_GAS_FRONTIER.
+     */
     public static final long TX_DATA_NON_ZERO_GAS_FRONTIER = 68L;
 
+    /**
+     * The constant TX_DATA_NON_ZERO_GAS_EIP2028.
+     */
     public static final long TX_DATA_NON_ZERO_GAS_EIP2028 = 16L;
 
+    /**
+     * The constant TX_DATA_ZERO_GAS.
+     */
     public static final long TX_DATA_ZERO_GAS = 4L;
 
+    /**
+     * The constant INIT_CODE_WORD_GAS.
+     */
     public static final long INIT_CODE_WORD_GAS = 2L;
 
     /**

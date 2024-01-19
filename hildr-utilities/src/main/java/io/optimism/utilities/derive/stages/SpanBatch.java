@@ -4,11 +4,11 @@ import java.math.BigInteger;
 import java.util.List;
 
 /**
- *  SpanBatch is an implementation of Batch interface,
- *  containing the input to build a span of L2 blocks in derived form (SpanBatchElement)
+ * SpanBatch is an implementation of Batch interface,
+ * containing the input to build a span of L2 blocks in derived form (SpanBatchElement)
  *
- *  @author zhouop0
- *  @since 0.1.0
+ * @author zhouop0
+ * @since 0.1.0
  */
 public class SpanBatch implements IBatch {
 
@@ -19,21 +19,41 @@ public class SpanBatch implements IBatch {
     // List of block input in derived form
     private List<SpanBatchElement> batches;
 
+    /**
+     * Instantiates a new Span batch.
+     */
+    public SpanBatch() {}
+
+    /**
+     * Gets parent check.
+     *
+     * @return the parent check
+     */
     public String getParentCheck() {
         return parentCheck;
     }
 
+    /**
+     * Gets l 1 origin check.
+     *
+     * @return the l 1 origin check
+     */
     public String getL1OriginCheck() {
         return l1OriginCheck;
     }
 
+    /**
+     * Gets batches.
+     *
+     * @return the batches
+     */
     public List<SpanBatchElement> getBatches() {
         return batches;
     }
 
     @Override
-    public int getBatchType() {
-        return BatchType.SPAN_BATCH_TYPE.getCode();
+    public BatchType getBatchType() {
+        return BatchType.SPAN_BATCH_TYPE;
     }
 
     @Override
@@ -43,6 +63,8 @@ public class SpanBatch implements IBatch {
 
     /**
      * GetStartEpochNum returns epoch number(L1 origin block number) of the first block in the span.
+     *
+     * @return the epoch number(L1 origin block number) of the first block in the span.
      */
     public BigInteger getStartEpochNum() {
         return this.batches.getFirst().epochNum();
@@ -50,8 +72,9 @@ public class SpanBatch implements IBatch {
 
     /**
      * checks if the parentCheck matches the first 20 bytes of given hash, probably the current L2 safe head.
+     *
      * @param hash the first 20 bytes of given hash.
-     * @return boolean.
+     * @return boolean. boolean
      */
     public boolean checkOriginHash(String hash) {
         return this.l1OriginCheck.equals(hash);
@@ -59,8 +82,9 @@ public class SpanBatch implements IBatch {
 
     /**
      * checks if the parentCheck matches the first 20 bytes of given hash, probably the current L2 safe head.
+     *
      * @param hash the first 20 bytes of given hash.
-     * @return boolean.
+     * @return boolean. boolean
      */
     public boolean checkParentHash(String hash) {
         return this.parentCheck.equals(hash);
@@ -68,6 +92,7 @@ public class SpanBatch implements IBatch {
 
     /**
      * GetBlockEpochNum
+     *
      * @param index batches index.
      * @return the epoch number(L1 origin block number) of the block at the given index in the span.
      */
@@ -77,6 +102,7 @@ public class SpanBatch implements IBatch {
 
     /**
      * GetBlockTimestamp
+     *
      * @param index batches index.
      * @return the timestamp of the block at the given index in the span.
      */
@@ -86,6 +112,7 @@ public class SpanBatch implements IBatch {
 
     /**
      * GetBlockCount
+     *
      * @return the number of blocks in the span.
      */
     public int getBlockCount() {

@@ -33,9 +33,16 @@ public class TracerTaskWrapper {
 
     private static Function<String, Tracer> tracerSupplier;
 
-    /** Instantiates a new Tracer task wrapper. */
+    /**
+     * Instantiates a new Tracer task wrapper.
+     */
     private TracerTaskWrapper() {}
 
+    /**
+     * Sets tracer supplier.
+     *
+     * @param supplier the supplier
+     */
     public static void setTracerSupplier(Function<String, Tracer> supplier) {
         TracerTaskWrapper.tracerSupplier = supplier;
     }
@@ -43,7 +50,7 @@ public class TracerTaskWrapper {
     /**
      * Wrap callable. It Will use default tracer name for tracer.
      *
-     * @param <T> the type parameter
+     * @param <T>  the type parameter
      * @param call the call
      * @return the callable
      */
@@ -54,8 +61,9 @@ public class TracerTaskWrapper {
     /**
      * Wrap callable.
      *
-     * @param <T> the type parameter
-     * @param call the call
+     * @param <T>        the type parameter
+     * @param tracerName the tracer name
+     * @param call       the call
      * @return the callable
      */
     public static <T> Callable<T> wrap(final String tracerName, final Callable<T> call) {
