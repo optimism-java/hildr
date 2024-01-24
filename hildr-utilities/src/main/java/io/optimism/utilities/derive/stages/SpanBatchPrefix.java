@@ -19,21 +19,26 @@ import org.web3j.utils.Numeric;
  */
 public class SpanBatchPrefix {
     private BigInteger relTimestamp;
-    private BigInteger l1Origin;
+    private BigInteger l1OriginNum;
     private Bytes parentCheck;
     private Bytes l1OriginCheck;
 
     /**
      * Instantiates a new Span batch prefix.
+     */
+    public SpanBatchPrefix() {}
+
+    /**
+     * Instantiates a new Span batch prefix.
      *
      * @param relTimestamp  the rel timestamp
-     * @param l1Origin      the l 1 origin
+     * @param l1OriginNum   the l 1 origin
      * @param parentCheck   the parent check
      * @param l1OriginCheck the l 1 origin check
      */
-    public SpanBatchPrefix(BigInteger relTimestamp, BigInteger l1Origin, Bytes parentCheck, Bytes l1OriginCheck) {
+    public SpanBatchPrefix(BigInteger relTimestamp, BigInteger l1OriginNum, Bytes parentCheck, Bytes l1OriginCheck) {
         this.relTimestamp = relTimestamp;
-        this.l1Origin = l1Origin;
+        this.l1OriginNum = l1OriginNum;
         this.parentCheck = parentCheck;
         this.l1OriginCheck = l1OriginCheck;
     }
@@ -52,8 +57,8 @@ public class SpanBatchPrefix {
      *
      * @return the big integer
      */
-    public BigInteger l1Origin() {
-        return l1Origin;
+    public BigInteger l1OriginNum() {
+        return l1OriginNum;
     }
 
     /**
@@ -74,25 +79,61 @@ public class SpanBatchPrefix {
         return l1OriginCheck;
     }
 
+    /**
+     * Sets rel timestamp.
+     *
+     * @param relTimestamp the rel timestamp
+     */
+    public void setRelTimestamp(BigInteger relTimestamp) {
+        this.relTimestamp = relTimestamp;
+    }
+
+    /**
+     * Sets l 1 origin num.
+     *
+     * @param l1OriginNum the l 1 origin num
+     */
+    public void setL1OriginNum(BigInteger l1OriginNum) {
+        this.l1OriginNum = l1OriginNum;
+    }
+
+    /**
+     * Sets parent check.
+     *
+     * @param parentCheck the parent check
+     */
+    public void setParentCheck(Bytes parentCheck) {
+        this.parentCheck = parentCheck;
+    }
+
+    /**
+     * Sets l 1 origin check.
+     *
+     * @param l1OriginCheck the l 1 origin check
+     */
+    public void setL1OriginCheck(Bytes l1OriginCheck) {
+        this.l1OriginCheck = l1OriginCheck;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof SpanBatchPrefix that)) return false;
         return Objects.equals(relTimestamp, that.relTimestamp)
-                && Objects.equals(l1Origin, that.l1Origin)
+                && Objects.equals(l1OriginNum, that.l1OriginNum)
                 && Objects.equals(parentCheck, that.parentCheck)
                 && Objects.equals(l1OriginCheck, that.l1OriginCheck);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(relTimestamp, l1Origin, parentCheck, l1OriginCheck);
+        return Objects.hash(relTimestamp, l1OriginNum, parentCheck, l1OriginCheck);
     }
 
     @Override
     public String toString() {
-        return "SpanBatchPrefix[relTimestamp=%s, l1Origin=%s, parentCheck=%s, l1OriginCheck=%s]"
-                .formatted(relTimestamp, l1Origin, parentCheck, l1OriginCheck);
+        return "SpanBatchPrefix[relTimestamp=%s, l1OriginNum=%s, parentCheck=%s, l1OriginCheck=%s]"
+                .formatted(relTimestamp, l1OriginNum, parentCheck, l1OriginCheck);
     }
 
     /**
@@ -122,7 +163,7 @@ public class SpanBatchPrefix {
      * @param source the source
      */
     public void decodeL1OriginNum(ByteBuf source) {
-        this.l1Origin = Numeric.toBigInt(Longs.toByteArray(SpanBatchUtils.getVarLong(source)));
+        this.l1OriginNum = Numeric.toBigInt(Longs.toByteArray(SpanBatchUtils.getVarLong(source)));
     }
 
     /**
@@ -132,7 +173,7 @@ public class SpanBatchPrefix {
      */
     public byte[] encodeL1OriginNum() {
         ByteBuf buffer = PooledByteBufAllocator.DEFAULT.buffer(10);
-        putVarLong(this.l1Origin.longValue(), buffer);
+        putVarLong(this.l1OriginNum.longValue(), buffer);
 
         return ByteBufUtil.getBytes(buffer);
     }
