@@ -155,7 +155,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                     byte[] batchData = ArrayUtils.subarray(
                             ((RlpString) rlpType).getBytes(), 1, ((RlpString) rlpType).getBytes().length);
                     RlpList rlpBatchData =
-                            (RlpList) RlpDecoder.decode(batchData).getValues().get(0);
+                            (RlpList) RlpDecoder.decode(batchData).getValues().getFirst();
                     return Batch.decode(rlpBatchData, channel.l1InclusionBlock());
                 })
                 .collect(Collectors.toList());

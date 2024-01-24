@@ -3,6 +3,7 @@ package io.optimism.utilities.derive.stages;
 import io.optimism.type.BlockId;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
@@ -12,17 +13,38 @@ import org.web3j.rlp.RlpType;
 /**
  * The type SingularBatch.
  *
- * @param epochHash    the epoch hash
- * @param epochNum     the epoch num
- * @param parentHash   the parent hash
- * @param timestamp    the timestamp
- * @param transactions the transactions
  * @author grapebaba
  * @since 0.2.4
  */
-public record SingularBatch(
-        String parentHash, BigInteger epochNum, String epochHash, BigInteger timestamp, List<String> transactions)
-        implements IBatch {
+public class SingularBatch implements IBatch {
+    private String parentHash;
+    private BigInteger epochNum;
+    private String epochHash;
+    private BigInteger timestamp;
+    private List<String> transactions;
+
+    /**
+     * Instantiates a new Singular batch.
+     */
+    public SingularBatch() {}
+
+    /**
+     * Instantiates a new Singular batch.
+     *
+     * @param parentHash   the parent hash
+     * @param epochNum     the epoch num
+     * @param epochHash    the epoch hash
+     * @param timestamp    the timestamp
+     * @param transactions the transactions
+     */
+    public SingularBatch(
+            String parentHash, BigInteger epochNum, String epochHash, BigInteger timestamp, List<String> transactions) {
+        this.parentHash = parentHash;
+        this.epochNum = epochNum;
+        this.epochHash = epochHash;
+        this.timestamp = timestamp;
+        this.transactions = transactions;
+    }
 
     /**
      * Epoch block id.
@@ -85,5 +107,126 @@ public record SingularBatch(
      */
     public BigInteger getEpochNum() {
         return epochNum();
+    }
+
+    /**
+     * To span batch element span batch element.
+     *
+     * @return the span batch element
+     */
+    public SpanBatchElement toSpanBatchElement() {
+        return new SpanBatchElement(epochNum(), timestamp(), transactions());
+    }
+
+    /**
+     * Parent hash string.
+     *
+     * @return the string
+     */
+    public String parentHash() {
+        return parentHash;
+    }
+
+    /**
+     * Epoch num big integer.
+     *
+     * @return the big integer
+     */
+    public BigInteger epochNum() {
+        return epochNum;
+    }
+
+    /**
+     * Epoch hash string.
+     *
+     * @return the string
+     */
+    public String epochHash() {
+        return epochHash;
+    }
+
+    /**
+     * Timestamp big integer.
+     *
+     * @return the big integer
+     */
+    public BigInteger timestamp() {
+        return timestamp;
+    }
+
+    /**
+     * Transactions list.
+     *
+     * @return the list
+     */
+    public List<String> transactions() {
+        return transactions;
+    }
+
+    /**
+     * Sets parent hash.
+     *
+     * @param parentHash the parent hash
+     */
+    public void setParentHash(String parentHash) {
+        this.parentHash = parentHash;
+    }
+
+    /**
+     * Sets epoch num.
+     *
+     * @param epochNum the epoch num
+     */
+    public void setEpochNum(BigInteger epochNum) {
+        this.epochNum = epochNum;
+    }
+
+    /**
+     * Sets epoch hash.
+     *
+     * @param epochHash the epoch hash
+     */
+    public void setEpochHash(String epochHash) {
+        this.epochHash = epochHash;
+    }
+
+    /**
+     * Sets timestamp.
+     *
+     * @param timestamp the timestamp
+     */
+    public void setTimestamp(BigInteger timestamp) {
+        this.timestamp = timestamp;
+    }
+
+    /**
+     * Sets transactions.
+     *
+     * @param transactions the transactions
+     */
+    public void setTransactions(List<String> transactions) {
+        this.transactions = transactions;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SingularBatch that)) return false;
+        return Objects.equals(parentHash, that.parentHash)
+                && Objects.equals(epochNum, that.epochNum)
+                && Objects.equals(epochHash, that.epochHash)
+                && Objects.equals(timestamp, that.timestamp)
+                && Objects.equals(transactions, that.transactions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(parentHash, epochNum, epochHash, timestamp, transactions);
+    }
+
+    @Override
+    public String toString() {
+        return "SingularBatch[parentHash=%s, epochNum=%s, epochHash=%s, timestamp=%s, transactions=%s]"
+                .formatted(parentHash, epochNum, epochHash, timestamp, transactions);
     }
 }

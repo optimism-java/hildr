@@ -13,14 +13,19 @@ import java.util.Objects;
 /**
  * The type SpanBatchPayload.
  *
- * @since 0.2.4
  * @author grapebaba
+ * @since 0.2.4
  */
 public class SpanBatchPayload {
     private long blockCount;
     private BigInteger originBits;
-    private List<Long> blockTxCounts;
+    private List<Long> blockTxCounts = new ArrayList<>();
     private SpanBatchTxs txs;
+
+    /**
+     * Instantiates a new Span batch payload.
+     */
+    public SpanBatchPayload() {}
 
     /**
      * Instantiates a new Span batch payload.
@@ -71,6 +76,42 @@ public class SpanBatchPayload {
      */
     public SpanBatchTxs txs() {
         return txs;
+    }
+
+    /**
+     * Sets block count.
+     *
+     * @param blockCount the block count
+     */
+    public void setBlockCount(long blockCount) {
+        this.blockCount = blockCount;
+    }
+
+    /**
+     * Sets origin bits.
+     *
+     * @param originBits the origin bits
+     */
+    public void setOriginBits(BigInteger originBits) {
+        this.originBits = originBits;
+    }
+
+    /**
+     * Sets block tx counts.
+     *
+     * @param blockTxCounts the block tx counts
+     */
+    public void setBlockTxCounts(List<Long> blockTxCounts) {
+        this.blockTxCounts = blockTxCounts;
+    }
+
+    /**
+     * Sets txs.
+     *
+     * @param txs the txs
+     */
+    public void setTxs(SpanBatchTxs txs) {
+        this.txs = txs;
     }
 
     @Override
