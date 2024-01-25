@@ -54,6 +54,24 @@ public class RawSpanBatch implements IBatch {
         return spanbatchPayload;
     }
 
+    /**
+     * Sets spanbatch prefix.
+     *
+     * @param spanbatchPrefix the spanbatch prefix
+     */
+    public void setSpanbatchPrefix(SpanBatchPrefix spanbatchPrefix) {
+        this.spanbatchPrefix = spanbatchPrefix;
+    }
+
+    /**
+     * Sets spanbatch payload.
+     *
+     * @param spanbatchPayload the spanbatch payload
+     */
+    public void setSpanbatchPayload(SpanBatchPayload spanbatchPayload) {
+        this.spanbatchPayload = spanbatchPayload;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

@@ -732,10 +732,16 @@ public class SpanBatchTxs {
         if (isTypedTransaction(input)) {
             final Bytes typedTransactionBytes = input.readBytes();
             Bytes txBytes = isLast ? lastCurrentListAsBytes(input) : input.currentListAsBytes();
+            if (txBytes.size() > SpanBatchUtils.MaxSpanBatchSize) {
+                throw new RuntimeException("tx size too large");
+            }
             var transactionType = getTransactionType(typedTransactionBytes).orElseThrow();
             return Pair.of(Bytes.concatenate(typedTransactionBytes, txBytes), transactionType);
         } else {
             Bytes bytes = isLast ? lastCurrentListAsBytes(input) : input.currentListAsBytes();
+            if (bytes.size() > SpanBatchUtils.MaxSpanBatchSize) {
+                throw new RuntimeException("tx size too large");
+            }
             return Pair.of(bytes, TransactionType.FRONTIER);
         }
     }

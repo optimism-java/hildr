@@ -46,8 +46,12 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
  */
 public class SpanBatchTx {
 
-    private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+    /**
+     * The constant SIGNATURE_ALGORITHM.
+     */
+    public static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
             Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
     private final SpanBatchTxData spanBatchTxData;
 
     /**
