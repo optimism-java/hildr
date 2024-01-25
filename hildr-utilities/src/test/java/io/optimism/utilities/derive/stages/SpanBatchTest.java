@@ -102,4 +102,101 @@ class SpanBatchTest {
                 rawSpanBatch.spanbatchPayload().originBits(),
                 rawSpanBatch1.spanbatchPayload().originBits());
     }
+
+    @Test
+    void testSpanBatchPrefix() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        rawSpanBatch.setSpanbatchPayload(new SpanBatchPayload());
+
+        byte[] prefix = rawSpanBatch.spanbatchPrefix().encode();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPrefix().decode(Unpooled.wrappedBuffer(prefix));
+
+        assertEquals(rawSpanBatch, rawSpanBatch1);
+    }
+
+    @Test
+    void testSpanBatchMaxOriginBitsLength() {
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.spanbatchPayload().setBlockCount(Long.MAX_VALUE);
+
+        assertThrows(
+                RuntimeException.class,
+                () -> rawSpanBatch.spanbatchPayload().decodeOriginBits(Unpooled.wrappedBuffer(new byte[] {})));
+    }
+
+    @Test
+    void testSpanBatchMaxBlockCount() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        rawSpanBatch.spanbatchPayload().setBlockCount(Long.MAX_VALUE);
+
+        byte[] encodedBlockCount = rawSpanBatch.spanbatchPayload().encodeBlockCount();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+
+        assertThrows(
+                RuntimeException.class,
+                () -> rawSpanBatch1.spanbatchPayload().decodeBlockCount(Unpooled.wrappedBuffer(encodedBlockCount)),
+                "span batch size limit reached");
+    }
+
+    @Test
+    void testSpanBatchMaxBlockTxCount() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        rawSpanBatch.spanbatchPayload().blockTxCounts().set(0, Long.MAX_VALUE);
+
+        byte[] encodedBlockTxCounts = rawSpanBatch.spanbatchPayload().encodeBlockTxCounts();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1
+                .spanbatchPayload()
+                .setBlockCount(rawSpanBatch.spanbatchPayload().blockCount());
+
+        assertThrows(
+                RuntimeException.class,
+                () -> rawSpanBatch1
+                        .spanbatchPayload()
+                        .decodeBlockTxCounts(Unpooled.wrappedBuffer(encodedBlockTxCounts)),
+                "span batch size limit reached");
+    }
+
+    @Test
+    void testSpanBatchTotalBlockTxCountNotOverflow() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        rawSpanBatch.spanbatchPayload().blockTxCounts().set(0, SpanBatchUtils.MaxSpanBatchSize - 1);
+        rawSpanBatch.spanbatchPayload().blockTxCounts().set(1, SpanBatchUtils.MaxSpanBatchSize - 1);
+
+        byte[] encodedBlockTxCounts = rawSpanBatch.spanbatchPayload().encodeBlockTxCounts();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1
+                .spanbatchPayload()
+                .setBlockTxCounts(rawSpanBatch.spanbatchPayload().blockTxCounts());
+
+        assertThrows(
+                RuntimeException.class,
+                () -> rawSpanBatch1.spanbatchPayload().decodeTxs(Unpooled.wrappedBuffer(encodedBlockTxCounts)),
+                "span batch size limit reached");
+    }
 }

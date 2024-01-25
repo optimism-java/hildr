@@ -1,7 +1,9 @@
 package io.optimism.utilities.derive.stages;
 
+import static io.optimism.utilities.derive.stages.SpanBatchTx.SIGNATURE_ALGORITHM;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -9,11 +11,19 @@ import io.netty.buffer.Unpooled;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
 
@@ -335,6 +345,28 @@ public class SpanBatchTxsTest {
                 .collect(Collectors.toList());
 
         assertEquals(txs, txs1);
+    }
+
+    @Test
+    void testSpanBatchMaxTxData() {
+        Transaction.Builder builder = Transaction.builder();
+        SecureRandom rng = new SecureRandom();
+        byte[] randomBytes = new byte[(int) (SpanBatchUtils.MaxSpanBatchSize + 1)];
+        rng.nextBytes(randomBytes);
+        builder.type(TransactionType.EIP1559)
+                .chainId(BigInteger.valueOf(108L))
+                .maxFeePerGas(Wei.of(5))
+                .maxPriorityFeePerGas(Wei.of(5))
+                .value(Wei.ZERO)
+                .payload(Bytes.wrap(randomBytes));
+        final SECPSignature signature =
+                SIGNATURE_ALGORITHM.get().createSignature(BigInteger.ONE, BigInteger.ONE, (byte) 1);
+        builder.signature(signature);
+
+        Bytes txEncoded = TransactionEncoder.encodeOpaqueBytes(builder.build(), EncodingContext.BLOCK_BODY);
+
+        RLPInput rlpInput = new BytesValueRLPInput(txEncoded, false);
+        assertThrows(RuntimeException.class, () -> SpanBatchTxs.readTxData(rlpInput, true));
     }
 
     //

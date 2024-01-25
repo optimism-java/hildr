@@ -229,10 +229,10 @@ public class SpanBatchPayload {
         }
 
         long totalBlockTxCount = 0;
-        for (int i = 0; i < this.blockCount; i++) {
+        for (Long blockTxCount : this.blockTxCounts) {
             long total;
             try {
-                total = Math.addExact(totalBlockTxCount, this.blockTxCounts.get(i));
+                total = Math.addExact(totalBlockTxCount, blockTxCount);
             } catch (ArithmeticException e) {
                 throw new RuntimeException("totalBlockTxCount overflow");
             }
