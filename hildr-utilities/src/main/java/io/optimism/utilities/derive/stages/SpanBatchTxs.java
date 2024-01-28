@@ -12,6 +12,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
@@ -341,12 +342,15 @@ public class SpanBatchTxs {
             throw new RuntimeException("protected bits not set");
         }
 
+        int protectedBitsIdx = 0;
         for (int i = 0; i < this.txTypes.size(); i++) {
             BigInteger bit = this.yParityBits.testBit(i) ? BigInteger.ONE : BigInteger.ZERO;
             BigInteger v;
             switch (this.txTypes.get(i)) {
                 case FRONTIER:
-                    if (this.protectedBits.testBit(i)) {
+                    boolean isProtected = this.protectedBits.testBit(protectedBitsIdx);
+                    protectedBitsIdx++;
+                    if (isProtected) {
                         v = chainId.multiply(BigInteger.TWO)
                                 .add(REPLAY_PROTECTED_V_BASE)
                                 .add(bit);
@@ -798,5 +802,38 @@ public class SpanBatchTxs {
         } catch (IllegalArgumentException ex) {
             return Optional.empty();
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SpanBatchTxs txs)) return false;
+        return totalBlockTxCount == txs.totalBlockTxCount
+                && totalLegacyTxCount == txs.totalLegacyTxCount
+                && Objects.equals(contractCreationBits, txs.contractCreationBits)
+                && Objects.equals(yParityBits, txs.yParityBits)
+                && Objects.equals(txSigs, txs.txSigs)
+                && Objects.equals(txNonces, txs.txNonces)
+                && Objects.equals(txGases, txs.txGases)
+                && Objects.equals(txTos, txs.txTos)
+                && Objects.equals(txDatas, txs.txDatas)
+                && Objects.equals(txTypes, txs.txTypes)
+                && Objects.equals(protectedBits, txs.protectedBits);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                totalBlockTxCount,
+                contractCreationBits,
+                yParityBits,
+                txSigs,
+                txNonces,
+                txGases,
+                txTos,
+                txDatas,
+                txTypes,
+                totalLegacyTxCount,
+                protectedBits);
     }
 }

@@ -1,10 +1,14 @@
 package io.optimism.utilities.derive.stages;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.netty.buffer.Unpooled;
+import io.optimism.type.BlockId;
+import io.optimism.type.L2BlockRef;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;
@@ -119,6 +123,219 @@ class SpanBatchTest {
         rawSpanBatch1.spanbatchPrefix().decode(Unpooled.wrappedBuffer(prefix));
 
         assertEquals(rawSpanBatch, rawSpanBatch1);
+    }
+
+    @Test
+    void testSpanBatchRelTimestamp() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        byte[] relTimestamp = rawSpanBatch.spanbatchPrefix().encodeRelTimestamp();
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPrefix().decodeRelTimestamp(Unpooled.wrappedBuffer(relTimestamp));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPrefix().relTimestamp(),
+                rawSpanBatch1.spanbatchPrefix().relTimestamp());
+    }
+
+    @Test
+    void testSpanBatchL1OriginNum() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        byte[] l1OriginNum = rawSpanBatch.spanbatchPrefix().encodeL1OriginNum();
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPrefix().decodeL1OriginNum(Unpooled.wrappedBuffer(l1OriginNum));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPrefix().l1OriginNum(),
+                rawSpanBatch1.spanbatchPrefix().l1OriginNum());
+    }
+
+    @Test
+    void testSpanBatchParentCheck() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        byte[] parentCheck = rawSpanBatch.spanbatchPrefix().encodeParentCheck();
+        assertEquals(20, parentCheck.length);
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPrefix().decodeParentCheck(Unpooled.wrappedBuffer(parentCheck));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPrefix().parentCheck(),
+                rawSpanBatch1.spanbatchPrefix().parentCheck());
+    }
+
+    @Test
+    void testSpanBatchL1OriginCheck() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        byte[] l1OriginCheck = rawSpanBatch.spanbatchPrefix().encodeL1OriginCheck();
+        assertEquals(20, l1OriginCheck.length);
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPrefix().decodeL1OriginCheck(Unpooled.wrappedBuffer(l1OriginCheck));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPrefix().l1OriginCheck(),
+                rawSpanBatch1.spanbatchPrefix().l1OriginCheck());
+    }
+
+    @Test
+    void testSpanBatchPayload() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+        rawSpanBatch.spanbatchPayload().txs().recoverV(BigInteger.valueOf(28));
+
+        byte[] payload = rawSpanBatch.spanbatchPayload().encode();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPayload().decode(Unpooled.wrappedBuffer(payload));
+        rawSpanBatch1.spanbatchPayload().txs().recoverV(BigInteger.valueOf(28));
+
+        assertEquals(rawSpanBatch.spanbatchPayload(), rawSpanBatch1.spanbatchPayload());
+    }
+
+    @Test
+    void testSpanBatchBlockCount() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        byte[] blockCount = rawSpanBatch.spanbatchPayload().encodeBlockCount();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1.spanbatchPayload().decodeBlockCount(Unpooled.wrappedBuffer(blockCount));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPayload().blockCount(),
+                rawSpanBatch1.spanbatchPayload().blockCount());
+    }
+
+    @Test
+    void testSpanBatchBlockTxCounts() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+
+        byte[] blockTxCounts = rawSpanBatch.spanbatchPayload().encodeBlockTxCounts();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1
+                .spanbatchPayload()
+                .setBlockCount(rawSpanBatch.spanbatchPayload().blockCount());
+        rawSpanBatch1.spanbatchPayload().decodeBlockTxCounts(Unpooled.wrappedBuffer(blockTxCounts));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPayload().blockTxCounts(),
+                rawSpanBatch1.spanbatchPayload().blockTxCounts());
+    }
+
+    @Test
+    void testSpanBatchTxs() throws IOException {
+        URL url = Resources.getResource("spanbatchoriginbits.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+        RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(Numeric.hexStringToByteArray(origin)));
+        rawSpanBatch.spanbatchPayload().txs().recoverV(BigInteger.valueOf(28));
+
+        byte[] txs = rawSpanBatch.spanbatchPayload().encodeTxs();
+
+        RawSpanBatch rawSpanBatch1 = new RawSpanBatch();
+        rawSpanBatch1
+                .spanbatchPayload()
+                .setBlockTxCounts(rawSpanBatch.spanbatchPayload().blockTxCounts());
+        rawSpanBatch1.spanbatchPayload().decodeTxs(Unpooled.wrappedBuffer(txs));
+        rawSpanBatch1.spanbatchPayload().txs().recoverV(BigInteger.valueOf(28));
+
+        assertEquals(
+                rawSpanBatch.spanbatchPayload().txs(),
+                rawSpanBatch1.spanbatchPayload().txs());
+    }
+
+    @Test
+    void testSpanBatchDerive() throws IOException {
+        BigInteger l2BlockTime = BigInteger.TWO;
+        for (int originChangedBit = 0; originChangedBit < 2; originChangedBit++) {
+            URL url = Resources.getResource("spanbatchfromsingular.txt");
+            List<String> singularBatches = Resources.readLines(url, Charsets.UTF_8);
+
+            List<SingularBatch> singularBatches1 = singularBatches.stream()
+                    .map(singularBatch -> {
+                        RlpList rlpBatchData = (RlpList) RlpDecoder.decode(Numeric.hexStringToByteArray(singularBatch))
+                                .getValues()
+                                .getFirst();
+                        return SingularBatch.decode(rlpBatchData);
+                    })
+                    .toList();
+            L2BlockRef l2BlockRef = new L2BlockRef(
+                    singularBatches1.getFirst().parentHash(),
+                    // random biginteger
+                    RandomUtils.randomBigInt(),
+                    // random string
+                    RandomUtils.randomHex(),
+                    // random biginteger
+                    RandomUtils.randomBigInt(),
+                    new BlockId(RandomUtils.randomHex(), RandomUtils.randomBigInt()),
+                    RandomUtils.randomBigInt());
+
+            BigInteger genesisTimeStamp =
+                    BigInteger.ONE.add(singularBatches1.getFirst().timestamp()).subtract(BigInteger.valueOf(128));
+
+            SpanBatch spanBatch = SpanBatch.newSpanBatch(singularBatches1);
+            RawSpanBatch rawSpanBatch =
+                    spanBatch.toRawSpanBatch(originChangedBit, genesisTimeStamp, BigInteger.valueOf(589));
+
+            long blockCount = singularBatches1.size();
+            SpanBatch spanBatchDerived = rawSpanBatch.derive(l2BlockTime, genesisTimeStamp, BigInteger.valueOf(589));
+
+            assertEquals(
+                    l2BlockRef.hash().substring(0, 40),
+                    spanBatchDerived.getParentCheck().toHexString());
+            assertEquals(
+                    singularBatches1.getLast().epoch().hash().substring(0, 40),
+                    spanBatchDerived.getL1OriginCheck().toHexString());
+            assertEquals(blockCount, spanBatchDerived.getBlockCount());
+
+            for (int i = 1; i < blockCount; i++) {
+                assertEquals(
+                        spanBatchDerived.getBatches().get(i).timestamp(),
+                        spanBatchDerived.getBatches().get(i - 1).timestamp().add(l2BlockTime));
+            }
+
+            for (int i = 0; i < blockCount; i++) {
+                assertEquals(
+                        spanBatchDerived.getBatches().get(i).epochNum(),
+                        singularBatches1.get(i).epochNum());
+                assertEquals(
+                        spanBatchDerived.getBatches().get(i).timestamp(),
+                        singularBatches1.get(i).timestamp());
+                assertEquals(
+                        spanBatchDerived.getBatches().get(i).transactions(),
+                        singularBatches1.get(i).transactions());
+            }
+        }
     }
 
     @Test
