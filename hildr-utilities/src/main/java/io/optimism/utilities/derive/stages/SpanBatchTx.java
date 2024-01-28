@@ -241,14 +241,13 @@ public class SpanBatchTx {
 
     private static Pair<Byte, Boolean> getRecId(BigInteger chainId, BigInteger v) {
         byte recId;
-        boolean protectedTx;
+        boolean protectedTx = true;
         if (v.equals(REPLAY_UNPROTECTED_V_BASE) || v.equals(REPLAY_UNPROTECTED_V_BASE_PLUS_1)) {
             recId = v.subtract(REPLAY_UNPROTECTED_V_BASE).byteValueExact();
             protectedTx = false;
         } else if (v.compareTo(REPLAY_PROTECTED_V_MIN) > 0) {
             recId = v.subtract(TWO.multiply(chainId).add(REPLAY_PROTECTED_V_BASE))
                     .byteValueExact();
-            protectedTx = true;
         } else {
             throw new RuntimeException(String.format("An unsupported encoded `v` value of %s was found", v));
         }
