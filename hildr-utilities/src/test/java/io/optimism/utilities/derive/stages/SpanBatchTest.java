@@ -49,7 +49,9 @@ class SpanBatchTest {
 
         SpanBatch spanBatch = SpanBatch.newSpanBatch(singularBatches1);
         assertEquals(spanBatch.getBatchType(), BatchType.SPAN_BATCH_TYPE);
-        assertEquals(spanBatch.getTimestamp(), singularBatches1.getFirst().getTimestamp());
+        assertEquals(
+                spanBatch.getTimestamp(BigInteger.ZERO),
+                singularBatches1.getFirst().getTimestamp(BigInteger.ZERO));
         assertEquals(spanBatch.getStartEpochNum(), singularBatches1.getFirst().getEpochNum());
 
         assertTrue(spanBatch.checkOriginHash(
