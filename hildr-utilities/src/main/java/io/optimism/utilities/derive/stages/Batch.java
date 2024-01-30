@@ -18,6 +18,7 @@ public record Batch(IBatch batch, BigInteger l1InclusionBlock) {
     /**
      * Gets timestamp.
      *
+     * @param l2genesisTimestamp L2 genesis timestamp
      * @return the timestamp
      */
     public BigInteger timestamp(BigInteger l2genesisTimestamp) {

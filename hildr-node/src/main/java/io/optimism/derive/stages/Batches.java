@@ -351,7 +351,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
             return BatchStatus.Undecided;
         }
         if (batchOrigin.timestamp().compareTo(this.config.chainConfig().deltaTime()) < 0) {
-            LOGGER.warn("epoch start time is before delta activation: epochStartTime=%d".formatted(batchOrigin.timestamp()));
+            LOGGER.warn("epoch start time is before delta activation: epochStartTime=%d"
+                    .formatted(batchOrigin.timestamp()));
             return BatchStatus.Drop;
         }
 
@@ -367,8 +368,13 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         final var prevL2Block = prevL2Info.component1();
         final var prevL2Epoch = prevL2Info.component2();
         // check that block builds on existing chain
-        if (!rawSpanBatch.spanbatchPrefix().parentCheck().toHexString().equalsIgnoreCase(prevL2Block.hash())) {
-            LOGGER.warn("batch parent check failed");
+        final String spanBatchParentCheck =
+                rawSpanBatch.spanbatchPrefix().parentCheck().toHexString();
+        if (!spanBatchParentCheck.equalsIgnoreCase(prevL2Block.hash())) {
+            LOGGER.warn(
+                    "batch parent check failed: batchParent={}; prevL2BlockHash={}",
+                    spanBatchParentCheck,
+                    prevL2Block.hash());
             return BatchStatus.Drop;
         }
 
