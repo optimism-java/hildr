@@ -101,15 +101,16 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         while (true) {
             if (this.batches.firstEntry() != null) {
                 Batch batch = this.batches.firstEntry().getValue();
-                BigInteger timestamp = this.config.chainConfig().l2Genesis().timestamp();
+                BigInteger l1GenesisTimestamp =
+                        this.config.chainConfig().l2Genesis().timestamp();
                 switch (batchStatus(batch)) {
                     case Accept:
                         derivedBatch = batch;
-                        this.batches.remove(batch.timestamp(timestamp));
+                        this.batches.remove(batch.timestamp(l1GenesisTimestamp));
                         break loop;
                     case Drop:
                         LOGGER.warn("dropping invalid batch");
-                        this.batches.remove(batch.timestamp(timestamp));
+                        this.batches.remove(batch.timestamp(l1GenesisTimestamp));
                         continue;
                     case Future, Undecided:
                         break loop;
@@ -484,7 +485,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
      * @return the list that inner batch data was singular batch
      */
     public List<Batch> getSingularBatches(final IBatch batch, final State state) {
-        Function<SingularBatch, Batch> f = singularBatch -> new Batch(batch, state.getCurrentEpochNum());
+        Function<SingularBatch, Batch> f = singularBatch -> new Batch(singularBatch, state.getCurrentEpochNum());
         if (batch instanceof SingularBatch typedBatch) {
             return List.of(f.apply(typedBatch));
         } else if (batch instanceof RawSpanBatch typedBatch) {
@@ -505,11 +506,11 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 continue;
             }
             SingularBatch singularBatch = new SingularBatch();
-            singularBatch.setEpochNum(singularBatch.epochNum());
-            singularBatch.setTimestamp(singularBatch.timestamp());
-            singularBatch.setTransactions(singularBatch.transactions());
+            singularBatch.setEpochNum(element.epochNum());
+            singularBatch.setTimestamp(element.timestamp());
+            singularBatch.setTransactions(element.transactions());
 
-            Epoch l1Origins = state.epoch(singularBatch.epochNum());
+            Epoch l1Origins = state.epoch(element.epochNum());
             if (l1Origins == null) {
                 throw new RuntimeException("cannot find origin for epochNum: %d".formatted(element.epochNum()));
             }
