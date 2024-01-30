@@ -206,8 +206,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 finalizedHead.number(),
                 config);
 
+        var l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), provider);
         AtomicReference<io.optimism.derive.State> state =
-                new AtomicReference<>(io.optimism.derive.State.create(finalizedHead, finalizedEpoch, config));
+                new AtomicReference<>(io.optimism.derive.State.create(l2Refs, finalizedHead, finalizedEpoch, config));
 
         EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, provider, config);
 

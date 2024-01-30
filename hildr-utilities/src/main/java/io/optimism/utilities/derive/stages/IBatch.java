@@ -24,5 +24,5 @@ public interface IBatch {
      *
      * @return the timestamp
      */
-    BigInteger getTimestamp();
+    BigInteger getTimestamp(BigInteger l2genesisTimestamp);
 }

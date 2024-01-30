@@ -3,11 +3,18 @@ package io.optimism.derive;
 import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
+import io.optimism.driver.HeadInfo;
 import io.optimism.l1.L1Info;
 import java.math.BigInteger;
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.StringUtils;
+import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.tuples.generated.Tuple2;
 
 /**
  * The type State.
@@ -20,6 +27,8 @@ public class State {
     private final TreeMap<String, L1Info> l1Info;
 
     private final TreeMap<BigInteger, String> l1Hashes;
+
+    private final TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs;
 
     private BlockInfo safeHead;
 
@@ -34,6 +43,7 @@ public class State {
      *
      * @param l1Info the L1 info
      * @param l1Hashes the L1 hashes
+     * @param l2Refs the L2 block info references
      * @param safeHead the safe head
      * @param safeEpoch the safe epoch
      * @param currentEpochNum the current epoch num
@@ -42,12 +52,14 @@ public class State {
     public State(
             TreeMap<String, L1Info> l1Info,
             TreeMap<BigInteger, String> l1Hashes,
+            TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs,
             BlockInfo safeHead,
             Epoch safeEpoch,
             BigInteger currentEpochNum,
             Config config) {
         this.l1Info = l1Info;
         this.l1Hashes = l1Hashes;
+        this.l2Refs = l2Refs;
         this.safeHead = safeHead;
         this.safeEpoch = safeEpoch;
         this.currentEpochNum = currentEpochNum;
@@ -57,13 +69,19 @@ public class State {
     /**
      * Create state.
      *
+     * @param l2Refs the L2 block info references
      * @param finalizedHead the finalized head
      * @param finalizedEpoch the finalized epoch
      * @param config the config
      * @return the state
      */
-    public static State create(BlockInfo finalizedHead, Epoch finalizedEpoch, Config config) {
-        return new State(new TreeMap<>(), new TreeMap<>(), finalizedHead, finalizedEpoch, BigInteger.ZERO, config);
+    public static State create(
+            TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs,
+            BlockInfo finalizedHead,
+            Epoch finalizedEpoch,
+            Config config) {
+        return new State(
+                new TreeMap<>(), new TreeMap<>(), l2Refs, finalizedHead, finalizedEpoch, BigInteger.ZERO, config);
     }
 
     /**
@@ -88,6 +106,20 @@ public class State {
             return null;
         }
         return l1Info.get(l1Hashes.get(number));
+    }
+
+    /**
+     * Gets L2 block info and epoch by block timestamp.
+     *
+     * @param timestamp the number
+     * @return the tuple of L2 block info and epoch
+     */
+    public Tuple2<BlockInfo, Epoch> l2Info(BigInteger timestamp) {
+        final BigInteger blockNum = timestamp
+                .subtract(config.chainConfig().l2Genesis().timestamp())
+                .divide(config.chainConfig().blockTime())
+                .add(config.chainConfig().l2Genesis().number());
+        return this.l2Refs.get(blockNum);
     }
 
     /**
@@ -146,6 +178,7 @@ public class State {
         this.l1Info.clear();
         this.l1Hashes.clear();
         this.currentEpochNum = BigInteger.ZERO;
+        this.updateSafeHead(safeHead, safeEpoch);
     }
 
     /**
@@ -157,6 +190,7 @@ public class State {
     public void updateSafeHead(BlockInfo safeHead, Epoch safeEpoch) {
         this.safeHead = safeHead;
         this.safeEpoch = safeEpoch;
+        this.l2Refs.put(safeHead.number(), new Tuple2<>(safeHead, safeEpoch));
     }
 
     /**
@@ -225,5 +259,63 @@ public class State {
             this.l1Info.remove(blockNumAndHash.getValue());
             this.l1Hashes.pollFirstEntry();
         }
+
+        pruneUntil = this.safeHead
+                .number()
+                .subtract(this.config
+                        .chainConfig()
+                        .maxSeqDrift()
+                        .divide(this.config.chainConfig().blockTime()));
+
+        Entry<BigInteger, Tuple2<BlockInfo, Epoch>> blockRefEntry;
+        while ((blockRefEntry = this.l2Refs.firstEntry()) != null) {
+            if (blockRefEntry.getKey().compareTo(pruneUntil) >= 0) {
+                break;
+            }
+            this.l2Refs.pollFirstEntry();
+        }
+    }
+
+    /**
+     * Init L2 refs tree map.
+     *
+     * @param headNum the l2 head block number
+     * @param chainConfig the chain config
+     * @param l2Client the l2 web3j client
+     * @return the L2 refs tree map.
+     * @throws ExecutionException throws the ExecutionException when the Task has been failed
+     * @throws InterruptedException throws the InterruptedException when the thread has been interrupted
+     */
+    public static TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> initL2Refs(
+            BigInteger headNum, Config.ChainConfig chainConfig, Web3j l2Client)
+            throws ExecutionException, InterruptedException {
+        final BigInteger lookback = chainConfig.maxSeqDrift().divide(chainConfig.blockTime());
+        BigInteger start;
+        if (headNum.compareTo(lookback) < 0) {
+            start = chainConfig.l2Genesis().number();
+        } else {
+            start = headNum.subtract(lookback).max(chainConfig.l2Genesis().number());
+        }
+        final TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs = new TreeMap<>();
+        for (BigInteger i = start; i.compareTo(headNum) <= 0; i = i.add(BigInteger.ONE)) {
+            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+                var l2Num = i;
+                var blockTask =
+                        scope.fork(() -> l2Client.ethGetBlockByNumber(DefaultBlockParameter.valueOf(l2Num), true)
+                                .send()
+                                .getBlock());
+                scope.join();
+                scope.throwIfFailed();
+                EthBlock.Block block = blockTask.get();
+                if (block == null) {
+                    continue;
+                }
+                final HeadInfo l2BlockInfo = HeadInfo.from(block);
+                l2Refs.put(
+                        l2BlockInfo.l2BlockInfo().number(),
+                        new Tuple2<>(l2BlockInfo.l2BlockInfo(), l2BlockInfo.l1Epoch()));
+            }
+        }
+        return l2Refs;
     }
 }

@@ -9,6 +9,7 @@ import io.optimism.derive.State;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
 import io.optimism.utilities.derive.stages.Batch;
+import io.optimism.utilities.derive.stages.SingularBatch;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -78,7 +79,8 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         return batch != null ? this.deriveAttributes(batch) : null;
     }
 
-    private PayloadAttributes deriveAttributes(Batch batch) {
+    private PayloadAttributes deriveAttributes(Batch batchWrapper) {
+        SingularBatch batch = (SingularBatch) batchWrapper.batch();
         LOGGER.debug("attributes derived from block {}", batch.epochNum());
         LOGGER.debug("batch epoch hash {}", batch.epochHash());
 
@@ -91,7 +93,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
                 batch.epochNum(), batch.epochHash(), l1Info.blockInfo().timestamp());
 
         BigInteger timestamp = batch.timestamp();
-        BigInteger l1InclusionBlock = batch.l1InclusionBlock();
+        BigInteger l1InclusionBlock = batchWrapper.l1InclusionBlock();
         BigInteger seqNumber = this.sequenceNumber;
         String prevRandao = l1Info.blockInfo().mixHash();
         List<String> transactions = this.deriveTransactions(batch, l1Info);
@@ -120,7 +122,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
                 seqNumber);
     }
 
-    private List<String> deriveTransactions(Batch batch, L1Info l1Info) {
+    private List<String> deriveTransactions(SingularBatch batch, L1Info l1Info) {
         List<String> transactions = new ArrayList<>();
 
         String attributesTx = this.deriveAttributesDeposited(l1Info, batch.timestamp());

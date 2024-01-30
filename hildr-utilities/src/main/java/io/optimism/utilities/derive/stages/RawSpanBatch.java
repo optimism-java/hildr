@@ -96,8 +96,8 @@ public class RawSpanBatch implements IBatch {
     }
 
     @Override
-    public BigInteger getTimestamp() {
-        return null;
+    public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
+        return spanbatchPrefix.relTimestamp().add(l2genesisTimestamp);
     }
 
     /**

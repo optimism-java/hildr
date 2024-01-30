@@ -7,22 +7,34 @@ import io.optimism.config.Config;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.derive.stages.Channels.Channel;
+import io.optimism.l1.L1Info;
 import io.optimism.utilities.derive.stages.Batch;
+import io.optimism.utilities.derive.stages.BatchType;
+import io.optimism.utilities.derive.stages.IBatch;
+import io.optimism.utilities.derive.stages.RawSpanBatch;
+import io.optimism.utilities.derive.stages.SingularBatch;
+import io.optimism.utilities.derive.stages.SpanBatch;
+import io.optimism.utilities.derive.stages.SpanBatchElement;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import org.apache.commons.lang3.ArrayUtils;
+import org.jctools.queues.atomic.SpscAtomicArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.rlp.RlpDecoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.tuples.generated.Tuple2;
+import org.web3j.utils.Numeric;
 
 /**
  * The type Batches.
@@ -42,6 +54,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
 
     private final Config config;
 
+    private SpscAtomicArrayQueue<Batch> nextSingularBatches;
+
     /**
      * Instantiates a new Batches.
      *
@@ -55,19 +69,32 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         this.channelIterator = channelIterator;
         this.state = state;
         this.config = config;
+        this.nextSingularBatches = new SpscAtomicArrayQueue<>(1024);
     }
 
     @Override
     public void purge() {
         this.channelIterator.purge();
         this.batches.clear();
+        this.nextSingularBatches.clear();
     }
 
     @Override
     public Batch next() {
+        final var nextBatch = nextSingularBatches.poll();
+        if (nextBatch != null) {
+            return nextBatch;
+        }
         Channel channel = this.channelIterator.next();
         if (channel != null) {
-            decodeBatches(channel).forEach(batch -> this.batches.put(batch.timestamp(), batch));
+            decodeBatches(channel)
+                    .forEach(batch -> this.batches.put(
+                            batch.batch()
+                                    .getTimestamp(this.config
+                                            .chainConfig()
+                                            .l2Genesis()
+                                            .timestamp()),
+                            batch));
         }
 
         Batch derivedBatch = null;
@@ -75,14 +102,15 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         while (true) {
             if (this.batches.firstEntry() != null) {
                 Batch batch = this.batches.firstEntry().getValue();
+                BigInteger timestamp = this.config.chainConfig().l2Genesis().timestamp();
                 switch (batchStatus(batch)) {
                     case Accept:
                         derivedBatch = batch;
-                        this.batches.remove(batch.timestamp());
+                        this.batches.remove(batch.timestamp(timestamp));
                         break loop;
                     case Drop:
                         LOGGER.warn("dropping invalid batch");
-                        this.batches.remove(batch.timestamp());
+                        this.batches.remove(batch.timestamp(timestamp));
                         continue;
                     case Future, Undecided:
                         break loop;
@@ -96,32 +124,31 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
 
         Batch batch = null;
         if (derivedBatch != null) {
-            batch = derivedBatch;
-        } else {
-            State state = this.state.get();
-
-            BigInteger currentL1Block = state.getCurrentEpochNum();
-            BlockInfo safeHead = state.getSafeHead();
-            Epoch epoch = state.getSafeEpoch();
-            Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
-            BigInteger seqWindowSize = this.config.chainConfig().seqWindowSize();
-
-            if (nextEpoch != null) {
-                if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
-                    BigInteger nextTimestamp =
-                            safeHead.timestamp().add(this.config.chainConfig().blockTime());
-                    Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
-                    batch = new Batch(
-                            safeHead.parentHash(),
-                            epochRes.number(),
-                            epochRes.hash(),
-                            nextTimestamp,
-                            Lists.newArrayList(),
-                            currentL1Block);
-                }
+            List<Batch> singularBatches = this.getSingularBatches(derivedBatch.batch(), this.state.get());
+            if (singularBatches.size() != 0) {
+                this.nextSingularBatches.addAll(singularBatches);
+                return this.nextSingularBatches.poll();
             }
         }
 
+        State state = this.state.get();
+
+        BigInteger currentL1Block = state.getCurrentEpochNum();
+        BlockInfo safeHead = state.getSafeHead();
+        Epoch epoch = state.getSafeEpoch();
+        Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
+        BigInteger seqWindowSize = this.config.chainConfig().seqWindowSize();
+
+        if (nextEpoch != null) {
+            if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
+                BigInteger nextTimestamp =
+                        safeHead.timestamp().add(this.config.chainConfig().blockTime());
+                Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
+                var singularBatch = new SingularBatch(
+                        safeHead.parentHash(), epochRes.number(), epochRes.hash(), nextTimestamp, Lists.newArrayList());
+                batch = new Batch(singularBatch, currentL1Block);
+            }
+        }
         return batch;
     }
 
@@ -136,11 +163,19 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         List<RlpType> batches = RlpDecoder.decode(channelData).getValues();
         return batches.stream()
                 .map(rlpType -> {
-                    byte[] batchData = ArrayUtils.subarray(
-                            ((RlpString) rlpType).getBytes(), 1, ((RlpString) rlpType).getBytes().length);
-                    RlpList rlpBatchData =
-                            (RlpList) RlpDecoder.decode(batchData).getValues().getFirst();
-                    return Batch.decode(rlpBatchData, channel.l1InclusionBlock());
+                    byte[] buffer = ((RlpString) rlpType).getBytes();
+                    byte batchType = buffer[0];
+                    byte[] batchData = ArrayUtils.subarray(buffer, 1, buffer.length);
+
+                    if (BatchType.SPAN_BATCH_TYPE.getCode() == ((int) batchType)) {
+                        return Batch.decodeRawSpanBatch(batchData, channel.l1InclusionBlock());
+                    } else if (BatchType.SINGULAR_BATCH_TYPE.getCode() == ((int) batchType)) {
+                        RlpList rlpBatchData = (RlpList)
+                                RlpDecoder.decode(batchData).getValues().getFirst();
+                        return Batch.decodeSingularBatch(rlpBatchData, channel.l1InclusionBlock());
+                    } else {
+                        throw new IllegalArgumentException("invalid batch type");
+                    }
                 })
                 .collect(Collectors.toList());
     }
@@ -153,6 +188,9 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
             byte[] buffer = new byte[1024];
             while (!inflater.finished()) {
                 int count = inflater.inflate(buffer);
+                if (count == 0) {
+                    break;
+                }
                 outputStream.write(buffer, 0, count);
             }
 
@@ -163,7 +201,18 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
     }
 
     @SuppressWarnings("WhitespaceAround")
-    private BatchStatus batchStatus(Batch batch) {
+    private BatchStatus batchStatus(final Batch batch) {
+        if (batch.batch() instanceof SingularBatch) {
+            return singularBatchStatus(batch);
+        } else if (batch.batch() instanceof RawSpanBatch) {
+            return spanBatchStatus(batch);
+        } else {
+            throw new IllegalStateException("unknown batch type");
+        }
+    }
+
+    private BatchStatus singularBatchStatus(final Batch batchWrapper) {
+        final SingularBatch batch = (SingularBatch) batchWrapper.batch();
         State state = this.state.get();
         Epoch epoch = state.getSafeEpoch();
         Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
@@ -172,7 +221,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 head.timestamp().add(this.config.chainConfig().blockTime());
 
         // check timestamp range
-        switch (batch.timestamp().compareTo(nextTimestamp)) {
+        switch (batch.getTimestamp(this.config.chainConfig().l2Genesis().timestamp())
+                .compareTo(nextTimestamp)) {
             case 1 -> {
                 return BatchStatus.Future;
             }
@@ -189,7 +239,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
 
         // check the inclusion delay
-        if (batch.epochNum().add(this.config.chainConfig().seqWindowSize()).compareTo(batch.l1InclusionBlock()) < 0) {
+        if (batch.epochNum().add(this.config.chainConfig().seqWindowSize()).compareTo(batchWrapper.l1InclusionBlock())
+                < 0) {
             LOGGER.warn("inclusion window elapsed");
             return BatchStatus.Drop;
         }
@@ -250,6 +301,211 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
 
         return BatchStatus.Accept;
+    }
+
+    private BatchStatus spanBatchStatus(final Batch batchWrapper) {
+        final RawSpanBatch rawSpanBatch = (RawSpanBatch) batchWrapper.batch();
+        final SpanBatch spanBatch = rawSpanBatch.toSpanBatch(
+                this.config.chainConfig().blockTime(),
+                this.config.chainConfig().l2Genesis().timestamp(),
+                this.config.chainConfig().l2ChainId());
+        final State state = this.state.get();
+        final Epoch epoch = state.getSafeEpoch();
+        final Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
+        final BlockInfo l2SafeHead = state.getSafeHead();
+        final BigInteger nextTimestamp =
+                l2SafeHead.timestamp().add(this.config.chainConfig().blockTime());
+
+        BigInteger originBits = rawSpanBatch.spanbatchPayload().originBits();
+
+        final BigInteger startEpochNum = rawSpanBatch
+                .spanbatchPrefix()
+                .l1OriginNum()
+                .subtract(originBits)
+                .add(originBits.testBit(0) ? BigInteger.ONE : BigInteger.ZERO);
+        final BigInteger endEpochNum =
+                Numeric.toBigInt(rawSpanBatch.spanbatchPrefix().encodeL1OriginNum());
+
+        final BigInteger spanStartTimestamp = rawSpanBatch
+                .spanbatchPrefix()
+                .relTimestamp()
+                .add(this.config.chainConfig().l2Genesis().timestamp());
+        final BigInteger spanEndTimestamp = spanStartTimestamp.add(
+                BigInteger.valueOf(rawSpanBatch.spanbatchPayload().blockCount())
+                        .multiply(this.config.chainConfig().blockTime()));
+
+        // check batch timestamp
+        if (spanEndTimestamp.compareTo(nextTimestamp) < 0) {
+            LOGGER.warn("past batch");
+            return BatchStatus.Drop;
+        }
+        if (spanStartTimestamp.compareTo(nextTimestamp) > 0) {
+            return BatchStatus.Future;
+        }
+
+        // check for delta activation
+        // startEpoch == (safeEpoch.number + 1)
+        final Epoch batchOrigin = startEpochNum.compareTo(epoch.number().add(BigInteger.ONE)) == 0 ? nextEpoch : epoch;
+
+        if (batchOrigin == null) {
+            return BatchStatus.Undecided;
+        }
+        if (batchOrigin.timestamp().compareTo(this.config.chainConfig().deltaTime()) < 0) {
+            LOGGER.warn("epoch start time is before delta activation: epochStartTime=%d".formatted(batchOrigin.timestamp()));
+            return BatchStatus.Drop;
+        }
+
+        // find previous l2 block
+        final BigInteger prevTimestamp =
+                spanStartTimestamp.subtract(this.config.chainConfig().blockTime());
+        final var prevL2Info = state.l2Info(prevTimestamp);
+        if (prevL2Info == null) {
+            LOGGER.warn("previous l2 block not found: %d".formatted(prevTimestamp));
+            return BatchStatus.Drop;
+        }
+
+        final var prevL2Block = prevL2Info.component1();
+        final var prevL2Epoch = prevL2Info.component2();
+        // check that block builds on existing chain
+        if (!rawSpanBatch.spanbatchPrefix().parentCheck().toHexString().equalsIgnoreCase(prevL2Block.hash())) {
+            LOGGER.warn("batch parent check failed");
+            return BatchStatus.Drop;
+        }
+
+        if (startEpochNum.add(this.config.chainConfig().seqWindowSize()).compareTo(batchWrapper.l1InclusionBlock())
+                < 0) {
+            LOGGER.warn("sequence window check failed");
+            return BatchStatus.Drop;
+        }
+
+        if (startEpochNum.compareTo(prevL2Block.number().add(BigInteger.ONE)) > 0) {
+            LOGGER.warn("invalid start epoch number");
+            return BatchStatus.Drop;
+        }
+
+        final Epoch l1Origin = state.epoch(endEpochNum);
+        if (l1Origin == null) {
+            LOGGER.warn("l1 origin not found");
+            return BatchStatus.Drop;
+        }
+        if (rawSpanBatch.spanbatchPrefix().l1OriginCheck().toHexString().equalsIgnoreCase(l1Origin.hash())) {
+            LOGGER.warn("l1 origin check failed");
+            return BatchStatus.Drop;
+        }
+
+        if (startEpochNum.compareTo(prevL2Epoch.number()) < 0) {
+            LOGGER.warn("invalid start epoch number");
+            return BatchStatus.Drop;
+        }
+
+        // check sequencer drift
+        final int blockCount = (int) rawSpanBatch.spanbatchPayload().blockCount();
+        for (int i = 0; i < blockCount; i++) {
+            final var blockTimestamp = spanBatch.getBlockTimestamp(i);
+            if (blockTimestamp.compareTo(l2SafeHead.timestamp()) <= 0) {
+                continue;
+            }
+            final BigInteger l1OriginNum = spanBatch.getBlockEpochNum(i);
+            final L1Info batchL1Origin = state.l1Info(l1OriginNum);
+            if (batchL1Origin == null) {
+                LOGGER.warn("l1 origin not found");
+                return BatchStatus.Drop;
+            }
+            if (blockTimestamp.compareTo(batchL1Origin.blockInfo().timestamp()) < 0) {
+                LOGGER.warn("block timestamp is less than L1 origin timestamp");
+                return BatchStatus.Drop;
+            }
+            final var max = batchL1Origin
+                    .blockInfo()
+                    .timestamp()
+                    .add(this.config.chainConfig().maxSeqDrift());
+            if (blockTimestamp.compareTo(max) > 0) {
+                if (!spanBatch.getBlockTransactions(i).isEmpty()) {
+                    LOGGER.warn(String.format(
+                            "batch exceeded sequencer time drift, sequencer must adopt new L1 origin to include transactions again: max=%d",
+                            max));
+                    return BatchStatus.Drop;
+                }
+                if (!rawSpanBatch.spanbatchPayload().originBits().testBit(i)) {
+                    var batchNextEpoch = state.l1Info(l1OriginNum.add(BigInteger.ONE));
+                    if (batchNextEpoch != null) {
+                        if (blockTimestamp.compareTo(batchNextEpoch.blockInfo().timestamp()) >= 0) {
+                            LOGGER.warn(
+                                    "batch exceeded sequencer time drift without adopting next origin, and next L1 origin would have been valid");
+                            return BatchStatus.Drop;
+                        }
+                    } else {
+                        return BatchStatus.Undecided;
+                    }
+                }
+            }
+
+            if (spanBatch.hasInvalidTransactions(i)) {
+                LOGGER.warn(String.format("invalid transaction: empty or deposits into batch data: txIndex=%d", i));
+                return BatchStatus.Drop;
+            }
+        }
+
+        // overlapped block checks
+        for (SpanBatchElement element : spanBatch.getBatches()) {
+            if (element.timestamp().compareTo(nextTimestamp) >= 0) {
+                continue;
+            }
+            Tuple2<BlockInfo, Epoch> info = state.l2Info(element.timestamp());
+            if (info == null) {
+                LOGGER.warn("overlapped l2 block not found");
+                return BatchStatus.Drop;
+            }
+
+            if (element.epochNum().compareTo(info.component2().number()) != 0) {
+                LOGGER.warn("epoch mismatch in overlapped blocks");
+                return BatchStatus.Drop;
+            }
+        }
+        return BatchStatus.Accept;
+    }
+
+    /**
+     * Gets singular batche list from IBatch instance.
+     *
+     * @param batch IBatch instance
+     * @param state the state
+     * @return the list that inner batch data was singular batch
+     */
+    public List<Batch> getSingularBatches(final IBatch batch, final State state) {
+        Function<SingularBatch, Batch> f = singularBatch -> new Batch(batch, state.getCurrentEpochNum());
+        if (batch instanceof SingularBatch typedBatch) {
+            return List.of(f.apply(typedBatch));
+        } else if (batch instanceof RawSpanBatch typedBatch) {
+            SpanBatch spanBatch = typedBatch.toSpanBatch(
+                    this.config.chainConfig().blockTime(),
+                    this.config.chainConfig().l2Genesis().timestamp(),
+                    this.config.chainConfig().l2ChainId());
+            return this.toSingularBatches(spanBatch, state).stream().map(f).collect(Collectors.toList());
+        } else {
+            throw new IllegalStateException("unknown batch type");
+        }
+    }
+
+    private List<SingularBatch> toSingularBatches(final SpanBatch batch, final State state) {
+        List<SingularBatch> singularBatches = new ArrayList<>();
+        for (SpanBatchElement element : batch.getBatches()) {
+            if (element.timestamp().compareTo(state.getSafeHead().timestamp()) <= 0) {
+                continue;
+            }
+            SingularBatch singularBatch = new SingularBatch();
+            singularBatch.setEpochNum(singularBatch.epochNum());
+            singularBatch.setTimestamp(singularBatch.timestamp());
+            singularBatch.setTransactions(singularBatch.transactions());
+
+            Epoch l1Origins = state.epoch(singularBatch.epochNum());
+            if (l1Origins == null) {
+                throw new RuntimeException("cannot find origin for epochNum: %d".formatted(element.epochNum()));
+            }
+            singularBatch.setEpochHash(state.epoch(singularBatch.epochNum()).hash());
+            singularBatches.add(singularBatch);
+        }
+        return singularBatches;
     }
 
     /**
