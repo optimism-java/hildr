@@ -19,7 +19,6 @@ import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.ServerWebSocket;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -68,7 +67,6 @@ public class RpcServer {
     /** Start. */
     public void start() {
         this.httpServer = vertx.createHttpServer(getHttpServerOptions(config));
-        httpServer.webSocketHandler(webSocketHandler());
         httpServer.connectionHandler(connectionHandler());
 
         CompletableFuture<Void> future = new CompletableFuture<>();
@@ -131,11 +129,6 @@ public class RpcServer {
                     activeConnectionsCount.decrementAndGet(),
                     maxActiveConnections));
         };
-    }
-
-    private Handler<ServerWebSocket> webSocketHandler() {
-        Handler<ServerWebSocket> o = null;
-        return o;
     }
 
     private HttpServerOptions getHttpServerOptions(final Config config) {
