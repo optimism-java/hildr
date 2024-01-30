@@ -18,11 +18,10 @@ public record Batch(IBatch batch, BigInteger l1InclusionBlock) {
     /**
      * Gets timestamp.
      *
-     * @param l2genesisTimestamp L2 genesis timestamp
      * @return the timestamp
      */
-    public BigInteger timestamp(BigInteger l2genesisTimestamp) {
-        return batch.getTimestamp(l2genesisTimestamp);
+    public BigInteger timestamp() {
+        return batch.getTimestamp();
     }
 
     /**
@@ -59,12 +58,21 @@ public record Batch(IBatch batch, BigInteger l1InclusionBlock) {
      * Decode span batch.
      *
      * @param buf the span batch encoded bytes
+     * @param blockTime the block time
+     * @param l2genesisTimestamp L2 genesis timestamp
+     * @param l2ChainId the L2 chain id
      * @param l1InclusionBlock L1 inclusion block
      * @return the batch
      */
-    public static Batch decodeRawSpanBatch(final byte[] buf, final BigInteger l1InclusionBlock) {
+    public static Batch decodeRawSpanBatch(
+            final byte[] buf,
+            final BigInteger blockTime,
+            final BigInteger l2genesisTimestamp,
+            final BigInteger l2ChainId,
+            final BigInteger l1InclusionBlock) {
         final RawSpanBatch rawSpanBatch = new RawSpanBatch();
         rawSpanBatch.decode(Unpooled.wrappedBuffer(buf));
-        return new Batch(rawSpanBatch, l1InclusionBlock);
+        final SpanBatch spanBatch = rawSpanBatch.toSpanBatch(blockTime, l2genesisTimestamp, l2ChainId);
+        return new Batch(spanBatch, l1InclusionBlock);
     }
 }

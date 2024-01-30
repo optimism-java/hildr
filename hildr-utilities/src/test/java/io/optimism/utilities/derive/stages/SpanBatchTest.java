@@ -49,15 +49,13 @@ class SpanBatchTest {
 
         SpanBatch spanBatch = SpanBatch.newSpanBatch(singularBatches1);
         assertEquals(spanBatch.getBatchType(), BatchType.SPAN_BATCH_TYPE);
-        assertEquals(
-                spanBatch.getTimestamp(BigInteger.ZERO),
-                singularBatches1.getFirst().getTimestamp(BigInteger.ZERO));
+        assertEquals(spanBatch.getTimestamp(), singularBatches1.getFirst().getTimestamp());
         assertEquals(spanBatch.getStartEpochNum(), singularBatches1.getFirst().getEpochNum());
 
         assertTrue(spanBatch.checkOriginHash(
-                Bytes.fromHexString(singularBatches1.getLast().epochHash().substring(0, 40))));
+                Bytes.fromHexString(singularBatches1.getLast().epochHash())));
         assertTrue(spanBatch.checkParentHash(
-                Bytes.fromHexString(singularBatches1.getFirst().parentHash().substring(0, 40))));
+                Bytes.fromHexString(singularBatches1.getFirst().parentHash())));
     }
 
     /**

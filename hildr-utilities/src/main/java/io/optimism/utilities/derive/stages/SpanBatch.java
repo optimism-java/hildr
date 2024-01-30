@@ -99,7 +99,7 @@ public class SpanBatch implements IBatch {
     }
 
     @Override
-    public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
+    public BigInteger getTimestamp() {
         return batches.getFirst().timestamp();
     }
 
@@ -119,7 +119,7 @@ public class SpanBatch implements IBatch {
      * @return boolean. boolean
      */
     public boolean checkOriginHash(Bytes hash) {
-        return this.l1OriginCheck.equals(hash);
+        return this.l1OriginCheck.equals(hash.slice(0, this.l1OriginCheck.size()));
     }
 
     /**
@@ -129,7 +129,7 @@ public class SpanBatch implements IBatch {
      * @return boolean. boolean
      */
     public boolean checkParentHash(Bytes hash) {
-        return this.parentCheck.equals(hash);
+        return this.parentCheck.equals(hash.slice(0, this.parentCheck.size()));
     }
 
     /**

@@ -11,7 +11,6 @@ import io.optimism.l1.L1Info;
 import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.BatchType;
 import io.optimism.utilities.derive.stages.IBatch;
-import io.optimism.utilities.derive.stages.RawSpanBatch;
 import io.optimism.utilities.derive.stages.SingularBatch;
 import io.optimism.utilities.derive.stages.SpanBatch;
 import io.optimism.utilities.derive.stages.SpanBatchElement;
@@ -26,6 +25,7 @@ import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.tuweni.bytes.Bytes;
 import org.jctools.queues.atomic.SpscAtomicArrayQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +68,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         this.channelIterator = channelIterator;
         this.state = state;
         this.config = config;
-        this.nextSingularBatches = new SpscAtomicArrayQueue<>(1024);
+        this.nextSingularBatches = new SpscAtomicArrayQueue<>(1024 * 64);
     }
 
     @Override
@@ -86,14 +86,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
         Channel channel = this.channelIterator.next();
         if (channel != null) {
-            decodeBatches(channel)
-                    .forEach(batch -> this.batches.put(
-                            batch.batch()
-                                    .getTimestamp(this.config
-                                            .chainConfig()
-                                            .l2Genesis()
-                                            .timestamp()),
-                            batch));
+            decodeBatches(this.config.chainConfig(), channel)
+                    .forEach(batch -> this.batches.put(batch.batch().getTimestamp(), batch));
         }
 
         Batch derivedBatch = null;
@@ -101,16 +95,14 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         while (true) {
             if (this.batches.firstEntry() != null) {
                 Batch batch = this.batches.firstEntry().getValue();
-                BigInteger l1GenesisTimestamp =
-                        this.config.chainConfig().l2Genesis().timestamp();
                 switch (batchStatus(batch)) {
                     case Accept:
                         derivedBatch = batch;
-                        this.batches.remove(batch.timestamp(l1GenesisTimestamp));
+                        this.batches.remove(batch.timestamp());
                         break loop;
                     case Drop:
                         LOGGER.warn("dropping invalid batch");
-                        this.batches.remove(batch.timestamp(l1GenesisTimestamp));
+                        this.batches.remove(batch.timestamp());
                         continue;
                     case Future, Undecided:
                         break loop;
@@ -158,7 +150,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
      * @param channel the channel
      * @return the list
      */
-    public static List<Batch> decodeBatches(Channel channel) {
+    public static List<Batch> decodeBatches(final Config.ChainConfig chainConfig, final Channel channel) {
         byte[] channelData = decompressZlib(channel.data());
         List<RlpType> batches = RlpDecoder.decode(channelData).getValues();
         return batches.stream()
@@ -168,7 +160,12 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                     byte[] batchData = ArrayUtils.subarray(buffer, 1, buffer.length);
 
                     if (BatchType.SPAN_BATCH_TYPE.getCode() == ((int) batchType)) {
-                        return Batch.decodeRawSpanBatch(batchData, channel.l1InclusionBlock());
+                        return Batch.decodeRawSpanBatch(
+                                batchData,
+                                chainConfig.blockTime(),
+                                chainConfig.l2Genesis().timestamp(),
+                                chainConfig.l2ChainId(),
+                                channel.l1InclusionBlock());
                     } else if (BatchType.SINGULAR_BATCH_TYPE.getCode() == ((int) batchType)) {
                         RlpList rlpBatchData = (RlpList)
                                 RlpDecoder.decode(batchData).getValues().getFirst();
@@ -204,7 +201,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
     private BatchStatus batchStatus(final Batch batch) {
         if (batch.batch() instanceof SingularBatch) {
             return singularBatchStatus(batch);
-        } else if (batch.batch() instanceof RawSpanBatch) {
+        } else if (batch.batch() instanceof SpanBatch) {
             return spanBatchStatus(batch);
         } else {
             throw new IllegalStateException("unknown batch type");
@@ -221,8 +218,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 head.timestamp().add(this.config.chainConfig().blockTime());
 
         // check timestamp range
-        switch (batch.getTimestamp(this.config.chainConfig().l2Genesis().timestamp())
-                .compareTo(nextTimestamp)) {
+        switch (batch.getTimestamp().compareTo(nextTimestamp)) {
             case 1 -> {
                 return BatchStatus.Future;
             }
@@ -304,11 +300,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
     }
 
     private BatchStatus spanBatchStatus(final Batch batchWrapper) {
-        final RawSpanBatch rawSpanBatch = (RawSpanBatch) batchWrapper.batch();
-        final SpanBatch spanBatch = rawSpanBatch.toSpanBatch(
-                this.config.chainConfig().blockTime(),
-                this.config.chainConfig().l2Genesis().timestamp(),
-                this.config.chainConfig().l2ChainId());
+        final SpanBatch spanBatch = (SpanBatch) batchWrapper.batch();
         final State state = this.state.get();
         final Epoch epoch = state.getSafeEpoch();
         final Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
@@ -316,22 +308,11 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         final BigInteger nextTimestamp =
                 l2SafeHead.timestamp().add(this.config.chainConfig().blockTime());
 
-        BigInteger originBits = rawSpanBatch.spanbatchPayload().originBits();
+        final BigInteger startEpochNum = spanBatch.getStartEpochNum();
+        final BigInteger endEpochNum = spanBatch.getBlockEpochNum(spanBatch.getBlockCount() - 1);
 
-        final BigInteger startEpochNum = rawSpanBatch
-                .spanbatchPrefix()
-                .l1OriginNum()
-                .subtract(BigInteger.valueOf(originBits.bitCount()))
-                .add(originBits.testBit(0) ? BigInteger.ONE : BigInteger.ZERO);
-        final BigInteger endEpochNum = rawSpanBatch.spanbatchPrefix().l1OriginNum();
-
-        final BigInteger spanStartTimestamp = rawSpanBatch
-                .spanbatchPrefix()
-                .relTimestamp()
-                .add(this.config.chainConfig().l2Genesis().timestamp());
-        final BigInteger spanEndTimestamp = spanStartTimestamp.add(
-                BigInteger.valueOf(rawSpanBatch.spanbatchPayload().blockCount())
-                        .multiply(this.config.chainConfig().blockTime()));
+        final BigInteger spanStartTimestamp = spanBatch.getTimestamp();
+        final BigInteger spanEndTimestamp = spanBatch.getBlockTimestamp(spanBatch.getBlockCount() - 1);
 
         // check batch timestamp
         if (spanEndTimestamp.compareTo(nextTimestamp) < 0) {
@@ -366,11 +347,10 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
 
         final var prevL2Block = prevL2Info.component1();
         final var prevL2Epoch = prevL2Info.component2();
-        // check that block builds on existing chain
-        final String spanBatchParentCheck =
-                rawSpanBatch.spanbatchPrefix().parentCheck().toHexString();
 
-        if (!spanBatchParentCheck.equalsIgnoreCase(prevL2Block.hash().substring(0, 42))) {
+        // check that block builds on existing chain
+        final String spanBatchParentCheck = spanBatch.getParentCheck().toHexString();
+        if (!spanBatch.checkParentHash(Bytes.fromHexString(prevL2Block.hash()))) {
             LOGGER.warn(
                     "batch parent check failed: batchParent={}; prevL2BlockHash={}",
                     spanBatchParentCheck,
@@ -398,10 +378,9 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
             LOGGER.warn("l1 origin not found");
             return BatchStatus.Drop;
         }
-        final String l1OriginCheck =
-                rawSpanBatch.spanbatchPrefix().l1OriginCheck().toHexString();
-        if (!l1OriginCheck.equalsIgnoreCase(l1Origin.hash().substring(0, 42))) {
-            LOGGER.warn("l1 origin check failed");
+        final String l1OriginCheck = spanBatch.getL1OriginCheck().toHexString();
+        if (!spanBatch.checkOriginHash(Bytes.fromHexString(l1Origin.hash()))) {
+            LOGGER.warn("l1 origin check failed: l1OriginCheck={}; l1Origin={}", l1OriginCheck, l1Origin.hash());
             return BatchStatus.Drop;
         }
 
@@ -411,7 +390,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
 
         // check sequencer drift
-        final int blockCount = (int) rawSpanBatch.spanbatchPayload().blockCount();
+        final int blockCount = spanBatch.getBlockCount();
         for (int i = 0; i < blockCount; i++) {
             final var blockTimestamp = spanBatch.getBlockTimestamp(i);
             if (blockTimestamp.compareTo(l2SafeHead.timestamp()) <= 0) {
@@ -438,7 +417,14 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                             max));
                     return BatchStatus.Drop;
                 }
-                if (!rawSpanBatch.spanbatchPayload().originBits().testBit(i)) {
+                boolean originAdvanced;
+                if (i == 0) {
+                    originAdvanced = startEpochNum.compareTo(l2SafeHead.number().add(BigInteger.ONE)) == 0;
+                } else {
+                    originAdvanced = spanBatch.getBlockEpochNum(i).compareTo(spanBatch.getBlockEpochNum(i - 1)) > 0;
+                }
+
+                if (!originAdvanced) {
                     var batchNextEpoch = state.l1Info(l1OriginNum.add(BigInteger.ONE));
                     if (batchNextEpoch != null) {
                         if (blockTimestamp.compareTo(batchNextEpoch.blockInfo().timestamp()) >= 0) {
@@ -488,12 +474,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         Function<SingularBatch, Batch> f = singularBatch -> new Batch(singularBatch, state.getCurrentEpochNum());
         if (batch instanceof SingularBatch typedBatch) {
             return List.of(f.apply(typedBatch));
-        } else if (batch instanceof RawSpanBatch typedBatch) {
-            SpanBatch spanBatch = typedBatch.toSpanBatch(
-                    this.config.chainConfig().blockTime(),
-                    this.config.chainConfig().l2Genesis().timestamp(),
-                    this.config.chainConfig().l2ChainId());
-            return this.toSingularBatches(spanBatch, state).stream().map(f).collect(Collectors.toList());
+        } else if (batch instanceof SpanBatch typedBatch) {
+            return this.toSingularBatches(typedBatch, state).stream().map(f).collect(Collectors.toList());
         } else {
             throw new IllegalStateException("unknown batch type");
         }
