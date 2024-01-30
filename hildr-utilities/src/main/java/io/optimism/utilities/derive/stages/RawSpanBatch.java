@@ -13,7 +13,7 @@ import org.web3j.utils.Numeric;
  * @author grapebaba
  * @since 0.2.4
  */
-public class RawSpanBatch implements IBatch {
+public class RawSpanBatch {
     private SpanBatchPrefix spanbatchPrefix;
     private SpanBatchPayload spanbatchPayload;
 
@@ -90,12 +90,11 @@ public class RawSpanBatch implements IBatch {
         return "RawSpanBatch[spanbatchPrefix=%s, spanbatchPayload=%s]".formatted(spanbatchPrefix, spanbatchPayload);
     }
 
-    @Override
-    public BatchType getBatchType() {
-        return BatchType.SPAN_BATCH_TYPE;
-    }
-
-    @Override
+    /**
+     * Gets span batch timestamp
+     * @param l2genesisTimestamp l2 genesis timestamp
+     * @return the span batch timestamp
+     */
     public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
         return spanbatchPrefix.relTimestamp().add(l2genesisTimestamp);
     }

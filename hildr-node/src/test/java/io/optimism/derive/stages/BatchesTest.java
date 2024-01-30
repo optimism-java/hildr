@@ -7,7 +7,6 @@ import io.optimism.config.Config;
 import io.optimism.derive.stages.Channels.Channel;
 import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.Frame;
-import io.optimism.utilities.derive.stages.RawSpanBatch;
 import io.optimism.utilities.derive.stages.SingularBatch;
 import io.optimism.utilities.derive.stages.SpanBatch;
 import java.math.BigInteger;
@@ -134,7 +133,7 @@ class BatchesTest {
                 + "4c665ca197cebff1c90e5484cc8a6cb2c5b1badab35aefa35c1384f0bb64"
                 + "59061ad574c2f37f8bbbd2e8dff5f27f020000ffff8db46838";
         Channel channel = new Channel(BigInteger.ONE, Hex.decode(data), BigInteger.ONE);
-        List<Batch> batches = Batches.decodeBatches(channel);
+        List<Batch> batches = Batches.decodeBatches(Config.ChainConfig.optimismSepolia(), channel);
 
         assertEquals(6, batches.size());
         assertEquals(
@@ -167,22 +166,20 @@ class BatchesTest {
 
         assertArrayEquals(channel.data(), parseChannel.data());
 
-        List<Batch> batches = Batches.decodeBatches(channel);
+        final Config.ChainConfig chainConfig = Config.ChainConfig.optimismSepolia();
+        List<Batch> batches = Batches.decodeBatches(chainConfig, channel);
         assertEquals(1, batches.size());
 
-        final Config.ChainConfig chainConfig = Config.ChainConfig.optimismSepolia();
-        final var batch = (RawSpanBatch) batches.get(0).batch();
+        final var batch = (SpanBatch) batches.get(0).batch();
 
-        final SpanBatch spanBatch = batch.toSpanBatch(
-                chainConfig.blockTime(), chainConfig.l2Genesis().timestamp(), chainConfig.l2ChainId());
-        long blockTxCountsSum = spanBatch.getBatches().stream()
+        long blockTxCountsSum = batch.getBatches().stream()
                 .mapToLong(e -> e.transactions().size())
                 .sum();
         assertEquals(9, blockTxCountsSum);
 
         assertEquals(BigInteger.ZERO, batches.get(0).l1InclusionBlock());
 
-        spanBatch.getBatches().forEach(element -> {
+        batch.getBatches().forEach(element -> {
             BigInteger unusedBlockNum = element.timestamp()
                     .subtract(chainConfig.l2Genesis().timestamp())
                     .divide(BigInteger.TWO);
@@ -195,13 +192,5 @@ class BatchesTest {
                 System.out.println(Numeric.toHexString(hash));
             });
         });
-    }
-
-    @Test
-    void testSub() {
-        String s1 = "0xe0bc110ffac850cd0de7fe2b110eb717a68a9799";
-        String s2 = "0xe0bc110ffac850cd0de7fe2b110eb717a68a9799797fd99cd89bf1b155a7aac2";
-        String s3 = s2.substring(0, 42);
-        assertEquals(s1, s3);
     }
 }

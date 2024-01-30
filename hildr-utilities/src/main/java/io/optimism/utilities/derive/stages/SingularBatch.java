@@ -98,7 +98,7 @@ public class SingularBatch implements IBatch {
     }
 
     @Override
-    public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
+    public BigInteger getTimestamp() {
         return timestamp();
     }
 
