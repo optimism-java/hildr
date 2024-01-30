@@ -6,8 +6,8 @@ import io.optimism.batcher.exception.UnsupportedException;
 import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockInfo;
-import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.Frame;
+import io.optimism.utilities.derive.stages.SingularBatch;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -106,9 +106,9 @@ public class ChannelImpl implements Channel {
         if (this.isClose) {
             throw new ChannelException("channel already closed");
         }
-        final Tuple2<L1BlockInfo, Batch> l1InfoAndBatch = this.blockToBatch(block);
+        final Tuple2<L1BlockInfo, SingularBatch> l1InfoAndBatch = this.blockToBatch(block);
         final L1BlockInfo l1Info = l1InfoAndBatch.component1();
-        final Batch batch = l1InfoAndBatch.component2();
+        final SingularBatch batch = l1InfoAndBatch.component2();
         try {
             this.addBatch(batch);
             this.blocks.add(block);
@@ -286,7 +286,7 @@ public class ChannelImpl implements Channel {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private Tuple2<L1BlockInfo, Batch> blockToBatch(EthBlock.Block block) {
+    private Tuple2<L1BlockInfo, SingularBatch> blockToBatch(EthBlock.Block block) {
         final List<EthBlock.TransactionResult> blockTxs = block.getTransactions();
         if (blockTxs == null || blockTxs.isEmpty()) {
             throw new ChannelException(String.format("block %s has no transations", block.getHash()));
@@ -308,16 +308,11 @@ public class ChannelImpl implements Channel {
         }
         return new Tuple2(
                 l1Info,
-                new Batch(
-                        block.getParentHash(),
-                        l1Info.number(),
-                        l1Info.blockHash(),
-                        block.getTimestamp(),
-                        txDataList,
-                        null));
+                new SingularBatch(
+                        block.getParentHash(), l1Info.number(), l1Info.blockHash(), block.getTimestamp(), txDataList));
     }
 
-    private int addBatch(Batch batch) {
+    private int addBatch(SingularBatch batch) {
         if (this.isClose) {
             throw new ChannelException("channel already closed");
         }
@@ -385,7 +380,7 @@ public class ChannelImpl implements Channel {
         return frame;
     }
 
-    private void updateSeqWindowTimeout(final Batch batch) {
+    private void updateSeqWindowTimeout(final SingularBatch batch) {
         var timeout = batch.epochNum().add(this.seqWindowTimeout);
         this.updateTimeout(timeout);
     }

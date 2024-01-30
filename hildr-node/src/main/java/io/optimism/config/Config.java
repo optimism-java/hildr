@@ -2,6 +2,7 @@ package io.optimism.config;
 
 import static java.util.Map.entry;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -180,6 +181,8 @@ public record Config(
      * The type ChainConfig.
      *
      * @param network              The network name.
+     * @param l1ChainId            The L1 chain id.
+     * @param l2ChainId            The L2 chain id.
      * @param l1StartEpoch         The L1 block referenced by the L2 chainConfig.
      * @param l2Genesis            The L2 genesis block info.
      * @param systemConfig         The initial system config value.
@@ -192,10 +195,9 @@ public record Config(
      * @param maxSeqDrift          Maximum timestamp drift.
      * @param regolithTime         Timestamp of the regolith hardfork.
      * @param canyonTime           Timestamp of the canyon hardfork.
+     * @param deltaTime           Timestamp of the canyon hardfork.
      * @param blockTime            Network blocktime.
      * @param l2Tol1MessagePasser  L2 To L1 Message passer address.
-     * @param l1ChainId            The L1 chain id.
-     * @param l2ChainId            The L2 chain id.
      * @author grapebaba
      * @since 0.1.0
      */
@@ -215,6 +217,7 @@ public record Config(
             BigInteger maxSeqDrift,
             BigInteger regolithTime,
             BigInteger canyonTime,
+            BigInteger deltaTime,
             BigInteger blockTime,
             String l2Tol1MessagePasser) {
 
@@ -252,6 +255,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1704992401L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -290,6 +294,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1704992401L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -328,6 +333,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.valueOf(1679079600L),
                     BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(1703116800L),
                     BigInteger.valueOf(2L),
                     "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a");
         }
@@ -366,6 +372,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(1703203200L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -404,6 +411,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.valueOf(1683219600L),
                     BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -442,6 +450,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -454,6 +463,7 @@ public record Config(
          */
         public static ChainConfig fromJson(String filePath) {
             ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             try {
                 ExternalChainConfig externalChainConfig = mapper.readValue(
                         Files.readString(Path.of(filePath), StandardCharsets.UTF_8), ExternalChainConfig.class);
@@ -495,6 +505,7 @@ public record Config(
                     external.maxSequencerDrift,
                     external.regolithTime,
                     external.canyonTime == null ? BigInteger.valueOf(-1L) : external.canyonTime,
+                    external.deltaTime == null ? BigInteger.valueOf(-1L) : external.deltaTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }
@@ -544,6 +555,7 @@ public record Config(
                     entry("config.chainConfig.maxSeqDrift", this.maxSeqDrift.toString()),
                     entry("config.chainConfig.regolithTime", this.regolithTime.toString()),
                     entry("config.chainConfig.canyonTime", this.canyonTime.toString()),
+                    entry("config.chainConfig.deltaTime", this.deltaTime.toString()),
                     entry("config.chainConfig.blockTime", this.blockTime.toString()),
                     entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
         }
@@ -657,6 +669,7 @@ public record Config(
      * @param l2ChainId              l2 chain id
      * @param regolithTime           regolith time
      * @param canyonTime             canyon time
+     * @param deltaTime             delta time
      * @param batchInboxAddress      batch inbox address
      * @param depositContractAddress deposit contract address
      * @param l1SystemConfigAddress  l1 system config address
@@ -673,6 +686,7 @@ public record Config(
             BigInteger l2ChainId,
             BigInteger regolithTime,
             BigInteger canyonTime,
+            BigInteger deltaTime,
             String batchInboxAddress,
             String depositContractAddress,
             String l1SystemConfigAddress) {}

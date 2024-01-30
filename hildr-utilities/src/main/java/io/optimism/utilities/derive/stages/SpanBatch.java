@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.web3j.utils.Numeric;
@@ -98,7 +99,7 @@ public class SpanBatch implements IBatch {
     }
 
     @Override
-    public BigInteger getTimestamp() {
+    public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
         return batches.getFirst().timestamp();
     }
 
@@ -162,6 +163,20 @@ public class SpanBatch implements IBatch {
     }
 
     /**
+     * Has invalid transactions boolean.
+     *
+     * @param index the index
+     * @return the boolean
+     */
+    public boolean hasInvalidTransactions(int index) {
+        return this.getBlockTransactions(index).stream()
+                .anyMatch(s -> StringUtils.isEmpty(s)
+                        || (Numeric.containsHexPrefix(s)
+                                ? StringUtils.startsWithIgnoreCase(s, "0x7E")
+                                : StringUtils.startsWithIgnoreCase(s, "7E")));
+    }
+
+    /**
      * GetBlockCount
      *
      * @return the number of blocks in the span.
@@ -176,7 +191,7 @@ public class SpanBatch implements IBatch {
      *
      * @param singularBatch SingularBatch
      */
-    public void AppendSingularBatch(SingularBatch singularBatch) {
+    public void appendSingularBatch(SingularBatch singularBatch) {
         if (batches.isEmpty()) {
             this.parentCheck =
                     Bytes.fromHexStringLenient(singularBatch.parentHash().substring(0, 40));
@@ -426,7 +441,7 @@ public class SpanBatch implements IBatch {
                 }
             }
 
-            this.spanBatch.AppendSingularBatch(singularBatch);
+            this.spanBatch.appendSingularBatch(singularBatch);
         }
 
         /**

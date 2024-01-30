@@ -1,34 +1,28 @@
 package io.optimism.utilities.derive.stages;
 
+import com.google.common.primitives.Bytes;
+import io.netty.buffer.Unpooled;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.commons.lang3.StringUtils;
-import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
-import org.web3j.rlp.RlpString;
-import org.web3j.rlp.RlpType;
-import org.web3j.utils.Numeric;
 
 /**
  * The type Batch.
  *
- * @param parentHash the parent hash
- * @param epochNum the epoch num
- * @param epochHash the epoch hash
- * @param timestamp the timestamp
- * @param transactions the transactions
+ * @param batch the batch
  * @param l1InclusionBlock L1 inclusion block
  * @author grapebaba
- * @since 0.1.0
+ * @since 0.2.4
  */
-public record Batch(
-        String parentHash,
-        BigInteger epochNum,
-        String epochHash,
-        BigInteger timestamp,
-        List<String> transactions,
-        BigInteger l1InclusionBlock) {
+public record Batch(IBatch batch, BigInteger l1InclusionBlock) {
+
+    /**
+     * Gets timestamp.
+     *
+     * @return the timestamp
+     */
+    public BigInteger timestamp(BigInteger l2genesisTimestamp) {
+        return batch.getTimestamp(l2genesisTimestamp);
+    }
 
     /**
      * Encode batch.
@@ -36,46 +30,40 @@ public record Batch(
      * @return encoded bytes by the batch
      */
     public byte[] encode() {
-        List<RlpType> collect = transactions().stream()
-                .map(tx -> (RlpType) RlpString.create(tx))
-                .collect(Collectors.toList());
-        return RlpEncoder.encode(new RlpList(
-                RlpString.create(parentHash()),
-                RlpString.create(epochNum()),
-                RlpString.create(epochHash()),
-                RlpString.create(timestamp()),
-                new RlpList(collect)));
+        if (batch instanceof SingularBatch) {
+            var typedBatch = (SingularBatch) batch;
+            return typedBatch.encode();
+        } else if (batch instanceof RawSpanBatch) {
+            var typedBatch = (RawSpanBatch) batch;
+            return Bytes.concat(
+                    typedBatch.spanbatchPrefix().encode(),
+                    typedBatch.spanbatchPayload().encode());
+        } else {
+            throw new IllegalStateException("unknown batch type");
+        }
     }
 
     /**
-     * Decode batch.
+     * Decode singular batch.
      *
      * @param rlp the rlp
      * @param l1InclusionBlock L1 inclusion block
      * @return the batch
      */
-    public static Batch decode(RlpList rlp, BigInteger l1InclusionBlock) {
-        String parentHash = ((RlpString) rlp.getValues().get(0)).asString();
-        BigInteger epochNum = ((RlpString) rlp.getValues().get(1)).asPositiveBigInteger();
-        String epochHash = ((RlpString) rlp.getValues().get(2)).asString();
-        BigInteger timestamp = ((RlpString) rlp.getValues().get(3)).asPositiveBigInteger();
-        List<String> transactions = ((RlpList) rlp.getValues().get(4))
-                .getValues().stream()
-                        .map(rlpString -> ((RlpString) rlpString).asString())
-                        .collect(Collectors.toList());
-        return new Batch(parentHash, epochNum, epochHash, timestamp, transactions, l1InclusionBlock);
+    public static Batch decodeSingularBatch(final RlpList rlp, final BigInteger l1InclusionBlock) {
+        return new Batch(SingularBatch.decode(rlp), l1InclusionBlock);
     }
 
     /**
-     * Has invalid transactions boolean.
+     * Decode span batch.
      *
-     * @return the boolean
+     * @param buf the span batch encoded bytes
+     * @param l1InclusionBlock L1 inclusion block
+     * @return the batch
      */
-    public boolean hasInvalidTransactions() {
-        return this.transactions.stream()
-                .anyMatch(s -> StringUtils.isEmpty(s)
-                        || (Numeric.containsHexPrefix("0x")
-                                ? StringUtils.startsWithIgnoreCase(s, "0x7E")
-                                : StringUtils.startsWithIgnoreCase(s, "7E")));
+    public static Batch decodeRawSpanBatch(final byte[] buf, final BigInteger l1InclusionBlock) {
+        final RawSpanBatch rawSpanBatch = new RawSpanBatch();
+        rawSpanBatch.decode(Unpooled.wrappedBuffer(buf));
+        return new Batch(rawSpanBatch, l1InclusionBlock);
     }
 }

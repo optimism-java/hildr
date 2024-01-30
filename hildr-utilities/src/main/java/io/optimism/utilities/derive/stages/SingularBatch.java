@@ -5,10 +5,12 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.utils.Numeric;
 
 /**
  * The type SingularBatch.
@@ -96,7 +98,7 @@ public class SingularBatch implements IBatch {
     }
 
     @Override
-    public BigInteger getTimestamp() {
+    public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
         return timestamp();
     }
 
@@ -228,5 +230,18 @@ public class SingularBatch implements IBatch {
     public String toString() {
         return "SingularBatch[parentHash=%s, epochNum=%s, epochHash=%s, timestamp=%s, transactions=%s]"
                 .formatted(parentHash, epochNum, epochHash, timestamp, transactions);
+    }
+
+    /**
+     * Has invalid transactions boolean.
+     *
+     * @return the boolean
+     */
+    public boolean hasInvalidTransactions() {
+        return this.transactions.stream()
+                .anyMatch(s -> StringUtils.isEmpty(s)
+                        || (Numeric.containsHexPrefix(s)
+                                ? StringUtils.startsWithIgnoreCase(s, "0x7E")
+                                : StringUtils.startsWithIgnoreCase(s, "7E")));
     }
 }
