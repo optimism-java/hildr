@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 281165273grape@gmail.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.derive.stages;
 
 import com.google.common.collect.Lists;
@@ -127,7 +111,7 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
 
         while (!this.frameBank.isEmpty()) {
             // Append the frame to the channel
-            Frame frame = this.frameBank.remove(0);
+            Frame frame = this.frameBank.removeFirst();
             BigInteger frameChannelId = frame.channelId();
             this.pushFrame(frame);
             this.prune();
@@ -145,7 +129,7 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
         if (this.pendingChannels.isEmpty()) {
             return Optional.empty();
         } else {
-            return Optional.of(this.pendingChannels.remove(0));
+            return Optional.of(this.pendingChannels.removeFirst());
         }
     }
 

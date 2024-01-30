@@ -21,13 +21,18 @@ import org.web3j.rlp.RlpList;
 import org.web3j.utils.Numeric;
 
 /**
- * Created by IntelliJ IDEA.
- * Author: kaichen
- * Date: 2024/1/24
- * Time: 17:51
+ * The SpanBatchTest type.
+ *
+ * @author grapebaba
+ * @since 0.2.4
  */
 class SpanBatchTest {
 
+    /**
+     * Test span batch for batch interface.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void testSpanBatchForBatchInterface() throws IOException {
         URL url = Resources.getResource("spanbatchfromsingular.txt");
@@ -53,6 +58,9 @@ class SpanBatchTest {
                 Bytes.fromHexString(singularBatches1.getFirst().parentHash().substring(0, 40))));
     }
 
+    /**
+     * Test empty span batch.
+     */
     @Test
     void testEmptySpanBatch() {
         SpanBatchTxs txs = SpanBatchTxs.newSpanBatchTxs(new ArrayList<>(), BigInteger.valueOf(28));
@@ -80,6 +88,11 @@ class SpanBatchTest {
                 "block count cannot be zero");
     }
 
+    /**
+     * Test span batch origin bits.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void testSpanBatchOriginBits() throws IOException {
         URL url = Resources.getResource("spanbatchoriginbits.txt");
@@ -107,6 +120,11 @@ class SpanBatchTest {
                 rawSpanBatch1.spanbatchPayload().originBits());
     }
 
+    /**
+     * Test span batch prefix.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void testSpanBatchPrefix() throws IOException {
         URL url = Resources.getResource("spanbatchoriginbits.txt");
@@ -125,6 +143,9 @@ class SpanBatchTest {
         assertEquals(rawSpanBatch, rawSpanBatch1);
     }
 
+    /**
+     * Test span batch max origin bits length.
+     */
     @Test
     void testSpanBatchRelTimestamp() throws IOException {
         URL url = Resources.getResource("spanbatchoriginbits.txt");
@@ -348,6 +369,11 @@ class SpanBatchTest {
                 () -> rawSpanBatch.spanbatchPayload().decodeOriginBits(Unpooled.wrappedBuffer(new byte[] {})));
     }
 
+    /**
+     * Test span batch max block count.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void testSpanBatchMaxBlockCount() throws IOException {
         URL url = Resources.getResource("spanbatchoriginbits.txt");
@@ -368,6 +394,11 @@ class SpanBatchTest {
                 "span batch size limit reached");
     }
 
+    /**
+     * Test span batch max block tx count.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void testSpanBatchMaxBlockTxCount() throws IOException {
         URL url = Resources.getResource("spanbatchoriginbits.txt");
@@ -393,6 +424,11 @@ class SpanBatchTest {
                 "span batch size limit reached");
     }
 
+    /**
+     * Test span batch total block tx count not overflow.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void testSpanBatchTotalBlockTxCountNotOverflow() throws IOException {
         URL url = Resources.getResource("spanbatchoriginbits.txt");

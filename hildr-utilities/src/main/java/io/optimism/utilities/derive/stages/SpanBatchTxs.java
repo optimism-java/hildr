@@ -751,12 +751,12 @@ public class SpanBatchTxs {
     }
 
     /**
-     * Last current list as bytes bytes.
+     * Last current list as bytes.
      *
      * @param input the input
      * @return the bytes
      */
-    public static Bytes lastCurrentListAsBytes(RLPInput input) {
+    private static Bytes lastCurrentListAsBytes(RLPInput input) {
         if (!input.nextIsList()) {
             throw new RuntimeException("Cannot read list, current item is not a list list");
         }

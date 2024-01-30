@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 q315xia@163.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.batcher.channel;
 
 import io.optimism.batcher.compressor.Compressor;
@@ -147,10 +131,10 @@ public class ChannelImpl implements Channel {
 
     @Override
     public Frame nextFrame() {
-        if (this.outputFrames.size() == 0) {
+        if (this.outputFrames.isEmpty()) {
             throw new ChannelException("not next frame");
         }
-        var tx = this.outputFrames.remove(0);
+        var tx = this.outputFrames.removeFirst();
         this.pendingTxs.put(tx.code(), tx);
         return tx;
     }
@@ -175,7 +159,7 @@ public class ChannelImpl implements Channel {
 
     @Override
     public boolean hasFrame() {
-        return this.outputFrames.size() > 0;
+        return !this.outputFrames.isEmpty();
     }
 
     @Override
@@ -234,7 +218,7 @@ public class ChannelImpl implements Channel {
 
     @Override
     public boolean noneSubmitted() {
-        return this.confirmedTxs.size() == 0 && this.pendingTxs.size() == 0;
+        return this.confirmedTxs.isEmpty() && this.pendingTxs.isEmpty();
     }
 
     @Override
@@ -248,7 +232,7 @@ public class ChannelImpl implements Channel {
     }
 
     private boolean isTimeout() {
-        if (this.confirmedTxs.size() == 0) {
+        if (this.confirmedTxs.isEmpty()) {
             return false;
         }
         var min = BigInteger.valueOf(Long.MAX_VALUE);
@@ -301,12 +285,13 @@ public class ChannelImpl implements Channel {
         }
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     private Tuple2<L1BlockInfo, Batch> blockToBatch(EthBlock.Block block) {
         final List<EthBlock.TransactionResult> blockTxs = block.getTransactions();
-        if (blockTxs == null || blockTxs.size() == 0) {
+        if (blockTxs == null || blockTxs.isEmpty()) {
             throw new ChannelException(String.format("block %s has no transations", block.getHash()));
         }
-        final EthBlock.TransactionObject depositTxObj = (EthBlock.TransactionObject) blockTxs.get(0);
+        final EthBlock.TransactionObject depositTxObj = (EthBlock.TransactionObject) blockTxs.getFirst();
         if (!DEPOSIT_TX_TYPE.equalsIgnoreCase(depositTxObj.getType())) {
             throw new ChannelException("block txs not contains deposit tx");
         }

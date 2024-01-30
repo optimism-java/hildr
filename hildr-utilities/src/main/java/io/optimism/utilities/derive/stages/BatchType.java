@@ -2,6 +2,9 @@ package io.optimism.utilities.derive.stages;
 
 /**
  * The enum Batch type.
+ *
+ * @author grapebaba
+ * @since 0.2.4
  */
 public enum BatchType {
     /**
@@ -50,6 +53,6 @@ public enum BatchType {
                 return batchType;
             }
         }
-        throw new IllegalArgumentException("Invalid BatchType code: " + code);
+        throw new IllegalArgumentException("Invalid BatchType code: %d".formatted(code));
     }
 }

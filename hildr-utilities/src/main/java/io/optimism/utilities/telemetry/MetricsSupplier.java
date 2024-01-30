@@ -78,6 +78,7 @@ public class MetricsSupplier {
      * @param tagKeyValue Metrics tags.
      * @return gauge value.
      */
+    @SuppressWarnings("unchecked")
     public AtomicReference<BigDecimal> getOrCreateGaugeDecimal(String name, final Map<String, String> tagKeyValue) {
         final String label = name + tagKeyValue.toString();
         var value = this.numberMap.computeIfAbsent(label, key -> {
@@ -85,7 +86,7 @@ public class MetricsSupplier {
             Gauge.Builder<AtomicReference<BigDecimal>> gaugeBuilder = Gauge.builder(
                             withPrefix(name), guage, ref -> ref.get().doubleValue())
                     .description(descMap.get(name));
-            if (tagKeyValue.size() > 0) {
+            if (!tagKeyValue.isEmpty()) {
                 final List<Tag> tags = toList(tagKeyValue);
                 gaugeBuilder.tags(Tags.of(tags));
             }
@@ -112,7 +113,7 @@ public class MetricsSupplier {
             final AtomicLong guage = new AtomicLong();
             Gauge.Builder<AtomicLong> gaugeBuilder = Gauge.builder(withPrefix(name), guage, AtomicLong::doubleValue)
                     .description(descMap.get(name));
-            if (tagKeyValue.size() > 0) {
+            if (!tagKeyValue.isEmpty()) {
                 final List<Tag> tags = toList(tagKeyValue);
                 gaugeBuilder.tags(Tags.of(tags));
             }
@@ -141,7 +142,7 @@ public class MetricsSupplier {
             if (StringUtils.isNotEmpty(baseUnit)) {
                 builder.baseUnit(baseUnit);
             }
-            if (tagKeyValue.size() > 0) {
+            if (!tagKeyValue.isEmpty()) {
                 final List<Tag> tags = toList(tagKeyValue);
                 builder.tags(Tags.of(tags));
             }
@@ -161,7 +162,7 @@ public class MetricsSupplier {
         final String label = name + tagKeyValue.toString();
         return this.counterMap.computeIfAbsent(label, key -> {
             Counter.Builder counterBuilder = Counter.builder(withPrefix(name)).description(descMap.get(name));
-            if (tagKeyValue.size() > 0) {
+            if (!tagKeyValue.isEmpty()) {
                 final List<Tag> tags = toList(tagKeyValue);
                 counterBuilder.tags(Tags.of(tags));
             }
@@ -177,16 +178,16 @@ public class MetricsSupplier {
      * @return the event meter.
      */
     public EventMeter getOrCreateEventMeter(String name, final Map<String, String> tagKeyValue) {
-        final String eventLabel = name + "_event";
+        final String eventLabel = "%s_event".formatted(name);
         return this.eventMap.computeIfAbsent(eventLabel, label -> {
-            Counter.Builder counterBuilder =
-                    Counter.builder(withPrefix(name + "_total")).description(String.format("Count of %s events", name));
+            Counter.Builder counterBuilder = Counter.builder(withPrefix("%s_total".formatted(name)))
+                    .description(String.format("Count of %s events", name));
 
             final AtomicLong guage = new AtomicLong();
             Gauge.Builder<AtomicLong> gaugeBuilder = Gauge.builder(
                             withPrefix(String.format("last_%s_unix", name)), guage, AtomicLong::doubleValue)
                     .description(String.format("Timestamp of last %s event", name));
-            if (tagKeyValue.size() > 0) {
+            if (!tagKeyValue.isEmpty()) {
                 final List<Tag> tags = toList(tagKeyValue);
                 counterBuilder.tags(Tags.of(tags));
                 gaugeBuilder.tags(Tags.of(tags));

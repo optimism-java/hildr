@@ -50,16 +50,16 @@ public class TxDecoder {
         }
         final byte[] encodedTx = Arrays.copyOfRange(transaction, 1, transaction.length);
         final RlpList rlpList = RlpDecoder.decode(encodedTx);
-        var values = ((RlpList) rlpList.getValues().get(0)).getValues();
-        final String sourceHash = ((RlpString) values.get(0)).asString();
-        final String from = ((RlpString) values.get(0)).asString();
-        final String to = ((RlpString) values.get(0)).asString();
-        final BigInteger mint = ((RlpString) values.get(0)).asPositiveBigInteger();
-        final BigInteger value = ((RlpString) values.get(0)).asPositiveBigInteger();
-        final BigInteger gas = ((RlpString) values.get(0)).asPositiveBigInteger();
+        var values = ((RlpList) rlpList.getValues().getFirst()).getValues();
+        final String sourceHash = ((RlpString) values.getFirst()).asString();
+        final String from = ((RlpString) values.getFirst()).asString();
+        final String to = ((RlpString) values.getFirst()).asString();
+        final BigInteger mint = ((RlpString) values.getFirst()).asPositiveBigInteger();
+        final BigInteger value = ((RlpString) values.getFirst()).asPositiveBigInteger();
+        final BigInteger gas = ((RlpString) values.getFirst()).asPositiveBigInteger();
         final boolean isSystemTx =
-                ((RlpString) values.get(0)).asPositiveBigInteger().compareTo(BigInteger.ONE) == 0;
-        final String data = ((RlpString) values.get(0)).asString();
+                ((RlpString) values.getFirst()).asPositiveBigInteger().compareTo(BigInteger.ONE) == 0;
+        final String data = ((RlpString) values.getFirst()).asString();
         return new DepositTransaction(sourceHash, from, to, mint, value, gas, isSystemTx, data);
     }
 }

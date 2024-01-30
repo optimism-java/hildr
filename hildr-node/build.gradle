@@ -245,13 +245,6 @@ spotless {
 		palantirJavaFormat('2.38.0')
 		// fix formatting of type annotations
 		formatAnnotations()
-		// make sure every file has the following copyright header.
-		// optionally, Spotless can set copyright years by digging
-		// through git history (see "license" section below)
-		licenseHeaderFile(project(":").file("config/spotless/java.license")).named('hildr').onlyIfContentMatches('/*\n' +
-				' * Copyright 2023 281165273grape@gmail.com')
-		licenseHeaderFile(project(":").file("config/spotless/besu.license")).named('besu').onlyIfContentMatches('/*\n' +
-				' * Copyright ConsenSys AG')
 
 		importOrder()
 

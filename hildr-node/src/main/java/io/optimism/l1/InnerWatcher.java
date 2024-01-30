@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 281165273grape@gmail.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.l1;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
@@ -185,7 +169,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             throw new L1AttributesDepositedTxNotFoundException();
         }
         EthBlock.TransactionObject tx =
-                (EthBlock.TransactionObject) block.getTransactions().get(0).get();
+                (EthBlock.TransactionObject) block.getTransactions().getFirst().get();
         final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
 
         final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
@@ -316,7 +300,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             if (updates.getLogs().isEmpty()) {
                 this.systemConfigUpdate = new Tuple2<>(toBlock, null);
             } else {
-                LogResult<?> update = updates.getLogs().iterator().next();
+                LogResult<?> update = updates.getLogs().getFirst();
                 BigInteger updateBlock = ((LogObject) update).getBlockNumber();
                 SystemConfigUpdate configUpdate = SystemConfigUpdate.tryFrom((LogObject) update);
                 if (updateBlock == null) {
@@ -456,7 +440,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 var userDepositeds = InnerWatcher.this.deposits.computeIfAbsent(num, k -> new ArrayList<>());
                 userDepositeds.add(userDeposited);
             } else {
-                throw new IllegalStateException("Unexpected result type: " + log.get() + " required LogObject");
+                throw new IllegalStateException("Unexpected result type: %s required LogObject".formatted(log.get()));
             }
         });
         var max = (int) endBlock.subtract(blockNum).add(BigInteger.ONE).longValue();

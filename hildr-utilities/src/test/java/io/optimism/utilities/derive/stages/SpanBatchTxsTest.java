@@ -27,7 +27,16 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
 
+/**
+ * The type SpanBatchTxsTest.
+ *
+ * @author grapebaba
+ * @since 0.2.4
+ */
 public class SpanBatchTxsTest {
+    /**
+     * Decode and encode span batch bits.
+     */
     @Test
     void decodeAndEncodeSpanBatchBits() {
         String test =
@@ -38,6 +47,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res1);
     }
 
+    /**
+     * Decode and encode tx sigs.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeTxSigs() throws IOException {
         URL url = Resources.getResource("txsigs.txt");
@@ -50,6 +64,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode tx nonces.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeTxNonces() throws IOException {
         URL url = Resources.getResource("txnonces.txt");
@@ -62,6 +81,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode tx gases.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeTxGases() throws IOException {
         URL url = Resources.getResource("txgases.txt");
@@ -74,6 +98,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode tx tos.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeTxTos() throws IOException {
         URL url = Resources.getResource("txtos.txt");
@@ -89,6 +118,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode tx datas.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeTxDatas() throws IOException {
         URL url = Resources.getResource("txdatas.txt");
@@ -101,6 +135,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode contract creation bits.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeContractCreationBits() throws IOException {
         URL url = Resources.getResource("contractcreationbits.txt");
@@ -114,6 +153,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode y parity bits.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeYParityBits() throws IOException {
         URL url = Resources.getResource("yparitybits.txt");
@@ -126,6 +170,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode protected bits.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncodeProtectedBits() throws IOException {
         URL url = Resources.getResource("protectedbits.txt");
@@ -138,6 +187,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Decode and encode.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void decodeAndEncode() throws IOException {
         URL url = Resources.getResource("spanbatchtxs.txt");
@@ -150,6 +204,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(Numeric.hexStringToByteArray(test), res);
     }
 
+    /**
+     * Recovery v unprotected.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void recoveryVUnprotected() throws IOException {
         SpanBatchTxs txs = new SpanBatchTxs();
@@ -184,6 +243,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(vs, res);
     }
 
+    /**
+     * Recovery v legacy.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void recoveryVLegacy() throws IOException {
         SpanBatchTxs txs = new SpanBatchTxs();
@@ -219,6 +283,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(vs, res);
     }
 
+    /**
+     * Recovery v access list.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void recoveryVAccessList() throws IOException {
         SpanBatchTxs txs = new SpanBatchTxs();
@@ -253,6 +322,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(vs, res);
     }
 
+    /**
+     * Recovery ve 1559.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void recoveryVE1559() throws IOException {
         SpanBatchTxs txs = new SpanBatchTxs();
@@ -287,6 +361,11 @@ public class SpanBatchTxsTest {
         assertArrayEquals(vs, res);
     }
 
+    /**
+     * Full tx unprotected.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void fullTxUnprotected() throws IOException {
         URL url = Resources.getResource("fulltxunprotected.txt");
@@ -302,6 +381,11 @@ public class SpanBatchTxsTest {
         assertEquals(txs, txs1);
     }
 
+    /**
+     * Full tx legacy.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void fullTxLegacy() throws IOException {
         URL url = Resources.getResource("fulltxlegacy.txt");
@@ -317,6 +401,11 @@ public class SpanBatchTxsTest {
         assertEquals(txs, txs1);
     }
 
+    /**
+     * Full tx access list.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void fullTxAccessList() throws IOException {
         URL url = Resources.getResource("fulltxacc.txt");
@@ -332,6 +421,11 @@ public class SpanBatchTxsTest {
         assertEquals(txs, txs1);
     }
 
+    /**
+     * Full tx dynamic.
+     *
+     * @throws IOException the io exception
+     */
     @Test
     void fullTxDynamic() throws IOException {
         URL url = Resources.getResource("fulltxdyn.txt");
@@ -347,6 +441,9 @@ public class SpanBatchTxsTest {
         assertEquals(txs, txs1);
     }
 
+    /**
+     * Test span batch max tx data.
+     */
     @Test
     void testSpanBatchMaxTxData() {
         Transaction.Builder builder = Transaction.builder();
