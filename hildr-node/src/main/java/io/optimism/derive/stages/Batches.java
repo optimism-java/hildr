@@ -370,7 +370,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         // check that block builds on existing chain
         final String spanBatchParentCheck =
                 rawSpanBatch.spanbatchPrefix().parentCheck().toHexString();
-        if (!spanBatchParentCheck.equalsIgnoreCase(prevL2Block.hash())) {
+
+        if (!spanBatchParentCheck.equalsIgnoreCase(prevL2Block.hash().substring(0, 42))) {
             LOGGER.warn(
                     "batch parent check failed: batchParent={}; prevL2BlockHash={}",
                     spanBatchParentCheck,
@@ -394,7 +395,9 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
             LOGGER.warn("l1 origin not found");
             return BatchStatus.Drop;
         }
-        if (rawSpanBatch.spanbatchPrefix().l1OriginCheck().toHexString().equalsIgnoreCase(l1Origin.hash())) {
+        final String l1OriginCheck =
+                rawSpanBatch.spanbatchPrefix().l1OriginCheck().toHexString();
+        if (l1OriginCheck.equalsIgnoreCase(l1Origin.hash().substring(0, 42))) {
             LOGGER.warn("l1 origin check failed");
             return BatchStatus.Drop;
         }

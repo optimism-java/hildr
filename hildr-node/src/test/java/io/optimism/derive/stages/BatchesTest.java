@@ -196,4 +196,12 @@ class BatchesTest {
             });
         });
     }
+
+    @Test
+    void testSub() {
+        String s1 = "0xe0bc110ffac850cd0de7fe2b110eb717a68a9799";
+        String s2 = "0xe0bc110ffac850cd0de7fe2b110eb717a68a9799797fd99cd89bf1b155a7aac2";
+        String s3 = s2.substring(0, 42);
+        assertEquals(s1, s3);
+    }
 }
