@@ -34,7 +34,6 @@ import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
 import org.web3j.tuples.generated.Tuple2;
-import org.web3j.utils.Numeric;
 
 /**
  * The type Batches.
@@ -321,10 +320,9 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         final BigInteger startEpochNum = rawSpanBatch
                 .spanbatchPrefix()
                 .l1OriginNum()
-                .subtract(originBits)
+                .subtract(BigInteger.valueOf(originBits.bitCount()))
                 .add(originBits.testBit(0) ? BigInteger.ONE : BigInteger.ZERO);
-        final BigInteger endEpochNum =
-                Numeric.toBigInt(rawSpanBatch.spanbatchPrefix().encodeL1OriginNum());
+        final BigInteger endEpochNum = rawSpanBatch.spanbatchPrefix().l1OriginNum();
 
         final BigInteger spanStartTimestamp = rawSpanBatch
                 .spanbatchPrefix()
@@ -381,7 +379,11 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
 
         if (startEpochNum.add(this.config.chainConfig().seqWindowSize()).compareTo(batchWrapper.l1InclusionBlock())
                 < 0) {
-            LOGGER.warn("sequence window check failed");
+            LOGGER.warn(
+                    "sequence window check failed: startEpochNum={} + seqWindowSize={} < l1InclusionBlock={}",
+                    startEpochNum,
+                    this.config.chainConfig().seqWindowSize(),
+                    batchWrapper.l1InclusionBlock());
             return BatchStatus.Drop;
         }
 
@@ -397,7 +399,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
         final String l1OriginCheck =
                 rawSpanBatch.spanbatchPrefix().l1OriginCheck().toHexString();
-        if (l1OriginCheck.equalsIgnoreCase(l1Origin.hash().substring(0, 42))) {
+        if (!l1OriginCheck.equalsIgnoreCase(l1Origin.hash().substring(0, 42))) {
             LOGGER.warn("l1 origin check failed");
             return BatchStatus.Drop;
         }
