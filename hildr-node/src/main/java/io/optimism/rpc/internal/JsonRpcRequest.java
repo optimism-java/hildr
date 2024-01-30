@@ -1,18 +1,3 @@
-/*
- * Copyright ConsenSys AG.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 package io.optimism.rpc.internal;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -27,7 +12,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * copied from project besu(https://github.com/hyperledger/besu).
+ * copied from project besu(<a href="https://github.com/hyperledger/besu">...</a>).
  *
  * @author thinkAfCod
  * @since 2023.06
@@ -137,11 +122,7 @@ public class JsonRpcRequest {
         }
 
         // Null Array: "params":[null]
-        if (params.length == 0 || params[0] == null) {
-            return false;
-        }
-
-        return true;
+        return params.length != 0 && params[0] != null;
     }
 
     /**
@@ -157,14 +138,9 @@ public class JsonRpcRequest {
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || !(o instanceof JsonRpcRequest)) {
-            return false;
-        }
-        final JsonRpcRequest that = (JsonRpcRequest) o;
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof JsonRpcRequest that)) return false;
         return isNotification == that.isNotification
                 && Objects.equals(id, that.id)
                 && Objects.equals(method, that.method)
@@ -174,7 +150,9 @@ public class JsonRpcRequest {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
+        int result = Objects.hash(id, method, version, isNotification);
+        result = 31 * result + Arrays.hashCode(params);
+        return result;
     }
 
     /**
@@ -185,6 +163,7 @@ public class JsonRpcRequest {
      * @param paramClass the param class
      * @return the parameter
      */
+    @SuppressWarnings("unchecked")
     public <T> T getParameter(final int index, final Class<T> paramClass) {
         if (params == null || params.length <= index || params[index] == null) {
             return null;
@@ -212,19 +191,7 @@ public class JsonRpcRequest {
 
     @Override
     public String toString() {
-        return "JsonRpcRequest{"
-                + "id="
-                + id
-                + ", method='"
-                + method
-                + '\''
-                + ", params="
-                + Arrays.toString(params)
-                + ", version='"
-                + version
-                + '\''
-                + ", isNotification="
-                + isNotification
-                + '}';
+        return "JsonRpcRequest{id=%s, method='%s', params=%s, version='%s', isNotification=%s}"
+                .formatted(id, method, Arrays.toString(params), version, isNotification);
     }
 }

@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 q315xia@163.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.batcher.loader;
 
 import io.optimism.batcher.channel.ReorgException;
@@ -164,8 +148,8 @@ public class BlockLoader implements Closeable {
     }
 
     L2BlockRef l2BlockToBlockRef(final EthBlock.Block block, Genesis genesis) {
-        BlockId l1Origin = null;
-        BigInteger sequenceNumber = null;
+        BlockId l1Origin;
+        BigInteger sequenceNumber;
         if (block.getNumber().equals(genesis.l2().number())) {
             if (!block.getHash().equals(genesis.l2().hash())) {
                 throw new BlockLoaderException(String.format(
@@ -181,7 +165,7 @@ public class BlockLoader implements Closeable {
                         String.format("l2 block is missing L1 info deposit tx, block hash: %s", block.getHash()));
             }
             EthBlock.TransactionObject tx =
-                    (EthBlock.TransactionObject) txs.get(0).get();
+                    (EthBlock.TransactionObject) txs.getFirst().get();
             if (!DEPOSIT_TX_TYPE.equalsIgnoreCase(tx.getType())) {
                 throw new BlockLoaderException(
                         String.format("first payload tx has unexpected tx type: %s", tx.getType()));

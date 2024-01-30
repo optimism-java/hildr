@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 281165273grape@gmail.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.rpc.internal.result;
 
 import com.fasterxml.jackson.core.JsonParser;
@@ -25,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 import org.web3j.protocol.ObjectMapperFactory;
 import org.web3j.protocol.core.Response;
 import org.web3j.utils.Numeric;
@@ -243,10 +228,9 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
             if (this == o) {
                 return true;
             }
-            if (!(o instanceof EthGetProof.Proof)) {
+            if (!(o instanceof Proof proof)) {
                 return false;
             }
-            EthGetProof.Proof proof = (EthGetProof.Proof) o;
 
             if (getAddress() != null ? !getAddress().equals(proof.getAddress()) : proof.getAddress() != null) {
                 return false;
@@ -377,30 +361,16 @@ public class EthGetProof extends Response<EthGetProof.Proof> {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof StorageProof)) {
-                return false;
-            }
-
-            StorageProof proof = (EthGetProof.StorageProof) o;
-
-            if (getKey() != null ? !getKey().equals(proof.getKey()) : proof.getKey() != null) {
-                return false;
-            }
-            if (getValue() != null ? !getValue().equals(proof.getValue()) : proof.getValue() != null) {
-                return false;
-            }
-            return getProof() != null ? getProof().equals(proof.getProof()) : proof.getProof() == null;
+            if (this == o) return true;
+            if (!(o instanceof StorageProof that)) return false;
+            return Objects.equals(key, that.key)
+                    && Objects.equals(value, that.value)
+                    && Objects.equals(proof, that.proof);
         }
 
         @Override
         public int hashCode() {
-            int result = getKey() != null ? getKey().hashCode() : 0;
-            result = 31 * result + (getValue() != null ? getValue().hashCode() : 0);
-            result = 31 * result + (getProof() != null ? getProof().hashCode() : 0);
-            return result;
+            return Objects.hash(key, value, proof);
         }
     }
 

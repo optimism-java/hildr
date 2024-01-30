@@ -1,21 +1,3 @@
-/*
- * Copyright 2023-2811 281165273grape@gmail.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- *
- * SPDX-License-Identifier: Apache-2.0
- */
-
 package io.optimism.rpc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -34,7 +16,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.function.Function;
 import okhttp3.MediaType;
@@ -73,6 +54,7 @@ public class RpcServerTest {
     }
 
     @Test
+    @SuppressWarnings("rawtypes")
     void testRpcServerStart() throws Exception {
         if (!TestConstants.isConfiguredApiKeyEnv) {
             return;
@@ -120,7 +102,8 @@ public class RpcServerTest {
     }
 
     @Test
-    void testRpcServerRegister() throws IOException, InterruptedException, ExecutionException {
+    @SuppressWarnings("rawtypes")
+    void testRpcServerRegister() throws IOException, InterruptedException {
         RpcServer rpcServer = createRpcServer(
                 new Config(null, null, "http://fakeurl", null, null, null, 9545, false, Config.ChainConfig.optimism()));
         rpcServer.start();
@@ -135,10 +118,12 @@ public class RpcServerTest {
         JsonRpcRequest jsonRpcRequest = new JsonRpcRequest("2.0", "test_url", new Object[] {"7900000"});
         jsonRpcRequest.setId(new JsonRpcRequestId("1"));
         try {
-            Response response = sendRequest(okHttpClient, jsonRpcRequest);
-            assertEquals(200, response.code());
-            assertNotNull(response.body());
-            Map jsonRpcResp = mapper.readValue(response.body().string(), Map.class);
+            Map jsonRpcResp;
+            try (Response response = sendRequest(okHttpClient, jsonRpcRequest)) {
+                assertEquals(200, response.code());
+                assertNotNull(response.body());
+                jsonRpcResp = mapper.readValue(response.body().string(), Map.class);
+            }
             System.out.println(jsonRpcResp);
         } finally {
             rpcServer.stop();
@@ -146,7 +131,7 @@ public class RpcServerTest {
     }
 
     private Response sendRequest(OkHttpClient okHttpClient, JsonRpcRequest jsonRpcRequest)
-            throws JsonProcessingException, InterruptedException, ExecutionException {
+            throws JsonProcessingException, InterruptedException {
         var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
         RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
 

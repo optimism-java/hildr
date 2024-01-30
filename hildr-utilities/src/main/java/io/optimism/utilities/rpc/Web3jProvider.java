@@ -1,19 +1,3 @@
-/*
- * Copyright 2023 281165273grape@gmail.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.utilities.rpc;
 
 import java.net.ConnectException;
@@ -55,7 +39,7 @@ public class Web3jProvider {
      * @return web3j client and web3j service
      */
     public static Tuple2<Web3j, Web3jService> create(String url) {
-        Web3jService web3Srv = null;
+        Web3jService web3Srv;
         if (Web3jProvider.isHttp(url)) {
             OkHttpClient okHttpClient = new OkHttpClient.Builder()
                     .addInterceptor(new RetryRateLimitInterceptor())
@@ -66,7 +50,7 @@ public class Web3jProvider {
             wsConnect(web3finalSrv);
             web3Srv = web3finalSrv;
         } else {
-            throw new IllegalArgumentException("not supported scheme:" + url);
+            throw new IllegalArgumentException("not supported scheme:%s".formatted(url));
         }
         return new Tuple2<>(Web3j.build(web3Srv), web3Srv);
     }
