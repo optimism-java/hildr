@@ -5,6 +5,8 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+
+import org.apache.commons.lang3.ArrayUtils;
 import org.web3j.utils.Numeric;
 
 /**
@@ -88,6 +90,15 @@ public class RawSpanBatch {
     @Override
     public String toString() {
         return "RawSpanBatch[spanbatchPrefix=%s, spanbatchPayload=%s]".formatted(spanbatchPrefix, spanbatchPayload);
+    }
+
+    /**
+     * Encode raw span batch.
+     *
+     * @return the encoded raw span batch bytes
+     */
+    public byte[] encode() {
+        return ArrayUtils.addAll(this.spanbatchPrefix.encode(), this.spanbatchPayload.encode());
     }
 
     /**
