@@ -28,6 +28,7 @@ COPY --from=builder /root/hildr/hildr-node/build/binary/hildr* .
 #COPY --from=builder /root/hildr/hildr-node/build/native/nativeCompile/hildr* .
 
 RUN chmod 0755 hildr-node && export PATH=/usr/local/bin:$PATH
+ENTRYPOINT ["hildr-node"]
 
 
 

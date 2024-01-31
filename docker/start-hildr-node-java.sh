@@ -12,6 +12,11 @@ then
     fi
 fi
 
+if [ $LOG_LEVEL = "" ]
+then
+  LOG_LEVEL="INFO"
+fi
+
 if [ $SYNC_MODE = "full" ]
 then
     exec java --enable-preview \
@@ -20,11 +25,12 @@ then
         --jwt-secret $JWT_SECRET \
         --l1-rpc-url $L1_RPC_URL \
         --l1-ws-rpc-url $L1_WS_RPC_URL \
-        --l2-rpc-url http://${EXECUTION_CLIENT}:8545 \
-        --l2-engine-url http://${EXECUTION_CLIENT}:8551 \
+        --l2-rpc-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_RPC_PORT} \
+        --l2-engine-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_AUTH_RPC_PORT} \
         --rpc-port $RPC_PORT \
         $DEVNET \
-        --sync-mode $SYNC_MODE
+        --sync-mode $SYNC_MODE \
+        --log-level $LOG_LEVEL
 elif [ $SYNC_MODE = "checkpoint"]
 then
     exec java --enable-preview \
@@ -33,13 +39,14 @@ then
         --jwt-secret $JWT_SECRET \
         --l1-rpc-url $L1_RPC_URL \
         --l1-ws-rpc-url $L1_WS_RPC_URL \
-        --l2-rpc-url http://${EXECUTION_CLIENT}:8545 \
-        --l2-engine-url http://${EXECUTION_CLIENT}:8551 \
+        --l2-rpc-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_RPC_PORT} \
+        --l2-engine-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_AUTH_RPC_PORT} \
         --rpc-port $RPC_PORT \
         $DEVNET \
         --sync-mode $SYNC_MODE \
         --checkpoint-sync-url $CHECKPOINT_SYNC_URL \
-        --checkpoint-hash $CHECKPOINT_HASH
+        --checkpoint-hash $CHECKPOINT_HASH \
+        --log-level $LOG_LEVEL
 else
     echo "Sync mode not recognized. Available options are full and checkpoint"
 fi
