@@ -5,7 +5,6 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.web3j.utils.Numeric;
 
