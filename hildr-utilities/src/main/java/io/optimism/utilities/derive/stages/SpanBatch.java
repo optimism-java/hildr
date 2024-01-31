@@ -390,7 +390,7 @@ public class SpanBatch implements IBatch {
     }
 
     /**
-     * Derive span batch span batch.
+     * Derive raw span batch to span batch.
      *
      * @param batch            the batch
      * @param blockTime        the block time
@@ -399,9 +399,8 @@ public class SpanBatch implements IBatch {
      * @return the span batch
      */
     public static SpanBatch deriveSpanBatch(
-            IBatch batch, BigInteger blockTime, BigInteger genesisTimestamp, BigInteger chainID) {
-        RawSpanBatch rawSpanBatch = (RawSpanBatch) batch;
-        return rawSpanBatch.toSpanBatch(blockTime, genesisTimestamp, chainID);
+            RawSpanBatch batch, BigInteger blockTime, BigInteger genesisTimestamp, BigInteger chainID) {
+        return batch.toSpanBatch(blockTime, genesisTimestamp, chainID);
     }
 
     /**
@@ -433,7 +432,7 @@ public class SpanBatch implements IBatch {
          * @param singularBatch the singular batch
          * @param seqNum        the seq num
          */
-        public void AppendSingularBatch(SingularBatch singularBatch, BigInteger seqNum) {
+        public void appendSingularBatch(SingularBatch singularBatch, BigInteger seqNum) {
             if (this.getBlockCount() == 0) {
                 this.originChangedBit = 0;
                 if (seqNum.compareTo(BigInteger.ZERO) == 0) {

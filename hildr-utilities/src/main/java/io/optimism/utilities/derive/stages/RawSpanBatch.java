@@ -91,15 +91,6 @@ public class RawSpanBatch {
     }
 
     /**
-     * Gets span batch timestamp
-     * @param l2genesisTimestamp l2 genesis timestamp
-     * @return the span batch timestamp
-     */
-    public BigInteger getTimestamp(BigInteger l2genesisTimestamp) {
-        return spanbatchPrefix.relTimestamp().add(l2genesisTimestamp);
-    }
-
-    /**
      * Decode.
      *
      * @param source the source

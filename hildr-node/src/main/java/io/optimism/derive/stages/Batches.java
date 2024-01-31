@@ -160,7 +160,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                     byte[] batchData = ArrayUtils.subarray(buffer, 1, buffer.length);
 
                     if (BatchType.SPAN_BATCH_TYPE.getCode() == ((int) batchType)) {
-                        return Batch.decodeRawSpanBatch(
+                        return Batch.decodeSpanBatch(
                                 batchData,
                                 chainConfig.blockTime(),
                                 chainConfig.l2Genesis().timestamp(),

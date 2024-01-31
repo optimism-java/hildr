@@ -1,6 +1,5 @@
 package io.optimism.utilities.derive.stages;
 
-import com.google.common.primitives.Bytes;
 import io.netty.buffer.Unpooled;
 import java.math.BigInteger;
 import org.web3j.rlp.RlpList;
@@ -33,11 +32,8 @@ public record Batch(IBatch batch, BigInteger l1InclusionBlock) {
         if (batch instanceof SingularBatch) {
             var typedBatch = (SingularBatch) batch;
             return typedBatch.encode();
-        } else if (batch instanceof RawSpanBatch) {
-            var typedBatch = (RawSpanBatch) batch;
-            return Bytes.concat(
-                    typedBatch.spanbatchPrefix().encode(),
-                    typedBatch.spanbatchPayload().encode());
+        } else if (batch instanceof SpanBatch) {
+            throw new IllegalStateException("unsupport batch type: %s".formatted(batch.getBatchType()));
         } else {
             throw new IllegalStateException("unknown batch type");
         }
@@ -64,7 +60,7 @@ public record Batch(IBatch batch, BigInteger l1InclusionBlock) {
      * @param l1InclusionBlock L1 inclusion block
      * @return the batch
      */
-    public static Batch decodeRawSpanBatch(
+    public static Batch decodeSpanBatch(
             final byte[] buf,
             final BigInteger blockTime,
             final BigInteger l2genesisTimestamp,
