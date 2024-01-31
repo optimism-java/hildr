@@ -17,6 +17,61 @@ Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/spe
 ## System requirements
 To run a `hildr-node` and `op-geth` node, at least 4C8G and 100GB of disk is required, as well as the installation of Java version 21 and Go version 1.20.8, must lower then v1.21.
 
+## Running `hildr-node`
+
+First, use Docker start a `op-geth` container in hildr project root directory:
+
+```shell
+cd ./docker && docker compose -f docker/docker-compose.yml up op-geth
+```
+
+### Use shell
+Then, once op-geth has been started, start up the `hildr-node` in `hildr` project root directory:
+```shell
+./gradlew :hildr-node:build -x test \
+    && nohup java --enable-preview \
+        -cp hildr-node/build/libs/hildr-node-{version}.jar io.optimism.Hildr \
+        --network optimism-sepolia \
+        --jwt-secret $JWT_SECRET
+        --l1-rpc-url $L1_RPC_URL
+        --l1-ws-rpc-url $L1_WS_RPC_URL
+        --l2-rpc-url $L2_RPC_URL \
+        --l2-engine-url $L2_AUTH_RPC_URL \
+        --rpc-port $HILDR_RPC_PORT \ # Choose any available port.
+        --log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
+        --sync-mode full >l2-hildr-node.log 2>&1 &
+```
+
+### Use docker
+
+Running a native hildr container on optimism-sepolia network:
+```shell
+docker run -it ghcr.io/optimism-java/hildr:latest-native \
+    --network optimism-sepolia \
+    --jwt-secret $JWT_SECRET \
+    --l1-rpc-url $L1_RPC_URL \
+    --l1-ws-rpc-url $L1_WS_RPC_URL \
+    --l2-rpc-url $L2_RPC_URL \
+    --l2-engine-url $L2_AUTH_RPC_URL \
+    --rpc-port $HILDR_RPC_PORT \
+    --log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
+    --sync-mode full
+```
+
+Running a java hildr container on optimism-sepolia network:
+```shell
+docker run -it ghcr.io/optimism-java/hildr:latest \
+    --network optimism-sepolia \
+    --jwt-secret $JWT_SECRET \
+    --l1-rpc-url $L1_RPC_URL \
+    --l1-ws-rpc-url $L1_WS_RPC_URL \
+    --l2-rpc-url $L2_RPC_URL \
+    --l2-engine-url $L2_AUTH_RPC_URL \
+    --rpc-port $HILDR_RPC_PORT \
+    --log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
+    --sync-mode full
+```
+
 ## Installing Hildr Node
 
 ### Building `hildr-node` from source
@@ -80,30 +135,6 @@ EXECUTION_CLIENT_RPC_PORT=5545
 # The execution client WebSocket port.
 EXECUTION_CLIENT_WS_PORT=5546
 
-```
-
-### Running `hildr-node`
-
-First, use Docker start a `op-geth` container in hildr project root directory:
-
-```shell
-cd ./docker && docker compose -f docker/docker-compose.yml up op-geth
-```
-
-Then, once op-geth has been started, start up the `hildr-node` in `hildr` project root directory:
-```shell
-./gradlew :hildr-node:build -x test \
-    && export $(grep -v '^#' .env|xargs) \ 
-    && nohup java --enable-preview \
-        -cp hildr-node/build/libs/hildr-node-0.2.0.jar io.optimism.Hildr \
-        --network optimism-sepolia \
-        --jwt-secret $JWT_SECRET
-        --l1-rpc-url $L1_RPC_URL
-        --l1-ws-rpc-url $L1_WS_RPC_URL
-        --l2-rpc-url http://127.0.0.1:5545 \
-        --l2-engine-url http://127.0.0.1:5551 \
-        --rpc-port 11545 \ # Choose any available port.
-        --sync-mode full >l2-hildr-node.log 2>&1 &
 ```
 
 ### Running devnet

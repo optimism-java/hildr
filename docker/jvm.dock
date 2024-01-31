@@ -11,3 +11,5 @@ COPY --from=builder /root/hildr/hildr-node/build/docker/hildr-node.jar .
 COPY --from=builder /root/hildr/docker/start-hildr-node-java.sh .
 ENV HILDR_JAR /usr/local/bin/hildr-node.jar
 ENV HILDR_MAIN_CLASS io.optimism.Hildr
+
+ENTRYPOINT ["java", "--enable-preview", "-cp" , "/usr/local/bin/hildr-node.jar", "io.optimism.Hildr"]
