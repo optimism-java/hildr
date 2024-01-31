@@ -86,7 +86,7 @@ public class OutputAtBlock implements JsonRpcMethod {
     private String computeL2OutputRoot(EthBlock.Block block, String storageRoot) {
         var version = new byte[32];
 
-        byte[] digestBytes = null;
+        byte[] digestBytes = new byte[0];
         digestBytes = ArrayUtils.addAll(digestBytes, version);
         digestBytes = ArrayUtils.addAll(digestBytes, Numeric.hexStringToByteArray(block.getStateRoot()));
         digestBytes = ArrayUtils.addAll(digestBytes, Numeric.hexStringToByteArray(storageRoot));
