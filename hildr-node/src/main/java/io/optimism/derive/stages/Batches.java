@@ -75,6 +75,9 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
     public void purge() {
         this.channelIterator.purge();
         this.batches.clear();
+        if (!this.nextSingularBatches.isEmpty()) {
+            LOGGER.warn("batches has element but will be discarded");
+        }
         this.nextSingularBatches.clear();
     }
 
@@ -86,8 +89,13 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         }
         Channel channel = this.channelIterator.next();
         if (channel != null) {
-            decodeBatches(this.config.chainConfig(), channel)
-                    .forEach(batch -> this.batches.put(batch.batch().getTimestamp(), batch));
+            decodeBatches(this.config.chainConfig(), channel).forEach(batch -> {
+                Batch prev = this.batches.put(batch.batch().getTimestamp(), batch);
+                if (prev != null) {
+                    LOGGER.warn(
+                            "batch was replaced: timestamp={}", batch.batch().getTimestamp());
+                }
+            });
         }
 
         Batch derivedBatch = null;
@@ -121,24 +129,28 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 this.nextSingularBatches.addAll(singularBatches);
                 return this.nextSingularBatches.poll();
             }
-        }
+        } else {
+            State state = this.state.get();
 
-        State state = this.state.get();
+            BigInteger currentL1Block = state.getCurrentEpochNum();
+            BlockInfo safeHead = state.getSafeHead();
+            Epoch epoch = state.getSafeEpoch();
+            Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
+            BigInteger seqWindowSize = this.config.chainConfig().seqWindowSize();
 
-        BigInteger currentL1Block = state.getCurrentEpochNum();
-        BlockInfo safeHead = state.getSafeHead();
-        Epoch epoch = state.getSafeEpoch();
-        Epoch nextEpoch = state.epoch(epoch.number().add(BigInteger.ONE));
-        BigInteger seqWindowSize = this.config.chainConfig().seqWindowSize();
-
-        if (nextEpoch != null) {
-            if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
-                BigInteger nextTimestamp =
-                        safeHead.timestamp().add(this.config.chainConfig().blockTime());
-                Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
-                var singularBatch = new SingularBatch(
-                        safeHead.parentHash(), epochRes.number(), epochRes.hash(), nextTimestamp, Lists.newArrayList());
-                batch = new Batch(singularBatch, currentL1Block);
+            if (nextEpoch != null) {
+                if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
+                    BigInteger nextTimestamp =
+                            safeHead.timestamp().add(this.config.chainConfig().blockTime());
+                    Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
+                    var singularBatch = new SingularBatch(
+                            safeHead.parentHash(),
+                            epochRes.number(),
+                            epochRes.hash(),
+                            nextTimestamp,
+                            Lists.newArrayList());
+                    batch = new Batch(singularBatch, currentL1Block);
+                }
             }
         }
         return batch;
@@ -147,6 +159,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
     /**
      * Decode batches list.
      *
+     * @param chainConfig the chain config
      * @param channel the channel
      * @return the list
      */
@@ -485,6 +498,12 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         List<SingularBatch> singularBatches = new ArrayList<>();
         for (SpanBatchElement element : batch.getBatches()) {
             if (element.timestamp().compareTo(state.getSafeHead().timestamp()) <= 0) {
+                if (!element.transactions().isEmpty()) {
+                    LOGGER.warn(
+                            "past span batch element: timestamp{{}} <= safeHead.timestamp={{}}",
+                            element.timestamp(),
+                            state.getSafeHead().timestamp());
+                }
                 continue;
             }
             SingularBatch singularBatch = new SingularBatch();
