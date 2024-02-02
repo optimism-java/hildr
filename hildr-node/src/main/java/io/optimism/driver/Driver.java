@@ -55,7 +55,9 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
 
 /**
@@ -166,7 +168,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      */
     public static Driver<EngineApi> from(Config config, CountDownLatch latch)
             throws InterruptedException, ExecutionException {
-        Web3j provider = Web3jProvider.createClient(config.l2RpcUrl());
+        final Web3j provider = Web3jProvider.createClient(config.l2RpcUrl());
 
         EthBlock finalizedBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -207,8 +209,27 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 config);
 
         var l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), provider);
-        AtomicReference<io.optimism.derive.State> state =
-                new AtomicReference<>(io.optimism.derive.State.create(l2Refs, finalizedHead, finalizedEpoch, config));
+        var l2Fetcher = (Function<BigInteger, Tuple2<BlockInfo, Epoch>>) blockNum -> {
+            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+                StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(
+                        () -> provider.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
+                                .send()));
+                scope.join();
+                scope.throwIfFailed();
+
+                var block = blockTask.get();
+                if (block == null) {
+                    return null;
+                }
+                final HeadInfo l2BlockInfo = HeadInfo.from(block.getBlock());
+                return new Tuple2<>(l2BlockInfo.l2BlockInfo(), l2BlockInfo.l1Epoch());
+            } catch (Exception e) {
+                LOGGER.error("failed to fetch L2 block", e);
+                return null;
+            }
+        };
+        AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(
+                io.optimism.derive.State.create(l2Refs, l2Fetcher, finalizedHead, finalizedEpoch, config));
 
         EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, provider, config);
 

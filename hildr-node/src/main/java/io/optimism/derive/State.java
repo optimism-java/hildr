@@ -10,7 +10,10 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.methods.response.EthBlock;
@@ -24,11 +27,15 @@ import org.web3j.tuples.generated.Tuple2;
  */
 public class State {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(State.class);
+
     private final TreeMap<String, L1Info> l1Info;
 
     private final TreeMap<BigInteger, String> l1Hashes;
 
     private final TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs;
+
+    private final Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher;
 
     private BlockInfo safeHead;
 
@@ -44,6 +51,7 @@ public class State {
      * @param l1Info the L1 info
      * @param l1Hashes the L1 hashes
      * @param l2Refs the L2 block info references
+     * @param l2Fetcher the L2 block info fetcher
      * @param safeHead the safe head
      * @param safeEpoch the safe epoch
      * @param currentEpochNum the current epoch num
@@ -53,6 +61,7 @@ public class State {
             TreeMap<String, L1Info> l1Info,
             TreeMap<BigInteger, String> l1Hashes,
             TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs,
+            Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher,
             BlockInfo safeHead,
             Epoch safeEpoch,
             BigInteger currentEpochNum,
@@ -60,6 +69,7 @@ public class State {
         this.l1Info = l1Info;
         this.l1Hashes = l1Hashes;
         this.l2Refs = l2Refs;
+        this.l2Fetcher = l2Fetcher;
         this.safeHead = safeHead;
         this.safeEpoch = safeEpoch;
         this.currentEpochNum = currentEpochNum;
@@ -70,6 +80,7 @@ public class State {
      * Create state.
      *
      * @param l2Refs the L2 block info references
+     * @param l2Fetcher the L2 block info fetcher
      * @param finalizedHead the finalized head
      * @param finalizedEpoch the finalized epoch
      * @param config the config
@@ -77,11 +88,19 @@ public class State {
      */
     public static State create(
             TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs,
+            Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher,
             BlockInfo finalizedHead,
             Epoch finalizedEpoch,
             Config config) {
         return new State(
-                new TreeMap<>(), new TreeMap<>(), l2Refs, finalizedHead, finalizedEpoch, BigInteger.ZERO, config);
+                new TreeMap<>(),
+                new TreeMap<>(),
+                l2Refs,
+                l2Fetcher,
+                finalizedHead,
+                finalizedEpoch,
+                BigInteger.ZERO,
+                config);
     }
 
     /**
@@ -119,7 +138,14 @@ public class State {
                 .subtract(config.chainConfig().l2Genesis().timestamp())
                 .divide(config.chainConfig().blockTime())
                 .add(config.chainConfig().l2Genesis().number());
-        return this.l2Refs.get(blockNum);
+        var cache = l2Refs.get(blockNum);
+        if (cache != null) {
+            return cache;
+        }
+
+        var res = l2Fetcher.apply(blockNum);
+        this.l2Refs.put(res.component1().number(), res);
+        return res;
     }
 
     /**
@@ -173,6 +199,7 @@ public class State {
      * @param safeEpoch the safe epoch
      */
     public void purge(BlockInfo safeHead, Epoch safeEpoch) {
+        LOGGER.info("purge state: safeHead.number={}, safeEpoch. ={}", safeHead.number(), safeEpoch.hash());
         this.safeHead = safeHead;
         this.safeEpoch = safeEpoch;
         this.l1Info.clear();
