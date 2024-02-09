@@ -4,6 +4,7 @@ import io.optimism.common.BlockInfo;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.driver.HeadInfo;
+import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.L1Info;
 import java.math.BigInteger;
 import java.util.Map.Entry;
@@ -142,7 +143,7 @@ public class State {
         if (cache != null) {
             return cache;
         }
-
+        LOGGER.warn("L2 refs cache not contains, will fetch from geth: blockNum = {}", blockNum);
         var res = l2Fetcher.apply(blockNum);
         this.l2Refs.put(res.component1().number(), res);
         return res;
@@ -337,10 +338,14 @@ public class State {
                 if (block == null) {
                     continue;
                 }
-                final HeadInfo l2BlockInfo = HeadInfo.from(block);
-                l2Refs.put(
-                        l2BlockInfo.l2BlockInfo().number(),
-                        new Tuple2<>(l2BlockInfo.l2BlockInfo(), l2BlockInfo.l1Epoch()));
+                try {
+                    final HeadInfo l2BlockInfo = HeadInfo.from(block);
+                    l2Refs.put(
+                            l2BlockInfo.l2BlockInfo().number(),
+                            new Tuple2<>(l2BlockInfo.l2BlockInfo(), l2BlockInfo.l1Epoch()));
+                } catch (L1AttributesDepositedTxNotFoundException ignore) {
+                    LOGGER.debug("Can't found deposited transaction (at blockNum = %d)".formatted(i));
+                }
             }
         }
         return l2Refs;
