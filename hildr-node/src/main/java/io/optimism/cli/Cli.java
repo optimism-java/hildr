@@ -45,6 +45,9 @@ public class Cli implements Runnable {
     @Option(names = "--l1-ws-rpc-url", required = true, description = "The base chain WS RPC URL")
     String l1WsRpcUrl;
 
+    @Option(names = "--l1-beacon-url", required = false, description = "The base chain beacon client RPC URL")
+    String l1BeaconUrl;
+
     @Option(names = "--l2-rpc-url", required = true, description = "The L2 engine RPC URL")
     String l2RpcUrl;
 
@@ -197,6 +200,7 @@ public class Cli implements Runnable {
         return new Config.CliConfig(
                 cli.l1RpcUrl,
                 cli.l1WsRpcUrl,
+                cli.l1BeaconUrl,
                 cli.l2RpcUrl,
                 cli.l2EngineUrl,
                 StringUtils.trim(Cli.this.getJwtSecret()),

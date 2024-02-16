@@ -1,5 +1,6 @@
 package io.optimism.common;
 
+import io.optimism.type.L1BlockInfo;
 import java.math.BigInteger;
 
 /**
@@ -14,12 +15,22 @@ import java.math.BigInteger;
 public record Epoch(BigInteger number, String hash, BigInteger timestamp) {
 
     /**
-     * From epoch.
+     * Create epoch from AttributesDepositedCall.
      *
      * @param call the hex call data
      * @return the epoch
      */
     public static Epoch from(AttributesDepositedCall call) {
         return new Epoch(call.number(), call.hash(), call.timestamp());
+    }
+
+    /**
+     * Create epoch from L1BlockInfo.
+     *
+     * @param info the L1 block info
+     * @return the epoch
+     */
+    public static Epoch from(L1BlockInfo info) {
+        return new Epoch(info.number(), info.blockHash(), info.time());
     }
 }

@@ -1,21 +1,23 @@
 package io.optimism.common;
 
+import io.optimism.type.L1BlockInfo;
 import java.math.BigInteger;
-import java.util.Objects;
-import net.osslabz.evm.abi.decoder.AbiDecoder;
-import net.osslabz.evm.abi.decoder.DecodedFunctionCall;
+import org.apache.commons.lang3.StringUtils;
+import org.web3j.utils.Numeric;
 
 /**
  * The type AttributesDepositedCall.
  *
- * @param number the number
- * @param timestamp the timestamp
- * @param baseFee the base fee
- * @param hash the hash
- * @param sequenceNumber the sequence number
- * @param batcherHash the batcher hash
- * @param feeOverhead the fee overhead
- * @param feeScalar the fee scalar
+ * @param number            the number
+ * @param timestamp         the timestamp
+ * @param baseFee           the base fee
+ * @param hash              the hash
+ * @param sequenceNumber    the sequence number
+ * @param batcherHash       the batcher hash
+ * @param feeOverhead       the fee overhead
+ * @param feeScalar         the fee scalar
+ * @param blobBaseFeeScalar the blob base fee scalar
+ * @param blobBaseFee       the blob base fee
  * @author grapebaba
  * @since 0.1.0
  */
@@ -27,13 +29,9 @@ public record AttributesDepositedCall(
         BigInteger sequenceNumber,
         String batcherHash,
         BigInteger feeOverhead,
-        BigInteger feeScalar) {
-
-    private static final AbiDecoder l1BlockAbi;
-
-    static {
-        l1BlockAbi = new AbiDecoder(Objects.requireNonNull(Epoch.class.getResourceAsStream("/abi/L1Block.json")));
-    }
+        BigInteger feeScalar,
+        BigInteger blobBaseFeeScalar,
+        BigInteger blobBaseFee) {
 
     /**
      * From attributes deposited call.
@@ -42,23 +40,20 @@ public record AttributesDepositedCall(
      * @return the attributes deposited call
      */
     public static AttributesDepositedCall from(String callData) {
-        DecodedFunctionCall decodedFunctionCall = l1BlockAbi.decodeFunctionCall(callData);
-        BigInteger number = (BigInteger) decodedFunctionCall.getParam("_number").getValue();
-        BigInteger timestamp =
-                (BigInteger) decodedFunctionCall.getParam("_timestamp").getValue();
-        BigInteger baseFee =
-                (BigInteger) decodedFunctionCall.getParam("_basefee").getValue();
-        String hash = (String) decodedFunctionCall.getParam("_hash").getValue();
-        BigInteger sequenceNumber =
-                (BigInteger) decodedFunctionCall.getParam("_sequencenumber").getValue();
-        String batcherHash =
-                (String) decodedFunctionCall.getParam("_batcherhash").getValue();
-        BigInteger feeOverhead =
-                (BigInteger) decodedFunctionCall.getParam("_l1feeoverhead").getValue();
-        BigInteger feeScalar =
-                (BigInteger) decodedFunctionCall.getParam("_l1feescalar").getValue();
-
+        if (StringUtils.isEmpty(callData)) {
+            throw new RuntimeException();
+        }
+        var info = L1BlockInfo.from(Numeric.hexStringToByteArray(callData));
         return new AttributesDepositedCall(
-                number, timestamp, baseFee, hash, sequenceNumber, batcherHash, feeOverhead, feeScalar);
+                info.number(),
+                info.time(),
+                info.baseFee(),
+                info.blockHash(),
+                info.sequenceNumber(),
+                info.batcherAddr(),
+                info.l1FeeOverhead(),
+                info.l1FeeScalar(),
+                info.blobBaseFeeScalar(),
+                info.blobBaseFee());
     }
 }
