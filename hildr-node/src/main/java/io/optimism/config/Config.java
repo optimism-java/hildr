@@ -33,6 +33,7 @@ import org.web3j.utils.Numeric;
  *
  * @param l1RpcUrl          L1 chain rpc url.
  * @param l1WsRpcUrl        L1 chain websocket rpc url.
+ * @param l1BeaconUrl        L1 chain websocket rpc url.
  * @param l2RpcUrl          L2 chain rpc url.
  * @param l2EngineUrl       L2 engine API url.
  * @param jwtSecret         L2 engine API jwt secret.
@@ -46,6 +47,7 @@ import org.web3j.utils.Numeric;
 public record Config(
         String l1RpcUrl,
         String l1WsRpcUrl,
+        String l1BeaconUrl,
         String l2RpcUrl,
         String l2EngineUrl,
         String jwtSecret,
@@ -116,6 +118,7 @@ public record Config(
         defaultProvider.put("config.l2EngineUrl", "http://127.0.0.1:8551");
         defaultProvider.put("config.l1RpcUrl", "");
         defaultProvider.put("config.l1WsRpcUrl", "");
+        defaultProvider.put("config.l1BeaconUrl", "");
         defaultProvider.put("config.jwtSecret", "");
         defaultProvider.put("config.checkpointSyncUrl", "");
         defaultProvider.put("config.rpcPort", "9545");
@@ -127,6 +130,7 @@ public record Config(
      *
      * @param l1RpcUrl          L1 chain rpc url.
      * @param l1WsRpcUrl        L1 chain websocket rpc url.
+     * @param l1BeaconUrl       L1 chain beacon client API rpc url.
      * @param l2RpcUrl          L2 chain rpc url.
      * @param l2EngineUrl       L2 engine API url.
      * @param jwtSecret         L2 engine API jwt secret.
@@ -137,6 +141,7 @@ public record Config(
     public record CliConfig(
             String l1RpcUrl,
             String l1WsRpcUrl,
+            String l1BeaconUrl,
             String l2RpcUrl,
             String l2EngineUrl,
             String jwtSecret,
@@ -154,8 +159,11 @@ public record Config(
             if (StringUtils.isNotEmpty(l1RpcUrl)) {
                 map.put("config.l1RpcUrl", l1RpcUrl);
             }
-            if (StringUtils.isNotEmpty(l1RpcUrl)) {
+            if (StringUtils.isNotEmpty(l1WsRpcUrl)) {
                 map.put("config.l1WsRpcUrl", l1WsRpcUrl);
+            }
+            if (StringUtils.isNotEmpty(l1BeaconUrl)) {
+                map.put("config.l1BeaconUrl", l1BeaconUrl);
             }
             if (StringUtils.isNotEmpty(l2RpcUrl)) {
                 map.put("config.l2RpcUrl", l2RpcUrl);
@@ -195,7 +203,8 @@ public record Config(
      * @param maxSeqDrift          Maximum timestamp drift.
      * @param regolithTime         Timestamp of the regolith hardfork.
      * @param canyonTime           Timestamp of the canyon hardfork.
-     * @param deltaTime           Timestamp of the canyon hardfork.
+     * @param deltaTime            Timestamp of the deltaTime hardfork.
+     * @param ecotoneTime          Timestamp of the ecotone hardfork.
      * @param blockTime            Network blocktime.
      * @param l2Tol1MessagePasser  L2 To L1 Message passer address.
      * @author grapebaba
@@ -218,6 +227,7 @@ public record Config(
             BigInteger regolithTime,
             BigInteger canyonTime,
             BigInteger deltaTime,
+            BigInteger ecotoneTime,
             BigInteger blockTime,
             String l2Tol1MessagePasser) {
 
@@ -255,6 +265,7 @@ public record Config(
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1704992401L),
+                    BigInteger.valueOf(1708560000L),
                     BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
@@ -295,6 +306,7 @@ public record Config(
                     BigInteger.ZERO,
                     BigInteger.valueOf(1704992401L),
                     BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -334,6 +346,7 @@ public record Config(
                     BigInteger.valueOf(1679079600L),
                     BigInteger.valueOf(1699981200L),
                     BigInteger.valueOf(1703116800L),
+                    BigInteger.valueOf(1707238800L),
                     BigInteger.valueOf(2L),
                     "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a");
         }
@@ -373,6 +386,7 @@ public record Config(
                     BigInteger.ZERO,
                     BigInteger.valueOf(1699981200L),
                     BigInteger.valueOf(1703203200L),
+                    BigInteger.valueOf(1708534800L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -412,6 +426,7 @@ public record Config(
                     BigInteger.valueOf(1683219600L),
                     BigInteger.valueOf(-1L),
                     BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -449,6 +464,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(-1L),
                     BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
@@ -506,6 +522,7 @@ public record Config(
                     external.regolithTime,
                     external.canyonTime == null ? BigInteger.valueOf(-1L) : external.canyonTime,
                     external.deltaTime == null ? BigInteger.valueOf(-1L) : external.deltaTime,
+                    external.ecotoneTime == null ? BigInteger.valueOf(-1L) : external.ecotoneTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }
@@ -556,6 +573,7 @@ public record Config(
                     entry("config.chainConfig.regolithTime", this.regolithTime.toString()),
                     entry("config.chainConfig.canyonTime", this.canyonTime.toString()),
                     entry("config.chainConfig.deltaTime", this.deltaTime.toString()),
+                    entry("config.chainConfig.ecotoneTime", this.ecotoneTime.toString()),
                     entry("config.chainConfig.blockTime", this.blockTime.toString()),
                     entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
         }
@@ -669,7 +687,8 @@ public record Config(
      * @param l2ChainId              l2 chain id
      * @param regolithTime           regolith time
      * @param canyonTime             canyon time
-     * @param deltaTime             delta time
+     * @param deltaTime              delta time
+     * @param ecotoneTime            ecotone time
      * @param batchInboxAddress      batch inbox address
      * @param depositContractAddress deposit contract address
      * @param l1SystemConfigAddress  l1 system config address
@@ -687,6 +706,7 @@ public record Config(
             BigInteger regolithTime,
             BigInteger canyonTime,
             BigInteger deltaTime,
+            BigInteger ecotoneTime,
             String batchInboxAddress,
             String depositContractAddress,
             String l1SystemConfigAddress) {}

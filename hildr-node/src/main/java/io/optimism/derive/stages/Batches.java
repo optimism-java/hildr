@@ -343,7 +343,8 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         if (batchOrigin == null) {
             return BatchStatus.Undecided;
         }
-        if (batchOrigin.timestamp().compareTo(this.config.chainConfig().deltaTime()) < 0) {
+        if (this.config.chainConfig().deltaTime().compareTo(BigInteger.ZERO) >= 0
+                && batchOrigin.timestamp().compareTo(this.config.chainConfig().deltaTime()) < 0) {
             LOGGER.warn("epoch start time is before delta activation: epochStartTime=%d"
                     .formatted(batchOrigin.timestamp()));
             return BatchStatus.Drop;
