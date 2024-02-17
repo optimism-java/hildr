@@ -106,6 +106,10 @@ dependencies {
 
 test {
 	useJUnitPlatform()
+	testLogging {
+		events "passed", "skipped", "failed"
+	}
+	finalizedBy jacocoTestReport
 }
 
 //checkstyle {
@@ -130,10 +134,31 @@ jacocoTestCoverageVerification {
 	violationRules {
 		rule {
 			limit {
-				minimum = 0
+				minimum = 0.3
 			}
 		}
 	}
+}
+
+tasks.named('test') {
+	// Use JUnit Platform for unit tests.
+	useJUnitPlatform()
+}
+
+check {
+	dependsOn += jacocoTestCoverageVerification
+//	dependsOn += integrationTest
+}
+
+tasks.withType(Test).configureEach {
+	def outputDir = reports.junitXml.outputLocation
+	jvmArgumentProviders << ({
+		[
+				"-Djunit.platform.reporting.open.xml.enabled=true",
+				"-Djunit.platform.reporting.output.dir=${outputDir.get().asFile.absolutePath}",
+				"--enable-preview"
+		]
+	} as CommandLineArgumentProvider)
 }
 
 spotless {
