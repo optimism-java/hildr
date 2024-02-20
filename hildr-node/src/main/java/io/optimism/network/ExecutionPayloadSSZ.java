@@ -26,8 +26,10 @@ import org.web3j.utils.Numeric;
  * @param extraData     the extra data
  * @param baseFeePerGas the base fee per gas
  * @param blockHash     the block hash
- * @param withdrawals   the withdrawals
  * @param transactions  the transactions
+ * @param withdrawals   the withdrawals
+ * @param blobGasUsed   the blob gas used
+ * @param excessBlobGas the excess blob gas
  * @author grapebaba
  * @since 0.2.0
  */
@@ -45,8 +47,10 @@ public record ExecutionPayloadSSZ(
         Bytes extraData,
         UInt256 baseFeePerGas,
         Bytes blockHash,
+        List<Bytes> transactions,
         List<EthBlock.Withdrawal> withdrawals,
-        List<Bytes> transactions) {
+        Long blobGasUsed,
+        Long excessBlobGas) {
     /**
      * The constant EXECUTION_PAYLOAD_FIXED_PART.
      */
@@ -54,9 +58,11 @@ public record ExecutionPayloadSSZ(
     private static final int EXECUTION_PAYLOAD_FIXED_PART_V1 =
             32 + 20 + 32 + 32 + 256 + 32 + 8 + 8 + 8 + 8 + 4 + 32 + 32 + 4;
 
-    // additional 4 bytes for withdrawals offset
+    // V1 + Withdrawals offset
     private static final int EXECUTION_PAYLOAD_FIXED_PART_V2 = EXECUTION_PAYLOAD_FIXED_PART_V1 + 4;
 
+    // V2 + BlobGasUed + ExcessBlobGas
+    private static final int EXECUTION_PAYLOAD_FIXED_PART_V3 = EXECUTION_PAYLOAD_FIXED_PART_V2 + 8 + 8;
     private static final int WITHDRAWAL_SIZE = 8 + 8 + 20 + 8;
 
     private static final int MAX_WITHDRAWALS_PER_PAYLOAD = 1 << 4;
@@ -73,7 +79,7 @@ public record ExecutionPayloadSSZ(
      * @param version the version
      * @return the execution payload ssz
      */
-    public static ExecutionPayloadSSZ from(Bytes data, int version) {
+    public static ExecutionPayloadSSZ from(Bytes data, BlockVersion version) {
         final int dataSize = data.size();
         final int fixedPart = executionPayloadFixedPart(version);
         if (dataSize < fixedPart) {
@@ -120,25 +126,30 @@ public record ExecutionPayloadSSZ(
             }
             offset += 4;
 
-            if (version == 0 && offset != fixedPart) {
-                throw new IllegalArgumentException(
-                        String.format("unexpected offset: %d <> %d, version: %d", offset, fixedPart, version));
+            if (version == BlockVersion.V1 && offset != fixedPart) {
+                throw new IllegalArgumentException(String.format(
+                        "unexpected offset: %d <> %d, version: %d", offset, fixedPart, version.getVersion()));
             }
 
             long withdrawalsOffset = dataSize;
-            if (version == 1) {
+            if (version.hasWithdrawals()) {
                 withdrawalsOffset = sszReader.readUInt32();
+                offset += 4;
                 if (withdrawalsOffset < transactionsOffset) {
                     throw new IllegalArgumentException(String.format(
                             "unexpected withdrawals offset: %d < %d", withdrawalsOffset, transactionsOffset));
                 }
-                offset += 4;
             }
 
-            if (version == 1 && offset != fixedPart) {
-                throw new IllegalArgumentException(
-                        String.format("unexpected offset: %d <> %d, version: %d", offset, fixedPart, version));
+            Long blobGasUsed = null;
+            Long ExcessBlobGas = null;
+            if (version == BlockVersion.V3) {
+                blobGasUsed = sszReader.readUInt64();
+                offset += 8;
+                ExcessBlobGas = sszReader.readUInt64();
             }
+
+            // var _ = offset; // for future extensions: we keep the offset accurate for extensions
 
             if (transactionsOffset > extraDataOffset + 32 || transactionsOffset > dataSize) {
                 throw new IllegalArgumentException(
@@ -150,11 +161,16 @@ public record ExecutionPayloadSSZ(
                 extraData = sszReader.readFixedBytes((int) (transactionsOffset - extraDataOffset));
             }
 
-            Bytes transactionsData = sszReader.readFixedBytes((int) (withdrawalsOffset - transactionsOffset));
-            List<Bytes> transactions = unmarshalTransactions(transactionsData);
+            List<Bytes> transactions;
+            if (sszReader.isComplete()) {
+                transactions = List.of();
+            } else {
+                Bytes transactionsData = sszReader.readFixedBytes((int) (withdrawalsOffset - transactionsOffset));
+                transactions = unmarshalTransactions(transactionsData);
+            }
 
             List<EthBlock.Withdrawal> withdrawals = null;
-            if (version == 1) {
+            if (version.hasWithdrawals()) {
                 if (withdrawalsOffset > dataSize) {
                     throw new IllegalArgumentException(
                             String.format("withdrawals is too large: %d", withdrawalsOffset - dataSize));
@@ -182,8 +198,10 @@ public record ExecutionPayloadSSZ(
                     extraData,
                     baseFeePerGas,
                     blockHash,
+                    transactions,
                     withdrawals,
-                    transactions);
+                    blobGasUsed,
+                    ExcessBlobGas);
         });
     }
 
@@ -285,26 +303,29 @@ public record ExecutionPayloadSSZ(
 
     @Override
     public String toString() {
-        return "ExecutionPayloadSSZ{" + "parentHash="
-                + parentHash + ", feeRecipient="
-                + feeRecipient + ", stateRoot="
-                + stateRoot + ", receiptsRoot="
-                + receiptsRoot + ", logsBloom="
-                + logsBloom + ", prevRandao="
-                + prevRandao + ", blockNumber="
-                + blockNumber + ", gasLimit="
-                + gasLimit + ", gasUsed="
-                + gasUsed + ", timestamp="
-                + timestamp + ", extraData="
-                + extraData + ", baseFeePerGas="
-                + baseFeePerGas + ", blockHash="
-                + blockHash + ", withdrawals="
-                + withdrawals + ", transactions="
-                + transactions + '}';
+        return "ExecutionPayloadSSZ{parentHash=%s, feeRecipient=%s, stateRoot=%s, receiptsRoot=%s, logsBloom=%s, prevRandao=%s, blockNumber=%d, gasLimit=%d, gasUsed=%d, timestamp=%d, extraData=%s, baseFeePerGas=%s, blockHash=%s, withdrawals=%s, transactions=%s}"
+                .formatted(
+                        parentHash,
+                        feeRecipient,
+                        stateRoot,
+                        receiptsRoot,
+                        logsBloom,
+                        prevRandao,
+                        blockNumber,
+                        gasLimit,
+                        gasUsed,
+                        timestamp,
+                        extraData,
+                        baseFeePerGas,
+                        blockHash,
+                        withdrawals,
+                        transactions);
     }
 
-    private static int executionPayloadFixedPart(int version) {
-        if (version == 1) {
+    private static int executionPayloadFixedPart(BlockVersion version) {
+        if (version == BlockVersion.V3) {
+            return EXECUTION_PAYLOAD_FIXED_PART_V3;
+        } else if (version == BlockVersion.V2) {
             return EXECUTION_PAYLOAD_FIXED_PART_V2;
         } else {
             return EXECUTION_PAYLOAD_FIXED_PART_V1;

@@ -104,6 +104,12 @@ public class OpStackNetwork {
                         gossipAsyncRunner,
                         chainId,
                         config.systemConfig().unsafeBlockSigner(),
+                        unsafeBlockQueue),
+                new BlockV3TopicHandler(
+                        new SnappyPreparedGossipMessageFactory(),
+                        gossipAsyncRunner,
+                        chainId,
+                        config.systemConfig().unsafeBlockSigner(),
                         unsafeBlockQueue));
         final AsyncRunner p2pAsyncRunner = AsyncRunnerFactory.createDefault(
                         new MetricTrackingExecutorFactory(metricsSystem))

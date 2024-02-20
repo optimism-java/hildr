@@ -7,15 +7,15 @@ import tech.pegasys.teku.infrastructure.async.AsyncRunner;
 import tech.pegasys.teku.networking.p2p.gossip.PreparedGossipMessageFactory;
 
 /**
- * The type BlockV2TopicHandler.
+ * The type BlockV3TopicHandler.
  *
  * @author grapebaba
- * @since 0.2.4
+ * @since 0.2.6
  */
-public class BlockV2TopicHandler extends AbstractTopicHandler {
+public class BlockV3TopicHandler extends AbstractTopicHandler {
 
     /**
-     * Instantiates a new BlockV2TopicHandler.
+     * Instantiates a new BlockV3TopicHandler.
      *
      * @param preparedGossipMessageFactory the prepared gossip message factory
      * @param asyncRunner                  the async runner
@@ -23,7 +23,7 @@ public class BlockV2TopicHandler extends AbstractTopicHandler {
      * @param unsafeBlockSigner            the unsafe block signer
      * @param unsafeBlockQueue             the unsafe block queue
      */
-    public BlockV2TopicHandler(
+    public BlockV3TopicHandler(
             PreparedGossipMessageFactory preparedGossipMessageFactory,
             AsyncRunner asyncRunner,
             UInt64 chainId,
@@ -31,11 +31,11 @@ public class BlockV2TopicHandler extends AbstractTopicHandler {
             MessagePassingQueue<ExecutionPayload> unsafeBlockQueue) {
         super(
                 preparedGossipMessageFactory,
-                String.format("/optimism/%s/%d/blocks", chainId.toString(), BlockVersion.V2.getVersion()),
+                String.format("/optimism/%s/%d/blocks", chainId.toString(), BlockVersion.V3.getVersion()),
                 asyncRunner,
                 chainId,
                 unsafeBlockSigner,
                 unsafeBlockQueue,
-                BlockVersion.V2);
+                BlockVersion.V3);
     }
 }
