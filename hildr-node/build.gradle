@@ -74,7 +74,7 @@ dependencies {
 	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
 	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
 
-	implementation('org.web3j:core:4.10.3') {
+	implementation('org.web3j:core:4.11.0') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
 		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
