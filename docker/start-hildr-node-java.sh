@@ -12,7 +12,7 @@ then
     fi
 fi
 
-if [ $LOG_LEVEL = "" ]
+if [[ $LOG_LEVEL = "" ]]
 then
   LOG_LEVEL="INFO"
 fi
