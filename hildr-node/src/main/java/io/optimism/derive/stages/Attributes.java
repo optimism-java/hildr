@@ -105,27 +105,19 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         final BigInteger gasLimit = l1Info.systemConfig().gasLimit();
 
         final var l2BlockTime = batch.timestamp();
-        final var blockTime = config.chainConfig().blockTime();
-        final var canyoneTime = config.chainConfig().canyonTime();
-        final var ecotoneTime = config.chainConfig().ecotoneTime();
         // check chain config canyonTime is greater than zero
         // check batch timestamp is greater than canyonTime
+        final var canyoneTime = config.chainConfig().canyonTime();
         if (canyoneTime.compareTo(BigInteger.ZERO) >= 0 && l2BlockTime.compareTo(canyoneTime) >= 0) {
             withdrawals = Collections.emptyList();
         }
 
+        final var ecotoneTime = config.chainConfig().ecotoneTime();
         String parentBeaconRoot = null;
-        if (ecotoneTime.compareTo(BigInteger.ZERO) >= 0) {
-            if (l2BlockTime.compareTo(config.chainConfig().ecotoneTime()) >= 0) {
-                // check l2 block time is ecotone activation block time
-                if (l2BlockTime.compareTo(blockTime) >= 0
-                        && l2BlockTime.subtract(blockTime).compareTo(ecotoneTime) < 0) {
-                    var upgradeTxs = EctoneUpgradeTransactions.UPGRADE_DEPORIT_TX;
-                    transactions.addAll(0, upgradeTxs);
-                }
-                var l1ParentBeaconRoot = l1Info.parentBeaconRoot();
-                parentBeaconRoot = StringUtils.isEmpty(l1ParentBeaconRoot) ? EMPTY_HASH : l1ParentBeaconRoot;
-            }
+        if (ecotoneTime.compareTo(BigInteger.ZERO) >= 0
+                && l2BlockTime.compareTo(config.chainConfig().ecotoneTime()) >= 0) {
+            var l1ParentBeaconRoot = l1Info.parentBeaconRoot();
+            parentBeaconRoot = StringUtils.isEmpty(l1ParentBeaconRoot) ? EMPTY_HASH : l1ParentBeaconRoot;
         }
         return new PayloadAttributes(
                 l2BlockTime,
@@ -150,6 +142,10 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         if (this.sequenceNumber.equals(BigInteger.ZERO)) {
             List<String> userDepositedTxs = this.deriveUserDeposited();
             transactions.addAll(userDepositedTxs);
+        }
+
+        if (this.config.chainConfig().isEcotoneActivationBlock(batch.timestamp())) {
+            transactions.addAll(EctoneUpgradeTransactions.UPGRADE_DEPORIT_TX);
         }
 
         List<String> rest = batch.transactions();
