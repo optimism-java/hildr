@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
  * @param systemConfig system config.
  * @param userDeposits user deposits.
  * @param batcherTransactions batcher transactions.
+ * @param parentBeaconRoot L1 beacon parent root hash.
  * @param finalized finalized.
  * @author grapebaba
  * @since 0.1.0
@@ -26,6 +27,7 @@ public record L1Info(
         SystemConfig systemConfig,
         List<UserDeposited> userDeposits,
         List<String> batcherTransactions,
+        String parentBeaconRoot,
         boolean finalized) {
 
     /**
@@ -64,16 +66,52 @@ public record L1Info(
                 L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, mixHash);
         List<String> batcherTransactions = createBatcherTransactions(block, systemConfig.batchSender(), batchInbox);
 
-        return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, finalized);
+        return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, null, finalized);
     }
 
-    private static List<String> createBatcherTransactions(Block block, String batchSender, String batchInbox) {
+    public static L1Info create(
+            Block block,
+            List<UserDeposited> userDeposits,
+            boolean finalized,
+            SystemConfig systemConfig,
+            List<String> batcherTransactions,
+            String parentBeaconRoot) {
+        checkBlock(block);
+        BigInteger blockNumber = block.getNumber();
+        String blockHash = block.getHash();
+        String mixHash = block.getMixHash();
+        BigInteger baseFeePerGas = block.getBaseFeePerGas();
+
+        L1BlockInfo l1BlockInfo =
+                L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, mixHash);
+        return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, parentBeaconRoot, finalized);
+    }
+
+    private static void checkBlock(Block block) {
+        if (block.getNumber() == null) {
+            throw new BlockNotIncludedException();
+        }
+        if (block.getHash() == null) {
+            throw new BlockNotIncludedException();
+        }
+        if (block.getMixHash() == null) {
+            throw new BlockNotIncludedException();
+        }
+        if (block.getBaseFeePerGas() == null) {
+            throw new BlockIsPreLondonException();
+        }
+    }
+
+    public static List<String> createBatcherTransactions(Block block, String batchSender, String batchInbox) {
         return block.getTransactions().stream()
                 .filter(transactionResult ->
-                        batchSender.equalsIgnoreCase(((TransactionObject) transactionResult).getFrom())
-                                && batchInbox.equalsIgnoreCase(((TransactionObject) transactionResult).getTo()))
+                        isValidBatcherTx((TransactionObject) transactionResult, batchSender, batchInbox))
                 .map(transactionResult -> ((TransactionObject) transactionResult).getInput())
                 .collect(Collectors.toList());
+    }
+
+    public static boolean isValidBatcherTx(TransactionObject tx, String batchSender, String batchInbox) {
+        return batchSender.equalsIgnoreCase(tx.getFrom()) && batchInbox.equalsIgnoreCase(tx.getTo());
     }
 
     /**

@@ -33,7 +33,7 @@ import org.web3j.utils.Numeric;
  *
  * @param l1RpcUrl          L1 chain rpc url.
  * @param l1WsRpcUrl        L1 chain websocket rpc url.
- * @param l1BeaconUrl        L1 chain websocket rpc url.
+ * @param l1BeaconUrl       L1 chain websocket rpc url.
  * @param l2RpcUrl          L2 chain rpc url.
  * @param l2EngineUrl       L2 engine API url.
  * @param jwtSecret         L2 engine API jwt secret.
@@ -649,8 +649,10 @@ public record Config(
      *
      * @param batchSender       batch sender address.
      * @param gasLimit          gas limit.
-     * @param l1FeeOverhead     L1 fee overhead.
-     * @param l1FeeScalar       L1 fee scalar.
+     * @param l1FeeOverhead     L1 fee overhead. Pre-Ecotone this is passed as-is to engine.
+     *                          Post-Ecotone this is always zero, and not passed into the engine.
+     * @param l1FeeScalar       L1 fee scalar. Pre-Ecotone this is passed as-is to the engine.
+     *                          Post-Ecotone this encodes multiple pieces of scalar data.
      * @param unsafeBlockSigner unsafe block signer address.
      * @author grapebaba
      * @since 0.1.0

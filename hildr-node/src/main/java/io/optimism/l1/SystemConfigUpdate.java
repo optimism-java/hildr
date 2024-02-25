@@ -13,6 +13,11 @@ import org.web3j.utils.Numeric;
  */
 public abstract class SystemConfigUpdate {
 
+    private static final BigInteger UPDATE_BATCH_SENDER = BigInteger.ZERO;
+    private static final BigInteger UPDATE_FEES_CONFIG = BigInteger.ONE;
+    private static final BigInteger UPDATE_GAS_LIMIT = BigInteger.TWO;
+    private static final BigInteger UPDATE_UNSAFE_BLOCK_SIGNER = BigInteger.valueOf(3L);
+
     /** not public constructor. */
     private SystemConfigUpdate() {}
 
@@ -78,23 +83,23 @@ public abstract class SystemConfigUpdate {
     }
 
     /** update gas. */
-    public static final class Gas extends SystemConfigUpdate {
+    public static final class GasLimit extends SystemConfigUpdate {
 
         private final BigInteger gas;
 
         /**
-         * the Gas constructor.
+         * the GasLimit constructor.
          *
          * @param gas gas value
          */
-        public Gas(BigInteger gas) {
+        public GasLimit(BigInteger gas) {
             this.gas = gas;
         }
 
         /**
-         * get fee of gas.
+         * get fee of gas limit.
          *
-         * @return fee of gas
+         * @return fee of gas limit
          */
         public BigInteger getGas() {
             return gas;
@@ -147,14 +152,14 @@ public abstract class SystemConfigUpdate {
         }
         byte[] decodeUpdateType = Numeric.hexStringToByteArray(log.getTopics().get(2));
         BigInteger updateType = Numeric.toBigInt(decodeUpdateType);
-        if (BigInteger.ZERO.compareTo(updateType) == 0) {
+        if (UPDATE_BATCH_SENDER.compareTo(updateType) == 0) {
             byte[] data = Numeric.hexStringToByteArray(log.getData());
             byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
             if (addrBytes.length != 20) {
                 throw new InvalidSystemConfigUpdateException();
             }
             return new BatchSender(Numeric.toHexString(addrBytes));
-        } else if (BigInteger.ONE.compareTo(updateType) == 0) {
+        } else if (UPDATE_FEES_CONFIG.compareTo(updateType) == 0) {
             byte[] data = Numeric.hexStringToByteArray(log.getData());
             byte[] feeOverheadBytes = Arrays.copyOfRange(data, 64, 96);
             if (feeOverheadBytes.length != 32) {
@@ -167,15 +172,15 @@ public abstract class SystemConfigUpdate {
             BigInteger feeOverhead = Numeric.toBigInt(feeOverheadBytes);
             BigInteger feeScalar = Numeric.toBigInt(feeScalarBytes);
             return new Fees(feeOverhead, feeScalar);
-        } else if (BigInteger.TWO.compareTo(updateType) == 0) {
+        } else if (UPDATE_GAS_LIMIT.compareTo(updateType) == 0) {
             byte[] data = Numeric.hexStringToByteArray(log.getData());
             byte[] gasBytes = Arrays.copyOfRange(data, 64, 96);
             if (gasBytes.length != 32) {
                 throw new InvalidSystemConfigUpdateException();
             }
             BigInteger gas = Numeric.toBigInt(gasBytes);
-            return new Gas(gas);
-        } else if (BigInteger.valueOf(3L).compareTo(updateType) == 0) {
+            return new GasLimit(gas);
+        } else if (UPDATE_UNSAFE_BLOCK_SIGNER.compareTo(updateType) == 0) {
             byte[] data = Numeric.hexStringToByteArray(log.getData());
             byte[] addrBytes = Arrays.copyOfRange(data, 76, 96);
             if (addrBytes.length != 20) {

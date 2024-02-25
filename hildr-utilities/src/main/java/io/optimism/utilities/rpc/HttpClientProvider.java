@@ -2,8 +2,6 @@ package io.optimism.utilities.rpc;
 
 import okhttp3.OkHttpClient;
 
-import java.time.Duration;
-
 /**
  * Http client provider.
  *
@@ -24,5 +22,4 @@ public class HttpClientProvider {
                 .addInterceptor(new RetryRateLimitInterceptor())
                 .build();
     }
-
 }

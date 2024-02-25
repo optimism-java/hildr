@@ -70,7 +70,7 @@ public class Runner extends AbstractExecutionThreadService {
         this.syncMode = syncMode;
         this.checkpointHash = checkpointHash;
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
-        this.engineApi = new EngineApi(this.config.l2EngineUrl(), this.config.jwtSecret());
+        this.engineApi = new EngineApi(this.config, this.config.l2EngineUrl(), this.config.jwtSecret());
         try {
             waitReady();
         } catch (InterruptedException e) {

@@ -65,7 +65,7 @@ public class EngineDriver<E extends Engine> {
      */
     @SuppressWarnings("unchecked")
     public EngineDriver(BlockInfo finalizedHead, Epoch finalizedEpoch, Web3j web3j, Config config) {
-        this.engine = (E) new EngineApi(config.l2EngineUrl(), config.jwtSecret());
+        this.engine = (E) new EngineApi(config, config.l2EngineUrl(), config.jwtSecret());
         this.unsafeHead = finalizedHead;
         this.finalizedHead = finalizedHead;
         this.finalizedEpoch = finalizedEpoch;

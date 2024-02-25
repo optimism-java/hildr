@@ -3,6 +3,7 @@ package io.optimism.engine;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import io.optimism.config.Config;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import java.io.IOException;
@@ -30,59 +31,76 @@ public class EngineApi implements Engine {
 
     private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EngineApi.class);
 
-    /** The forkchoice updated method string. */
+    /**
+     * The forkchoice updated method string.
+     */
     public static final String ENGINE_FORKCHOICE_UPDATED_V2 = "engine_forkchoiceUpdatedV2";
 
-    /** The new payload method string. */
+    public static final String ENGINE_FORKCHOICE_UPDATED_V3 = "engine_forkchoiceUpdatedV3";
+
+    /**
+     * The new payload method string.
+     */
     public static final String ENGINE_NEW_PAYLOAD_V2 = "engine_newPayloadV2";
 
-    /** The get payload method string. */
+    /**
+     * The get payload method string.
+     */
     public static final String ENGINE_GET_PAYLOAD_V2 = "engine_getPayloadV2";
 
-    /** The default engine api authentication port. */
+    /**
+     * The default engine api authentication port.
+     */
     public static final Integer DEFAULT_AUTH_PORT = 8851;
 
-    /** HttpService web3jService. */
+    /**
+     * HttpService web3jService.
+     */
     private final HttpService web3jService;
 
     private final Key key;
 
+    private final Config config;
+
     /**
      * Creates an engine api from environment variables.
      *
+     * @param config the hildr config
      * @return EngineApi. engine api
      */
-    public EngineApi fromEnv() {
+    public EngineApi fromEnv(Config config) {
         String baseUrlParm = System.getenv("ENGINE_API_URL");
         if (StringUtils.isBlank(baseUrlParm)) {
             throw new RuntimeException(
                     """
-          ENGINE_API_URL environment variable not set.
-          Please set this to the base url of the engine api
-          """);
+                            ENGINE_API_URL environment variable not set.
+                            Please set this to the base url of the engine api
+                            """);
         }
         String secretKey = System.getenv("JWT_SECRET");
         if (StringUtils.isBlank(secretKey)) {
             throw new RuntimeException(
                     """
-          JWT_SECRET environment variable not set.
-          Please set this to the 256 bit hex-encoded secret key
-           used to authenticate with the engine api.
-          This should be the same as set in the `--auth.secret`
-           flag when executing go-ethereum.
-          """);
+                            JWT_SECRET environment variable not set.
+                            Please set this to the 256 bit hex-encoded secret key
+                             used to authenticate with the engine api.
+                            This should be the same as set in the `--auth.secret`
+                             flag when executing go-ethereum.
+                            """);
         }
         String baseUrlFormat = authUrlFromAddr(baseUrlParm, null);
-        return new EngineApi(baseUrlFormat, secretKey);
+        return new EngineApi(config, baseUrlFormat, secretKey);
     }
 
     /**
      * Creates a new [`EngineApi`] with a base url and secret.
      *
-     * @param baseUrl baseUrl
+     * @param config    config
+     * @param baseUrl   baseUrl
      * @param secretStr secret
      */
-    public EngineApi(final String baseUrl, final String secretStr) {
+    public EngineApi(final Config config, final String baseUrl, final String secretStr) {
+        this.config = config;
         this.key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
         this.web3jService = new HttpService(baseUrl);
     }
@@ -90,7 +108,7 @@ public class EngineApi implements Engine {
     /**
      * Constructs the base engine api url for the given address.
      *
-     * @param addr addr
+     * @param addr     addr
      * @param portParm port
      * @return url string
      */
@@ -120,9 +138,14 @@ public class EngineApi implements Engine {
     @Override
     public OpEthForkChoiceUpdate forkchoiceUpdated(ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes)
             throws IOException {
+        var method = ENGINE_FORKCHOICE_UPDATED_V2;
+        var ecotoneTime = this.config.chainConfig().ecotoneTime();
+        if (payloadAttributes == null || payloadAttributes.timestamp().compareTo(ecotoneTime) >= 0) {
+            method = ENGINE_FORKCHOICE_UPDATED_V3;
+        }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthForkChoiceUpdate> r = new Request<>(
-                ENGINE_FORKCHOICE_UPDATED_V2,
+                method,
                 Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
                 web3jService,
                 OpEthForkChoiceUpdate.class);

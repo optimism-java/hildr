@@ -147,6 +147,12 @@ public record ExecutionPayloadSSZ(
                 blobGasUsed = sszReader.readUInt64();
                 offset += 8;
                 ExcessBlobGas = sszReader.readUInt64();
+                offset += 8;
+            }
+
+            if (version == BlockVersion.V2 && offset != fixedPart) {
+                throw new IllegalArgumentException(String.format(
+                        "unexpected offset: %d <> %d, version: %d", offset, fixedPart, version.getVersion()));
             }
 
             // var _ = offset; // for future extensions: we keep the offset accurate for extensions

@@ -1,6 +1,8 @@
 package io.optimism.type;
 
-import java.math.BigInteger;
+import com.fasterxml.jackson.annotation.JsonAlias;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * The BlobSidecar class
@@ -9,59 +11,48 @@ import java.math.BigInteger;
  * @since 0.2.6
  */
 public class BlobSidecar {
-    private String blockRoot;
     private String index;
-    private BigInteger slot;
-    private String blockParentRoot;
-    private BigInteger proposerIndex;
     private String blob;
+
+    @JsonAlias("signed_block_header")
+    private BeaconSignedBlockHeader signedBlockHeader;
+
+    @JsonAlias("kzg_commitment")
     private String kzgCommitment;
+
+    @JsonAlias("kzg_proof")
     private String kzgProof;
+
+    @JsonAlias("kzg_commitment_inclusion_proof")
+    private List<String> kzgCommitmentInclusionProof;
 
     /**
      * The BlobSidecar constructor.
      */
-    public BlobSidecar() {
-    }
+    public BlobSidecar() {}
 
     /**
      * The BlobSidecar constructor.
      *
-     * @param blockRoot
-     * @param index
-     * @param slot
-     * @param blockParentRoot
-     * @param proposerIndex
-     * @param blob
-     * @param kzgCommitment
-     * @param kzgProof
+     * @param index the blob index
+     * @param blob the blob data
+     * @param signedBlockHeader signed blob block header info
+     * @param kzgCommitment the kzg commitment info
+     * @param kzgProof the kzg proofs
      */
     public BlobSidecar(
-            String blockRoot,
             String index,
-            BigInteger slot,
-            String blockParentRoot,
-            BigInteger proposerIndex,
             String blob,
+            BeaconSignedBlockHeader signedBlockHeader,
             String kzgCommitment,
-            String kzgProof
-    ) {
-        this.blockRoot = blockRoot;
+            String kzgProof,
+            List<String> kzgCommitmentInclusionProof) {
         this.index = index;
-        this.slot = slot;
-        this.blockParentRoot = blockParentRoot;
-        this.proposerIndex = proposerIndex;
         this.blob = blob;
+        this.signedBlockHeader = signedBlockHeader;
         this.kzgCommitment = kzgCommitment;
         this.kzgProof = kzgProof;
-    }
-
-    public String getBlockRoot() {
-        return blockRoot;
-    }
-
-    public void setBlockRoot(String blockRoot) {
-        this.blockRoot = blockRoot;
+        this.kzgCommitmentInclusionProof = kzgCommitmentInclusionProof;
     }
 
     public String getIndex() {
@@ -72,36 +63,20 @@ public class BlobSidecar {
         this.index = index;
     }
 
-    public BigInteger getSlot() {
-        return slot;
-    }
-
-    public void setSlot(BigInteger slot) {
-        this.slot = slot;
-    }
-
-    public String getBlockParentRoot() {
-        return blockParentRoot;
-    }
-
-    public void setBlockParentRoot(String blockParentRoot) {
-        this.blockParentRoot = blockParentRoot;
-    }
-
-    public BigInteger getProposerIndex() {
-        return proposerIndex;
-    }
-
-    public void setProposerIndex(BigInteger proposerIndex) {
-        this.proposerIndex = proposerIndex;
-    }
-
     public String getBlob() {
         return blob;
     }
 
     public void setBlob(String blob) {
         this.blob = blob;
+    }
+
+    public BeaconSignedBlockHeader getSignedBlockHeader() {
+        return signedBlockHeader;
+    }
+
+    public void setSignedBlockHeader(BeaconSignedBlockHeader signedBlockHeader) {
+        this.signedBlockHeader = signedBlockHeader;
     }
 
     public String getKzgCommitment() {
@@ -118,5 +93,32 @@ public class BlobSidecar {
 
     public void setKzgProof(String kzgProof) {
         this.kzgProof = kzgProof;
+    }
+
+    public List<String> getKzgCommitmentInclusionProof() {
+        return kzgCommitmentInclusionProof;
+    }
+
+    public void setKzgCommitmentInclusionProof(List<String> kzgCommitmentInclusionProof) {
+        this.kzgCommitmentInclusionProof = kzgCommitmentInclusionProof;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        BlobSidecar that = (BlobSidecar) o;
+        return Objects.equals(index, that.index)
+                && Objects.equals(blob, that.blob)
+                && Objects.equals(kzgCommitment, that.kzgCommitment)
+                && Objects.equals(kzgProof, that.kzgProof)
+                && Objects.equals(kzgCommitmentInclusionProof, that.kzgCommitmentInclusionProof);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(index, blob, signedBlockHeader, kzgCommitment, kzgProof, kzgCommitmentInclusionProof);
     }
 }
