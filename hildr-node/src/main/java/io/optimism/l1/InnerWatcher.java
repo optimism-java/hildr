@@ -12,6 +12,9 @@ import io.optimism.derive.stages.Attributes;
 import io.optimism.derive.stages.Attributes.UserDeposited;
 import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.BlockUpdate.FinalityUpdate;
+import io.optimism.type.BeaconSignedBlockHeader;
+import io.optimism.type.BlobSidecar;
+import io.optimism.utilities.BlobCodec;
 import io.optimism.utilities.rpc.Web3jProvider;
 import io.optimism.utilities.telemetry.Logging;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
@@ -25,6 +28,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.jctools.queues.MessagePassingQueue;
 import org.slf4j.Logger;
@@ -72,39 +76,62 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                     new TypeReference<Uint256>() {},
                     new TypeReference<Bytes>() {})));
 
-    /** Global Config. */
+    /**
+     * Global Config.
+     */
     private final Config config;
 
-    /** Ethers http provider for L1. */
+    /**
+     * Ethers http provider for L1.
+     */
     private final Web3j provider;
 
     private final Web3j wsProvider;
 
+    /**
+     * Beacon blob fetcher to fetch the beacon blob from the L1 beacon endpoint.
+     */
+    private final BeaconBlobFetcher beaconFetcher;
+
     private BigInteger l2StartBlock;
 
-    /** Channel to send block updates. */
+    /**
+     * Channel to send block updates.
+     */
     private final MessagePassingQueue<BlockUpdate> blockUpdateQueue;
 
-    /** Most recent ingested block. */
+    /**
+     * Most recent ingested block.
+     */
     private BigInteger currentBlock;
 
-    /** Most recent ingested block info. */
+    /**
+     * Most recent ingested block info.
+     */
     private volatile BlockInfo currentBlockInfo;
 
-    /** Most recent block. */
+    /**
+     * Most recent block.
+     */
     private BigInteger headBlock;
 
-    /** Most recent finalized block. */
+    /**
+     * Most recent finalized block.
+     */
     private BigInteger finalizedBlock;
 
-    /** Most recent finalized block info. */
+    /**
+     * Most recent finalized block info.
+     */
     private volatile BlockInfo l1Finalized;
 
     private volatile BlockInfo l1Safe;
 
     private volatile BlockInfo l1Head;
 
-    /** List of blocks that have not been finalized yet. */
+    /**
+     * List of blocks that have not been finalized yet.
+     */
     private List<BlockInfo> unfinalizedBlocks;
 
     /**
@@ -113,7 +140,9 @@ public class InnerWatcher extends AbstractExecutionThreadService {
      */
     private final HashMap<BigInteger, List<Attributes.UserDeposited>> deposits;
 
-    /** Current system config value. */
+    /**
+     * Current system config value.
+     */
     private Config.SystemConfig systemConfig;
 
     /**
@@ -131,8 +160,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     /**
      * create a InnerWatcher instance.
      *
-     * @param config the global config
-     * @param queue the Queue to send block updates
+     * @param config       the global config
+     * @param queue        the Queue to send block updates
      * @param l1StartBlock the start block number of l1
      * @param l2StartBlock the start block number of l2
      */
@@ -141,6 +170,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         this.config = config;
         this.provider = Web3jProvider.createClient(config.l1RpcUrl());
         this.wsProvider = Web3jProvider.createClient(config.l1WsRpcUrl());
+        this.beaconFetcher = new BeaconBlobFetcher(config.l1BeaconUrl());
         this.l2StartBlock = l2StartBlock;
         this.devnet = config.devnet() != null && config.devnet();
 
@@ -208,7 +238,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     /**
      * try ingest block.
      *
-     * @throws ExecutionException thrown if failed to get data from web3j client
+     * @throws ExecutionException   thrown if failed to get data from web3j client
      * @throws InterruptedException thrown if executor has been shutdown
      */
     public void tryIngestBlock() throws ExecutionException, InterruptedException {
@@ -253,16 +283,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private void updateSystemConfigWithNewestLog() throws ExecutionException, InterruptedException {
-        this.updateSystemConfig();
         EthBlock.Block blockResp = this.pollBlockByNumber(this.provider, this.currentBlock);
-        List<UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
-
-        boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
-        L1Info l1Info =
-                L1Info.create(blockResp, userDeposits, config.chainConfig().batchInbox(), finalized, this.systemConfig);
-
+        BlockInfo blockInfo = BlockInfo.from(blockResp);
+        this.updateSystemConfig(blockInfo);
+        final L1Info l1Info = deriveL1Info(blockResp);
         if (l1Info.blockInfo().number().compareTo(this.finalizedBlock) >= 0) {
-            BlockInfo blockInfo = BlockInfo.from(blockResp);
             this.unfinalizedBlocks.add(blockInfo);
             this.currentBlockInfo = blockInfo;
         }
@@ -271,6 +296,73 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         this.putBlockUpdate(update);
         LOGGER.debug("current block will add one: {}", this.currentBlock);
         this.currentBlock = this.currentBlock.add(BigInteger.ONE);
+    }
+
+    private L1Info deriveL1Info(EthBlock.Block l1Block) throws ExecutionException, InterruptedException {
+        List<UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
+        boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
+        L1Info l1Info;
+        var tuple = getBatcherTxAndBlobHeader(l1Block);
+        List<String> data = tuple.component1();
+        BeaconSignedBlockHeader header = tuple.component2();
+        var parentBeaconRoot = header == null ? null : header.getMessage().getParentRoot();
+        l1Info = L1Info.create(l1Block, userDeposits, finalized, this.systemConfig, data, parentBeaconRoot);
+        return l1Info;
+    }
+
+    private Tuple2<List<String>, BeaconSignedBlockHeader> getBatcherTxAndBlobHeader(EthBlock.Block l1Block) {
+        final List<String> data = new ArrayList<>();
+        List<Tuple2<BigInteger, String>> indexedBlobs = new ArrayList<>();
+        int blobIndex = 0;
+        for (EthBlock.TransactionResult txRes : l1Block.getTransactions()) {
+            EthBlock.TransactionObject tx = (EthBlock.TransactionObject) txRes.get();
+            if (!L1Info.isValidBatcherTx(
+                    tx, this.systemConfig.batchSender(), config.chainConfig().batchInbox())) {
+                blobIndex += indexedBlobs.size();
+                continue;
+            }
+            if (!tx.getType().equalsIgnoreCase("0x3") && !tx.getType().equalsIgnoreCase("0x03")) {
+                data.add(StringUtils.isEmpty(tx.getInput()) ? "" : tx.getInput());
+                continue;
+            }
+            if (StringUtils.isNotEmpty(tx.getInput())) {
+                LOGGER.warn("blob tx has calldata, which will be ignored: txhash = {}", tx.getHash());
+            }
+            for (String blobVersionedHash : tx.getVersionedHashes()) {
+                indexedBlobs.add(new Tuple2<>(BigInteger.valueOf(blobIndex), blobVersionedHash));
+                data.add(null);
+                blobIndex += 1;
+            }
+        }
+        if (indexedBlobs.isEmpty()) {
+            return new Tuple2<>(data, null);
+        }
+        BigInteger slot = this.beaconFetcher.getSlotFromTime(l1Block.getTimestamp());
+        List<BigInteger> indices = indexedBlobs.stream().map(Tuple2::component1).collect(Collectors.toList());
+        List<BlobSidecar> blobs = this.beaconFetcher.getBlobSidecards(slot.toString(), indices);
+        if (blobs == null || blobs.isEmpty()) {
+            throw new DepositsNotFoundException(
+                    "blobSidecards is empty, and excepted to be %d".formatted(indices.size()));
+        }
+        int blobsIndex = 0;
+        for (int i = 0; i < data.size(); i++) {
+            if (data.get(i) != null) {
+                continue;
+            }
+            if (blobsIndex >= blobs.size()) {
+                throw new IndexOutOfBoundsException("blobIndex >= blobSidecards.size()");
+            }
+            byte[] decodedBlob = BlobCodec.decode(
+                    Numeric.hexStringToByteArray(blobs.get(blobIndex).getBlob()));
+            data.set(i, Numeric.toHexString(decodedBlob));
+            blobsIndex++;
+        }
+        if (blobsIndex != blobs.size()) {
+            throw new IllegalStateException("got too many blobs");
+        }
+
+        return new Tuple2<List<String>, BeaconSignedBlockHeader>(
+                data, blobs.get(0).getSignedBlockHeader());
     }
 
     private void putBlockUpdate(final BlockUpdate update) {
@@ -282,7 +374,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         }
     }
 
-    private void updateSystemConfig() throws ExecutionException, InterruptedException {
+    private void updateSystemConfig(BlockInfo l1BlockInfo) throws ExecutionException, InterruptedException {
         BigInteger preLastUpdateBlock = this.systemConfigUpdate.component1();
         if (preLastUpdateBlock.compareTo(this.currentBlock) < 0) {
             BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(1000L));
@@ -306,7 +398,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 if (updateBlock == null) {
                     this.systemConfigUpdate = new Tuple2<>(toBlock, null);
                 } else {
-                    SystemConfig updateSystemConfig = parseSystemConfigUpdate(configUpdate);
+                    SystemConfig updateSystemConfig = parseSystemConfigUpdate(l1BlockInfo, configUpdate);
                     this.systemConfigUpdate = new Tuple2<>(updateBlock, updateSystemConfig);
                 }
             }
@@ -320,7 +412,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         }
     }
 
-    private Config.SystemConfig parseSystemConfigUpdate(SystemConfigUpdate configUpdate) {
+    private Config.SystemConfig parseSystemConfigUpdate(BlockInfo l1BlockInfo, SystemConfigUpdate configUpdate) {
         Config.SystemConfig updateSystemConfig = null;
         if (configUpdate instanceof SystemConfigUpdate.BatchSender) {
             updateSystemConfig = new Config.SystemConfig(
@@ -330,16 +422,27 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                     this.systemConfig.l1FeeScalar(),
                     this.systemConfig.unsafeBlockSigner());
         } else if (configUpdate instanceof SystemConfigUpdate.Fees) {
+            var ecotoneTime = this.config.chainConfig().ecotoneTime();
+            if (ecotoneTime.compareTo(BigInteger.ZERO) > 0
+                    && l1BlockInfo.timestamp().compareTo(ecotoneTime) >= 0) {
+                updateSystemConfig = new Config.SystemConfig(
+                        this.systemConfig.batchSender(),
+                        this.systemConfig.gasLimit(),
+                        BigInteger.ZERO,
+                        ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar(),
+                        this.systemConfig.unsafeBlockSigner());
+            } else {
+                updateSystemConfig = new Config.SystemConfig(
+                        this.systemConfig.batchSender(),
+                        this.systemConfig.gasLimit(),
+                        ((SystemConfigUpdate.Fees) configUpdate).getFeeOverhead(),
+                        ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar(),
+                        this.systemConfig.unsafeBlockSigner());
+            }
+        } else if (configUpdate instanceof SystemConfigUpdate.GasLimit) {
             updateSystemConfig = new Config.SystemConfig(
                     this.systemConfig.batchSender(),
-                    this.systemConfig.gasLimit(),
-                    ((SystemConfigUpdate.Fees) configUpdate).getFeeOverhead(),
-                    ((SystemConfigUpdate.Fees) configUpdate).getFeeScalar(),
-                    this.systemConfig.unsafeBlockSigner());
-        } else if (configUpdate instanceof SystemConfigUpdate.Gas) {
-            updateSystemConfig = new Config.SystemConfig(
-                    this.systemConfig.batchSender(),
-                    ((SystemConfigUpdate.Gas) configUpdate).getGas(),
+                    ((SystemConfigUpdate.GasLimit) configUpdate).getGas(),
                     this.systemConfig.l1FeeOverhead(),
                     this.systemConfig.l1FeeScalar(),
                     this.systemConfig.unsafeBlockSigner());
@@ -461,7 +564,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         } else {
             this.getMetadataFromL2(this.l2StartBlock);
         }
-        this.subscribeL1NewHeads();
+        //        this.subscribeL1NewHeads();
     }
 
     @Override

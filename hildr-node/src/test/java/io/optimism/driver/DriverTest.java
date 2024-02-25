@@ -24,10 +24,12 @@ class DriverTest {
         }
         String l1rpc = System.getenv("L1_TEST_RPC_URL");
         String l1WsRpc = System.getenv("L1_TEST_WS_RPC_URL");
+        String l1BeaconRpc = System.getenv("L1_TEST_BEACON_RPC_URL");
         String l2rpc = System.getenv("L2_TEST_RPC_URL");
         CliConfig cliConfig = new CliConfig(
                 l1rpc,
                 l1WsRpc,
+                l1BeaconRpc,
                 l2rpc,
                 null,
                 "d195a64e08587a3f1560686448867220c2727550ce3e0c95c7200d0ade0f9167",

@@ -4,6 +4,7 @@ import io.optimism.common.BlockNotIncludedException;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemAccounts;
+import io.optimism.derive.EctoneUpgradeTransactions;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
@@ -47,6 +48,8 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Attributes.class);
 
+    private static final String EMPTY_HASH = "0x0000000000000000000000000000000000000000000000000000000000000000";
+
     private final I batchIterator;
 
     private final AtomicReference<State> state;
@@ -60,9 +63,9 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
     /**
      * Instantiates a new Attributes.
      *
-     * @param batchIterator the batch iterator
-     * @param state the state
-     * @param config the config
+     * @param batchIterator  the batch iterator
+     * @param state          the state
+     * @param config         the config
      * @param sequenceNumber the sequence number
      */
     public Attributes(I batchIterator, AtomicReference<State> state, Config config, BigInteger sequenceNumber) {
@@ -92,25 +95,40 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         Epoch epoch = new Epoch(
                 batch.epochNum(), batch.epochHash(), l1Info.blockInfo().timestamp());
 
-        BigInteger timestamp = batch.timestamp();
-        BigInteger l1InclusionBlock = batchWrapper.l1InclusionBlock();
-        BigInteger seqNumber = this.sequenceNumber;
-        String prevRandao = l1Info.blockInfo().mixHash();
-        List<String> transactions = this.deriveTransactions(batch, l1Info);
-        String suggestedFeeRecipient = SystemAccounts.defaultSystemAccounts().feeVault();
-        BigInteger gasLimit = l1Info.systemConfig().gasLimit();
-
         List<EthBlock.Withdrawal> withdrawals = null;
+        final BigInteger l1InclusionBlock = batchWrapper.l1InclusionBlock();
+        final BigInteger seqNumber = this.sequenceNumber;
+        final String prevRandao = l1Info.blockInfo().mixHash();
+        final List<String> transactions = this.deriveTransactions(batch, l1Info);
+        final String suggestedFeeRecipient =
+                SystemAccounts.defaultSystemAccounts().feeVault();
+        final BigInteger gasLimit = l1Info.systemConfig().gasLimit();
+
+        final var l2BlockTime = batch.timestamp();
+        final var blockTime = config.chainConfig().blockTime();
+        final var canyoneTime = config.chainConfig().canyonTime();
+        final var ecotoneTime = config.chainConfig().ecotoneTime();
         // check chain config canyonTime is greater than zero
-        if (config.chainConfig().canyonTime().compareTo(BigInteger.ZERO) >= 0) {
-            // check batch timestamp is greater than canyonTime
-            if (batch.timestamp().compareTo(config.chainConfig().canyonTime()) >= 0) {
-                withdrawals = Collections.emptyList();
-            }
+        // check batch timestamp is greater than canyonTime
+        if (canyoneTime.compareTo(BigInteger.ZERO) >= 0 && l2BlockTime.compareTo(canyoneTime) >= 0) {
+            withdrawals = Collections.emptyList();
         }
 
+        String parentBeaconRoot = null;
+        if (ecotoneTime.compareTo(BigInteger.ZERO) >= 0) {
+            if (l2BlockTime.compareTo(config.chainConfig().ecotoneTime()) >= 0) {
+                // check l2 block time is ecotone activation block time
+                if (l2BlockTime.compareTo(blockTime) >= 0
+                        && l2BlockTime.subtract(blockTime).compareTo(ecotoneTime) < 0) {
+                    var upgradeTxs = EctoneUpgradeTransactions.UPGRADE_DEPORIT_TX;
+                    transactions.addAll(0, upgradeTxs);
+                }
+                var l1ParentBeaconRoot = l1Info.parentBeaconRoot();
+                parentBeaconRoot = StringUtils.isEmpty(l1ParentBeaconRoot) ? EMPTY_HASH : l1ParentBeaconRoot;
+            }
+        }
         return new PayloadAttributes(
-                timestamp,
+                l2BlockTime,
                 prevRandao,
                 suggestedFeeRecipient,
                 transactions,
@@ -119,7 +137,8 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
                 gasLimit,
                 epoch,
                 l1InclusionBlock,
-                seqNumber);
+                seqNumber,
+                parentBeaconRoot);
     }
 
     private List<String> deriveTransactions(SingularBatch batch, L1Info l1Info) {
@@ -181,16 +200,16 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
     /**
      * The type UserDeposited.
      *
-     * @param from the from address.
-     * @param to the to address.
-     * @param mint the mint amount.
-     * @param value the value.
-     * @param gas the gas.
-     * @param isCreation the isCreation flag.
-     * @param data the data.
-     * @param l1BlockNum the L1 blockNum.
+     * @param from        the from address.
+     * @param to          the to address.
+     * @param mint        the mint amount.
+     * @param value       the value.
+     * @param gas         the gas.
+     * @param isCreation  the isCreation flag.
+     * @param data        the data.
+     * @param l1BlockNum  the L1 blockNum.
      * @param l1BlockHash the L1 blockHash.
-     * @param logIndex the logIndex.
+     * @param logIndex    the logIndex.
      * @author grapebaba
      * @since 0.1.0
      */
@@ -266,16 +285,16 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
     /**
      * The type AttributesDeposited.
      *
-     * @param number the number
-     * @param timestamp the timestamp
-     * @param baseFee the base fee
-     * @param hash the hash
+     * @param number         the number
+     * @param timestamp      the timestamp
+     * @param baseFee        the base fee
+     * @param hash           the hash
      * @param sequenceNumber the sequence number
-     * @param batcherHash the batcher hash
-     * @param feeOverhead the fee overhead
-     * @param feeScalar the fee scalar
-     * @param gas the gas
-     * @param isSystemTx the is system tx
+     * @param batcherHash    the batcher hash
+     * @param feeOverhead    the fee overhead
+     * @param feeScalar      the fee scalar
+     * @param gas            the gas
+     * @param isSystemTx     the is system tx
      * @author grapebaba
      * @since 0.1.0
      */
@@ -294,10 +313,10 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         /**
          * From block info attributes deposited.
          *
-         * @param l1Info the l 1 info
+         * @param l1Info         the l 1 info
          * @param sequenceNumber the sequence number
          * @param batchTimestamp the batch timestamp
-         * @param config the config
+         * @param config         the config
          * @return the attributes deposited
          */
         public static AttributesDeposited fromBlockInfo(
@@ -343,13 +362,13 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
     /**
      * The type DepositedTransaction.
      *
-     * @param data the data
+     * @param data       the data
      * @param isSystemTx the is system tx
-     * @param gas the gas
-     * @param value the value
-     * @param mint the mint
-     * @param to the to address
-     * @param from the from address
+     * @param gas        the gas
+     * @param value      the value
+     * @param mint       the mint
+     * @param to         the to address
+     * @param from       the from address
      * @param sourceHash the source hash
      * @author grapebaba
      * @since 0.1.0

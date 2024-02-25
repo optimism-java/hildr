@@ -9,6 +9,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import io.optimism.TestConstants;
 import io.optimism.common.Epoch;
 import io.optimism.engine.ExecutionPayload.ExecutionPayloadRes;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
@@ -89,10 +90,10 @@ public class EngineApiTest {
                 "123123",
                 "123123",
                 "sdfasdf12312312",
+                null,
                 List.of(""),
-                null,
-                null,
-                null);
+                "123321",
+                "321123");
     }
 
     String initExecutionPayloadJson() throws JsonProcessingException {
@@ -107,7 +108,7 @@ public class EngineApiTest {
         String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initForkChoiceUpdateResp()));
-        EngineApi engineApi = new EngineApi(baseUrl, SECRET);
+        EngineApi engineApi = new EngineApi(TestConstants.createConfig(), baseUrl, SECRET);
         ForkchoiceState forkchoiceState = new ForkchoiceState("123", "123", "!@3");
         PayloadAttributes payloadAttributes = new PayloadAttributes(
                 new BigInteger("123123"),
@@ -119,7 +120,8 @@ public class EngineApiTest {
                 new BigInteger("1"),
                 new Epoch(new BigInteger("12"), "123", new BigInteger("1233145")),
                 new BigInteger("1334"),
-                new BigInteger("321"));
+                new BigInteger("321"),
+                null);
 
         OpEthForkChoiceUpdate forkChoiceUpdate = engineApi.forkchoiceUpdated(forkchoiceState, payloadAttributes);
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -131,7 +133,7 @@ public class EngineApiTest {
         String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initPayloadStatusResp()));
-        EngineApi engineApi = new EngineApi(baseUrl, SECRET);
+        EngineApi engineApi = new EngineApi(TestConstants.createConfig(), baseUrl, SECRET);
         OpEthPayloadStatus payloadStatus =
                 engineApi.newPayload(initExecutionPayload().toExecutionPayload());
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
@@ -143,7 +145,7 @@ public class EngineApiTest {
         String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initExecutionPayloadJson()));
-        EngineApi engineApi = new EngineApi(baseUrl, SECRET);
+        EngineApi engineApi = new EngineApi(TestConstants.createConfig(), baseUrl, SECRET);
         OpEthExecutionPayload executionPayload = engineApi.getPayloadV2(new BigInteger("123"));
         ObjectWriter ow = new ObjectMapper().writer().withDefaultPrettyPrinter();
         assertEquals(initExecutionPayloadJson(), ow.writeValueAsString(executionPayload));
