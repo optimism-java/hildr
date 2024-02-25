@@ -34,9 +34,9 @@ public record AttributesDepositedCall(
         BigInteger blobBaseFee) {
 
     /**
-     * From attributes deposited call.
+     * Create AttributesDepositedCall from attributes deposited call.
      *
-     * @param callData the call data
+     * @param callData the call data from ectone transaction or bedrock transaction
      * @return the attributes deposited call
      */
     public static AttributesDepositedCall from(String callData) {
