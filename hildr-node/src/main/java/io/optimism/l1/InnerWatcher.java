@@ -301,12 +301,11 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     private L1Info deriveL1Info(EthBlock.Block l1Block) throws ExecutionException, InterruptedException {
         List<UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
         boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
-        L1Info l1Info;
         var tuple = getBatcherTxAndBlobHeader(l1Block);
         List<String> data = tuple.component1();
         BeaconSignedBlockHeader header = tuple.component2();
         var parentBeaconRoot = header == null ? null : header.getMessage().getParentRoot();
-        l1Info = L1Info.create(l1Block, userDeposits, finalized, this.systemConfig, data, parentBeaconRoot);
+        var l1Info = L1Info.create(l1Block, userDeposits, finalized, this.systemConfig, data, parentBeaconRoot);
         return l1Info;
     }
 
@@ -322,7 +321,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 continue;
             }
             if (!tx.getType().equalsIgnoreCase("0x3") && !tx.getType().equalsIgnoreCase("0x03")) {
-                data.add(StringUtils.isEmpty(tx.getInput()) ? "" : tx.getInput());
+                data.add(tx.getInput());
                 continue;
             }
             if (StringUtils.isNotEmpty(tx.getInput())) {

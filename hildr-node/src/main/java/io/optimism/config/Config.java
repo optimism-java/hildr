@@ -232,6 +232,18 @@ public record Config(
             String l2Tol1MessagePasser) {
 
         /**
+         * Checking if the time is the ecotone activation block.
+         *
+         * @param time block time
+         * @return true if the time is the ecotone activation block, otherwise false.
+         */
+        public boolean isEcotoneActivationBlock(BigInteger time) {
+            return time.compareTo(ecotoneTime) >= 0
+                    && time.compareTo(this.blockTime) >= 0
+                    && time.subtract(this.blockTime).compareTo(ecotoneTime) < 0;
+        }
+
+        /**
          * Optimism chain config.
          *
          * @return the chain config
