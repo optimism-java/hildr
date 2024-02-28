@@ -1,5 +1,6 @@
 package io.optimism.derive.stages;
 
+import io.optimism.common.BlockInfo;
 import io.optimism.common.BlockNotIncludedException;
 import io.optimism.common.Epoch;
 import io.optimism.config.Config;
@@ -35,6 +36,7 @@ import org.web3j.rlp.RlpEncoder;
 import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
 
 /**
@@ -86,14 +88,19 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         SingularBatch batch = (SingularBatch) batchWrapper.batch();
         LOGGER.debug("attributes derived from block {}", batch.epochNum());
         LOGGER.debug("batch epoch hash {}", batch.epochHash());
-
-        this.updateSequenceNumber(batch.epochHash());
+        var l2Parent = this.state
+                .get()
+                .l2Info(batch.timestamp().subtract(this.config.chainConfig().blockTime()));
+        if (l2Parent == null) {
+            throw new BlockNotIncludedException();
+        }
+        this.updateSequenceNumber(l2Parent, batch);
 
         State state = this.state.get();
         L1Info l1Info = state.l1Info(batch.epochHash());
 
         Epoch epoch = new Epoch(
-                batch.epochNum(), batch.epochHash(), l1Info.blockInfo().timestamp());
+                batch.epochNum(), batch.epochHash(), l1Info.blockInfo().timestamp(), null);
 
         List<EthBlock.Withdrawal> withdrawals = null;
         final BigInteger l1InclusionBlock = batchWrapper.l1InclusionBlock();
@@ -176,14 +183,14 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         return Numeric.toHexString(attributeTx.encode());
     }
 
-    private void updateSequenceNumber(String batchEpochHash) {
-        if (this.epochHash.equals(batchEpochHash)) {
-            this.sequenceNumber = this.sequenceNumber.add(BigInteger.ONE);
+    private void updateSequenceNumber(Tuple2<BlockInfo, Epoch> l2Parent, SingularBatch batch) {
+        Epoch l1Epoch = l2Parent.component2();
+        if (l1Epoch.number().equals(batch.epochNum())) {
+            this.sequenceNumber = l1Epoch.sequenceNumber().add(BigInteger.ONE);
         } else {
             this.sequenceNumber = BigInteger.ZERO;
         }
-
-        this.epochHash = batchEpochHash;
+        this.epochHash = batch.epochHash();
     }
 
     @Override

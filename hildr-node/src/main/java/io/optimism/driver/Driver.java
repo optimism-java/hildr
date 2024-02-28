@@ -168,13 +168,13 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      */
     public static Driver<EngineApi> from(Config config, CountDownLatch latch)
             throws InterruptedException, ExecutionException {
-        final Web3j provider = Web3jProvider.createClient(config.l2RpcUrl());
+        final Web3j l2Provider = Web3jProvider.createClient(config.l2RpcUrl());
 
         EthBlock finalizedBlock;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
             var parameter = config.devnet() != null && config.devnet() ? LATEST : FINALIZED;
             StructuredTaskScope.Subtask<EthBlock> finalizedBlockFuture = scope.fork(TracerTaskWrapper.wrap(
-                    () -> provider.ethGetBlockByNumber(parameter, true).send()));
+                    () -> l2Provider.ethGetBlockByNumber(parameter, true).send()));
             scope.join();
             scope.throwIfFailed();
 
@@ -208,12 +208,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 finalizedHead.number(),
                 config);
 
-        var l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), provider);
+        var l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), l2Provider);
         var l2Fetcher = (Function<BigInteger, Tuple2<BlockInfo, Epoch>>) blockNum -> {
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(
-                        () -> provider.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
-                                .send()));
+                StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(() -> l2Provider
+                        .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
+                        .send()));
                 scope.join();
                 scope.throwIfFailed();
 
@@ -231,7 +231,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(
                 io.optimism.derive.State.create(l2Refs, l2Fetcher, finalizedHead, finalizedEpoch, config));
 
-        EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, provider, config);
+        EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, l2Provider, config);
 
         Pipeline pipeline = new Pipeline(state, config, finalizedSeq);
 
@@ -241,7 +241,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
         OpStackNetwork opStackNetwork = new OpStackNetwork(config.chainConfig(), unsafeBlockQueue);
 
-        provider.shutdown();
+        l2Provider.shutdown();
         return new Driver<>(
                 engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch, config, opStackNetwork);
     }
@@ -451,7 +451,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                     Driver.this.engineDriver.getSafeHead().hash());
 
             final BlockInfo newSafeHead = Driver.this.engineDriver.getSafeHead();
-            final Epoch newSafeEpoch = Driver.this.engineDriver.getSafeEpoch();
+            final Epoch safeEpoch = Driver.this.engineDriver.getSafeEpoch();
+            final Epoch newSafeEpoch = Epoch.from(safeEpoch, seqNumber);
 
             Driver.this.state.getAndUpdate(state -> {
                 state.updateSafeHead(newSafeHead, newSafeEpoch);
@@ -553,7 +554,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 null);
 
         if (newFinalized != null) {
-            this.engineDriver.updateFinalized(newFinalized.head(), newFinalized.epoch());
+            this.engineDriver.updateFinalized(newFinalized.head(), newFinalized.epochWithSeq());
         }
 
         this.unfinalizedBlocks = this.unfinalizedBlocks.stream()
@@ -641,5 +642,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param l1InclusionBlock the L1 inclusion block
      * @param seqNumber        the seq number
      */
-    protected record UnfinalizedBlock(BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {}
+    protected record UnfinalizedBlock(BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {
+        public Epoch epochWithSeq() {
+            return Epoch.from(epoch, seqNumber);
+        }
+    }
 }

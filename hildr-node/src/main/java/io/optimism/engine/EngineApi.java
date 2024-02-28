@@ -138,14 +138,14 @@ public class EngineApi implements Engine {
     @Override
     public OpEthForkChoiceUpdate forkchoiceUpdated(ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes)
             throws IOException {
-        var method = ENGINE_FORKCHOICE_UPDATED_V2;
-        var ecotoneTime = this.config.chainConfig().ecotoneTime();
-        if (payloadAttributes == null || payloadAttributes.timestamp().compareTo(ecotoneTime) >= 0) {
-            method = ENGINE_FORKCHOICE_UPDATED_V3;
-        }
+        //        var method = ENGINE_FORKCHOICE_UPDATED_V2;
+        //        var ecotoneTime = this.config.chainConfig().ecotoneTime();
+        //        if (payloadAttributes == null || payloadAttributes.timestamp().compareTo(ecotoneTime) >= 0) {
+        //            method = ENGINE_FORKCHOICE_UPDATED_V3;
+        //        }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthForkChoiceUpdate> r = new Request<>(
-                method,
+                ENGINE_FORKCHOICE_UPDATED_V2,
                 Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
                 web3jService,
                 OpEthForkChoiceUpdate.class);

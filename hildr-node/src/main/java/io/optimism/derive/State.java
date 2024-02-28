@@ -160,7 +160,8 @@ public class State {
         return new Epoch(
                 l1Info.blockInfo().number(),
                 l1Info.blockInfo().hash(),
-                l1Info.blockInfo().timestamp());
+                l1Info.blockInfo().timestamp(),
+                null);
     }
 
     /**
@@ -177,7 +178,8 @@ public class State {
         return new Epoch(
                 l1Info.blockInfo().number(),
                 l1Info.blockInfo().hash(),
-                l1Info.blockInfo().timestamp());
+                l1Info.blockInfo().timestamp(),
+                null);
     }
 
     /**

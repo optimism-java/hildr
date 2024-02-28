@@ -463,6 +463,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
             if (element.timestamp().compareTo(nextTimestamp) >= 0) {
                 continue;
             }
+
             Tuple2<BlockInfo, Epoch> info = state.l2Info(element.timestamp());
             if (info == null) {
                 LOGGER.warn("overlapped l2 block not found");
