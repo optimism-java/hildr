@@ -410,7 +410,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.valueOf(1683219600L),
-                    BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
@@ -449,7 +449,7 @@ public record Config(
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
-                    BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
