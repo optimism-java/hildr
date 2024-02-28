@@ -41,7 +41,7 @@ public class EngineDriver<E extends Engine> {
     private static final Logger LOGGER = LoggerFactory.getLogger(EngineDriver.class);
     private E engine;
 
-    private Web3j web3j;
+    private Web3j l2Client;
 
     private BigInteger blockTime;
 
@@ -60,24 +60,24 @@ public class EngineDriver<E extends Engine> {
      *
      * @param finalizedHead the finalized head
      * @param finalizedEpoch the finalized epoch
-     * @param web3j the web 3 j
+     * @param l2Client the web 3 j
      * @param config the config
      */
     @SuppressWarnings("unchecked")
-    public EngineDriver(BlockInfo finalizedHead, Epoch finalizedEpoch, Web3j web3j, Config config) {
+    public EngineDriver(BlockInfo finalizedHead, Epoch finalizedEpoch, Web3j l2Client, Config config) {
         this.engine = (E) new EngineApi(config, config.l2EngineUrl(), config.jwtSecret());
         this.unsafeHead = finalizedHead;
         this.finalizedHead = finalizedHead;
         this.finalizedEpoch = finalizedEpoch;
         this.safeHead = finalizedHead;
         this.safeEpoch = finalizedEpoch;
-        this.web3j = web3j;
+        this.l2Client = l2Client;
         this.blockTime = config.chainConfig().blockTime();
     }
 
     /** Stop. */
     public void stop() {
-        this.web3j.shutdown();
+        this.l2Client.shutdown();
     }
 
     /**
@@ -237,7 +237,7 @@ public class EngineDriver<E extends Engine> {
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
             StructuredTaskScope.Subtask<EthBlock> ethBlockFuture = scope.fork(TracerTaskWrapper.wrap(
-                    () -> web3j.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
+                    () -> l2Client.ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNumber), true)
                             .send()));
 
             scope.join();
@@ -333,14 +333,14 @@ public class EngineDriver<E extends Engine> {
 
     private void skipAttributes(PayloadAttributes attributes, EthBlock block)
             throws ExecutionException, InterruptedException {
-        Epoch newEpoch = attributes.epoch();
+        Epoch newEpoch = Epoch.from(attributes.epoch(), attributes.seqNumber());
         BlockInfo newHead = BlockInfo.from(block.getBlock());
         this.updateSafeHead(newHead, newEpoch, false);
         this.updateForkchoice();
     }
 
     private void processAttributes(PayloadAttributes attributes) throws ExecutionException, InterruptedException {
-        Epoch newEpoch = attributes.epoch();
+        Epoch newEpoch = Epoch.from(attributes.epoch(), attributes.seqNumber());
         OpEthExecutionPayload opEthExecutionPayload = this.buildPayload(attributes);
         ExecutionPayload executionPayload = opEthExecutionPayload.getExecutionPayload();
         BlockInfo newHead = new BlockInfo(

@@ -256,7 +256,8 @@ public record Config(
                     new Epoch(
                             BigInteger.valueOf(17422590L),
                             "0x438335a20d98863a4c0c97999eb2481921ccd28553eac6f913af7c12aec04108",
-                            BigInteger.valueOf(1686068903L)),
+                            BigInteger.valueOf(1686068903L),
+                            BigInteger.ZERO),
                     new BlockInfo(
                             "0xdbf6a80fef073de06add9b0d14026d6e5a86c85f6d102c36d3d8e9cf89c2afd3",
                             BigInteger.valueOf(105235063L),
@@ -296,7 +297,8 @@ public record Config(
                     new Epoch(
                             BigInteger.valueOf(17481768L),
                             "0x5c13d307623a926cd31415036c8b7fa14572f9dac64528e857a470511fc30771",
-                            BigInteger.valueOf(1686789347L)),
+                            BigInteger.valueOf(1686789347L),
+                            BigInteger.ZERO),
                     new BlockInfo(
                             "0xf712aa9241cc24369b143cf6dce85f0902a9731e70d66818a3a5845b296c73dd",
                             BigInteger.valueOf(0L),
@@ -336,7 +338,8 @@ public record Config(
                     new Epoch(
                             BigInteger.valueOf(8300214L),
                             "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
-                            BigInteger.valueOf(1673550516L)),
+                            BigInteger.valueOf(1673550516L),
+                            BigInteger.ZERO),
                     new BlockInfo(
                             "0x0f783549ea4313b784eadd9b8e8a69913b368b7366363ea814d7707ac505175f",
                             BigInteger.valueOf(4061224L),
@@ -376,7 +379,8 @@ public record Config(
                     new Epoch(
                             BigInteger.valueOf(4071408L),
                             "0x48f520cf4ddaf34c8336e6e490632ea3cf1e5e93b0b2bc6e917557e31845371b",
-                            BigInteger.valueOf(1691802540L)),
+                            BigInteger.valueOf(1691802540L),
+                            BigInteger.ZERO),
                     new BlockInfo(
                             "0x102de6ffb001480cc9b8b548fd05c34cd4f46ae4aa91759393db90ea0409887d",
                             BigInteger.valueOf(0L),
@@ -416,7 +420,8 @@ public record Config(
                     new Epoch(
                             BigInteger.valueOf(8410981L),
                             "0x73d89754a1e0387b89520d989d3be9c37c1f32495a88faf1ea05c61121ab0d19",
-                            BigInteger.valueOf(1675193616L)),
+                            BigInteger.valueOf(1675193616L),
+                            BigInteger.ZERO),
                     new BlockInfo(
                             "0xa3ab140f15ea7f7443a4702da64c10314eb04d488e72974e02e2d728096b4f76",
                             BigInteger.valueOf(0L),
@@ -456,7 +461,8 @@ public record Config(
                     new Epoch(
                             BigInteger.valueOf(4370868L),
                             "0xcac9a83291d4dec146d6f7f69ab2304f23f5be87b1789119a0c5b1e4482444ed",
-                            BigInteger.valueOf(1695768288L)),
+                            BigInteger.valueOf(1695768288L),
+                            BigInteger.ZERO),
                     new BlockInfo(
                             "0x0dcc9e089e30b90ddfc55be9a37dd15bc551aeee999d2e2b51414c54eaf934e4",
                             BigInteger.valueOf(0L),
@@ -512,7 +518,7 @@ public record Config(
                     "external",
                     external.l1ChainId,
                     external.l2ChainId,
-                    new Epoch(external.genesis.l1.number, external.genesis.l1.hash, BigInteger.ZERO),
+                    new Epoch(external.genesis.l1.number, external.genesis.l1.hash, BigInteger.ZERO, BigInteger.ZERO),
                     new BlockInfo(
                             external.genesis.l2.hash,
                             external.genesis.l2.number,
@@ -556,6 +562,9 @@ public record Config(
                             "config.chainConfig.l1StartEpoch.timestamp",
                             this.l1StartEpoch.timestamp().toString()),
                     entry("config.chainConfig.l1StartEpoch.hash", this.l1StartEpoch.hash()),
+                    entry(
+                            "config.chainConfig.l1StartEpoch.sequenceNumber",
+                            this.l1StartEpoch.sequenceNumber().toString()),
                     entry("config.chainConfig.l2Genesis.hash", this.l2Genesis.hash()),
                     entry("config.chainConfig.l2Genesis.parentHash", this.l2Genesis.parentHash()),
                     entry(
