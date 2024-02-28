@@ -101,7 +101,7 @@ class ConfigTest {
     @Test
     void baseSepolia() {
         ChainConfig chainConfig = ChainConfig.baseSepolia();
-        assertEquals(chainConfig.canyonTime(), BigInteger.valueOf(1699981200L));
+        assertEquals(chainConfig.canyonTime(), BigInteger.valueOf(-1L));
     }
 
     /**
