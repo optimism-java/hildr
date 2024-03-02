@@ -66,11 +66,12 @@ public interface Engine {
      * and message set in case an exception happens while getting the payload. Refer to <a
      *     href="https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md#engine_getpayloadv2">Optimism Specs</a>
      *
+     * @param timestamp the payload timestamp
      * @param payloadId the payload id
      * @return the payload v2
      * @throws IOException the io exception
      * @see <a
      *     href="https://github.com/ethereum/execution-apis/blob/main/src/engine/shanghai.md#engine_getpayloadv2"></a>
      */
-    OpEthExecutionPayload getPayloadV2(BigInteger payloadId) throws IOException;
+    OpEthExecutionPayload getPayload(BigInteger timestamp, BigInteger payloadId) throws IOException;
 }
