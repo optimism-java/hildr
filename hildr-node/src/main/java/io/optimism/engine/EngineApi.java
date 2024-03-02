@@ -6,7 +6,6 @@ import io.jsonwebtoken.security.Keys;
 import io.optimism.config.Config;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
-
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
@@ -15,7 +14,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.web3j.protocol.core.Request;
@@ -45,10 +43,14 @@ public class EngineApi implements Engine {
      */
     public static final String ENGINE_NEW_PAYLOAD_V2 = "engine_newPayloadV2";
 
+    public static final String ENGINE_NEW_PAYLOAD_V3 = "engine_newPayloadV3";
+
     /**
      * The get payload method string.
      */
     public static final String ENGINE_GET_PAYLOAD_V2 = "engine_getPayloadV2";
+
+    public static final String ENGINE_GET_PAYLOAD_V3 = "engine_getPayloadV3";
 
     /**
      * The default engine api authentication port.
@@ -156,9 +158,14 @@ public class EngineApi implements Engine {
 
     @Override
     public OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException {
+        var method = ENGINE_NEW_PAYLOAD_V2;
+        var ecotoneTime = this.config.chainConfig().ecotoneTime();
+        if (executionPayload.timestamp().compareTo(ecotoneTime) >= 0) {
+            method = ENGINE_NEW_PAYLOAD_V3;
+        }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthPayloadStatus> r = new Request<>(
-                ENGINE_NEW_PAYLOAD_V2,
+                method,
                 Collections.singletonList(executionPayload != null ? executionPayload.toReq() : null),
                 web3jService,
                 OpEthPayloadStatus.class);
@@ -166,10 +173,15 @@ public class EngineApi implements Engine {
     }
 
     @Override
-    public OpEthExecutionPayload getPayloadV2(BigInteger payloadId) throws IOException {
+    public OpEthExecutionPayload getPayload(BigInteger timestamp, BigInteger payloadId) throws IOException {
+        var method = ENGINE_GET_PAYLOAD_V2;
+        var ecotoneTime = this.config.chainConfig().ecotoneTime();
+        if (timestamp == null || timestamp.compareTo(ecotoneTime) >= 0) {
+            method = ENGINE_GET_PAYLOAD_V3;
+        }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthExecutionPayload> r = new Request<>(
-                ENGINE_GET_PAYLOAD_V2,
+                method,
                 Collections.singletonList(
                         payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
                 web3jService,
