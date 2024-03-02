@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import io.optimism.config.Config;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
+
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
@@ -14,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.web3j.protocol.core.Request;
@@ -138,14 +140,14 @@ public class EngineApi implements Engine {
     @Override
     public OpEthForkChoiceUpdate forkchoiceUpdated(ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes)
             throws IOException {
-        //        var method = ENGINE_FORKCHOICE_UPDATED_V2;
-        //        var ecotoneTime = this.config.chainConfig().ecotoneTime();
-        //        if (payloadAttributes == null || payloadAttributes.timestamp().compareTo(ecotoneTime) >= 0) {
-        //            method = ENGINE_FORKCHOICE_UPDATED_V3;
-        //        }
+        var method = ENGINE_FORKCHOICE_UPDATED_V2;
+        var ecotoneTime = this.config.chainConfig().ecotoneTime();
+        if (payloadAttributes == null || payloadAttributes.timestamp().compareTo(ecotoneTime) >= 0) {
+            method = ENGINE_FORKCHOICE_UPDATED_V3;
+        }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthForkChoiceUpdate> r = new Request<>(
-                ENGINE_FORKCHOICE_UPDATED_V2,
+                method,
                 Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
                 web3jService,
                 OpEthForkChoiceUpdate.class);
