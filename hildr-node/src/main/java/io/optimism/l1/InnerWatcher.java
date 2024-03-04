@@ -303,8 +303,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
         var tuple = getBatcherTxAndBlobHeader(l1Block);
         List<String> data = tuple.component1();
-        BeaconSignedBlockHeader header = tuple.component2();
-        var parentBeaconRoot = header == null ? null : header.getMessage().getParentRoot();
+        var parentBeaconRoot = l1Block.getParentBeaconBlockRoot();
         var l1Info = L1Info.create(l1Block, userDeposits, finalized, this.systemConfig, data, parentBeaconRoot);
         return l1Info;
     }
