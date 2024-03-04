@@ -13,23 +13,24 @@ import org.web3j.utils.Numeric;
 /**
  * The type ExecutionPayload.
  *
- * @param parentHash    A 32 byte hash of the parent payload.
- * @param feeRecipient  A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
- * @param stateRoot     A 32 byte state root hash.
- * @param receiptsRoot  A 32 byte receipt root hash.
- * @param logsBloom     A 32 byte logs bloom filter.
- * @param prevRandao    A 32 byte beacon chain randomness value.
- * @param blockNumber   A 64-bit number for the current block index.
- * @param gasLimit      A 64-bit value for the gas limit.
- * @param gasUsed       A 64-bit value for the gas used.
- * @param timestamp     A 64-bit value for the timestamp field of the new payload.
- * @param extraData     0 to 32 byte value for extra data.
- * @param baseFeePerGas 256 bits for the base fee per gas.
- * @param blockHash     The 32 byte block hash.
- * @param transactions  An array of transaction objects where each object is a byte list.
- * @param withdrawals   An array of withdrawal objects where each object is a byte list.
- * @param blobGasUsed   The gas used by the blob.
- * @param excessBlobGas The excess gas used by the blob.
+ * @param parentHash            A 32 byte hash of the parent payload.
+ * @param feeRecipient          A 20 byte hash (aka Address) for the feeRecipient field of the new payload.
+ * @param stateRoot             A 32 byte state root hash.
+ * @param receiptsRoot          A 32 byte receipt root hash.
+ * @param logsBloom             A 32 byte logs bloom filter.
+ * @param prevRandao            A 32 byte beacon chain randomness value.
+ * @param blockNumber           A 64-bit number for the current block index.
+ * @param gasLimit              A 64-bit value for the gas limit.
+ * @param gasUsed               A 64-bit value for the gas used.
+ * @param timestamp             A 64-bit value for the timestamp field of the new payload.
+ * @param extraData             0 to 32 byte value for extra data.
+ * @param baseFeePerGas         256 bits for the base fee per gas.
+ * @param blockHash             The 32 byte block hash.
+ * @param transactions          An array of transaction objects where each object is a byte list.
+ * @param withdrawals           An array of withdrawal objects where each object is a byte list.
+ * @param blobGasUsed           The gas used by the blob.
+ * @param excessBlobGas         The excess gas used by the blob.
+ * @param parentBeaconBlockRoot The parent beacon block root.
  * @author grapebaba
  * @since 0.1.0
  */
@@ -50,7 +51,8 @@ public record ExecutionPayload(
         List<String> transactions,
         List<EthBlock.Withdrawal> withdrawals,
         BigInteger blobGasUsed,
-        BigInteger excessBlobGas) {
+        BigInteger excessBlobGas,
+        String parentBeaconBlockRoot) {
 
     /**
      * The type Execution payload res.
@@ -95,9 +97,10 @@ public record ExecutionPayload(
         /**
          * To execution payload execution payload.
          *
+         * @param parentBeaconBlockRoot the parent beacon block root
          * @return the execution payload
          */
-        public ExecutionPayload toExecutionPayload() {
+        public ExecutionPayload toExecutionPayload(String parentBeaconBlockRoot) {
             return new ExecutionPayload(
                     parentHash,
                     feeRecipient,
@@ -115,7 +118,8 @@ public record ExecutionPayload(
                     transactions,
                     withdrawals,
                     StringUtils.isEmpty(blobGasUsed) ? null : Numeric.decodeQuantity(blobGasUsed),
-                    StringUtils.isEmpty(excessBlobGas) ? null : Numeric.decodeQuantity(excessBlobGas));
+                    StringUtils.isEmpty(excessBlobGas) ? null : Numeric.decodeQuantity(excessBlobGas),
+                    parentBeaconBlockRoot);
         }
     }
 
@@ -146,9 +150,9 @@ public record ExecutionPayload(
                 block.getHash(),
                 encodedTxs,
                 block.getWithdrawals(),
-                // TODO:
-                null,
-                null);
+                block.getBlobGasUsed(),
+                block.getExcessBlobGas(),
+                block.getParentBeaconBlockRoot());
     }
 
     /**
@@ -177,7 +181,38 @@ public record ExecutionPayload(
                         .collect(Collectors.toList()),
                 payload.withdrawals(),
                 payload.blobGasUsed() == null ? null : BigInteger.valueOf(payload.blobGasUsed()),
-                payload.excessBlobGas() == null ? null : BigInteger.valueOf(payload.excessBlobGas()));
+                payload.excessBlobGas() == null ? null : BigInteger.valueOf(payload.excessBlobGas()),
+                null);
+    }
+
+    /**
+     * From ExecutionPayloadSSZ to ExecutionPayload.
+     *
+     * @param payload the ExecutionPayloadSSZ
+     * @return the ExecutionPayload
+     */
+    public static ExecutionPayload from(ExecutionPayloadSSZ payload, String parentBeaconBlockRoot) {
+        return new ExecutionPayload(
+                Numeric.toHexString(payload.parentHash().toArray()),
+                Numeric.toHexString(payload.feeRecipient().toArray()),
+                Numeric.toHexString(payload.stateRoot().toArray()),
+                Numeric.toHexString(payload.receiptsRoot().toArray()),
+                Numeric.toHexString(payload.logsBloom().toArray()),
+                Numeric.toHexString(payload.prevRandao().toArray()),
+                BigInteger.valueOf(payload.blockNumber()),
+                BigInteger.valueOf(payload.gasLimit()),
+                BigInteger.valueOf(payload.gasUsed()),
+                BigInteger.valueOf(payload.timestamp()),
+                Numeric.toHexString(payload.extraData().toArray()),
+                payload.baseFeePerGas().toBigInteger(),
+                Numeric.toHexString(payload.blockHash().toArray()),
+                payload.transactions().stream()
+                        .map(bytes -> Numeric.toHexString(bytes.toArray()))
+                        .collect(Collectors.toList()),
+                payload.withdrawals(),
+                payload.blobGasUsed() == null ? null : BigInteger.valueOf(payload.blobGasUsed()),
+                payload.excessBlobGas() == null ? null : BigInteger.valueOf(payload.excessBlobGas()),
+                parentBeaconBlockRoot);
     }
 
     /**
@@ -303,6 +338,7 @@ public record ExecutionPayload(
          * @param withdrawals           the withdrawals
          * @param noTxPool              the no tx pool
          * @param gasLimit              the gas limit
+         * @param parentBeaconBlockRoot the parent beacon block root
          */
         public record PayloadAttributesReq(
                 String timestamp,
@@ -311,7 +347,8 @@ public record ExecutionPayload(
                 List<String> transactions,
                 List<EthBlock.Withdrawal> withdrawals,
                 boolean noTxPool,
-                String gasLimit) {}
+                String gasLimit,
+                String parentBeaconBlockRoot) {}
 
         /**
          * To req payload attributes req.
@@ -326,7 +363,8 @@ public record ExecutionPayload(
                     transactions,
                     withdrawals,
                     noTxPool,
-                    Numeric.encodeQuantity(gasLimit));
+                    Numeric.encodeQuantity(gasLimit),
+                    parentBeaconBlockRoot);
         }
     }
 
