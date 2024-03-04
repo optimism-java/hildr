@@ -158,17 +158,19 @@ public class EngineApi implements Engine {
 
     @Override
     public OpEthPayloadStatus newPayload(ExecutionPayload executionPayload) throws IOException {
-        var method = ENGINE_NEW_PAYLOAD_V2;
         var ecotoneTime = this.config.chainConfig().ecotoneTime();
-        if (executionPayload.timestamp().compareTo(ecotoneTime) >= 0) {
+        List<Object> params;
+        String method;
+        var payloadReq = executionPayload != null ? executionPayload.toReq() : null;
+        if (executionPayload != null && executionPayload.timestamp().compareTo(ecotoneTime) >= 0) {
             method = ENGINE_NEW_PAYLOAD_V3;
+            params = List.of(payloadReq, Collections.EMPTY_LIST, executionPayload.parentBeaconBlockRoot());
+        } else {
+            method = ENGINE_NEW_PAYLOAD_V2;
+            params = Collections.singletonList(payloadReq);
         }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
-        Request<?, OpEthPayloadStatus> r = new Request<>(
-                method,
-                Collections.singletonList(executionPayload != null ? executionPayload.toReq() : null),
-                web3jService,
-                OpEthPayloadStatus.class);
+        Request<?, OpEthPayloadStatus> r = new Request<>(method, params, web3jService, OpEthPayloadStatus.class);
         return r.send();
     }
 

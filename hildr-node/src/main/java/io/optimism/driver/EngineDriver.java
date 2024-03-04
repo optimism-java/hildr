@@ -280,7 +280,7 @@ public class EngineDriver<E extends Engine> {
         }
     }
 
-    private void pushPayload(ExecutionPayload payload) throws InterruptedException, ExecutionException {
+    private void pushPayload(final ExecutionPayload payload) throws InterruptedException, ExecutionException {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
             StructuredTaskScope.Subtask<OpEthPayloadStatus> payloadStatusFuture =
                     scope.fork(TracerTaskWrapper.wrap(() -> EngineDriver.this.engine.newPayload(payload)));
@@ -304,7 +304,6 @@ public class EngineDriver<E extends Engine> {
             StructuredTaskScope.Subtask<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
                     scope.fork(TracerTaskWrapper.wrap(
                             () -> EngineDriver.this.engine.forkchoiceUpdated(forkchoiceState, attributes)));
-
             scope.join();
             scope.throwIfFailed();
             forkChoiceUpdate = forkChoiceUpdateFuture.get().getForkChoiceUpdate();

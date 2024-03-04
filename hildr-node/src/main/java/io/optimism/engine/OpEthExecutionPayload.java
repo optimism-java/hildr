@@ -28,7 +28,7 @@ public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.Execut
      * @return the execution payload
      */
     public ExecutionPayload getExecutionPayload() {
-        return getResult().getExecutionPayload().toExecutionPayload();
+        return getResult().getExecutionPayload().toExecutionPayload(getResult().getParentBeaconBlockRoot());
     }
 
     @Override
@@ -43,6 +43,8 @@ public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.Execut
      */
     public static class ExecutionPayloadObj {
 
+        private String parentBeaconBlockRoot;
+
         /** The Execution payload result. */
         private ExecutionPayload.ExecutionPayloadRes executionPayload;
 
@@ -56,6 +58,24 @@ public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.Execut
          */
         public ExecutionPayloadObj(ExecutionPayload.ExecutionPayloadRes executionPayload) {
             this.executionPayload = executionPayload;
+        }
+
+        /**
+         * Gets parent beacon block root.
+         *
+         * @return the parent beacon block root
+         */
+        public String getParentBeaconBlockRoot() {
+            return parentBeaconBlockRoot;
+        }
+
+        /**
+         * Sets parent beacon block root.
+         *
+         * @param parentBeaconBlockRoot the parentBeaconBlockRoot
+         */
+        public void setParentBeaconBlockRoot(String parentBeaconBlockRoot) {
+            this.parentBeaconBlockRoot = parentBeaconBlockRoot;
         }
 
         /**
@@ -84,12 +104,13 @@ public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.Execut
             if (!(o instanceof ExecutionPayloadObj that)) {
                 return false;
             }
-            return Objects.equals(executionPayload, that.executionPayload);
+            return Objects.equals(parentBeaconBlockRoot, that.parentBeaconBlockRoot)
+                    && Objects.equals(executionPayload, that.executionPayload);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(executionPayload);
+            return Objects.hash(parentBeaconBlockRoot, executionPayload);
         }
     }
 
