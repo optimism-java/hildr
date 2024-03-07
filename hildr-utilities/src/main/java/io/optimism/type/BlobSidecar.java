@@ -106,10 +106,9 @@ public class BlobSidecar {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BlobSidecar that)) {
             return false;
         }
-        BlobSidecar that = (BlobSidecar) o;
         return Objects.equals(index, that.index)
                 && Objects.equals(blob, that.blob)
                 && Objects.equals(kzgCommitment, that.kzgCommitment)

@@ -32,24 +32,33 @@ public class EngineApi implements Engine {
     private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EngineApi.class);
 
     /**
-     * The forkchoice updated method string.
+     * The forkchoice updated v2 method string.
      */
     public static final String ENGINE_FORKCHOICE_UPDATED_V2 = "engine_forkchoiceUpdatedV2";
 
+    /**
+     * The forkchoice updated v3 method string.
+     */
     public static final String ENGINE_FORKCHOICE_UPDATED_V3 = "engine_forkchoiceUpdatedV3";
 
     /**
-     * The new payload method string.
+     * The new payload v2 method string.
      */
     public static final String ENGINE_NEW_PAYLOAD_V2 = "engine_newPayloadV2";
 
+    /**
+     * The new payload v3 method string .
+     */
     public static final String ENGINE_NEW_PAYLOAD_V3 = "engine_newPayloadV3";
 
     /**
-     * The get payload method string.
+     * The get payload v2 method string.
      */
     public static final String ENGINE_GET_PAYLOAD_V2 = "engine_getPayloadV2";
 
+    /**
+     * The get payload v3 method string.
+     */
     public static final String ENGINE_GET_PAYLOAD_V3 = "engine_getPayloadV3";
 
     /**

@@ -46,6 +46,10 @@ public class GasCalculator {
      */
     public static final long INIT_CODE_WORD_GAS = 2L;
 
+    public static final BigInteger MIN_BLOB_GAS_PRICE = BigInteger.ONE;
+
+    public static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = new BigInteger("3338477");
+
     /**
      * Calculator gas fee but exclude effective of AccessList.
      *
@@ -93,6 +97,29 @@ public class GasCalculator {
      */
     public static BigInteger calcGasFeeCap(BigInteger baseFee, BigInteger gasTipCap) {
         return gasTipCap.add(baseFee.multiply(BigInteger.TWO));
+    }
+
+    /**
+     * Calculate blob gas fee.
+     *
+     * @param excessBlobGas the excess blob gas
+     * @return the blob base fee
+     */
+    public static BigInteger calcBlobBaseFee(BigInteger excessBlobGas) {
+        return fakeExponential(MIN_BLOB_GAS_PRICE, excessBlobGas, BLOB_GAS_PRICE_UPDATE_FRACTION);
+    }
+
+    private static BigInteger fakeExponential(BigInteger factor, BigInteger numerator, BigInteger denominator) {
+        var accum = factor.multiply(denominator);
+        var output = BigInteger.ZERO;
+        var i = BigInteger.ONE;
+        while (accum.compareTo(BigInteger.ZERO) > 0) {
+            output = output.add(accum);
+
+            accum = accum.multiply(numerator).divide(denominator).divide(i);
+            i = i.add(BigInteger.ONE);
+        }
+        return output.divide(denominator);
     }
 
     private static long toWordSize(int size) {

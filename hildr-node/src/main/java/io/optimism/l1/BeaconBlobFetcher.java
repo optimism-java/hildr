@@ -21,8 +21,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * The class of BeaconBlobFetcher.
+ *
  * @author thinkAfCod
- * @since 0.1.1
+ * @since 0.2.7
  */
 public class BeaconBlobFetcher {
     // https://beacon-nd-182-746-446.p2pify.com/ae65ad4cb1ef42d6a520ac0516776939
@@ -84,6 +86,11 @@ public class BeaconBlobFetcher {
         return res.getData();
     }
 
+    /**
+     * Get slot from time.
+     * @param time the block time
+     * @return the slot
+     */
     public BigInteger getSlotFromTime(BigInteger time) {
         if (this.genesisTimestamp == null) {
             this.genesisTimestamp = this.getGenesisTimestamp();
@@ -96,6 +103,7 @@ public class BeaconBlobFetcher {
      * Get the blob sidecars
      *
      * @param blockId the block id
+     * @param indices the blob indices
      * @return the list of blob sidecars
      */
     public List<BlobSidecar> getBlobSidecards(String blockId, final List<BigInteger> indices) {

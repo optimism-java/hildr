@@ -33,7 +33,7 @@ public record L1Info(
     /**
      * Create L1Info.
      *
-     * @param block the block
+     * @param block the l1 block
      * @param userDeposits the user deposits
      * @param batchInbox the batch inbox
      * @param finalized the finalized
@@ -69,6 +69,17 @@ public record L1Info(
         return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, null, finalized);
     }
 
+    /**
+     * Create L1Info.
+     *
+     * @param block the l1 block
+     * @param userDeposits the user deposits
+     * @param finalized if block is finalized
+     * @param systemConfig the system config
+     * @param batcherTransactions the batcher transactions
+     * @param parentBeaconRoot the l1 parent beacon root hash
+     * @return the L1Info instance
+     */
     public static L1Info create(
             Block block,
             List<UserDeposited> userDeposits,
@@ -81,9 +92,10 @@ public record L1Info(
         String blockHash = block.getHash();
         String mixHash = block.getMixHash();
         BigInteger baseFeePerGas = block.getBaseFeePerGas();
+        BigInteger excessBlobGas = block.getExcessBlobGas();
 
         L1BlockInfo l1BlockInfo =
-                L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, mixHash);
+                L1BlockInfo.create(blockNumber, blockHash, block.getTimestamp(), baseFeePerGas, excessBlobGas, mixHash);
         return new L1Info(l1BlockInfo, systemConfig, userDeposits, batcherTransactions, parentBeaconRoot, finalized);
     }
 
@@ -102,6 +114,14 @@ public record L1Info(
         }
     }
 
+    /**
+     * Create batcher transactions
+     *
+     * @param block the l1 block
+     * @param batchSender the batch sender address
+     * @param batchInbox the batch inbox contract address
+     * @return the list of batcher transactions
+     */
     public static List<String> createBatcherTransactions(Block block, String batchSender, String batchInbox) {
         return block.getTransactions().stream()
                 .filter(transactionResult ->
@@ -110,6 +130,14 @@ public record L1Info(
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Check if the transaction is a valid batcher transaction.
+     *
+     * @param tx the transaction
+     * @param batchSender the batch sender address
+     * @param batchInbox the batch inbox contract address
+     * @return true if the transaction is a valid batcher transaction
+     */
     public static boolean isValidBatcherTx(TransactionObject tx, String batchSender, String batchInbox) {
         return batchSender.equalsIgnoreCase(tx.getFrom()) && batchInbox.equalsIgnoreCase(tx.getTo());
     }
@@ -121,12 +149,18 @@ public record L1Info(
      * @param hash L1 block hash
      * @param timestamp L1 block timestamp
      * @param baseFee L1 base fee per gas
+     * @param excessBlobGas L1 excess blob gas
      * @param mixHash L1 mix hash (prevrandao)
      * @author grapebaba
      * @since 0.1.0
      */
     public record L1BlockInfo(
-            BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
+            BigInteger number,
+            String hash,
+            BigInteger timestamp,
+            BigInteger baseFee,
+            BigInteger excessBlobGas,
+            String mixHash) {
 
         /**
          * Create L1BlockInfo.
@@ -140,7 +174,28 @@ public record L1Info(
          */
         public static L1BlockInfo create(
                 BigInteger number, String hash, BigInteger timestamp, BigInteger baseFee, String mixHash) {
-            return new L1BlockInfo(number, hash, timestamp, baseFee, mixHash);
+            return new L1BlockInfo(number, hash, timestamp, baseFee, BigInteger.ZERO, mixHash);
+        }
+
+        /**
+         * Create L1BlockInfo.
+         *
+         * @param number the number
+         * @param hash the hash
+         * @param timestamp the timestamp
+         * @param baseFee the base fee
+         * @param excessBlobGas the excess blob gas
+         * @param mixHash the mix hash
+         * @return the l 1 block info
+         */
+        public static L1BlockInfo create(
+                BigInteger number,
+                String hash,
+                BigInteger timestamp,
+                BigInteger baseFee,
+                BigInteger excessBlobGas,
+                String mixHash) {
+            return new L1BlockInfo(number, hash, timestamp, baseFee, excessBlobGas, mixHash);
         }
     }
 }

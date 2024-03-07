@@ -78,8 +78,7 @@ public class BeaconBlockHeader {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        BeaconBlockHeader that = (BeaconBlockHeader) o;
+        if (!(o instanceof BeaconBlockHeader that)) return false;
         return Objects.equals(slot, that.slot)
                 && Objects.equals(proposerIndex, that.proposerIndex)
                 && Objects.equals(parentRoot, that.parentRoot)

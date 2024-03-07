@@ -9,6 +9,7 @@ import java.math.BigInteger;
  * @param number L1 block number.
  * @param hash L1 block hash.
  * @param timestamp L1 block timestamp.
+ * @param sequenceNumber The sequence number of the batcher transactions.
  * @author grapebaba
  * @since 0.1.0
  */

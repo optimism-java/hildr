@@ -5,6 +5,8 @@ import java.math.BigInteger;
 import java.util.Objects;
 
 /**
+ * The class of SpecConfig
+ *
  * @author thinkAfCod
  * @since 0.1.1
  */
@@ -24,10 +26,9 @@ public class SpecConfig {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof SpecConfig that)) {
             return false;
         }
-        SpecConfig that = (SpecConfig) o;
         return Objects.equals(secondsPerSlot, that.secondsPerSlot);
     }
 

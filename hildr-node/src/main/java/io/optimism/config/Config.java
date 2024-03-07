@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
@@ -26,6 +27,7 @@ import org.github.gestalt.config.loader.PropertyLoader;
 import org.github.gestalt.config.source.FileConfigSource;
 import org.github.gestalt.config.source.MapConfigSource;
 import org.github.gestalt.config.toml.TomlLoader;
+import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
 
 /**
@@ -238,9 +240,36 @@ public record Config(
          * @return true if the time is the ecotone activation block, otherwise false.
          */
         public boolean isEcotoneActivationBlock(BigInteger time) {
-            return time.compareTo(ecotoneTime) >= 0
+            return isEcotone(time)
                     && time.compareTo(this.blockTime) >= 0
                     && time.subtract(this.blockTime).compareTo(ecotoneTime) < 0;
+        }
+
+        /**
+         * Check if the time is the ecotone activation block.
+         * @param time the block timestamp
+         * @return true if the time is the ecotone activation block, otherwise false.
+         */
+        public boolean isEcotone(BigInteger time) {
+            return ecotoneTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(ecotoneTime) >= 0;
+        }
+
+        /**
+         * Check if the time is the ecotone activation block and not the first ecotone block.
+         * @param time the block timestamp
+         * @return true if the time is the ecotone activation block and not the first ecotone block, otherwise false.
+         */
+        public boolean isEcotoneAndNotFirst(BigInteger time) {
+            return isEcotone(time.subtract(blockTime)) && isEcotone(time);
+        }
+
+        /**
+         * Check if the time is the canyon activation block.
+         * @param time the block timestamp
+         * @return true if the time is the canyon activation block, otherwise false.
+         */
+        public boolean isCanyon(BigInteger time) {
+            return canyonTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(canyonTime) >= 0;
         }
 
         /**
@@ -692,6 +721,27 @@ public record Config(
          */
         public String batcherHash() {
             return Numeric.toHexStringWithPrefixZeroPadded(Numeric.toBigInt(batchSender), 64);
+        }
+
+        /**
+         * get base fee scalar.
+         * @return tuple contains blobBaseFeeScalar and baseFeeScalar
+         */
+        public Tuple2<BigInteger, BigInteger> ecotoneScalars() {
+            var scalars = Numeric.toBytesPadded(l1FeeScalar, 32);
+            var versionByte = scalars[0];
+            if (versionByte == 0) {
+                // Bedrock version L1 base fee scalar
+                var blobBaseFeeScalar = BigInteger.ZERO;
+                var baseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(scalars, 28, scalars.length));
+                return new Tuple2<>(blobBaseFeeScalar, baseFeeScalar);
+            } else if (versionByte == 1) {
+                // ecotone version L1 base fee scalar
+                var blobBaseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(scalars, 24, 28));
+                var baseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(scalars, 28, scalars.length));
+                return new Tuple2<>(blobBaseFeeScalar, baseFeeScalar);
+            }
+            throw new IllegalStateException("invalid l1FeeScalar");
         }
     }
 
