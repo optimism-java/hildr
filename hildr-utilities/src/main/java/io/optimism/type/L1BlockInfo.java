@@ -45,7 +45,7 @@ public record L1BlockInfo(
     private static final byte[] L1_INFO_BEDROCK_SIGN_BYTES =
             ArrayUtils.subarray(Hash.sha3(L1_INFO_BEDROCK_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
 
-    private static final byte[] L1_INFO_ECOTONE_SIGN_BYTES =
+    public static final byte[] L1_INFO_ECOTONE_SIGN_BYTES =
             ArrayUtils.subarray(Hash.sha3(L1_INFO_ECOTONE_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
 
     /**

@@ -643,6 +643,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @param seqNumber        the seq number
      */
     protected record UnfinalizedBlock(BlockInfo head, Epoch epoch, BigInteger l1InclusionBlock, BigInteger seqNumber) {
+        /**
+         * create Epoch with sequence number.
+         * @return a new Epoch.
+         */
         public Epoch epochWithSeq() {
             return Epoch.from(epoch, seqNumber);
         }

@@ -40,10 +40,9 @@ public class BeaconSignedBlockHeader {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BeaconSignedBlockHeader that)) {
             return false;
         }
-        BeaconSignedBlockHeader that = (BeaconSignedBlockHeader) o;
         return Objects.equals(message, that.message) && Objects.equals(signature, that.signature);
     }
 

@@ -47,10 +47,9 @@ public class BeaconApiResponse<T> {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BeaconApiResponse that)) {
             return false;
         }
-        BeaconApiResponse<?> that = (BeaconApiResponse<?>) o;
         return Objects.equals(data, that.data);
     }
 

@@ -12,6 +12,7 @@ import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
 import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.SingularBatch;
+import io.optimism.utilities.gas.GasCalculator;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -29,6 +30,8 @@ import org.slf4j.LoggerFactory;
 import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.datatypes.Uint;
 import org.web3j.abi.datatypes.generated.Bytes32;
+import org.web3j.abi.datatypes.generated.Uint256;
+import org.web3j.abi.datatypes.generated.Uint64;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
@@ -179,7 +182,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         BigInteger seq = this.sequenceNumber;
         AttributesDeposited attributesDeposited =
                 AttributesDeposited.fromBlockInfo(l1Info, seq, batchTimestamp, this.config);
-        DepositedTransaction attributeTx = DepositedTransaction.from(attributesDeposited);
+        DepositedTransaction attributeTx = DepositedTransaction.from(this.config.chainConfig(), attributesDeposited);
         return Numeric.toHexString(attributeTx.encode());
     }
 
@@ -294,9 +297,12 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
      * @param hash           the hash
      * @param sequenceNumber the sequence number
      * @param batcherHash    the batcher hash
-     * @param feeOverhead    the fee overhead
-     * @param feeScalar      the fee scalar
+     * @param feeOverhead    the fee overhead, ignored after ecotone upgrade
+     * @param feeScalar      the fee scalar, ignored after ecotone upgrade
      * @param gas            the gas
+     * @param blobBaseFee the blob base fee scalar, contains after ecotone
+     * @param baseFeeScalar the blob base fee scalar, contains after ecotone
+     * @param blobBaseFeeScalar the blob base fee scalar, contains after ecotone
      * @param isSystemTx     the is system tx
      * @author grapebaba
      * @since 0.1.0
@@ -311,6 +317,9 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
             BigInteger feeOverhead,
             BigInteger feeScalar,
             BigInteger gas,
+            BigInteger blobBaseFee,
+            BigInteger baseFeeScalar,
+            BigInteger blobBaseFeeScalar,
             boolean isSystemTx) {
 
         /**
@@ -327,7 +336,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
             boolean isRegolith = batchTimestamp.compareTo(config.chainConfig().regolithTime()) >= 0;
             boolean isSystemTx = !isRegolith;
             BigInteger gas = isRegolith ? BigInteger.valueOf(1_000_000L) : BigInteger.valueOf(150_000_000L);
-
+            Tuple2<BigInteger, BigInteger> scalars = l1Info.systemConfig().ecotoneScalars();
             return new AttributesDeposited(
                     l1Info.blockInfo().number(),
                     l1Info.blockInfo().timestamp(),
@@ -338,6 +347,9 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
                     l1Info.systemConfig().l1FeeOverhead(),
                     l1Info.systemConfig().l1FeeScalar(),
                     gas,
+                    GasCalculator.calcBlobBaseFee(l1Info.blockInfo().excessBlobGas()),
+                    scalars.component2(),
+                    scalars.component1(),
                     isSystemTx);
         }
 
@@ -358,6 +370,25 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
             sb.append(TypeEncoder.encode(new Uint(this.feeOverhead)));
             sb.append(TypeEncoder.encode(new Uint(this.feeScalar)));
 
+            return Numeric.hexStringToByteArray(sb.toString());
+        }
+
+        /**
+         * Encode for ecotone.
+         * @return the bytes
+         */
+        public byte[] encodeInEcotone() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("440a5e20");
+            sb.append(TypeEncoder.encode(new Uint(this.baseFeeScalar)));
+            sb.append(TypeEncoder.encode(new Uint(this.blobBaseFeeScalar)));
+            sb.append(TypeEncoder.encode(new Uint64(this.sequenceNumber)));
+            sb.append(TypeEncoder.encode(new Uint64(this.timestamp)));
+            sb.append(TypeEncoder.encode(new Uint64(this.number)));
+            sb.append(TypeEncoder.encode(new Uint256(this.baseFee)));
+            sb.append(TypeEncoder.encode(new Uint256(this.blobBaseFee)));
+            sb.append(TypeEncoder.encode(new Bytes32(Numeric.hexStringToByteArray(this.hash))));
+            sb.append(TypeEncoder.encode(new Bytes32(Numeric.hexStringToByteArray(this.batcherHash))));
             return Numeric.hexStringToByteArray(sb.toString());
         }
     }
@@ -389,10 +420,11 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         /**
          * From deposited transaction.
          *
+         * @param config the chain config
          * @param attributesDeposited the attributes deposited
          * @return the deposited transaction
          */
-        public static DepositedTransaction from(AttributesDeposited attributesDeposited) {
+        public static DepositedTransaction from(Config.ChainConfig config, AttributesDeposited attributesDeposited) {
             byte[] hash = Numeric.hexStringToByteArray(attributesDeposited.hash);
             byte[] seq = Numeric.toBytesPadded(attributesDeposited.sequenceNumber, 32);
             byte[] h = Hash.sha3(ArrayUtils.addAll(hash, seq));
@@ -403,7 +435,12 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
             String from = systemAccounts.attributesDepositor();
             String to = systemAccounts.attributesPreDeploy();
 
-            byte[] data = attributesDeposited.encode();
+            byte[] data;
+            if (config.isEcotoneAndNotFirst(attributesDeposited.timestamp())) {
+                data = attributesDeposited.encodeInEcotone();
+            } else {
+                data = attributesDeposited.encode();
+            }
 
             return new DepositedTransaction(
                     Numeric.toHexString(sourceHash),

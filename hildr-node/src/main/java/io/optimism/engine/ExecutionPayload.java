@@ -189,6 +189,7 @@ public record ExecutionPayload(
      * From ExecutionPayloadSSZ to ExecutionPayload.
      *
      * @param payload the ExecutionPayloadSSZ
+     * @param parentBeaconBlockRoot the l1 parent beacon block root
      * @return the ExecutionPayload
      */
     public static ExecutionPayload from(ExecutionPayloadSSZ payload, String parentBeaconBlockRoot) {
@@ -304,6 +305,7 @@ public record ExecutionPayload(
      *                              is not expected by the engine and is skipped during serialization and deserialization.
      * @param seqNumber             The L2 sequence number of the block. This value is not expected by the engine
      *                              and is skipped during serialization and deserialization.
+     * @param parentBeaconBlockRoot The parent beacon block root.
      * @author zhouop0
      * @since 0.1.0
      */
@@ -317,7 +319,8 @@ public record ExecutionPayload(
             BigInteger gasLimit,
             Epoch epoch,
             BigInteger l1InclusionBlock,
-            BigInteger seqNumber) {
+            BigInteger seqNumber,
+            String parentBeaconBlockRoot) {
 
         /**
          * The type Epoch req.
