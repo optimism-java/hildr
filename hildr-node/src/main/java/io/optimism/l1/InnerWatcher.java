@@ -21,13 +21,12 @@ import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import io.reactivex.disposables.Disposable;
 import java.math.BigInteger;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.jctools.queues.MessagePassingQueue;
@@ -326,7 +325,10 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             if (StringUtils.isNotEmpty(tx.getInput())) {
                 LOGGER.warn("blob tx has calldata, which will be ignored: txhash = {}", tx.getHash());
             }
-            for (String blobVersionedHash : tx.getVersionedHashes()) {
+            if (CollectionUtils.isEmpty(tx.getBlobVersionedHashes())) {
+                continue;
+            }
+            for (String blobVersionedHash : tx.getBlobVersionedHashes()) {
                 indexedBlobs.add(new Tuple2<>(BigInteger.valueOf(blobIndex), blobVersionedHash));
                 data.add(null);
                 blobIndex += 1;
