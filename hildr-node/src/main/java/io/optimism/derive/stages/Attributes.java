@@ -29,9 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.datatypes.Uint;
-import org.web3j.abi.datatypes.generated.Bytes32;
-import org.web3j.abi.datatypes.generated.Uint256;
-import org.web3j.abi.datatypes.generated.Uint64;
+import org.web3j.abi.datatypes.generated.*;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
@@ -381,11 +379,12 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         public byte[] encodeInEcotone() {
             StringBuilder sb = new StringBuilder();
             sb.append("440a5e20");
-            sb.append(TypeEncoder.encode(new Uint(this.baseFeeScalar)));
-            sb.append(TypeEncoder.encode(new Uint(this.blobBaseFeeScalar)));
-            sb.append(TypeEncoder.encode(new Uint64(this.sequenceNumber)));
-            sb.append(TypeEncoder.encode(new Uint64(this.timestamp)));
-            sb.append(TypeEncoder.encode(new Uint64(this.number)));
+            sb.append(Numeric.toHexStringNoPrefixZeroPadded(this.baseFeeScalar, 8));
+            sb.append(Numeric.toHexStringNoPrefixZeroPadded(this.blobBaseFeeScalar, 8));
+            sb.append(Numeric.toHexStringNoPrefixZeroPadded(this.sequenceNumber, 16));
+            sb.append(Numeric.toHexStringNoPrefixZeroPadded(this.timestamp, 16));
+            sb.append(Numeric.toHexStringNoPrefixZeroPadded(this.number, 16));
+
             sb.append(TypeEncoder.encode(new Uint256(this.baseFee)));
             sb.append(TypeEncoder.encode(new Uint256(this.blobBaseFee)));
             sb.append(TypeEncoder.encode(new Bytes32(Numeric.hexStringToByteArray(this.hash))));
