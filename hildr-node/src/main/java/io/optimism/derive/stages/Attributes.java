@@ -182,7 +182,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         BigInteger seq = this.sequenceNumber;
         AttributesDeposited attributesDeposited =
                 AttributesDeposited.fromBlockInfo(l1Info, seq, batchTimestamp, this.config);
-        DepositedTransaction attributeTx = DepositedTransaction.from(this.config.chainConfig(), attributesDeposited);
+        DepositedTransaction attributeTx = DepositedTransaction.from(this.config.chainConfig(), batchTimestamp, attributesDeposited);
         return Numeric.toHexString(attributeTx.encode());
     }
 
@@ -424,7 +424,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
          * @param attributesDeposited the attributes deposited
          * @return the deposited transaction
          */
-        public static DepositedTransaction from(Config.ChainConfig config, AttributesDeposited attributesDeposited) {
+        public static DepositedTransaction from(Config.ChainConfig config, BigInteger l2BlockTime,AttributesDeposited attributesDeposited) {
             byte[] hash = Numeric.hexStringToByteArray(attributesDeposited.hash);
             byte[] seq = Numeric.toBytesPadded(attributesDeposited.sequenceNumber, 32);
             byte[] h = Hash.sha3(ArrayUtils.addAll(hash, seq));
@@ -436,7 +436,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
             String to = systemAccounts.attributesPreDeploy();
 
             byte[] data;
-            if (config.isEcotoneAndNotFirst(attributesDeposited.timestamp())) {
+            if (config.isEcotoneAndNotFirst(l2BlockTime)) {
                 data = attributesDeposited.encodeInEcotone();
             } else {
                 data = attributesDeposited.encode();
