@@ -1,10 +1,6 @@
 package io.optimism.utilities;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.web3j.abi.datatypes.Uint;
-import org.web3j.utils.Numeric;
-
-import java.math.BigInteger;
 
 /**
  * The BlobCodec class.
