@@ -6,6 +6,8 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
@@ -17,6 +19,19 @@ import org.web3j.utils.Numeric;
  * @since 0.2.6
  */
 class BlobCodecTest {
+
+    @Test
+    @DisplayName("test decode sepolia blob data")
+    void testSepoliaBlobCodec() throws IOException {
+        URL url = Resources.getResource("blob9.txt");
+        String origin = Resources.toString(url, Charsets.UTF_8);
+
+        URL decodeUrl = Resources.getResource("blob9_decode.txt");
+        String decodedData = Resources.toString(decodeUrl, Charsets.UTF_8);
+
+        byte[] decode = BlobCodec.decode(Numeric.hexStringToByteArray(origin));
+        assertEquals(decodedData, Numeric.toHexString(decode));
+    }
 
     @Test
     @DisplayName("test decode blob.")
