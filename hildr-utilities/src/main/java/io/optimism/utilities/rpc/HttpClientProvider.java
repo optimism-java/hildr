@@ -1,6 +1,9 @@
 package io.optimism.utilities.rpc;
 
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Http client provider.
@@ -10,6 +13,8 @@ import okhttp3.OkHttpClient;
  */
 public class HttpClientProvider {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientProvider.class);
+
     private HttpClientProvider() {}
 
     /**
@@ -18,8 +23,11 @@ public class HttpClientProvider {
      * @return a HttpClient
      */
     public static OkHttpClient create() {
-        return new OkHttpClient.Builder()
-                .addInterceptor(new RetryRateLimitInterceptor())
-                .build();
+        OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        if (LOGGER.isDebugEnabled()) {
+            builder.addInterceptor(
+                    new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
+        }
+        return builder.addInterceptor(new RetryRateLimitInterceptor()).build();
     }
 }
