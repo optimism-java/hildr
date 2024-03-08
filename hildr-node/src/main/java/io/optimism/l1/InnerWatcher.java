@@ -48,6 +48,7 @@ import org.web3j.protocol.core.methods.response.EthLog.LogObject;
 import org.web3j.protocol.core.methods.response.EthLog.LogResult;
 import org.web3j.protocol.websocket.events.NewHead;
 import org.web3j.tuples.generated.Tuple2;
+import org.web3j.tuples.generated.Tuple3;
 import org.web3j.utils.Numeric;
 
 /**
@@ -308,13 +309,16 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private Tuple2<List<String>, BeaconSignedBlockHeader> getBatcherTxAndBlobHeader(EthBlock.Block l1Block) {
         final List<String> data = new ArrayList<>();
-        List<Tuple2<BigInteger, String>> indexedBlobs = new ArrayList<>();
-        int blobIndex = 0;
+        List<Tuple3<Integer, BigInteger, String>> indexedBlobs = new ArrayList<>();
+        int blobIndexRec = 0;
         for (EthBlock.TransactionResult txRes : l1Block.getTransactions()) {
             EthBlock.TransactionObject tx = (EthBlock.TransactionObject) txRes.get();
             if (!L1Info.isValidBatcherTx(
                     tx, this.systemConfig.batchSender(), config.chainConfig().batchInbox())) {
-                blobIndex += indexedBlobs.size();
+                int skipBlobHashSize = tx.getBlobVersionedHashes() == null
+                        ? 0
+                        : tx.getBlobVersionedHashes().size();
+                blobIndexRec += skipBlobHashSize;
                 continue;
             }
             if (!tx.getType().equalsIgnoreCase("0x3") && !tx.getType().equalsIgnoreCase("0x03")) {
@@ -328,40 +332,37 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 continue;
             }
             for (String blobVersionedHash : tx.getBlobVersionedHashes()) {
-                indexedBlobs.add(new Tuple2<>(BigInteger.valueOf(blobIndex), blobVersionedHash));
                 data.add(null);
-                blobIndex += 1;
+                indexedBlobs.add(new Tuple3<>(data.size() - 1, BigInteger.valueOf(blobIndexRec), blobVersionedHash));
+                blobIndexRec += 1;
             }
         }
         if (indexedBlobs.isEmpty()) {
             return new Tuple2<>(data, null);
         }
         BigInteger slot = this.beaconFetcher.getSlotFromTime(l1Block.getTimestamp());
-        List<BigInteger> indices = indexedBlobs.stream().map(Tuple2::component1).collect(Collectors.toList());
-        List<BlobSidecar> blobs = this.beaconFetcher.getBlobSidecards(slot.toString(), indices);
-        if (blobs == null || blobs.isEmpty()) {
+        List<BigInteger> indices = indexedBlobs.stream().map(Tuple3::component2).collect(Collectors.toList());
+        List<BlobSidecar> blobsRes = this.beaconFetcher.getBlobSidecards(slot.toString(), indices);
+        if (blobsRes == null || blobsRes.isEmpty()) {
             throw new DepositsNotFoundException(
                     "blobSidecards is empty, and excepted to be %d".formatted(indices.size()));
         }
-        int blobsIndex = 0;
+        int blobsResIndex = 0;
         for (int i = 0; i < data.size(); i++) {
-            if (data.get(i) != null) {
-                continue;
-            }
-            if (blobsIndex >= blobs.size()) {
+            if (blobsResIndex >= blobsRes.size()) {
                 throw new IndexOutOfBoundsException("blobIndex >= blobSidecards.size()");
             }
             byte[] decodedBlob = BlobCodec.decode(
-                    Numeric.hexStringToByteArray(blobs.get(blobIndex).getBlob()));
+                    Numeric.hexStringToByteArray(blobsRes.get(blobsResIndex).getBlob()));
             data.set(i, Numeric.toHexString(decodedBlob));
-            blobsIndex++;
+            blobsResIndex++;
         }
-        if (blobsIndex != blobs.size()) {
+        if (blobsResIndex != blobsRes.size()) {
             throw new IllegalStateException("got too many blobs");
         }
 
         return new Tuple2<List<String>, BeaconSignedBlockHeader>(
-                data, blobs.get(0).getSignedBlockHeader());
+                data, blobsRes.get(0).getSignedBlockHeader());
     }
 
     private void putBlockUpdate(final BlockUpdate update) {
