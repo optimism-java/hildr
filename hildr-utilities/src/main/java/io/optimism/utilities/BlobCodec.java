@@ -1,6 +1,10 @@
 package io.optimism.utilities;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.web3j.abi.datatypes.Uint;
+import org.web3j.utils.Numeric;
+
+import java.math.BigInteger;
 
 /**
  * The BlobCodec class.
@@ -35,7 +39,8 @@ public final class BlobCodec {
         }
 
         // decode the 3-byte big-endian length value into a 4-byte integer
-        int outputLength = blob[2] << 16 | blob[3] << 8 | blob[4];
+
+        int outputLength = (blob[2] & 0xFF) << 16 | (blob[3] & 0xFF) << 8 | (blob[4] & 0xFF);
         if (outputLength > MAX_BLOB_DATA_SIZE) {
             throw new IllegalArgumentException("invalid length for blob: output length %d exceeds maximum %d"
                     .formatted(outputLength, MAX_BLOB_DATA_SIZE));
