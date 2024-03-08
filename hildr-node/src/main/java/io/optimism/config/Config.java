@@ -260,7 +260,7 @@ public record Config(
          * @return true if the time is the ecotone activation block and not the first ecotone block, otherwise false.
          */
         public boolean isEcotoneAndNotFirst(BigInteger time) {
-            return isEcotone(time.subtract(blockTime)) && isEcotone(time);
+            return isEcotone(time) && time.compareTo(blockTime) >= 0 && isEcotone(time.subtract(blockTime));
         }
 
         /**
