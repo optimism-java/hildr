@@ -1,15 +1,13 @@
 package io.optimism.config;
 
+import static org.junit.Assert.assertEquals;
+
 import io.optimism.derive.stages.Attributes;
+import java.math.BigInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.web3j.abi.datatypes.generated.Bytes32;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
-
-import java.math.BigInteger;
-
-import static org.junit.Assert.assertEquals;
 
 /**
  * The type of SystemConfigTest.
