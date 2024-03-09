@@ -767,7 +767,7 @@ public record Config(
                 var baseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(scalars, 28, scalars.length));
                 return new Tuple2<>(blobBaseFeeScalar, baseFeeScalar);
             } else if (versionByte == 1) {
-                // ecotone version L1 base fee scalar
+                // Ecotone version L1 base fee scalar
                 var blobBaseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(scalars, 24, 28));
                 var baseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(scalars, 28, scalars.length));
                 return new Tuple2<>(blobBaseFeeScalar, baseFeeScalar);
