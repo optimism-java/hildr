@@ -715,6 +715,37 @@ public record Config(
             String unsafeBlockSigner) {
 
         /**
+         * Create SystemConfig from Bedrock tx input.
+         * @param unsafeBlockSigner the unsafe block signer
+         * @param gasLimit l2 gas limit
+         * @param input l2 block tx input
+         * @return the system config
+         */
+        public static SystemConfig fromBedrockTxInput(String unsafeBlockSigner, BigInteger gasLimit, byte[] input) {
+            final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
+            var l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, 196, 228));
+            var l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, 228, 260));
+            return new Config.SystemConfig(batchSender, gasLimit, l1FeeOverhead, l1FeeScalar, unsafeBlockSigner);
+        }
+
+        /**
+         * Create SystemConfig from Ecotone tx input.
+         * @param unsafeBlockSigner the unsafe block signer
+         * @param gasLimit l2 gas limit
+         * @param input l2 block tx input
+         * @return the system config
+         */
+        public static SystemConfig fromEcotoneTxInput(String unsafeBlockSigner, BigInteger gasLimit, byte[] input) {
+            final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 144, 164));
+            var originFeeScalar = Arrays.copyOfRange(input, 4, 12);
+            var destFeeScalar = new byte[32];
+            System.arraycopy(originFeeScalar, 0, destFeeScalar, 24, originFeeScalar.length);
+            destFeeScalar[0] = 1;
+            var l1FeeScalar = Numeric.toBigInt(destFeeScalar);
+            return new Config.SystemConfig(batchSender, gasLimit, BigInteger.ZERO, l1FeeScalar, unsafeBlockSigner);
+        }
+
+        /**
          * Batch hash string.
          *
          * @return the string
@@ -724,7 +755,7 @@ public record Config(
         }
 
         /**
-         * get base fee scalar.
+         * Get base fee scalar.
          * @return tuple contains blobBaseFeeScalar and baseFeeScalar
          */
         public Tuple2<BigInteger, BigInteger> ecotoneScalars() {

@@ -16,6 +16,7 @@ import io.optimism.utilities.gas.GasCalculator;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
@@ -291,7 +292,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
      * The type AttributesDeposited.
      *
      * @param number         the number
-     * @param timestamp      the timestamp
+     * @param timestamp      the l1 block timestamp
      * @param baseFee        the base fee
      * @param hash           the hash
      * @param sequenceNumber the sequence number
@@ -350,6 +351,95 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
                     scalars.component2(),
                     scalars.component1(),
                     isSystemTx);
+        }
+
+        /**
+         * decode from l2 bedrock tx input.
+         * @param txInput the l2 bedrock tx input
+         * @return the attributes deposited
+         */
+        public static AttributesDeposited decode(String txInput) {
+            byte[] input = Numeric.hexStringToByteArray(txInput);
+            if (input.length != 260) {
+                throw new IllegalArgumentException("bedrock deposit tx input length is not 164 bytes");
+            }
+            int offset = 4;
+            BigInteger l1BlockNum = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            BigInteger l1BlockTime = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            BigInteger baseFee = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            String l1BlockHash = Numeric.toHexString(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            BigInteger seqNum = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            String batcherHash = Numeric.toHexString(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            BigInteger l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            BigInteger l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            return new AttributesDeposited(
+                    l1BlockNum,
+                    l1BlockTime,
+                    baseFee,
+                    l1BlockHash,
+                    seqNum,
+                    batcherHash,
+                    l1FeeOverhead,
+                    l1FeeScalar,
+                    BigInteger.ZERO,
+                    BigInteger.ZERO,
+                    BigInteger.ZERO,
+                    BigInteger.ZERO,
+                    false);
+        }
+
+        /**
+         * decode from l2 ecotone tx input.
+         * @param txInput the l2 ecotone tx input
+         * @return the attributes deposited
+         */
+        public static AttributesDeposited decodeForEcotone(String txInput) {
+            byte[] input = Numeric.hexStringToByteArray(txInput);
+            if (input.length != 164) {
+                throw new IllegalArgumentException("ecotone deposit tx input length is not 164 bytes");
+            }
+            int offset = 4;
+            BigInteger baseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 4));
+            offset += 4;
+            BigInteger blobBaseFeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 4));
+            offset += 4;
+
+            BigInteger sequenceNum = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 8));
+            offset += 8;
+            BigInteger l1Timestamp = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 8));
+            offset += 8;
+            BigInteger l1BlockNum = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 8));
+            offset += 8;
+
+            BigInteger baseFee = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            BigInteger blobBaseFee = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            String l1BlockHash = Numeric.toHexString(Arrays.copyOfRange(input, offset, offset + 32));
+            offset += 32;
+            String batcherHash = Numeric.toHexString(Arrays.copyOfRange(input, offset, offset + 32));
+
+            return new AttributesDeposited(
+                    l1BlockNum,
+                    l1Timestamp,
+                    baseFee,
+                    l1BlockHash,
+                    sequenceNum,
+                    batcherHash,
+                    BigInteger.ZERO,
+                    BigInteger.ZERO,
+                    BigInteger.ZERO,
+                    blobBaseFee,
+                    baseFeeScalar,
+                    blobBaseFeeScalar,
+                    false);
         }
 
         /**
@@ -421,6 +511,7 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
          * From deposited transaction.
          *
          * @param config the chain config
+         * @param l2BlockTime the l2 block time
          * @param attributesDeposited the attributes deposited
          * @return the deposited transaction
          */
