@@ -184,34 +184,32 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private void getMetadataFromL2(BigInteger l2StartBlock) {
         Web3j l2Client = Web3jProvider.createClient(config.l2RpcUrl());
-        EthBlock.Block block;
+        EthBlock.Block l2Block;
         try {
-            block = this.pollBlockByNumber(l2Client, l2StartBlock.subtract(BigInteger.ONE));
+            l2Block = this.pollBlockByNumber(l2Client, l2StartBlock.subtract(BigInteger.ONE));
+            if (l2Block.getTransactions() == null || l2Block.getTransactions().isEmpty()) {
+                throw new L1AttributesDepositedTxNotFoundException();
+            }
+
+            EthBlock.TransactionObject tx = (EthBlock.TransactionObject)
+                    l2Block.getTransactions().getFirst().get();
+            final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
+            var gasLimit = l2Block.getGasLimit();
+            if (this.config.chainConfig().isEcotoneAndNotFirst(l2Block.getTimestamp())) {
+                this.systemConfig = Config.SystemConfig.fromEcotoneTxInput(
+                        config.chainConfig().systemConfig().unsafeBlockSigner(), gasLimit, input);
+            } else {
+                this.systemConfig = Config.SystemConfig.fromBedrockTxInput(
+                        config.chainConfig().systemConfig().unsafeBlockSigner(), gasLimit, input);
+            }
         } catch (InterruptedException | ExecutionException e) {
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
-            l2Client.shutdown();
             throw new HildrServiceExecutionException(e);
+        } finally {
+            l2Client.shutdown();
         }
-        if (block.getTransactions().isEmpty()) {
-            throw new L1AttributesDepositedTxNotFoundException();
-        }
-        EthBlock.TransactionObject tx =
-                (EthBlock.TransactionObject) block.getTransactions().getFirst().get();
-        final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
-
-        final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
-        var l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, 196, 228));
-        var l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, 228, 260));
-        var gasLimit = block.getGasLimit();
-        this.systemConfig = new Config.SystemConfig(
-                batchSender,
-                gasLimit,
-                l1FeeOverhead,
-                l1FeeScalar,
-                config.chainConfig().systemConfig().unsafeBlockSigner());
-        l2Client.shutdown();
     }
 
     private Disposable subscribeL1NewHeads() {
@@ -564,7 +562,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         } else {
             this.getMetadataFromL2(this.l2StartBlock);
         }
-        //        this.subscribeL1NewHeads();
+        this.subscribeL1NewHeads();
     }
 
     @Override
