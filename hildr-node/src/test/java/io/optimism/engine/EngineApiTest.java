@@ -92,7 +92,7 @@ public class EngineApiTest {
                 "123123",
                 "sdfasdf12312312",
                 null,
-                List.of(""),
+                List.of(),
                 "123321",
                 "321123");
     }
