@@ -1,12 +1,12 @@
 package io.optimism.derive.stages;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import java.math.BigInteger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * The type AttributesDepositedTest.
@@ -37,9 +37,7 @@ public class AttributesDepositedTest {
                 BigInteger.valueOf(0L),
                 false);
         byte[] bytes = deposited.encodeInEcotone();
-        Assertions.assertEquals(
-                TX_INPUT,
-                Numeric.toHexString(bytes));
+        Assertions.assertEquals(TX_INPUT, Numeric.toHexString(bytes));
     }
 
     @Test
