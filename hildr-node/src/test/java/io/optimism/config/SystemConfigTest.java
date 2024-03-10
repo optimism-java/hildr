@@ -2,7 +2,6 @@ package io.optimism.config;
 
 import static org.junit.Assert.assertEquals;
 
-import io.optimism.derive.stages.Attributes;
 import java.math.BigInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
