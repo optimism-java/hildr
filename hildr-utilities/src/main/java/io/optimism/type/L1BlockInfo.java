@@ -74,9 +74,9 @@ public record L1BlockInfo(
         BigInteger number = Numeric.toBigInt(data, 4, 32);
         BigInteger time = Numeric.toBigInt(data, 36, 32);
         BigInteger baseFee = Numeric.toBigInt(data, 68, 32);
-        String blockHash = Numeric.toHexString(ArrayUtils.subarray(data, 100, 32));
+        String blockHash = Numeric.toHexString(ArrayUtils.subarray(data, 100, 132));
         BigInteger sequenceNumber = Numeric.toBigInt(data, 132, 32);
-        String batcherAddr = Numeric.toHexString(ArrayUtils.subarray(data, 176, 20));
+        String batcherAddr = Numeric.toHexString(ArrayUtils.subarray(data, 176, 196));
         BigInteger l1FeeOverhead = Numeric.toBigInt(data, 196, 32);
         BigInteger l1FeeScalar = Numeric.toBigInt(data, 228, 32);
         return new L1BlockInfo(
@@ -120,10 +120,10 @@ public record L1BlockInfo(
         BigInteger blobBaseFee = Numeric.toBigInt(data, offset, 32);
         offset += 32;
 
-        String blockHash = Numeric.toHexString(ArrayUtils.subarray(data, offset, 32));
+        String blockHash = Numeric.toHexString(ArrayUtils.subarray(data, offset, offset + 32));
         offset += 32;
 
-        String batcherAddr = Numeric.toHexString(ArrayUtils.subarray(data, offset, 32));
+        String batcherAddr = Numeric.toHexString(ArrayUtils.subarray(data, offset, offset + 32));
         return new L1BlockInfo(
                 number,
                 time,

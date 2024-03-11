@@ -1,6 +1,5 @@
 package io.optimism.engine;
 
-import static io.optimism.type.L1BlockInfo.L1_INFO_ECOTONE_SIGN_BYTES;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -106,6 +105,9 @@ public class EngineApiTest {
 
     @Test
     void testForkChoiceUpdate() throws IOException {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
         String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initForkChoiceUpdateResp()));
@@ -131,6 +133,9 @@ public class EngineApiTest {
 
     @Test
     void testNewPayload() throws IOException {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
         String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initPayloadStatusResp()));
@@ -143,6 +148,9 @@ public class EngineApiTest {
 
     @Test
     void testGetPayload() throws IOException {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
         String baseUrl = EngineApi.authUrlFromAddr(AUTH_ADDR, null);
         assertEquals("http://127.0.0.1:8851", baseUrl);
         server.enqueue(new MockResponse().setBody(initExecutionPayloadJson()));
@@ -167,10 +175,5 @@ public class EngineApiTest {
                 jwt.getBody().getExpiration().toInstant().getEpochSecond()
                         - jwt.getBody().getIssuedAt().toInstant().getEpochSecond(),
                 60L);
-    }
-
-    @Test
-    void testHash() {
-        System.out.println(Numeric.toHexString(L1_INFO_ECOTONE_SIGN_BYTES));
     }
 }

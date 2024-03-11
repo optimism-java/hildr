@@ -15,7 +15,8 @@ import org.junit.jupiter.api.Test;
  */
 class BeaconBlobFetcherTest {
 
-    private static String beaconUrl = "https://beacon-nd-182-746-446.p2pify.com/ae65ad4cb1ef42d6a520ac0516776939";
+    private static String beaconUrl =
+            "https://few-sleek-sound.ethereum-sepolia.quiknode.pro/8e8c3ae8c9ddf50628ad22d3d8cdaf36230d52e1";
     private static BeaconBlobFetcher fetcher;
 
     @BeforeAll

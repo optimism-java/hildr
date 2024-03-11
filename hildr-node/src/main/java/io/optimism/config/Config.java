@@ -33,16 +33,17 @@ import org.web3j.utils.Numeric;
 /**
  * The type Config.
  *
- * @param l1RpcUrl          L1 chain rpc url.
- * @param l1WsRpcUrl        L1 chain websocket rpc url.
- * @param l1BeaconUrl       L1 chain websocket rpc url.
- * @param l2RpcUrl          L2 chain rpc url.
- * @param l2EngineUrl       L2 engine API url.
- * @param jwtSecret         L2 engine API jwt secret.
- * @param chainConfig       The chain config.
- * @param rpcPort           The rpc port.
- * @param devnet            The flag of devnet.
- * @param checkpointSyncUrl The checkpoint sync url.
+ * @param l1RpcUrl            L1 chain rpc url.
+ * @param l1WsRpcUrl          L1 chain websocket rpc url.
+ * @param l1BeaconUrl         L1 beacon chain rpc url.
+ * @param l1BeaconArchiverUrl L1 beacon chain archiver rpc url.
+ * @param l2RpcUrl            L2 chain rpc url.
+ * @param l2EngineUrl         L2 engine API url.
+ * @param jwtSecret           L2 engine API jwt secret.
+ * @param chainConfig         The chain config.
+ * @param rpcPort             The rpc port.
+ * @param devnet              The flag of devnet.
+ * @param checkpointSyncUrl   The checkpoint sync url.
  * @author grapebaba
  * @since 0.1.0
  */
@@ -50,6 +51,7 @@ public record Config(
         String l1RpcUrl,
         String l1WsRpcUrl,
         String l1BeaconUrl,
+        String l1BeaconArchiverUrl,
         String l2RpcUrl,
         String l2EngineUrl,
         String jwtSecret,
@@ -121,6 +123,7 @@ public record Config(
         defaultProvider.put("config.l1RpcUrl", "");
         defaultProvider.put("config.l1WsRpcUrl", "");
         defaultProvider.put("config.l1BeaconUrl", "");
+        defaultProvider.put("config.l1BeaconArchiverUrl", "");
         defaultProvider.put("config.jwtSecret", "");
         defaultProvider.put("config.checkpointSyncUrl", "");
         defaultProvider.put("config.rpcPort", "9545");
@@ -130,20 +133,22 @@ public record Config(
     /**
      * The type Cli config.
      *
-     * @param l1RpcUrl          L1 chain rpc url.
-     * @param l1WsRpcUrl        L1 chain websocket rpc url.
-     * @param l1BeaconUrl       L1 chain beacon client API rpc url.
-     * @param l2RpcUrl          L2 chain rpc url.
-     * @param l2EngineUrl       L2 engine API url.
-     * @param jwtSecret         L2 engine API jwt secret.
-     * @param checkpointSyncUrl The checkpoint sync url.
-     * @param rpcPort           The rpc port.
-     * @param devnet            The devnet flag.
+     * @param l1RpcUrl            L1 chain rpc url.
+     * @param l1WsRpcUrl          L1 chain websocket rpc url.
+     * @param l1BeaconUrl         L1 chain beacon client API rpc url.
+     * @param l1BeaconArchiverUrl L1 chain beacon archiver API rpc url.
+     * @param l2RpcUrl            L2 chain rpc url.
+     * @param l2EngineUrl         L2 engine API url.
+     * @param jwtSecret           L2 engine API jwt secret.
+     * @param checkpointSyncUrl   The checkpoint sync url.
+     * @param rpcPort             The rpc port.
+     * @param devnet              The devnet flag.
      */
     public record CliConfig(
             String l1RpcUrl,
             String l1WsRpcUrl,
             String l1BeaconUrl,
+            String l1BeaconArchiverUrl,
             String l2RpcUrl,
             String l2EngineUrl,
             String jwtSecret,
@@ -166,6 +171,9 @@ public record Config(
             }
             if (StringUtils.isNotEmpty(l1BeaconUrl)) {
                 map.put("config.l1BeaconUrl", l1BeaconUrl);
+            }
+            if (StringUtils.isNotEmpty(l1BeaconArchiverUrl)) {
+                map.put("config.l1BeaconArchiverUrl", l1BeaconArchiverUrl);
             }
             if (StringUtils.isNotEmpty(l2RpcUrl)) {
                 map.put("config.l2RpcUrl", l2RpcUrl);

@@ -169,7 +169,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         this.config = config;
         this.provider = Web3jProvider.createClient(config.l1RpcUrl());
         this.wsProvider = Web3jProvider.createClient(config.l1WsRpcUrl());
-        this.beaconFetcher = new BeaconBlobFetcher(config.l1BeaconUrl());
+        this.beaconFetcher = new BeaconBlobFetcher(config.l1BeaconUrl(), config.l1BeaconArchiverUrl());
         this.l2StartBlock = l2StartBlock;
         this.devnet = config.devnet() != null && config.devnet();
 

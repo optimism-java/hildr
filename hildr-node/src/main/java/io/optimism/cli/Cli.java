@@ -39,14 +39,17 @@ public class Cli implements Runnable {
             description = "network type, or rollup.json file path, support: optimism-goerli, base-goerli")
     String network;
 
-    @Option(names = "--l1-rpc-url", required = true, description = "The base chain RPC URL")
+    @Option(names = "--l1-rpc-url", required = true, description = "The l1 chain RPC URL")
     String l1RpcUrl;
 
-    @Option(names = "--l1-ws-rpc-url", required = true, description = "The base chain WS RPC URL")
+    @Option(names = "--l1-ws-rpc-url", required = true, description = "The l1 chain WS RPC URL")
     String l1WsRpcUrl;
 
-    @Option(names = "--l1-beacon-url", required = false, description = "The base chain beacon client RPC URL")
+    @Option(names = "--l1-beacon-url", required = true, description = "The l1 chain beacon client RPC URL")
     String l1BeaconUrl;
+
+    @Option(names = "--l1-beacon-archiver-url", required = false, description = "The l1 beacon chain archiver RPC URL")
+    String l1BeaconArchiverUrl;
 
     @Option(names = "--l2-rpc-url", required = true, description = "The L2 engine RPC URL")
     String l2RpcUrl;
@@ -201,6 +204,7 @@ public class Cli implements Runnable {
                 cli.l1RpcUrl,
                 cli.l1WsRpcUrl,
                 cli.l1BeaconUrl,
+                cli.l1BeaconArchiverUrl,
                 cli.l2RpcUrl,
                 cli.l2EngineUrl,
                 StringUtils.trim(Cli.this.getJwtSecret()),

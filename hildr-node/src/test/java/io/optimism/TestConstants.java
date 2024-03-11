@@ -45,7 +45,7 @@ public class TestConstants {
         var l1BeaconRpcUrl = l1RpcBeaconUrlFormat.formatted(envs.get(ETH_API_ENV));
         var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
         Config.CliConfig cliConfig = new Config.CliConfig(
-                l1RpcUrl, l1WsRpcUrl, l1BeaconRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
+                l1RpcUrl, l1WsRpcUrl, l1BeaconRpcUrl, l1BeaconRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
         return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
     }
 }
