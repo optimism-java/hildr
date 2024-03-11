@@ -17,6 +17,7 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,8 @@ public class BeaconBlobFetcher {
 
     private final String sidecarsMethod;
 
+    private final String archiverSidecarsMethod;
+
     private final OkHttpClient httpClient;
 
     private final ObjectMapper mapper;
@@ -52,13 +55,25 @@ public class BeaconBlobFetcher {
 
     /**
      * Beacon blob info fetcher constructor.
-     *
      * @param beaconUrl L1 beacon client url
      */
     public BeaconBlobFetcher(String beaconUrl) {
+        this(beaconUrl, null);
+    }
+
+    /**
+     * Beacon blob info fetcher constructor.
+     *
+     * @param beaconUrl L1 beacon client url
+     * @param beaconArchiverUrl L1 beacon archiver client url
+     */
+    public BeaconBlobFetcher(String beaconUrl, String beaconArchiverUrl) {
         this.genesisMethod = GENESIS_METHOD_FORMAT.formatted(beaconUrl);
         this.specMethod = SPEC_METHOD_FORMAT.formatted(beaconUrl);
         this.sidecarsMethod = SIDECARS_METHOD_PREFIX_FORMAT.formatted(beaconUrl);
+        this.archiverSidecarsMethod = StringUtils.isEmpty(beaconArchiverUrl)
+                ? null
+                : SIDECARS_METHOD_PREFIX_FORMAT.formatted(beaconArchiverUrl);
         this.httpClient = HttpClientProvider.create();
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -110,12 +125,32 @@ public class BeaconBlobFetcher {
         var params = indices == null || indices.isEmpty()
                 ? null
                 : Map.of("indices", indices.stream().map(BigInteger::toString).collect(Collectors.joining(",")));
-        var req = new Request.Builder()
-                .get()
-                .url(this.sidecarsMethod + "/" + blockId + prepareQueryParams(params))
-                .build();
-        var res = this.send(req, new TypeReference<BeaconApiResponse<List<BlobSidecar>>>() {});
+        var postfix = "%s%s".formatted(blockId, prepareQueryParams(params));
+        var res = getBlobSidecars("%s/%s".formatted(this.sidecarsMethod, postfix));
+        if (res.getData() != null && res.getData().isEmpty()) {
+            return res.getData();
+        }
+        if (this.archiverSidecarsMethod != null) {
+            LOGGER.debug(
+                    "blob sidecars may be pruned, try blob archiver sidecars method: blockId = {}, indices = {}",
+                    blockId,
+                    indices);
+            var archiverRes = getBlobSidecars("%s/%s".formatted(this.archiverSidecarsMethod, postfix));
+            if (archiverRes.getData() != null && !archiverRes.getData().isEmpty()) {
+                return archiverRes.getData();
+            }
+        } else {
+            LOGGER.debug(
+                    "blob archiver sidecars method is empty, skip retry: block Id = {}, indices = {}",
+                    blockId,
+                    indices);
+        }
         return res.getData();
+    }
+
+    private BeaconApiResponse<List<BlobSidecar>> getBlobSidecars(String url) {
+        var req = new Request.Builder().get().url(url).build();
+        return this.send(req, new TypeReference<BeaconApiResponse<List<BlobSidecar>>>() {});
     }
 
     private <T> T send(final Request req, final TypeReference<T> typeRef) {

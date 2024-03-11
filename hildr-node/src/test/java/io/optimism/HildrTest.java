@@ -23,7 +23,7 @@ class HildrTest {
      */
     @Test
     void appHasGreeting() throws JsonProcessingException {
-        CliConfig cliConfig = new CliConfig("test", "test", "test", "test", "test", null, null, null, false);
+        CliConfig cliConfig = new CliConfig("test", "test", "test", "test", "test", "test", "test", null, null, false);
         TomlMapper mapper = new TomlMapper();
         String cliConfigStr = mapper.writerFor(CliConfig.class).writeValueAsString(cliConfig);
 

@@ -30,6 +30,7 @@ class DriverTest {
                 l1rpc,
                 l1WsRpc,
                 l1BeaconRpc,
+                l1BeaconRpc,
                 l2rpc,
                 null,
                 "d195a64e08587a3f1560686448867220c2727550ce3e0c95c7200d0ade0f9167",
