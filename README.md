@@ -32,9 +32,10 @@ Then, once op-geth has been started, start up the `hildr-node` in `hildr` projec
     && nohup java --enable-preview \
         -cp hildr-node/build/libs/hildr-node-{version}.jar io.optimism.Hildr \
         --network optimism-sepolia \
-        --jwt-secret $JWT_SECRET
-        --l1-rpc-url $L1_RPC_URL
-        --l1-ws-rpc-url $L1_WS_RPC_URL
+        --jwt-secret $JWT_SECRET \
+        --l1-rpc-url $L1_RPC_URL \
+        --l1-ws-rpc-url $L1_WS_RPC_URL \
+        --l1-beacon-url $L1_BEACON_RPC_URL \
         --l2-rpc-url $L2_RPC_URL \
         --l2-engine-url $L2_AUTH_RPC_URL \
         --rpc-port $HILDR_RPC_PORT \ # Choose any available port.
@@ -51,6 +52,7 @@ docker run -it ghcr.io/optimism-java/hildr:latest-native \
     --jwt-secret $JWT_SECRET \
     --l1-rpc-url $L1_RPC_URL \
     --l1-ws-rpc-url $L1_WS_RPC_URL \
+    --l1-beacon-url $L1_BEACON_RPC_URL \
     --l2-rpc-url $L2_RPC_URL \
     --l2-engine-url $L2_AUTH_RPC_URL \
     --rpc-port $HILDR_RPC_PORT \
@@ -113,7 +115,7 @@ We'll run it by docker image.
 
 There has a .env.defaul file in the `./docker` directory. Copy it as `.env` and modify the fields value below:
 
-```toml
+```properties
 # Set the network value to `devnet` in the configuration.
 NETWORK=optimism-sepolia
 
