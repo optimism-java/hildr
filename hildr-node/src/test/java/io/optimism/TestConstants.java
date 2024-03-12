@@ -20,14 +20,14 @@ public class TestConstants {
     private static final String OPT_API_ENV = "OPT_API_KEY";
 
     /** The L 1 rpc url format. */
-    static String l1RpcUrlFormat = "https://eth-goerli.g.alchemy.com/v2/%s";
+    static String l1RpcUrlFormat = "https://eth-sepolia.g.alchemy.com/v2/%s";
 
-    static String l1RpcWsUrlFormat = "wss://eth-goerli.g.alchemy.com/v2/%s";
+    static String l1RpcWsUrlFormat = "wss://eth-sepolia.g.alchemy.com/v2/%s";
 
     static String l1RpcBeaconUrlFormat = "%s";
 
     /** The L 2 rpc url format. */
-    static String l2RpcUrlFormat = "https://opt-goerli.g.alchemy.com/v2/%s";
+    static String l2RpcUrlFormat = "https://opt-sepolia.g.alchemy.com/v2/%s";
 
     /**
      * Create config config.
