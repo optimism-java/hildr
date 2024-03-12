@@ -25,6 +25,7 @@ then
         --jwt-secret $JWT_SECRET \
         --l1-rpc-url $L1_RPC_URL \
         --l1-ws-rpc-url $L1_WS_RPC_URL \
+        --l1-beacon-url $L1_BEACON_RPC_URL \
         --l2-rpc-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_RPC_PORT} \
         --l2-engine-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_AUTH_RPC_PORT} \
         --rpc-port $RPC_PORT \
@@ -39,6 +40,7 @@ then
         --jwt-secret $JWT_SECRET \
         --l1-rpc-url $L1_RPC_URL \
         --l1-ws-rpc-url $L1_WS_RPC_URL \
+        --l1-beacon-url $L1_BEACON_RPC_URL \
         --l2-rpc-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_RPC_PORT} \
         --l2-engine-url http://${EXECUTION_CLIENT}:${EXECUTION_CLIENT_AUTH_RPC_PORT} \
         --rpc-port $RPC_PORT \

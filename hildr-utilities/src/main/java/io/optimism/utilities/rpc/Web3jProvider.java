@@ -3,8 +3,11 @@ package io.optimism.utilities.rpc;
 import java.net.ConnectException;
 import java.util.function.Consumer;
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.lang3.StringUtils;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.http.HttpService;
@@ -18,6 +21,8 @@ import org.web3j.tuples.generated.Tuple2;
  * @since 2023.06
  */
 public class Web3jProvider {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpClientProvider.class);
 
     private Web3jProvider() {}
 
@@ -41,8 +46,12 @@ public class Web3jProvider {
     public static Tuple2<Web3j, Web3jService> create(String url) {
         Web3jService web3Srv;
         if (Web3jProvider.isHttp(url)) {
-            OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                    .addInterceptor(new RetryRateLimitInterceptor())
+            var okHttpClientBuilder = new OkHttpClient.Builder();
+            if (LOGGER.isDebugEnabled()) {
+                okHttpClientBuilder.addInterceptor(
+                        new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
+            }
+            var okHttpClient = okHttpClientBuilder.addInterceptor(new RetryRateLimitInterceptor())
                     .build();
             web3Srv = new HttpService(url, okHttpClient);
         } else if (Web3jProvider.isWs(url)) {
