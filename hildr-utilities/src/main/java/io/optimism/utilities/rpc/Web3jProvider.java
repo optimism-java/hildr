@@ -51,7 +51,8 @@ public class Web3jProvider {
                 okHttpClientBuilder.addInterceptor(
                         new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
             }
-            var okHttpClient = okHttpClientBuilder.addInterceptor(new RetryRateLimitInterceptor())
+            var okHttpClient = okHttpClientBuilder
+                    .addInterceptor(new RetryRateLimitInterceptor())
                     .build();
             web3Srv = new HttpService(url, okHttpClient);
         } else if (Web3jProvider.isWs(url)) {
