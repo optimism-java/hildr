@@ -28,7 +28,7 @@ import org.slf4j.LoggerFactory;
  * @since 0.2.7
  */
 public class BeaconBlobFetcher {
-    // https://beacon-nd-182-746-446.p2pify.com/ae65ad4cb1ef42d6a520ac0516776939
+
     private static final Logger LOGGER = LoggerFactory.getLogger(BeaconBlobFetcher.class);
 
     private static final String GENESIS_METHOD_FORMAT = "%s/eth/v1/beacon/genesis";
@@ -127,7 +127,7 @@ public class BeaconBlobFetcher {
                 : Map.of("indices", indices.stream().map(BigInteger::toString).collect(Collectors.joining(",")));
         var postfix = "%s%s".formatted(blockId, prepareQueryParams(params));
         var res = getBlobSidecars("%s/%s".formatted(this.sidecarsMethod, postfix));
-        if (res.getData() != null && res.getData().isEmpty()) {
+        if (res.getData() != null && !res.getData().isEmpty()) {
             return res.getData();
         }
         if (this.archiverSidecarsMethod != null) {

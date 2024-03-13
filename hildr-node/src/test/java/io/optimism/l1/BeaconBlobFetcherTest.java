@@ -2,6 +2,8 @@ package io.optimism.l1;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import io.optimism.TestConstants;
+import io.optimism.config.Config;
 import io.optimism.type.BlobSidecar;
 import io.optimism.type.SpecConfig;
 import java.math.BigInteger;
@@ -15,31 +17,45 @@ import org.junit.jupiter.api.Test;
  */
 class BeaconBlobFetcherTest {
 
-    private static String beaconUrl =
-            "https://few-sleek-sound.ethereum-sepolia.quiknode.pro/8e8c3ae8c9ddf50628ad22d3d8cdaf36230d52e1";
     private static BeaconBlobFetcher fetcher;
+
+    private static Config config;
 
     @BeforeAll
     static void setUp() {
-        fetcher = new BeaconBlobFetcher(beaconUrl);
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
+        config = TestConstants.createConfig();
+        fetcher = new BeaconBlobFetcher(config.l1BeaconUrl());
     }
 
     @Test
     void getSpecConfig() {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
         SpecConfig specConfig = fetcher.getSpecConfig();
-        System.out.println(specConfig);
+        assertEquals(BigInteger.valueOf(12L), specConfig.getSecondsPerSlot());
     }
 
     @Test
     void getSlotFromTime() {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
         BigInteger slotFromTime = fetcher.getSlotFromTime(BigInteger.valueOf(1708659300L));
-        System.out.println(slotFromTime);
+        assertEquals(BigInteger.valueOf(4410475), slotFromTime);
     }
 
     @Test
-    void getBlobSidecards() {
-        BigInteger slotFromTime = fetcher.getSlotFromTime(BigInteger.valueOf(1708659300L));
-        List<BlobSidecar> blobSidecards = fetcher.getBlobSidecards(slotFromTime.toString(), null);
-        System.out.println(blobSidecards);
+    void getBlobSidecardsAlreadyPrune() {
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
+        var blobFetcher = new BeaconBlobFetcher(config.l1BeaconUrl(), config.l1BeaconArchiverUrl());
+        BigInteger slotFromTime = blobFetcher.getSlotFromTime(BigInteger.valueOf(1708659300L));
+        List<BlobSidecar> blobSidecards = blobFetcher.getBlobSidecards(slotFromTime.toString(), null);
+        assertTrue(blobSidecards != null && blobSidecards.size() > 0);
     }
 }
