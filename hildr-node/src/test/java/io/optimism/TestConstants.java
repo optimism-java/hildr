@@ -18,6 +18,7 @@ public class TestConstants {
 
     private static final String ETH_API_ENV = "ETH_API_KEY";
     private static final String OPT_API_ENV = "OPT_API_KEY";
+    private static final String BEACON_ARCHIVER_ENV = "BEACON_ARCHIVE_API_URL";
 
     /** The L 1 rpc url format. */
     static String l1RpcUrlFormat = "https://eth-sepolia.g.alchemy.com/v2/%s";
@@ -42,10 +43,20 @@ public class TestConstants {
         }
         var l1RpcUrl = l1RpcUrlFormat.formatted(envs.get(ETH_API_ENV));
         var l1WsRpcUrl = l1RpcWsUrlFormat.formatted(envs.get(ETH_API_ENV));
-        var l1BeaconRpcUrl = l1RpcBeaconUrlFormat.formatted(envs.get(ETH_API_ENV));
+        var l1BeaconRpcUrl = "https://ethereum-sepolia-beacon-api.publicnode.com";
+        var l1BeaconArchiverRpcUrl = envs.get(BEACON_ARCHIVER_ENV);
         var l2RpcUrl = l2RpcUrlFormat.formatted(envs.get(OPT_API_ENV));
         Config.CliConfig cliConfig = new Config.CliConfig(
-                l1RpcUrl, l1WsRpcUrl, l1BeaconRpcUrl, l1BeaconRpcUrl, l2RpcUrl, null, "testjwt", null, null, false);
+                l1RpcUrl,
+                l1WsRpcUrl,
+                l1BeaconRpcUrl,
+                l1BeaconArchiverRpcUrl,
+                l2RpcUrl,
+                null,
+                "testjwt",
+                null,
+                null,
+                false);
         return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
     }
 }
