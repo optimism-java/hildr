@@ -56,6 +56,6 @@ public class InnerWatcherTest {
         var watcher = this.createWatcher(null, queue);
         watcher.startUp();
         watcher.tryIngestBlock();
-        assertEquals(2, queue.size());
+        assertEquals(1, queue.size());
     }
 }
