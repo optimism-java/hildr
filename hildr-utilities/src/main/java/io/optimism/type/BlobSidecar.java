@@ -111,6 +111,7 @@ public class BlobSidecar {
         }
         return Objects.equals(index, that.index)
                 && Objects.equals(blob, that.blob)
+                && Objects.equals(signedBlockHeader, that.signedBlockHeader)
                 && Objects.equals(kzgCommitment, that.kzgCommitment)
                 && Objects.equals(kzgProof, that.kzgProof)
                 && Objects.equals(kzgCommitmentInclusionProof, that.kzgCommitmentInclusionProof);

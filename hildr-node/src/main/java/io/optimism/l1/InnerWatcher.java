@@ -297,7 +297,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private L1Info deriveL1Info(EthBlock.Block l1Block) throws ExecutionException, InterruptedException {
         List<UserDeposited> userDeposits = this.getDeposits(this.currentBlock);
-        boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) >= 0;
+        boolean finalized = this.currentBlock.compareTo(this.finalizedBlock) <= 0;
         var tuple = getBatcherTxAndBlobHeader(l1Block);
         List<String> data = tuple.component1();
         var parentBeaconRoot = l1Block.getParentBeaconBlockRoot();

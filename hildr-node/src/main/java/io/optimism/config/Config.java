@@ -747,7 +747,8 @@ public record Config(
             final String batchSender = Numeric.toHexString(Arrays.copyOfRange(input, 144, 164));
             var originFeeScalar = Arrays.copyOfRange(input, 4, 12);
             var destFeeScalar = new byte[32];
-            System.arraycopy(originFeeScalar, 0, destFeeScalar, 24, originFeeScalar.length);
+            System.arraycopy(originFeeScalar, 0, destFeeScalar, 28, 4);
+            System.arraycopy(originFeeScalar, 4, destFeeScalar, 24, 4);
             destFeeScalar[0] = 1;
             var l1FeeScalar = Numeric.toBigInt(destFeeScalar);
             return new Config.SystemConfig(batchSender, gasLimit, BigInteger.ZERO, l1FeeScalar, unsafeBlockSigner);
