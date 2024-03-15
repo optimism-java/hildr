@@ -142,14 +142,21 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 if (currentL1Block.compareTo(epoch.number().add(seqWindowSize)) > 0) {
                     BigInteger nextTimestamp =
                             safeHead.timestamp().add(this.config.chainConfig().blockTime());
-                    Epoch epochRes = nextTimestamp.compareTo(nextEpoch.timestamp()) < 0 ? epoch : nextEpoch;
-                    var singularBatch = new SingularBatch(
-                            safeHead.parentHash(),
-                            epochRes.number(),
-                            epochRes.hash(),
-                            nextTimestamp,
-                            Lists.newArrayList());
-                    batch = new Batch(singularBatch, currentL1Block);
+                    Epoch epochRes = null;
+                    if (nextTimestamp.compareTo(nextEpoch.timestamp()) < 0) {
+                        epochRes = epoch;
+                    } else if (currentL1Block.compareTo(nextEpoch.number().add(seqWindowSize)) > 0) {
+                        epochRes = nextEpoch;
+                    }
+                    if (epochRes != null) {
+                        var singularBatch = new SingularBatch(
+                                safeHead.parentHash(),
+                                epochRes.number(),
+                                epochRes.hash(),
+                                nextTimestamp,
+                                Lists.newArrayList());
+                        batch = new Batch(singularBatch, currentL1Block);
+                    }
                 }
             }
         }
