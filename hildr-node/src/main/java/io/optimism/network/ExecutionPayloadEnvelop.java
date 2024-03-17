@@ -28,7 +28,8 @@ public record ExecutionPayloadEnvelop(Bytes parentBeaconBlockRoot, ExecutionPayl
         Bytes parentBeaconBlockRoot = data.slice(0, 32);
 
         ExecutionPayloadSSZ executionPayloadSSZ = ExecutionPayloadSSZ.from(data.slice(32), BlockVersion.V3);
-        ExecutionPayload executionPayload = ExecutionPayload.from(executionPayloadSSZ);
+        ExecutionPayload executionPayload =
+                ExecutionPayload.from(executionPayloadSSZ, parentBeaconBlockRoot.toHexString());
         return new ExecutionPayloadEnvelop(parentBeaconBlockRoot, executionPayload);
     }
 }
