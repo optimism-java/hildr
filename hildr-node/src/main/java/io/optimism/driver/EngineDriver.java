@@ -166,7 +166,7 @@ public class EngineDriver<E extends Engine> {
         this.pushPayload(payload);
         this.unsafeHead = BlockInfo.from(payload);
         this.updateForkchoice();
-        LOGGER.info("head updated: {} {}", this.unsafeHead.number(), this.unsafeHead.hash());
+        LOGGER.info("unsafe head updated: {} {}", this.unsafeHead.number(), this.unsafeHead.hash());
     }
 
     /**
