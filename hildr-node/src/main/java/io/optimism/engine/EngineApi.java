@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
@@ -173,7 +174,8 @@ public class EngineApi implements Engine {
         var payloadReq = executionPayload != null ? executionPayload.toReq() : null;
         if (executionPayload != null && executionPayload.timestamp().compareTo(ecotoneTime) >= 0) {
             method = ENGINE_NEW_PAYLOAD_V3;
-            params = List.of(payloadReq, Collections.EMPTY_LIST, executionPayload.parentBeaconBlockRoot());
+            params = new ArrayList<>();
+            Collections.addAll(params, payloadReq, Collections.EMPTY_LIST, executionPayload.parentBeaconBlockRoot());
         } else {
             method = ENGINE_NEW_PAYLOAD_V2;
             params = Collections.singletonList(payloadReq);

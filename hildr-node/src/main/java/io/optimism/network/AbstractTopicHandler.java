@@ -163,10 +163,13 @@ public abstract class AbstractTopicHandler implements NamedTopicHandler {
     }
 
     private BlockMessage decode(PreparedGossipMessage message) throws DecodingException {
-        LOGGER.debug("Received gossip message {} on topic: {}", message, topic);
         try {
-            return BlockMessage.from(
-                    message.getDecodedMessage().getDecodedMessageOrElseThrow().toArray(), version);
+            var decodesMsg =
+                    message.getDecodedMessage().getDecodedMessageOrElseThrow().toArray();
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Received gossip message {} on topic: {}", Numeric.toHexString(decodesMsg), topic);
+            }
+            return BlockMessage.from(decodesMsg, version);
         } catch (PreparedGossipMessage.GossipDecodingException e) {
             LOGGER.error("Failed to decode gossip message", e);
             throw new DecodingException("Failed to decode gossip message", e);
