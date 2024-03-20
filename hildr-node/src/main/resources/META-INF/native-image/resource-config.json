@@ -1,9 +1,17 @@
 {
   "resources":{
     "includes":[{
+      "pattern":"\\QMETA-INF/log4j-provider.properties\\E"
+    }, {
+      "pattern":"\\QMETA-INF/maven/org.xerial.snappy/snappy-java/pom.properties\\E"
+    },{
       "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
     },{
+      "pattern":"\\QMETA-INF/services/com.fasterxml.jackson.databind.Module\\E"
+    },{
       "pattern":"\\QMETA-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat\\E"
+    },{
+      "pattern":"\\QMETA-INF/services/io.jsonwebtoken.io.Serializer\\E"
     }, {
       "pattern":"\\QMETA-INF/services/com.fasterxml.jackson.databind.Module\\E"
     }, {
@@ -12,9 +20,27 @@
       "pattern":"\\QMETA-INF/services/io.micrometer.context.ContextAccessor\\E"
     }, {
       "pattern":"\\QMETA-INF/services/io.micrometer.context.ThreadLocalAccessor\\E"
+    },{
+      "pattern":"\\QMETA-INF/services/io.opentelemetry.context.ContextStorageProvider\\E"
+    },  {
+      "pattern":"\\QMETA-INF/services/io.vertx.core.spi.VerticleFactory\\E"
     }, {
+      "pattern":"\\QMETA-INF/services/io.vertx.core.spi.VertxServiceProvider\\E"
+    },{
       "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.core.util.ContextDataProvider\\E"
     }, {
+      "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
+    }, {
+      "pattern":"\\QMETA-INF/services/java.net.spi.InetAddressResolverProvider\\E"
+    }, {
+      "pattern":"\\QMETA-INF/services/java.net.spi.URLStreamHandlerProvider\\E"
+    }, {
+      "pattern":"\\QMETA-INF/services/java.nio.channels.spi.SelectorProvider\\E"
+    }, {
+      "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
+    }, {
+      "pattern":"\\QMETA-INF/services/javax.xml.parsers.SAXParserFactory\\E"
+    },{
       "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.spi.Provider\\E"
     }, {
       "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.util.PropertySource\\E"
@@ -28,11 +54,35 @@
       "pattern":"\\QMETA-INF/services/org.github.gestalt.config.post.process.transform.Transformer\\E"
     }, {
       "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
+    },{
+      "pattern":"\\Qjndi.properties\\E"
+    }, {
+      "pattern":"\\Qlog4j2.StatusLogger.json\\E"
+    }, {
+      "pattern":"\\Qlog4j2.StatusLogger.properties\\E"
+    }, {
+      "pattern":"\\Qlog4j2.component.json\\E"
+    }, {
+      "pattern":"\\Qlog4j2.component.properties\\E"
+    }, {
+      "pattern":"\\Qlog4j2.propertyMapping.json\\E"
+    }, {
+      "pattern":"\\Qlog4j2.system.properties\\E"
+    }, {
+      "pattern":"\\Qlogback-test.xml\\E"
     }, {
       "pattern":"\\Qlogback.xml\\E"
     }, {
       "pattern":"\\Qorg/apache/logging/log4j/core\\E"
     }, {
+      "pattern":"\\Qorg-xerial-snappy.properties\\E"
+    }, {
+      "pattern":"\\Qorg/xerial/snappy/VERSION\\E"
+    }, {
+      "pattern":"\\Qorg/xerial/snappy/native/Linux/x86_64/libsnappyjava.so\\E"
+    }, {
+      "pattern":"\\Qvertx-default-jul-logging.properties\\E"
+    },{
       "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/nfkc.nrm\\E"
     }, {
       "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/uprops.icu\\E"

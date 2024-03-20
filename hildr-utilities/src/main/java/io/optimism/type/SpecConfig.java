@@ -8,7 +8,7 @@ import java.util.Objects;
  * The class of SpecConfig
  *
  * @author thinkAfCod
- * @since 0.1.1
+ * @since 0.3.0
  */
 public class SpecConfig {
 

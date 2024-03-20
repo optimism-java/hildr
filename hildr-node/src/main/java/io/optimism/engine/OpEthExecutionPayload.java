@@ -39,7 +39,7 @@ public class OpEthExecutionPayload extends Response<OpEthExecutionPayload.Execut
 
     /**
      * The type Execution payload obj.
-     * @since 0.2.6
+     * @since 0.3.0
      */
     public static class ExecutionPayloadObj {
 

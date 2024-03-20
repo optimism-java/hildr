@@ -7,7 +7,7 @@ import java.util.List;
  * Contains all the content of the Ectone upgrade transactions.
  *
  * @author thinkAfCod
- * @since 0.2.7
+ * @since 0.3.0
  */
 public class EctoneUpgradeTransactions {
 
