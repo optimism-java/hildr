@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * The class of BeaconBlobFetcher.
  *
  * @author thinkAfCod
- * @since 0.2.7
+ * @since 0.3.0
  */
 public class BeaconBlobFetcher {
 

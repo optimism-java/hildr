@@ -6,7 +6,7 @@ import java.util.Objects;
  * The BeaconApiResponse class.
  *
  * @author thinkAfCod
- * @since 0.2.7
+ * @since 0.3.0
  */
 public class BeaconApiResponse<T> {
 

@@ -6,7 +6,7 @@ import java.util.Objects;
  * The BeaconSignedBlockHeader class.
  *
  * @author thinkAfCod
- * @since 0.1.1
+ * @since 0.3.0
  */
 public class BeaconSignedBlockHeader {
 

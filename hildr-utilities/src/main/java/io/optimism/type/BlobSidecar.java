@@ -8,7 +8,7 @@ import java.util.Objects;
  * The BlobSidecar class
  *
  * @author thinkAfCod
- * @since 0.2.6
+ * @since 0.3.0
  */
 public class BlobSidecar {
     private String index;
