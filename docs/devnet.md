@@ -154,7 +154,7 @@ Note: This command will withdraw some ETH from pre-deposited accounts on L2. How
 
 To test withdrawal from your account refer to this [tutorial](https://stack.optimism.io/docs/security/forced-withdrawal/).
 
-## Trouble shooting
+## Troubleshooting
 
 If the Hildr node stops syncing, you can reset the devnet.
 
