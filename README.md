@@ -5,9 +5,9 @@
 
 # Hildr
 
-This work is support by an [Optimism governance grant](https://app.charmverse.io/op-grants/proposals?id=e5613e76-a26f-41e4-9f0d-4e2dbfccf5b8).
+This work is supported by an [Optimism governance grant](https://app.charmverse.io/op-grants/proposals?id=e5613e76-a26f-41e4-9f0d-4e2dbfccf5b8).
 
-Hildr is an OP Stack rollup client written in the Java 21 with GraalVM native.
+Hildr is an OP Stack rollup client written in Java 21 with GraalVM native.
 
 Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/specs/rollup-node.md)
 
@@ -15,11 +15,11 @@ Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/spe
 - [Go](https://github.com/ethereum-optimism/optimism/tree/develop/op-node)
 
 ## System requirements
-To run a `hildr-node` and `op-geth` node, at least 4C8G and 100GB of disk is required, as well as the installation of Java version 21 and Go version 1.20.8, must lower then v1.21.
+To run a `hildr-node` and `op-geth` node, at least 4C8G and 100GB of disk is required, as well as the installation of Java version 21 and Go version 1.20.8, must be lower than v1.21.
 
 ## Running `hildr-node`
 
-First, use Docker start a `op-geth` container in hildr project root directory:
+First, use Docker start an `op-geth` container in hildr project root directory:
 
 ```shell
 cd ./docker && docker compose -f docker/docker-compose.yml up op-geth
@@ -92,12 +92,12 @@ This command will generate the `hildr-node` jar file in `hildr/hildr-node/build/
 
 You will need three things to run `hildr-node`:
 1. An archival L1 node, synced to the settlement layer of the OP Stack chain you want to sync (e.g. reth, geth, besu, nethermind, etc.)
-2. A Optimism Execution Engine (e.g. op-geth, op-reth, op-erigon, etc.)
+2. An Optimism Execution Engine (e.g. op-geth, op-reth, op-erigon, etc.)
 3. An instance of hildr-node.
-For this example, we'll start a Optimism Sepolia Node.
+For this example, we'll start an Optimism Sepolia Node.
 
 
-### Installing a Optimism Execution Engine
+### Installing an Optimism Execution Engine
 
 Next, you'll need to install a [Optimism L2 Execution Engine](https://github.com/ethereum-optimism/optimism/blob/develop/specs/exec-engine.md), which is the equivalent to the Execution Client on the OP Stack.
 Available options include:
@@ -113,7 +113,7 @@ We'll run it by docker image.
 
 ### Modify `.env` file
 
-There has a .env.defaul file in the `./docker` directory. Copy it as `.env` and modify the fields value below:
+There has a .env.default file in the `./docker` directory. Copy it as `.env` and modify the fields value below:
 
 ```properties
 # Set the network value to `devnet` in the configuration.
