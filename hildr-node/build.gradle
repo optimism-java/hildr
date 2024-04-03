@@ -67,19 +67,18 @@ tasks.withType(JavaExec).configureEach {
 dependencies {
 	implementation project(':hildr-utilities')
 	// This dependency is used by the application.
-	implementation 'com.google.guava:guava:31.1-jre'
+	implementation 'com.google.guava:guava:33.0.0-jre'
 	implementation 'com.github.rholder:guava-retrying:2.0.0'
 
 	// define any required OkHttp artifacts without version
-	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
-	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
+	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.9")
 
-	implementation('org.web3j:core:4.11.0') {
+	implementation('org.web3j:core:4.11.2') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
 		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
 	}
-	implementation files('../libs/core-4.11.1-SNAPSHOT.jar')
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
 	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
 	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
@@ -105,8 +104,8 @@ dependencies {
 	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 
 	// Logback
-	implementation 'ch.qos.logback:logback-core:1.4.7'
-	implementation 'ch.qos.logback:logback-classic:1.4.7'
+	implementation 'ch.qos.logback:logback-core:1.4.12'
+	implementation 'ch.qos.logback:logback-classic:1.4.14'
 	implementation 'org.slf4j:slf4j-api:2.0.7'
 
 	implementation platform("io.opentelemetry:opentelemetry-bom-alpha:1.26.0-alpha")
@@ -146,7 +145,7 @@ dependencies {
 	}
 	implementation 'io.tmio:tuweni-rlp:2.4.2'
 	implementation('tech.pegasys.discovery:discovery:22.12.0')
-	implementation 'org.xerial.snappy:snappy-java:1.1.10.3'
+	implementation 'org.xerial.snappy:snappy-java:1.1.10.5'
 
 	implementation 'org.apache.logging.log4j:log4j-api:3.0.0-alpha1'
 //	implementation 'org.apache.logging.log4j:log4j-core:3.0.0-alpha1'
@@ -165,7 +164,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-reporting:1.9.1'
 
 	testImplementation 'org.mockito:mockito-junit-jupiter:2.19.0'
-	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.2")
+	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.9")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
