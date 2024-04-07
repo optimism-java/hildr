@@ -31,7 +31,7 @@ repositories {
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(22)
 	}
 }
 
@@ -119,7 +119,7 @@ test {
 //}
 
 jacoco {
-	toolVersion = "0.8.9"
+	toolVersion = "0.8.12"
 }
 
 jacocoTestReport {

@@ -171,7 +171,7 @@ dependencies {
 // Apply a specific Java toolchain to ease working on different environments.
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(22)
 //		vendor = JvmVendorSpec.GRAAL_VM
 //		implementation = JvmImplementation.VENDOR_SPECIFIC
 	}
@@ -191,7 +191,7 @@ test {
 }
 
 jacoco {
-	toolVersion = "0.8.9"
+	toolVersion = "0.8.12"
 }
 
 jacocoTestReport {
@@ -308,7 +308,7 @@ javadoc {
 		options.addBooleanOption('html5', true)
 	}
 	options.addBooleanOption('-enable-preview', true)
-	options.addStringOption('-release', '21')
+	options.addStringOption('-release', '22')
 //	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
 
@@ -443,7 +443,7 @@ graalvmNative {
 			imageName = 'hildr-node'
 
 			javaLauncher = javaToolchains.launcherFor {
-				languageVersion = JavaLanguageVersion.of(21)
+				languageVersion = JavaLanguageVersion.of(22)
 				vendor = JvmVendorSpec.matching("Oracle Corporation")
 			}
 
