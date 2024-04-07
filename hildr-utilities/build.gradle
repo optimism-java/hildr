@@ -54,18 +54,19 @@ tasks.withType(JavaExec).configureEach {
 }
 
 dependencies {
-	api 'com.google.guava:guava:33.0.0-jre'
+	api 'com.google.guava:guava:31.1-jre'
 	api 'com.github.rholder:guava-retrying:2.0.0'
 	api 'org.apache.commons:commons-lang3:3.12.0'
 
-	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
-	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.9")
-	api('org.web3j:core:4.11.2') {
+	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.2")
+	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.2")
+	api('org.web3j:core:4.11.0') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
 		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
 	}
 
+	api files('libs/core-4.11.1-SNAPSHOT.jar')
 	api 'io.micrometer:micrometer-registry-prometheus:1.11.0'
 	api platform('io.micrometer:micrometer-tracing-bom:1.1.1')
 	api 'io.micrometer:micrometer-tracing'
@@ -80,8 +81,8 @@ dependencies {
 	implementation 'com.fasterxml.jackson:jackson-bom:2.15.2'
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 
-	implementation 'ch.qos.logback:logback-core:1.4.12'
-	implementation 'ch.qos.logback:logback-classic:1.4.14'
+	implementation 'ch.qos.logback:logback-core:1.4.7'
+	implementation 'ch.qos.logback:logback-classic:1.4.7'
 
 	implementation 'com.google.protobuf:protobuf-java:3.25.1'
 	implementation 'io.tmio:tuweni-units:2.4.2'
