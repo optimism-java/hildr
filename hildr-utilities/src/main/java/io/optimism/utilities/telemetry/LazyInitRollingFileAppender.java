@@ -26,13 +26,13 @@ public class LazyInitRollingFileAppender<E> extends RollingFileAppender<E> {
 
     /** This method is synchronized to avoid double start from doAppender(). */
     protected void maybeStart() {
-        lock.lock();
+        streamWriteLock.lock();
         try {
             if (!started) {
                 this.start();
             }
         } finally {
-            lock.unlock();
+            streamWriteLock.unlock();
         }
     }
 
