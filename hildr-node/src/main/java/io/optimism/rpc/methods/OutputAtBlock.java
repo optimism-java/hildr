@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.jcajce.provider.digest.Keccak;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.Web3jService;
@@ -60,14 +61,22 @@ public class OutputAtBlock implements JsonRpcMethod {
 
     @Override
     public JsonRpcResponse response(JsonRpcRequestContext context) {
-        final BigInteger blockNumber = new BigInteger(context.getParameter(0, String.class), 10);
-
+        if (context.getRequest().getParamLength() == 0) {
+            throw new HildrServiceExecutionException("Invalid params");
+        }
+        String number = context.getParameter(0, String.class);
+        if (StringUtils.isEmpty(number)) {
+            throw new HildrServiceExecutionException("failed to get block by number: " + number);
+        }
+        final BigInteger blockNumber = Numeric.toBigInt(number);
         try {
             EthBlock.Block block = this.getBlock(blockNumber);
 
             final String blockHash = block.getHash();
             EthGetProof.Proof stateProof = this.getProof(blockHash);
-
+            if (stateProof == null) {
+                throw new HildrServiceExecutionException("failed to get state proof: " + blockHash);
+            }
             String stateRoot = block.getStateRoot();
             String withdrawalStorageRoot = stateProof.getStorageHash();
             var outputRoot = computeL2OutputRoot(block, withdrawalStorageRoot);
@@ -83,7 +92,7 @@ public class OutputAtBlock implements JsonRpcMethod {
         }
     }
 
-    private String computeL2OutputRoot(EthBlock.Block block, String storageRoot) {
+    static String computeL2OutputRoot(EthBlock.Block block, String storageRoot) {
         var version = new byte[32];
 
         byte[] digestBytes = new byte[0];
