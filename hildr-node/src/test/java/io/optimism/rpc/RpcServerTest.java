@@ -71,7 +71,7 @@ public class RpcServerTest {
 
             ObjectMapper mapper = new ObjectMapper();
             JsonRpcRequest jsonRpcRequest = new JsonRpcRequest(
-                    "2.0", RpcMethod.OP_OUTPUT_AT_BLOCK.getRpcMethodName(), new Object[] {"7900000"});
+                    "2.0", RpcMethod.OP_OUTPUT_AT_BLOCK.getRpcMethodName(), new Object[] {"0x788B60"});
             jsonRpcRequest.setId(new JsonRpcRequestId("1"));
             var postBody = mapper.writeValueAsBytes(jsonRpcRequest);
             RequestBody requestBody = RequestBody.create(postBody, MediaType.get("application/json"));
