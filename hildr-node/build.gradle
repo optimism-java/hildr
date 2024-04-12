@@ -137,6 +137,7 @@ dependencies {
 	implementation('tech.pegasys.teku.internal:serviceutils:23.10.0')
 	implementation('tech.pegasys.teku.internal:unsigned:23.10.0')
 	implementation('tech.pegasys.teku.internal:statetransition:23.10.0')
+	implementation 'tech.pegasys:jc-kzg-4844'
 	implementation('org.hyperledger.besu.internal:metrics-core:23.10.2')
 	implementation('org.hyperledger.besu:plugin-api:23.10.2')
 	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE')

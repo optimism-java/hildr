@@ -3,6 +3,7 @@ package io.optimism.l1;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import ethereum.ckzg4844.CKZG4844JNI;
 import io.optimism.type.BlobSidecar;
 import io.optimism.type.SpecConfig;
 import io.optimism.utilities.rpc.HttpClientProvider;
@@ -20,6 +21,7 @@ import okhttp3.Response;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.web3j.utils.Numeric;
 
 /**
  * The class of BeaconBlobFetcher.
@@ -36,6 +38,11 @@ public class BeaconBlobFetcher {
     private static final String SPEC_METHOD_FORMAT = "%s/eth/v1/config/spec";
 
     private static final String SIDECARS_METHOD_PREFIX_FORMAT = "%s/eth/v1/beacon/blob_sidecars";
+
+    static {
+        CKZG4844JNI.loadNativeLibrary();
+        CKZG4844JNI.loadTrustedSetupFromResource("/kzg-trusted-setups/mainnet.txt", BeaconBlobFetcher.class);
+    }
 
     private final String genesisMethod;
 
@@ -145,12 +152,40 @@ public class BeaconBlobFetcher {
                     blockId,
                     indices);
         }
+        List<BlobSidecar> blobSiders = res.getData();
+
         return res.getData();
     }
 
     private BeaconApiResponse<List<BlobSidecar>> getBlobSidecars(String url) {
         var req = new Request.Builder().get().url(url).build();
         return this.send(req, new TypeReference<BeaconApiResponse<List<BlobSidecar>>>() {});
+    }
+
+    static boolean verifyBlobSidecar(List<BlobSidecar> blobSidecars, List<String> versionedHashes) {
+        if (blobSidecars == null || versionedHashes == null) {
+            return false;
+        }
+        // check length
+        if (blobSidecars.size() != versionedHashes.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < blobSidecars.size(); i++) {
+            var blobSidecar = blobSidecars.get(i);
+            var versionedHash = versionedHashes.get(i);
+            if (!blobSidecar.getVersionedHash().equals(versionedHash)) {
+                return false;
+            }
+            if (!CKZG4844JNI.verifyBlobKzgProof(
+                    Numeric.hexStringToByteArray(blobSidecar.getBlob()),
+                    Numeric.hexStringToByteArray(blobSidecar.getKzgCommitment()),
+                    Numeric.hexStringToByteArray(blobSidecar.getKzgProof()))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private <T> T send(final Request req, final TypeReference<T> typeRef) {
