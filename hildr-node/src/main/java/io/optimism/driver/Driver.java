@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import org.apache.commons.collections4.CollectionUtils;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +183,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         }
 
         HeadInfo head;
-        if (finalizedBlock == null) {
+        if (finalizedBlock == null
+                || finalizedBlock.getBlock() == null
+                || CollectionUtils.isEmpty(finalizedBlock.getBlock().getTransactions())) {
             LOGGER.warn("could not get head info. Falling back to the genesis head.");
             head = new HeadInfo(
                     config.chainConfig().l2Genesis(), config.chainConfig().l1StartEpoch(), BigInteger.ZERO);
@@ -218,7 +221,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 scope.throwIfFailed();
 
                 var block = blockTask.get();
-                if (block == null) {
+                if (block == null || block.getBlock() == null) {
                     return null;
                 }
                 final HeadInfo l2BlockInfo = HeadInfo.from(block.getBlock());
