@@ -3,6 +3,8 @@ package io.optimism.type;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.util.List;
 import java.util.Objects;
+import org.web3j.crypto.Hash;
+import org.web3j.utils.Numeric;
 
 /**
  * The BlobSidecar class
@@ -101,6 +103,12 @@ public class BlobSidecar {
 
     public void setKzgCommitmentInclusionProof(List<String> kzgCommitmentInclusionProof) {
         this.kzgCommitmentInclusionProof = kzgCommitmentInclusionProof;
+    }
+
+    public String getVersionedHash() {
+        var hash = Hash.sha256(Numeric.hexStringToByteArray(this.kzgCommitment));
+        hash[0] = 1;
+        return Numeric.toHexString(hash);
     }
 
     @Override
