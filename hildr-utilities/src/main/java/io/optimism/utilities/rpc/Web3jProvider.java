@@ -47,7 +47,7 @@ public class Web3jProvider {
         Web3jService web3Srv;
         if (Web3jProvider.isHttp(url)) {
             var okHttpClientBuilder = new OkHttpClient.Builder();
-            if (LOGGER.isDebugEnabled()) {
+            if (LOGGER.isTraceEnabled()) {
                 okHttpClientBuilder.addInterceptor(
                         new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
             }
@@ -57,6 +57,13 @@ public class Web3jProvider {
             web3Srv = new HttpService(url, okHttpClient);
         } else if (Web3jProvider.isWs(url)) {
             final var web3finalSrv = new WebSocketService(url, true);
+            var logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+            if (logger instanceof ch.qos.logback.classic.Logger) {
+                var level = LOGGER.isTraceEnabled()
+                        ? ch.qos.logback.classic.Level.TRACE
+                        : ch.qos.logback.classic.Level.INFO;
+                ((ch.qos.logback.classic.Logger) logger).setLevel(level);
+            }
             wsConnect(web3finalSrv);
             web3Srv = web3finalSrv;
         } else {
