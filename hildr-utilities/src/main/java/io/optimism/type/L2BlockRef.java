@@ -21,7 +21,7 @@ public record L2BlockRef(
         BigInteger number,
         String parentHash,
         BigInteger timestamp,
-        BlockId l1origin,
+        Epoch l1origin,
         BigInteger sequenceNumber) {
 
     public static final L2BlockRef EMPTY = new L2BlockRef(null, null, null, null, null, null);
@@ -48,7 +48,7 @@ public record L2BlockRef(
                 block.getNumber(),
                 block.getParentHash(),
                 block.getTimestamp(),
-                new BlockId(l1Info.blockHash(), l1Info.number()),
+                l1Info.toEpoch(),
                 l1Info.sequenceNumber());
     }
 

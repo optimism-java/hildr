@@ -4,6 +4,7 @@ import io.optimism.batcher.channel.ReorgException;
 import io.optimism.batcher.exception.Web3jCallException;
 import io.optimism.batcher.telemetry.BatcherMetrics;
 import io.optimism.type.BlockId;
+import io.optimism.type.Epoch;
 import io.optimism.type.Genesis;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.type.L1BlockRef;
@@ -148,7 +149,7 @@ public class BlockLoader implements Closeable {
     }
 
     L2BlockRef l2BlockToBlockRef(final EthBlock.Block block, Genesis genesis) {
-        BlockId l1Origin;
+        Epoch l1Origin;
         BigInteger sequenceNumber;
         if (block.getNumber().equals(genesis.l2().number())) {
             if (!block.getHash().equals(genesis.l2().hash())) {
@@ -172,7 +173,7 @@ public class BlockLoader implements Closeable {
             }
             final byte[] input = Numeric.hexStringToByteArray(tx.getInput());
             L1BlockInfo info = L1BlockInfo.from(input);
-            l1Origin = info.toId();
+            l1Origin = info.toEpoch();
             sequenceNumber = info.sequenceNumber();
         }
         return new L2BlockRef(

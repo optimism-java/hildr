@@ -1,11 +1,11 @@
 package io.optimism.derive;
 
 import io.optimism.common.BlockInfo;
-import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.driver.HeadInfo;
 import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
 import io.optimism.l1.L1Info;
+import io.optimism.type.Epoch;
 import java.math.BigInteger;
 import java.util.Map.Entry;
 import java.util.TreeMap;

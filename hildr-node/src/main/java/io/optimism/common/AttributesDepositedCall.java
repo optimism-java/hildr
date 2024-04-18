@@ -1,5 +1,6 @@
 package io.optimism.common;
 
+import io.optimism.type.Epoch;
 import io.optimism.type.L1BlockInfo;
 import java.math.BigInteger;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +33,14 @@ public record AttributesDepositedCall(
         BigInteger feeScalar,
         BigInteger blobBaseFeeScalar,
         BigInteger blobBaseFee) {
+
+    /**
+     * Create Epoch from attributes deposited call.
+     * @return the epoch
+     */
+    public Epoch toEpoch() {
+        return new Epoch(number, hash, timestamp, sequenceNumber);
+    }
 
     /**
      * Create AttributesDepositedCall from attributes deposited call.

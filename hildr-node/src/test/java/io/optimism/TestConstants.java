@@ -56,6 +56,7 @@ public class TestConstants {
                 "testjwt",
                 null,
                 null,
+                Config.SyncMode.Full,
                 false);
         return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
     }

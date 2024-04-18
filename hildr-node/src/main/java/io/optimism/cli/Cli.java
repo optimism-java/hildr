@@ -210,6 +210,7 @@ public class Cli implements Runnable {
                 StringUtils.trim(Cli.this.getJwtSecret()),
                 cli.checkpointSyncUrl,
                 cli.rpcPort,
+                cli.syncMode,
                 cli.devnet);
     }
 }

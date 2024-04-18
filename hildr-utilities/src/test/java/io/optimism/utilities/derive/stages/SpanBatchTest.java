@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.netty.buffer.Unpooled;
-import io.optimism.type.BlockId;
+import io.optimism.type.Epoch;
 import io.optimism.type.L2BlockRef;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -318,7 +318,9 @@ class SpanBatchTest {
                     RandomUtils.randomHex(),
                     // random biginteger
                     RandomUtils.randomBigInt(),
-                    new BlockId(RandomUtils.randomHex(), RandomUtils.randomBigInt()),
+                    new Epoch(
+                            RandomUtils.randomBigInt(), RandomUtils.randomHex(),
+                            RandomUtils.randomBigInt(), RandomUtils.randomBigInt()),
                     RandomUtils.randomBigInt());
 
             BigInteger genesisTimeStamp =

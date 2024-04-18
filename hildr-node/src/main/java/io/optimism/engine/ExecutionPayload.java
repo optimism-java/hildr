@@ -1,7 +1,13 @@
 package io.optimism.engine;
 
-import io.optimism.common.Epoch;
+import io.optimism.common.BlockInfo;
+import io.optimism.config.Config;
 import io.optimism.network.ExecutionPayloadSSZ;
+import io.optimism.type.DepositTransaction;
+import io.optimism.type.Epoch;
+import io.optimism.type.L1BlockInfo;
+import io.optimism.type.L2BlockRef;
+import io.optimism.utilities.TxDecoder;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -53,6 +59,36 @@ public record ExecutionPayload(
         BigInteger blobGasUsed,
         BigInteger excessBlobGas,
         String parentBeaconBlockRoot) {
+
+    public L2BlockRef toL2BlockInfo(Config.ChainConfig config) {
+        final Epoch l1GenesisEpoch = config.l1StartEpoch();
+        final BlockInfo l2GenesisInfo = config.l2Genesis();
+        BigInteger seqNumber;
+        Epoch l1Origin;
+        if (this.blockNumber.compareTo(l2GenesisInfo.number()) == 0) {
+            if (!l2GenesisInfo.hash().equals(this.blockHash)) {
+                throw new IllegalArgumentException("expected L2 genesis hash to match L2 block at genesis block number "
+                        + l2GenesisInfo.number()
+                        + ": "
+                        + this.blockHash
+                        + " <> "
+                        + l2GenesisInfo.hash());
+            }
+            l1Origin = l1GenesisEpoch;
+            seqNumber = BigInteger.ZERO;
+        } else {
+            if (transactions == null || transactions.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "l2 block is missing L1 info deposit tx, block hash: " + this.blockHash);
+            }
+            String txData = transactions.getFirst();
+            DepositTransaction depositTx = TxDecoder.decodeToDeposit(txData);
+            L1BlockInfo l1Info = L1BlockInfo.from(Numeric.hexStringToByteArray(depositTx.getData()));
+            l1Origin = l1Info.toEpoch();
+            seqNumber = l1Info.sequenceNumber();
+        }
+        return new L2BlockRef(this.blockHash, this.blockNumber, this.parentHash, this.timestamp, l1Origin, seqNumber);
+    }
 
     /**
      * The type Execution payload res.

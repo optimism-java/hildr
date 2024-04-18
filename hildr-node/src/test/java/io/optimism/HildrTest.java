@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.dataformat.toml.TomlMapper;
+import io.optimism.config.Config;
 import io.optimism.config.Config.CliConfig;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,8 @@ class HildrTest {
      */
     @Test
     void appHasGreeting() throws JsonProcessingException {
-        CliConfig cliConfig = new CliConfig("test", "test", "test", "test", "test", "test", "test", null, null, false);
+        CliConfig cliConfig = new CliConfig(
+                "test", "test", "test", "test", "test", "test", "test", null, null, Config.SyncMode.Full, false);
         TomlMapper mapper = new TomlMapper();
         String cliConfigStr = mapper.writerFor(CliConfig.class).writeValueAsString(cliConfig);
 

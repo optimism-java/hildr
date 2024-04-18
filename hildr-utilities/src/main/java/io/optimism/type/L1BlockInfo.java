@@ -49,6 +49,14 @@ public record L1BlockInfo(
             ArrayUtils.subarray(Hash.sha3(L1_INFO_ECOTONE_SIGNATURE.getBytes(StandardCharsets.UTF_8)), 0, 4);
 
     /**
+     * Create Epoch from L1BlockInfo.
+     * @return the Epoch.
+     */
+    public Epoch toEpoch() {
+        return new Epoch(number, blockHash, time, sequenceNumber);
+    }
+
+    /**
      * Parse tx data to L1BlockInfo.
      *
      * @param data bytes of tx data

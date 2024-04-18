@@ -13,4 +13,4 @@ import java.math.BigInteger;
  * @author thinkAfCod
  * @since 0.1.1
  */
-public record Genesis(BlockId l1, BlockId l2, BigInteger l2Time, SystemConfig systemConfig) {}
+public record Genesis(Epoch l1, BlockId l2, BigInteger l2Time, SystemConfig systemConfig) {}

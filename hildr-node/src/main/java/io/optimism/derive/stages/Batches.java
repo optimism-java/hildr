@@ -2,12 +2,12 @@ package io.optimism.derive.stages;
 
 import com.google.common.collect.Lists;
 import io.optimism.common.BlockInfo;
-import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.derive.stages.Channels.Channel;
 import io.optimism.l1.L1Info;
+import io.optimism.type.Epoch;
 import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.BatchType;
 import io.optimism.utilities.derive.stages.IBatch;

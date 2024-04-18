@@ -10,13 +10,14 @@ import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import io.optimism.TestConstants;
-import io.optimism.common.Epoch;
 import io.optimism.engine.ExecutionPayload.ExecutionPayloadRes;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate.ForkChoiceUpdateRes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
+import io.optimism.type.Epoch;
+import io.optimism.utilities.rpc.Web3jProvider;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
@@ -44,6 +45,7 @@ public class EngineApiTest {
 
     @BeforeAll
     static void setUp() throws IOException {
+        TestConstants.createConfig();
         server = new MockWebServer();
         server.start(8851);
     }
@@ -175,5 +177,33 @@ public class EngineApiTest {
                 jwt.getBody().getExpiration().toInstant().getEpochSecond()
                         - jwt.getBody().getIssuedAt().toInstant().getEpochSecond(),
                 60L);
+    }
+
+    @Test
+    void testLogging() throws IOException, InterruptedException {
+        TestConstants.createConfig();
+        if (!TestConstants.isConfiguredApiKeyEnv) {
+            return;
+        }
+        EngineApi engineApi = new EngineApi(
+                TestConstants.createConfig(),
+                "http://127.0.0.1:8552",
+                "bf549f5188556ce0951048ef467ec93067bc4ea21acebe46ef675cd4e8e015ff");
+        ForkchoiceState forkchoiceState = new ForkchoiceState("123", "123", "!@3");
+        PayloadAttributes payloadAttributes = new PayloadAttributes(
+                new BigInteger("123123"),
+                "123123",
+                "123",
+                List.of(""),
+                null,
+                true,
+                new BigInteger("1"),
+                new Epoch(new BigInteger("12"), "123", new BigInteger("1233145"), BigInteger.ZERO),
+                new BigInteger("1334"),
+                new BigInteger("321"),
+                null);
+        engineApi.forkchoiceUpdated(forkchoiceState, payloadAttributes);
+        Web3jProvider.stop();
+        Thread.sleep(3000);
     }
 }
