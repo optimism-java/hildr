@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.optimism.common.BlockInfo;
-import io.optimism.common.Epoch;
+import io.optimism.type.Epoch;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -58,6 +58,7 @@ public record Config(
         String checkpointSyncUrl,
         Integer rpcPort,
         Boolean devnet,
+        SyncMode syncMode,
         ChainConfig chainConfig) {
 
     /**
@@ -154,6 +155,7 @@ public record Config(
             String jwtSecret,
             String checkpointSyncUrl,
             Integer rpcPort,
+            SyncMode syncMode,
             Boolean devnet) {
 
         /**
@@ -189,6 +191,9 @@ public record Config(
             }
             if (rpcPort != null) {
                 map.put("config.rpcPort", rpcPort.toString());
+            }
+            if (syncMode != null) {
+                map.put("config.syncMode", syncMode.toString());
             }
             map.put("config.devnet", String.valueOf(devnet != null && devnet));
             return map;
@@ -659,7 +664,15 @@ public record Config(
         /**
          * Checkpoint sync mode.
          */
-        Checkpoint;
+        Checkpoint,
+        /**
+         * Execution layer sync mode.
+         */
+        ExecutionLayer;
+
+        public boolean isEl() {
+            return this == ExecutionLayer;
+        }
 
         /**
          * From sync mode.
@@ -673,6 +686,7 @@ public record Config(
                 case "challenge" -> Challenge;
                 case "full" -> Full;
                 case "checkpoint" -> Checkpoint;
+                case "execution-layer" -> ExecutionLayer;
                 default -> throw new RuntimeException("invalid sync mode");
             };
         }

@@ -1,6 +1,5 @@
-package io.optimism.common;
+package io.optimism.type;
 
-import io.optimism.type.L1BlockInfo;
 import java.math.BigInteger;
 
 /**
@@ -14,16 +13,6 @@ import java.math.BigInteger;
  * @since 0.1.0
  */
 public record Epoch(BigInteger number, String hash, BigInteger timestamp, BigInteger sequenceNumber) {
-
-    /**
-     * Create epoch from AttributesDepositedCall.
-     *
-     * @param call the hex call data
-     * @return the epoch
-     */
-    public static Epoch from(AttributesDepositedCall call) {
-        return new Epoch(call.number(), call.hash(), call.timestamp(), call.sequenceNumber());
-    }
 
     /**
      * Create epoch from L1BlockInfo.

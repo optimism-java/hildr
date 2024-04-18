@@ -2,7 +2,6 @@ package io.optimism.derive.stages;
 
 import io.optimism.common.BlockInfo;
 import io.optimism.common.BlockNotIncludedException;
-import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemAccounts;
 import io.optimism.derive.EctoneUpgradeTransactions;
@@ -10,6 +9,7 @@ import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.l1.L1Info;
+import io.optimism.type.Epoch;
 import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.SingularBatch;
 import io.optimism.utilities.gas.GasCalculator;

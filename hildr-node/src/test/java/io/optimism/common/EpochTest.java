@@ -2,6 +2,7 @@ package io.optimism.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.optimism.type.Epoch;
 import java.math.BigInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,7 @@ class EpochTest {
         final BigInteger expectedTimestamp = BigInteger.valueOf(1682191440L);
 
         final AttributesDepositedCall call = AttributesDepositedCall.from(callData);
-        final Epoch epoch = Epoch.from(call);
+        final Epoch epoch = call.toEpoch();
 
         assertEquals(expectedHash, epoch.hash());
         assertEquals(expectedBlockNumber, epoch.number());

@@ -115,6 +115,7 @@ public class RpcServerTest {
                 null,
                 9545,
                 false,
+                Config.SyncMode.Full,
                 Config.ChainConfig.optimism()));
         rpcServer.start();
         HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);

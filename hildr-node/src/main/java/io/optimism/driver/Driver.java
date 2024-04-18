@@ -8,7 +8,6 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.optimism.common.BlockInfo;
-import io.optimism.common.Epoch;
 import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
 import io.optimism.derive.Pipeline;
@@ -25,6 +24,7 @@ import io.optimism.rpc.internal.result.SyncStatusResult;
 import io.optimism.telemetry.InnerMetrics;
 import io.optimism.type.BlockId;
 import io.optimism.type.DepositTransaction;
+import io.optimism.type.Epoch;
 import io.optimism.type.Genesis;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.type.L2BlockRef;
@@ -273,9 +273,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 curSysConfig.l1FeeScalar(),
                 curSysConfig.gasLimit());
         var latestGenesis = new Genesis(
-                new BlockId(
-                        chainConfig.l1StartEpoch().hash(),
-                        chainConfig.l1StartEpoch().number()),
+                chainConfig.l1StartEpoch(),
                 new BlockId(
                         chainConfig.l2Genesis().hash(), chainConfig.l2Genesis().number()),
                 chainConfig.l2Genesis().timestamp(),
@@ -440,14 +438,16 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             if (l1InclusionBlock == null) {
                 throw new InvalidAttributesException("attributes without inclusion block");
             }
-
+            if (Driver.this.engineDriver.isEngineSyncing()) {
+                LOGGER.info("engine is syncing, skipping payload");
+                continue;
+            }
             BigInteger seqNumber = payloadAttributes.seqNumber();
             if (seqNumber == null) {
                 throw new InvalidAttributesException("attributes without seq number");
             }
 
             Driver.this.engineDriver.handleAttributes(payloadAttributes);
-
             LOGGER.info(
                     "safe head updated: {} {}",
                     Driver.this.engineDriver.getSafeHead().number(),
@@ -577,7 +577,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void tryStartNetwork() {
-        if (this.synced() && this.opStackNetwork != null && !this.isP2PNetworkStarted.compareAndExchange(false, true)) {
+        if ((this.synced() || this.config.syncMode().isEl())
+                && this.opStackNetwork != null
+                && !this.isP2PNetworkStarted.compareAndExchange(false, true)) {
             this.opStackNetwork.start();
         }
     }
@@ -603,7 +605,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @return L2BlockRef instance
      */
     public static L2BlockRef payloadToRef(ExecutionPayload payload, Config.ChainConfig genesis) {
-        BlockId l1Origin;
+        Epoch l1Origin;
         BigInteger sequenceNumber;
         if (payload.blockNumber().compareTo(genesis.l2Genesis().number()) == 0) {
             if (!payload.blockHash().equals(genesis.l2Genesis().hash())) {
@@ -613,18 +615,17 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                         payload.blockHash(),
                         genesis.l2Genesis().hash()));
             }
-            l1Origin = new BlockId(
-                    genesis.l1StartEpoch().hash(), genesis.l1StartEpoch().number());
+            l1Origin = genesis.l1StartEpoch();
             sequenceNumber = BigInteger.ZERO;
         } else {
-            if (payload.transactions().size() == 0) {
+            if (payload.transactions().isEmpty()) {
                 throw new RuntimeException(
                         String.format("l2 block is missing L1 info deposit tx, block hash: %s", payload.blockHash()));
             }
             DepositTransaction depositTx =
                     TxDecoder.decodeToDeposit(payload.transactions().get(0));
             L1BlockInfo info = L1BlockInfo.from(Numeric.hexStringToByteArray(depositTx.getData()));
-            l1Origin = new BlockId(info.blockHash(), info.number());
+            l1Origin = info.toEpoch();
             sequenceNumber = info.sequenceNumber();
         }
 
@@ -633,7 +634,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 payload.blockNumber(),
                 payload.parentHash(),
                 payload.timestamp(),
-                new BlockId(l1Origin.hash(), l1Origin.number()),
+                l1Origin,
                 sequenceNumber);
     }
 

@@ -1,7 +1,6 @@
 package io.optimism.driver;
 
 import io.optimism.common.BlockInfo;
-import io.optimism.common.Epoch;
 import io.optimism.config.Config;
 import io.optimism.engine.Engine;
 import io.optimism.engine.EngineApi;
@@ -14,6 +13,9 @@ import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthExecutionPayload;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
+import io.optimism.type.Epoch;
+import io.optimism.type.L2BlockRef;
+import io.optimism.type.enums.SyncStatus;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.util.List;
@@ -26,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
@@ -39,11 +42,15 @@ import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 public class EngineDriver<E extends Engine> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(EngineDriver.class);
-    private E engine;
+    private final E engine;
 
-    private Web3j l2Client;
+    private final Web3j l2Client;
 
-    private BigInteger blockTime;
+    private final BigInteger blockTime;
+
+    private final boolean syncModeEl;
+
+    private final Config.ChainConfig chainConfig;
 
     private BlockInfo unsafeHead;
 
@@ -55,6 +62,7 @@ public class EngineDriver<E extends Engine> {
 
     private Epoch finalizedEpoch;
 
+    private SyncStatus syncStatus;
     /**
      * Instantiates a new Engine driver.
      *
@@ -72,7 +80,10 @@ public class EngineDriver<E extends Engine> {
         this.safeHead = finalizedHead;
         this.safeEpoch = finalizedEpoch;
         this.l2Client = l2Client;
+        this.chainConfig = config.chainConfig();
         this.blockTime = config.chainConfig().blockTime();
+        this.syncModeEl = config.syncMode().isEl();
+        this.syncStatus = syncModeEl ? SyncStatus.WillStartEL : SyncStatus.CL;
     }
 
     /** Stop. */
@@ -134,6 +145,10 @@ public class EngineDriver<E extends Engine> {
         return finalizedEpoch;
     }
 
+    public boolean isEngineSyncing() {
+        return syncStatus.isEngineSyncing();
+    }
+
     /**
      * Handle attributes completable future.
      *
@@ -142,6 +157,7 @@ public class EngineDriver<E extends Engine> {
      * @throws InterruptedException the interrupted exception
      */
     public void handleAttributes(PayloadAttributes attributes) throws ExecutionException, InterruptedException {
+
         EthBlock block = this.blockAt(attributes.timestamp());
         if (block == null || block.getBlock() == null) {
             processAttributes(attributes);
@@ -163,8 +179,39 @@ public class EngineDriver<E extends Engine> {
      * @throws InterruptedException the interrupted exception
      */
     public void handleUnsafePayload(ExecutionPayload payload) throws ExecutionException, InterruptedException {
+        if (this.syncStatus == SyncStatus.WillStartEL) {
+            // todo query from l2Client
+            var l2Finalized = l2Client.ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, true)
+                    .sendAsync()
+                    .get();
+            if (l2Finalized != null && l2Finalized.getBlock() != null) {
+                this.syncStatus = SyncStatus.StartedEL;
+                LOGGER.info("Starting EL sync");
+            } else if (this.chainConfig.l2Genesis().number().compareTo(BigInteger.ZERO) != 0
+                    && l2Finalized
+                            .getBlock()
+                            .getHash()
+                            .equals(this.chainConfig.l2Genesis().hash())) {
+                this.syncStatus = SyncStatus.StartedEL;
+                LOGGER.info("Starting EL sync");
+            } else {
+                this.syncStatus = SyncStatus.FinishedEL;
+                LOGGER.info("Skipping EL sync and going straight to CL sync because there is a finalized block");
+                return;
+            }
+        }
+
         this.pushPayload(payload);
         this.unsafeHead = BlockInfo.from(payload);
+        L2BlockRef l2BlockInfo = payload.toL2BlockInfo(this.chainConfig);
+        if (this.syncStatus == SyncStatus.FinishedELNotFinalized) {
+            BlockInfo l2NewHead = new BlockInfo(
+                    l2BlockInfo.hash(), l2BlockInfo.number(), l2BlockInfo.parentHash(), l2BlockInfo.timestamp());
+            Epoch l1NewEpoch = l2BlockInfo.l1origin();
+            this.updateSafeHead(l2NewHead, l1NewEpoch, false);
+            this.updateFinalized(l2NewHead, l1NewEpoch);
+        }
+
         this.updateForkchoice();
         LOGGER.info("unsafe head updated: {} {}", this.unsafeHead.number(), this.unsafeHead.hash());
     }
@@ -271,11 +318,23 @@ public class EngineDriver<E extends Engine> {
             scope.join();
             scope.throwIfFailed();
             ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.get().getForkChoiceUpdate();
-
-            if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
-                throw new ForkchoiceUpdateException(String.format(
-                        "could not accept new forkchoice: %s",
-                        forkChoiceUpdate.payloadStatus().getValidationError()));
+            Status forkChoiceUpdateStatus = forkChoiceUpdate.payloadStatus().getStatus();
+            if (this.syncModeEl) {
+                if (forkChoiceUpdateStatus == Status.VALID && this.syncStatus == SyncStatus.StartedEL) {
+                    this.syncStatus = SyncStatus.FinishedELNotFinalized;
+                }
+                // Allow SYNCING if engine P2P sync is enabled
+                if (forkChoiceUpdateStatus != Status.VALID && forkChoiceUpdateStatus != Status.SYNCING) {
+                    throw new ForkchoiceUpdateException(String.format(
+                            "could not accept new forkchoice: %s",
+                            forkChoiceUpdate.payloadStatus().getValidationError()));
+                }
+            } else {
+                if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
+                    throw new ForkchoiceUpdateException(String.format(
+                            "could not accept new forkchoice: %s",
+                            forkChoiceUpdate.payloadStatus().getValidationError()));
+                }
             }
         }
     }
@@ -288,9 +347,20 @@ public class EngineDriver<E extends Engine> {
             scope.join();
             scope.throwIfFailed();
             PayloadStatus payloadStatus = payloadStatusFuture.get().getPayloadStatus();
-
-            if (payloadStatus.getStatus() != Status.VALID && payloadStatus.getStatus() != Status.ACCEPTED) {
-                throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
+            if (syncModeEl) {
+                if (payloadStatus.getStatus() == Status.VALID && this.syncStatus == SyncStatus.StartedEL) {
+                    syncStatus = SyncStatus.FinishedELNotFinalized;
+                }
+                // Allow SYNCING and ACCEPTED if engine EL sync is enabled
+                if (payloadStatus.getStatus() != Status.VALID
+                        && payloadStatus.getStatus() != Status.ACCEPTED
+                        && payloadStatus.getStatus() != Status.SYNCING) {
+                    throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
+                }
+            } else {
+                if (payloadStatus.getStatus() != Status.VALID && payloadStatus.getStatus() != Status.ACCEPTED) {
+                    throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
+                }
             }
         }
     }
