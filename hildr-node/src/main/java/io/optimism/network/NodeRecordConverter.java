@@ -25,7 +25,15 @@ public class NodeRecordConverter {
      * @return the optional
      */
     public Optional<DiscoveryPeer> convertToDiscoveryPeer(final NodeRecord nodeRecord) {
-        return nodeRecord.getTcpAddress().map(address -> socketAddressToDiscoveryPeer(nodeRecord, address));
+        if (nodeRecord.getTcpAddress().isPresent()) {
+            return Optional.of(socketAddressToDiscoveryPeer(
+                    nodeRecord, nodeRecord.getTcpAddress().get()));
+        } else if (nodeRecord.getUdpAddress().isPresent()) {
+            return Optional.of(socketAddressToDiscoveryPeer(
+                    nodeRecord, nodeRecord.getUdpAddress().get()));
+        } else {
+            return Optional.empty();
+        }
     }
 
     private static DiscoveryPeer socketAddressToDiscoveryPeer(
