@@ -193,13 +193,14 @@ public class DiscV5Service extends Service implements DiscoveryService {
 
     private List<NodeRecord> filterByOpStackDataEnr(final Collection<NodeRecord> nodeRecords) {
         return nodeRecords.stream()
-                .filter(nodeRecord -> nodeRecord.containsKey(OP_STACK)
-                        && OpStackEnrData.decode((Bytes) nodeRecord.get(OP_STACK))
-                                .getChainId()
-                                .equals(chainId)
-                        && OpStackEnrData.decode((Bytes) nodeRecord.get(OP_STACK))
-                                .getVersion()
-                                .isZero())
+                .filter(nodeRecord -> {
+                    if (!nodeRecord.containsKey(OP_STACK)) {
+                        return false;
+                    }
+                    OpStackEnrData enrData = OpStackEnrData.decode((Bytes) nodeRecord.get(OP_STACK));
+                    return enrData.getChainId().equals(chainId)
+                            && enrData.getVersion().isZero();
+                })
                 .collect(toList());
     }
 
