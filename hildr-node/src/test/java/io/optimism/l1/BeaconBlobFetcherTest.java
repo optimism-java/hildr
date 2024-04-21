@@ -31,7 +31,7 @@ class BeaconBlobFetcherTest {
         if (!TestConstants.isConfiguredApiKeyEnv) {
             return;
         }
-        fetcher = new BeaconBlobFetcher(config.l1BeaconUrl());
+        fetcher = new BeaconBlobFetcher(config.l1BeaconUrl(), config.l1BeaconArchiverUrl());
     }
 
     @Test
@@ -57,10 +57,9 @@ class BeaconBlobFetcherTest {
         if (!TestConstants.isConfiguredApiKeyEnv) {
             return;
         }
-        var blobFetcher = new BeaconBlobFetcher(config.l1BeaconUrl(), config.l1BeaconArchiverUrl());
-        BigInteger slotFromTime = blobFetcher.getSlotFromTime(BigInteger.valueOf(1708659300L));
-        List<BlobSidecar> blobSidecards = blobFetcher.getBlobSidecards(slotFromTime.toString(), null);
-        assertTrue(blobSidecards != null && blobSidecards.size() > 0);
+        BigInteger slotFromTime = fetcher.getSlotFromTime(BigInteger.valueOf(1708659300L));
+        List<BlobSidecar> blobSidecards = fetcher.getBlobSidecards(slotFromTime.toString(), null);
+        assertTrue(blobSidecards != null && !blobSidecards.isEmpty());
     }
 
     @Test

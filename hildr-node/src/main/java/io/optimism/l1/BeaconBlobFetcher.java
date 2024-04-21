@@ -152,7 +152,6 @@ public class BeaconBlobFetcher {
                     blockId,
                     indices);
         }
-        List<BlobSidecar> blobSiders = res.getData();
 
         return res.getData();
     }
