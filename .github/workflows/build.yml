@@ -24,6 +24,7 @@ jobs:
         env:
           ETH_API_KEY: ${{ secrets.ETH_API_KEY }}
           OPT_API_KEY: ${{ secrets.OPT_API_KEY }}
+          BEACON_ARCHIVE_API_URL: ${{ secrets.BEACON_ARCHIVE_API_URL }}
         run: ./gradlew build
 
       - name: Generate JaCoCo Badge
