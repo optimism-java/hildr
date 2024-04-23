@@ -298,6 +298,11 @@ public class Runner extends AbstractExecutionThreadService {
         waitDriverRunning();
     }
 
+    public void executionLayerSync() throws InterruptedException {
+        LOGGER.info("execution layer sync");
+        waitDriverRunning();
+    }
+
     private void startDriver() throws InterruptedException {
         driver.startAsync().awaitRunning();
         latch.await();
@@ -372,6 +377,7 @@ public class Runner extends AbstractExecutionThreadService {
             case Challenge -> this.challengeSync();
             case Full -> this.fullSync();
             case Checkpoint -> this.checkpointSync();
+            case ExecutionLayer -> this.executionLayerSync();
             default -> throw new RuntimeException("unknown sync mode");
         }
     }
