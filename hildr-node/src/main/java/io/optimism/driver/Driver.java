@@ -380,6 +380,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.engineDriver.stop();
         LOGGER.info("engineDriver shut down.");
         this.rpcServer.stop();
+        Web3jProvider.stop();
         LOGGER.info("driver stopped.");
         if (this.opStackNetwork != null && this.isP2PNetworkStarted.compareAndExchange(true, false)) {
             this.opStackNetwork.stop();

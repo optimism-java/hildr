@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import io.optimism.config.Config;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
+import io.optimism.utilities.rpc.Web3jProvider;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
@@ -15,6 +16,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.web3j.protocol.core.Request;
@@ -86,21 +88,21 @@ public class EngineApi implements Engine {
         String baseUrlParm = System.getenv("ENGINE_API_URL");
         if (StringUtils.isBlank(baseUrlParm)) {
             throw new RuntimeException(
-                    """
-                            ENGINE_API_URL environment variable not set.
-                            Please set this to the base url of the engine api
-                            """);
+                """
+                        ENGINE_API_URL environment variable not set.
+                        Please set this to the base url of the engine api
+                        """);
         }
         String secretKey = System.getenv("JWT_SECRET");
         if (StringUtils.isBlank(secretKey)) {
             throw new RuntimeException(
-                    """
-                            JWT_SECRET environment variable not set.
-                            Please set this to the 256 bit hex-encoded secret key
-                             used to authenticate with the engine api.
-                            This should be the same as set in the `--auth.secret`
-                             flag when executing go-ethereum.
-                            """);
+                """
+                        JWT_SECRET environment variable not set.
+                        Please set this to the 256 bit hex-encoded secret key
+                         used to authenticate with the engine api.
+                        This should be the same as set in the `--auth.secret`
+                         flag when executing go-ethereum.
+                        """);
         }
         String baseUrlFormat = authUrlFromAddr(baseUrlParm, null);
         return new EngineApi(config, baseUrlFormat, secretKey);
@@ -116,7 +118,8 @@ public class EngineApi implements Engine {
     public EngineApi(final Config config, final String baseUrl, final String secretStr) {
         this.config = config;
         this.key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
-        this.web3jService = new HttpService(baseUrl);
+        var filter = (Function<String, Boolean>) body -> body.contains("method\":\"engine_");
+        this.web3jService = (HttpService) Web3jProvider.create(baseUrl, filter).component2();
     }
 
     /**
@@ -143,15 +146,15 @@ public class EngineApi implements Engine {
         Date nowDate = Date.from(now);
         Date expirationDate = Date.from(now.plusSeconds(60));
         return Jwts.builder()
-                .setIssuedAt(nowDate)
-                .setExpiration(expirationDate)
-                .signWith(key, SignatureAlgorithm.HS256)
-                .compact();
+            .setIssuedAt(nowDate)
+            .setExpiration(expirationDate)
+            .signWith(key, SignatureAlgorithm.HS256)
+            .compact();
     }
 
     @Override
     public OpEthForkChoiceUpdate forkchoiceUpdated(ForkchoiceState forkchoiceState, PayloadAttributes payloadAttributes)
-            throws IOException {
+        throws IOException {
         var method = ENGINE_FORKCHOICE_UPDATED_V2;
         var ecotoneTime = this.config.chainConfig().ecotoneTime();
         if (payloadAttributes == null || payloadAttributes.timestamp().compareTo(ecotoneTime) >= 0) {
@@ -159,10 +162,10 @@ public class EngineApi implements Engine {
         }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthForkChoiceUpdate> r = new Request<>(
-                method,
-                Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
-                web3jService,
-                OpEthForkChoiceUpdate.class);
+            method,
+            Arrays.asList(forkchoiceState, payloadAttributes != null ? payloadAttributes.toReq() : null),
+            web3jService,
+            OpEthForkChoiceUpdate.class);
         return r.send();
     }
 
@@ -194,11 +197,11 @@ public class EngineApi implements Engine {
         }
         web3jService.addHeader("authorization", String.format("Bearer %1$s", generateJws(key)));
         Request<?, OpEthExecutionPayload> r = new Request<>(
-                method,
-                Collections.singletonList(
-                        payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
-                web3jService,
-                OpEthExecutionPayload.class);
+            method,
+            Collections.singletonList(
+                payloadId != null ? Numeric.toHexStringWithPrefixZeroPadded(payloadId, 16) : null),
+            web3jService,
+            OpEthExecutionPayload.class);
         return r.send();
     }
 
