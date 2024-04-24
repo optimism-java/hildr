@@ -38,6 +38,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -210,29 +211,16 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 l1StartBlock.compareTo(BigInteger.ZERO) < 0 ? BigInteger.ZERO : l1StartBlock,
                 finalizedHead.number(),
                 config);
+        TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs;
+        if (config.syncMode().isEl()) {
+            finalizedHead = BlockInfo.EMPTY;
+            l2Refs = new TreeMap<>();
+        } else {
+            l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), l2Provider);
+        }
 
-        var l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), l2Provider);
-        var l2Fetcher = (Function<BigInteger, Tuple2<BlockInfo, Epoch>>) blockNum -> {
-            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(() -> l2Provider
-                        .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
-                        .send()));
-                scope.join();
-                scope.throwIfFailed();
-
-                var block = blockTask.get();
-                if (block == null || block.getBlock() == null) {
-                    return null;
-                }
-                final HeadInfo l2BlockInfo = HeadInfo.from(block.getBlock());
-                return new Tuple2<>(l2BlockInfo.l2BlockInfo(), l2BlockInfo.l1Epoch());
-            } catch (Exception e) {
-                LOGGER.error("failed to fetch L2 block", e);
-                return null;
-            }
-        };
-        AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(
-                io.optimism.derive.State.create(l2Refs, l2Fetcher, finalizedHead, finalizedEpoch, config));
+        AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(io.optimism.derive.State.create(
+                l2Refs, Driver.l2Fetcher(l2Provider), finalizedHead, finalizedEpoch, config));
 
         EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, l2Provider, config);
 
@@ -302,6 +290,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * @return result of sync status.
      */
     public SyncStatusResult getSyncStatus() {
+        if (this.engineDriver.isEngineSyncing()) {
+            return null;
+        }
         // CurrentL1
         final var currentL1 = this.chainWatcher.getCurrentL1();
         // CurrentL1Finalized
@@ -362,7 +353,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             LOGGER.error("driver start fatal error", e);
             throw new HildrServiceExecutionException(e);
         }
-        this.chainWatcher.start();
+        if (!Driver.this.config.syncMode().isEl()) {
+            this.chainWatcher.start();
+        }
     }
 
     @Override
@@ -482,19 +475,30 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                     BigInteger unsafeBlockNum = payload.blockNumber();
                     BigInteger syncedBlockNum =
                             Driver.this.engineDriver.getUnsafeHead().number();
+                    if (Driver.this.engineDriver.isEngineSyncing()) {
+                        return unsafeBlockNum.compareTo(syncedBlockNum) > 0;
+                    }
                     return unsafeBlockNum.compareTo(syncedBlockNum) > 0
                             && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(1024L)) < 0;
                 })
                 .collect(Collectors.toList());
 
-        Optional<ExecutionPayload> nextUnsafePayload = Iterables.tryFind(
-                        this.futureUnsafeBlocks, input -> input.parentHash()
-                                .equalsIgnoreCase(
-                                        Driver.this.engineDriver.getUnsafeHead().hash()))
-                .toJavaUtil();
+        Optional<ExecutionPayload> nextUnsafePayload;
+        if (Driver.this.engineDriver.isEngineSyncing() && !this.futureUnsafeBlocks.isEmpty()) {
+            nextUnsafePayload = Optional.of(this.futureUnsafeBlocks.getLast());
+        } else {
+            nextUnsafePayload = Iterables.tryFind(this.futureUnsafeBlocks, input -> input.parentHash()
+                            .equalsIgnoreCase(
+                                    Driver.this.engineDriver.getUnsafeHead().hash()))
+                    .toJavaUtil();
+        }
 
         if (nextUnsafePayload.isPresent()) {
             this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
+            if (this.config.syncMode().isEl() && !this.engineDriver.isEngineSyncing()) {
+                LOGGER.info("execution layer syncing is done, restarting chain watcher.");
+                this.restartChainWatcher(false);
+            }
         }
     }
 
@@ -529,22 +533,25 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             case BlockUpdate.Reorg ignored -> {
                 LOGGER.warn("reorg detected, purging pipeline");
                 Driver.this.unfinalizedBlocks.clear();
-
-                Driver.this.chainWatcher.restart(
-                        Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
-                        Driver.this.engineDriver.getFinalizedHead().number());
-
-                Driver.this.state.getAndUpdate(state -> {
-                    state.purge(
-                            Driver.this.engineDriver.getFinalizedHead(), Driver.this.engineDriver.getFinalizedEpoch());
-                    return state;
-                });
-
-                Driver.this.pipeline.purge();
-                Driver.this.engineDriver.reorg();
+                Driver.this.restartChainWatcher(true);
             }
             case BlockUpdate.FinalityUpdate num -> Driver.this.finalizedL1BlockNumber = num.get();
             default -> throw new IllegalArgumentException("unknown block update type");
+        }
+    }
+
+    private void restartChainWatcher(boolean isReorg) {
+        Driver.this.chainWatcher.restart(
+                Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
+                Driver.this.engineDriver.getFinalizedHead().number());
+
+        Driver.this.state.getAndUpdate(state -> {
+            state.purge(Driver.this.engineDriver.getFinalizedHead(), Driver.this.engineDriver.getFinalizedEpoch());
+            return state;
+        });
+        Driver.this.pipeline.purge();
+        if (isReorg) {
+            Driver.this.engineDriver.reorg();
         }
     }
 
@@ -637,6 +644,28 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 payload.timestamp(),
                 l1Origin,
                 sequenceNumber);
+    }
+
+    private static Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher(final Web3j l2Provider) {
+        return blockNum -> {
+            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+                StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(() -> l2Provider
+                        .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
+                        .send()));
+                scope.join();
+                scope.throwIfFailed();
+
+                var block = blockTask.get();
+                if (block == null || block.getBlock() == null) {
+                    return null;
+                }
+                final HeadInfo l2BlockInfo = HeadInfo.from(block.getBlock());
+                return new Tuple2<>(l2BlockInfo.l2BlockInfo(), l2BlockInfo.l1Epoch());
+            } catch (Exception e) {
+                LOGGER.error("failed to fetch L2 block", e);
+                return null;
+            }
+        };
     }
 
     /**

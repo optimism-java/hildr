@@ -59,7 +59,7 @@ public class Web3jProvider {
             var okHttpClientBuilder = new OkHttpClient.Builder();
             if (LOGGER.isDebugEnabled()) {
                 okHttpClientBuilder.addInterceptor(
-                    new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
+                        new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
             }
             if (logFilter != null) {
                 var interceptor = new JsonRpcRequestBodyLoggingInterceptor(logFilter);
@@ -67,8 +67,8 @@ public class Web3jProvider {
                 okHttpClientBuilder.addInterceptor(interceptor);
             }
             var okHttpClient = okHttpClientBuilder
-                .addInterceptor(new RetryRateLimitInterceptor())
-                .build();
+                    .addInterceptor(new RetryRateLimitInterceptor())
+                    .build();
             web3Srv = new HttpService(url, okHttpClient);
 
         } else if (Web3jProvider.isWs(url)) {

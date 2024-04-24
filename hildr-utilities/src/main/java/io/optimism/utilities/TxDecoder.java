@@ -52,14 +52,14 @@ public class TxDecoder {
         final RlpList rlpList = RlpDecoder.decode(encodedTx);
         var values = ((RlpList) rlpList.getValues().getFirst()).getValues();
         final String sourceHash = ((RlpString) values.getFirst()).asString();
-        final String from = ((RlpString) values.getFirst()).asString();
-        final String to = ((RlpString) values.getFirst()).asString();
-        final BigInteger mint = ((RlpString) values.getFirst()).asPositiveBigInteger();
-        final BigInteger value = ((RlpString) values.getFirst()).asPositiveBigInteger();
-        final BigInteger gas = ((RlpString) values.getFirst()).asPositiveBigInteger();
+        final String from = ((RlpString) values.get(1)).asString();
+        final String to = ((RlpString) values.get(2)).asString();
+        final BigInteger mint = ((RlpString) values.get(3)).asPositiveBigInteger();
+        final BigInteger value = ((RlpString) values.get(4)).asPositiveBigInteger();
+        final BigInteger gas = ((RlpString) values.get(5)).asPositiveBigInteger();
         final boolean isSystemTx =
-                ((RlpString) values.getFirst()).asPositiveBigInteger().compareTo(BigInteger.ONE) == 0;
-        final String data = ((RlpString) values.getFirst()).asString();
+                ((RlpString) values.get(6)).asPositiveBigInteger().compareTo(BigInteger.ONE) == 0;
+        final String data = ((RlpString) values.getLast()).asString();
         return new DepositTransaction(sourceHash, from, to, mint, value, gas, isSystemTx, data);
     }
 }

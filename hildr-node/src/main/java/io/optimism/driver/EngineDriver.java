@@ -184,7 +184,7 @@ public class EngineDriver<E extends Engine> {
             var l2Finalized = l2Client.ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, true)
                     .sendAsync()
                     .get();
-            if (l2Finalized != null && l2Finalized.getBlock() != null) {
+            if (l2Finalized.hasError() && l2Finalized.getError().getMessage().contains("block not found")) {
                 this.syncStatus = SyncStatus.StartedEL;
                 LOGGER.info("Starting EL sync");
             } else if (this.chainConfig.l2Genesis().number().compareTo(BigInteger.ZERO) != 0
@@ -241,6 +241,10 @@ public class EngineDriver<E extends Engine> {
      * @throws InterruptedException the interrupted exception
      */
     public boolean engineReady() throws InterruptedException {
+        if (this.syncModeEl) {
+            // Skip check if EL sync is enabled
+            return true;
+        }
         ForkchoiceState forkchoiceState = createForkchoiceState();
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
@@ -324,7 +328,7 @@ public class EngineDriver<E extends Engine> {
                     this.syncStatus = SyncStatus.FinishedELNotFinalized;
                 }
                 // Allow SYNCING if engine P2P sync is enabled
-                if (forkChoiceUpdateStatus != Status.VALID && forkChoiceUpdateStatus != Status.SYNCING) {
+                if (forkChoiceUpdateStatus == Status.INVALID || forkChoiceUpdateStatus == Status.INVALID_BLOCK_HASH) {
                     throw new ForkchoiceUpdateException(String.format(
                             "could not accept new forkchoice: %s",
                             forkChoiceUpdate.payloadStatus().getValidationError()));
