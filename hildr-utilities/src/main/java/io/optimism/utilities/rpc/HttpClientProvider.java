@@ -24,7 +24,7 @@ public class HttpClientProvider {
      */
     public static OkHttpClient create() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        if (LOGGER.isDebugEnabled()) {
+        if (LOGGER.isTraceEnabled()) {
             builder.addInterceptor(
                     new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
         }
