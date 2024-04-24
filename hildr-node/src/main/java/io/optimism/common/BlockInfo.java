@@ -4,6 +4,7 @@ import io.optimism.engine.ExecutionPayload;
 import java.math.BigInteger;
 import java.util.Objects;
 import org.web3j.protocol.core.methods.response.EthBlock.Block;
+import org.web3j.utils.Numeric;
 
 /**
  * The type BlockInfo.
@@ -18,6 +19,9 @@ import org.web3j.protocol.core.methods.response.EthBlock.Block;
  * @since 0.1.0
  */
 public record BlockInfo(String hash, BigInteger number, String parentHash, BigInteger timestamp) {
+
+    public static final BlockInfo EMPTY = new BlockInfo(
+            Numeric.toHexString(new byte[32]), BigInteger.ZERO, Numeric.toHexString(new byte[32]), BigInteger.ZERO);
 
     /**
      * From block info.
