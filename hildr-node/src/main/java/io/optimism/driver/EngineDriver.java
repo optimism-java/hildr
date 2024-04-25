@@ -357,19 +357,24 @@ public class EngineDriver<E extends Engine> {
 
             scope.join();
             scope.throwIfFailed();
-            PayloadStatus payloadStatus = payloadStatusFuture.get().getPayloadStatus();
+            OpEthPayloadStatus payloadStatus = payloadStatusFuture.get();
+            if (payloadStatus.hasError()) {
+                throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid:"
+                        + payloadStatus.getError().getMessage());
+            }
+            PayloadStatus status = payloadStatus.getPayloadStatus();
             if (syncModeEl) {
-                if (payloadStatus.getStatus() == Status.VALID && this.syncStatus == SyncStatus.StartedEL) {
+                if (status.getStatus() == Status.VALID && this.syncStatus == SyncStatus.StartedEL) {
                     syncStatus = SyncStatus.FinishedELNotFinalized;
                 }
                 // Allow SYNCING and ACCEPTED if engine EL sync is enabled
-                if (payloadStatus.getStatus() != Status.VALID
-                        && payloadStatus.getStatus() != Status.ACCEPTED
-                        && payloadStatus.getStatus() != Status.SYNCING) {
+                if (status.getStatus() != Status.VALID
+                        && status.getStatus() != Status.ACCEPTED
+                        && status.getStatus() != Status.SYNCING) {
                     throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
                 }
             } else {
-                if (payloadStatus.getStatus() != Status.VALID && payloadStatus.getStatus() != Status.ACCEPTED) {
+                if (status.getStatus() != Status.VALID && status.getStatus() != Status.ACCEPTED) {
                     throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
                 }
             }
