@@ -298,6 +298,11 @@ public class Runner extends AbstractExecutionThreadService {
         waitDriverRunning();
     }
 
+    /**
+     * snap sync.
+     *
+     * @throws InterruptedException the interrupted exception
+     */
     public void executionLayerSync() throws InterruptedException {
         LOGGER.info("execution layer sync");
         waitDriverRunning();

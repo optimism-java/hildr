@@ -40,10 +40,11 @@ import org.web3j.utils.Numeric;
  * @param l2RpcUrl            L2 chain rpc url.
  * @param l2EngineUrl         L2 engine API url.
  * @param jwtSecret           L2 engine API jwt secret.
- * @param chainConfig         The chain config.
+ * @param checkpointSyncUrl   The checkpoint sync url.
  * @param rpcPort             The rpc port.
  * @param devnet              The flag of devnet.
- * @param checkpointSyncUrl   The checkpoint sync url.
+ * @param syncMode            The sync mode
+ * @param chainConfig         The chain config.
  * @author grapebaba
  * @since 0.1.0
  */
@@ -143,6 +144,7 @@ public record Config(
      * @param jwtSecret           L2 engine API jwt secret.
      * @param checkpointSyncUrl   The checkpoint sync url.
      * @param rpcPort             The rpc port.
+     * @param syncMode             The sync mode.
      * @param devnet              The devnet flag.
      */
     public record CliConfig(
@@ -670,6 +672,10 @@ public record Config(
          */
         ExecutionLayer;
 
+        /**
+         * is execution layer sync mode
+         * @return true if execution layer sync mode, otherwise false.
+         */
         public boolean isEl() {
             return this == ExecutionLayer;
         }

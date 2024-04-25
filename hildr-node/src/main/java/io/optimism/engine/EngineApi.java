@@ -16,7 +16,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.function.Function;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.web3j.protocol.core.Request;
@@ -118,8 +117,7 @@ public class EngineApi implements Engine {
     public EngineApi(final Config config, final String baseUrl, final String secretStr) {
         this.config = config;
         this.key = Keys.hmacShaKeyFor(Numeric.hexStringToByteArray(secretStr));
-        var filter = (Function<String, Boolean>) body -> body.contains("method\":\"engine_");
-        this.web3jService = (HttpService) Web3jProvider.create(baseUrl, filter).component2();
+        this.web3jService = (HttpService) Web3jProvider.create(baseUrl).component2();
     }
 
     /**

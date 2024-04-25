@@ -60,6 +60,11 @@ public record ExecutionPayload(
         BigInteger excessBlobGas,
         String parentBeaconBlockRoot) {
 
+    /**
+     * Converts the ExecutionPayload to an L2BlockRef.
+     * @param config the chain config
+     * @return the L2BlockRef
+     */
     public L2BlockRef toL2BlockInfo(Config.ChainConfig config) {
         final Epoch l1GenesisEpoch = config.l1StartEpoch();
         final BlockInfo l2GenesisInfo = config.l2Genesis();

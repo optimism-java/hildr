@@ -41,6 +41,7 @@ public class BlobSidecar {
      * @param signedBlockHeader signed blob block header info
      * @param kzgCommitment the kzg commitment info
      * @param kzgProof the kzg proofs
+     * @param kzgCommitmentInclusionProof the kzg commitment inclusion proofs
      */
     public BlobSidecar(
             String index,
@@ -57,54 +58,119 @@ public class BlobSidecar {
         this.kzgCommitmentInclusionProof = kzgCommitmentInclusionProof;
     }
 
+    /**
+     * Gets index.
+     *
+     * @return the index
+     */
     public String getIndex() {
         return index;
     }
 
+    /**
+     * Sets index value.
+     *
+     * @param index the index
+     */
     public void setIndex(String index) {
         this.index = index;
     }
 
+    /**
+     * Gets blob.
+     *
+     * @return the blob
+     */
     public String getBlob() {
         return blob;
     }
 
+    /**
+     * Sets blob value.
+     *
+     * @param blob the blob
+     */
     public void setBlob(String blob) {
         this.blob = blob;
     }
 
+    /**
+     * Gets signed block header.
+     *
+     * @return the signed block header
+     */
     public BeaconSignedBlockHeader getSignedBlockHeader() {
         return signedBlockHeader;
     }
 
+    /**
+     * Sets signed block header value.
+     *
+     * @param signedBlockHeader the signed block header
+     */
     public void setSignedBlockHeader(BeaconSignedBlockHeader signedBlockHeader) {
         this.signedBlockHeader = signedBlockHeader;
     }
 
+    /**
+     * Gets kzg commitment.
+     *
+     * @return the kzg commitment
+     */
     public String getKzgCommitment() {
         return kzgCommitment;
     }
 
+    /**
+     * Sets kzg commitment value.
+     *
+     * @param kzgCommitment the kzg commitment
+     */
     public void setKzgCommitment(String kzgCommitment) {
         this.kzgCommitment = kzgCommitment;
     }
 
+    /**
+     * Gets kzg proof.
+     *
+     * @return the kzg proof
+     */
     public String getKzgProof() {
         return kzgProof;
     }
 
+    /**
+     * Sets kzg proof value.
+     *
+     * @param kzgProof the kzg proof
+     */
     public void setKzgProof(String kzgProof) {
         this.kzgProof = kzgProof;
     }
 
+    /**
+     * Gets kzg commitment inclusion proof.
+     *
+     * @return the kzg commitment inclusion proof
+     */
     public List<String> getKzgCommitmentInclusionProof() {
         return kzgCommitmentInclusionProof;
     }
 
+    /**
+     * Sets kzg commitment inclusion proof value.
+     *
+     * @param kzgCommitmentInclusionProof the kzg commitment inclusion proof
+     */
     public void setKzgCommitmentInclusionProof(List<String> kzgCommitmentInclusionProof) {
         this.kzgCommitmentInclusionProof = kzgCommitmentInclusionProof;
     }
 
+    /**
+     * Gets versioned hash.
+     *
+     * @return the versioned hash
+     */
     public String getVersionedHash() {
         var hash = Hash.sha256(Numeric.hexStringToByteArray(this.kzgCommitment));
         hash[0] = 1;

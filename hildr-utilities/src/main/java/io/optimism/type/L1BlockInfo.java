@@ -18,6 +18,8 @@ import org.web3j.utils.Numeric;
  * @param batcherAddr    batcher address
  * @param l1FeeOverhead  l1 fee overhead
  * @param l1FeeScalar    l1 fee scalar
+ * @param blobBaseFeeScalar  blob base fee scalar
+ * @param blobBaseFee    blob base fee
  * @author thinkAfCod
  * @since 0.1.1
  */
