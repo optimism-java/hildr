@@ -44,11 +44,11 @@ public class GasCalculator {
     /**
      * The constant INIT_CODE_WORD_GAS.
      */
-    public static final long INIT_CODE_WORD_GAS = 2L;
+    private static final long INIT_CODE_WORD_GAS = 2L;
 
-    public static final BigInteger MIN_BLOB_GAS_PRICE = BigInteger.ONE;
+    private static final BigInteger MIN_BLOB_GAS_PRICE = BigInteger.ONE;
 
-    public static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = new BigInteger("3338477");
+    private static final BigInteger BLOB_GAS_PRICE_UPDATE_FRACTION = new BigInteger("3338477");
 
     /**
      * Calculator gas fee but exclude effective of AccessList.

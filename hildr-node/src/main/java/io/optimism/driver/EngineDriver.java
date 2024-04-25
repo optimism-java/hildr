@@ -145,6 +145,10 @@ public class EngineDriver<E extends Engine> {
         return finalizedEpoch;
     }
 
+    /**
+     * check is engine syncing
+     * @return true if engine is syncing
+     */
     public boolean isEngineSyncing() {
         return syncStatus.isEngineSyncing();
     }
@@ -324,7 +328,7 @@ public class EngineDriver<E extends Engine> {
             var forkChoiceUpdate = forkChoiceUpdateFuture.get();
             if (forkChoiceUpdate.hasError()) {
                 throw new ForkchoiceUpdateException(
-                    "could not accept new forkchoice: %s".formatted(forkChoiceUpdate.getError()));
+                        "could not accept new forkchoice: %s".formatted(forkChoiceUpdate.getError()));
             }
             var forkChoiceUpdateStatus = forkChoiceUpdate.getForkChoiceUpdate().payloadStatus();
             var updateStatus = forkChoiceUpdateStatus.getStatus();
@@ -335,14 +339,12 @@ public class EngineDriver<E extends Engine> {
                 // Allow SYNCING if engine P2P sync is enabled
                 if (updateStatus == Status.INVALID || forkChoiceUpdateStatus.getStatus() == Status.INVALID_BLOCK_HASH) {
                     throw new ForkchoiceUpdateException(String.format(
-                            "could not accept new forkchoice: %s",
-                        forkChoiceUpdateStatus.getValidationError()));
+                            "could not accept new forkchoice: %s", forkChoiceUpdateStatus.getValidationError()));
                 }
             } else {
                 if (updateStatus != Status.VALID) {
                     throw new ForkchoiceUpdateException(String.format(
-                            "could not accept new forkchoice: %s",
-                        forkChoiceUpdateStatus.getValidationError()));
+                            "could not accept new forkchoice: %s", forkChoiceUpdateStatus.getValidationError()));
                 }
             }
         }

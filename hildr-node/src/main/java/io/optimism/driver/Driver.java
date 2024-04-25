@@ -116,6 +116,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      *
      * @param engineDriver     the engine driver
      * @param pipeline         the pipeline
+     * @param l2Fetcher        the L2 HeadInfo fetcher
      * @param state            the state
      * @param chainWatcher     the chain watcher
      * @param unsafeBlockQueue the unsafe block queue
@@ -227,8 +228,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), l2Provider);
         }
         var l2Fetcher = Driver.l2Fetcher(l2Provider);
-        AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(io.optimism.derive.State.create(
-                l2Refs, l2Fetcher, finalizedHead, finalizedEpoch, config));
+        AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(
+                io.optimism.derive.State.create(l2Refs, l2Fetcher, finalizedHead, finalizedEpoch, config));
 
         EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, l2Provider, config);
 
@@ -242,7 +243,16 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         l2Provider.shutdown();
         return new Driver<>(
-                engineDriver, pipeline, l2Fetcher, state, watcher, unsafeBlockQueue, rpcServer, latch, config, opStackNetwork);
+                engineDriver,
+                pipeline,
+                l2Fetcher,
+                state,
+                watcher,
+                unsafeBlockQueue,
+                rpcServer,
+                latch,
+                config,
+                opStackNetwork);
     }
 
     /**
@@ -381,7 +391,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.engineDriver.stop();
         LOGGER.info("engineDriver shut down.");
         this.rpcServer.stop();
-        Web3jProvider.stop();
         LOGGER.info("driver stopped.");
         if (this.opStackNetwork != null && this.isP2PNetworkStarted.compareAndExchange(true, false)) {
             this.opStackNetwork.stop();
@@ -668,15 +677,15 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         if (this.engineDriver.getFinalizedHead().number().compareTo(BigInteger.ZERO) == 0) {
             blockParameter = FINALIZED;
         } else {
-            blockParameter = DefaultBlockParameter.valueOf(this.engineDriver.getFinalizedHead().number());
+            blockParameter = DefaultBlockParameter.valueOf(
+                    this.engineDriver.getFinalizedHead().number());
         }
         Tuple2<BlockInfo, Epoch> finalizedHead = l2Fetcher.apply(blockParameter, true);
         this.engineDriver.updateFinalized(finalizedHead.component1(), finalizedHead.component2());
     }
 
-
-
-    private static BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher(final Web3j l2Provider) {
+    private static BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher(
+            final Web3j l2Provider) {
         return (blockParameter, returnFull) -> {
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
                 StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(() -> l2Provider
@@ -697,8 +706,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             }
         };
     }
-
-
 
     /**
      * The type Unfinalized block.

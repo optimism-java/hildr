@@ -34,10 +34,20 @@ public enum SyncStatus {
         this.code = code;
     }
 
+    /**
+     * Get the sync status code.
+     *
+     * @return the sync status code
+     */
     public int getCode() {
         return code;
     }
 
+    /**
+     * Check if the engine is syncing.
+     *
+     * @return true if the engine is syncing, false otherwise
+     */
     public boolean isEngineSyncing() {
         return code > 1 && code < 5;
     }

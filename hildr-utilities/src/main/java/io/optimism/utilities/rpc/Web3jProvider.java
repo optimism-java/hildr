@@ -1,12 +1,8 @@
 package io.optimism.utilities.rpc;
 
 import ch.qos.logback.classic.Level;
-import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import java.net.ConnectException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import org.apache.commons.lang3.StringUtils;
@@ -31,8 +27,6 @@ public class Web3jProvider {
 
     private Web3jProvider() {}
 
-    private static final List<AbstractExecutionThreadService> services = new ArrayList<>();
-
     /**
      * create web3j client.
      *
@@ -51,21 +45,12 @@ public class Web3jProvider {
      * @return web3j client and web3j service
      */
     public static Tuple2<Web3j, Web3jService> create(String url) {
-        return create(url, null);
-    }
-
-    public static Tuple2<Web3j, Web3jService> create(String url, Function<String, Boolean> logFilter) {
         Web3jService web3Srv;
         if (Web3jProvider.isHttp(url)) {
             var okHttpClientBuilder = new OkHttpClient.Builder();
             if (LOGGER.isDebugEnabled()) {
                 okHttpClientBuilder.addInterceptor(
                         new HttpLoggingInterceptor(LOGGER::debug).setLevel(HttpLoggingInterceptor.Level.BODY));
-            }
-            if (logFilter != null) {
-                var interceptor = new JsonRpcRequestBodyLoggingInterceptor(logFilter);
-                services.add(interceptor);
-                okHttpClientBuilder.addInterceptor(interceptor);
             }
             var okHttpClient = okHttpClientBuilder
                     .addInterceptor(new RetryRateLimitInterceptor())
@@ -85,10 +70,6 @@ public class Web3jProvider {
             throw new IllegalArgumentException("not supported scheme:%s".formatted(url));
         }
         return new Tuple2<>(Web3j.build(web3Srv), web3Srv);
-    }
-
-    public static void stop() {
-        services.forEach(AbstractExecutionThreadService::stopAsync);
     }
 
     private static void wsConnect(final WebSocketService wss) {

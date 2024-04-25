@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.stream.Collectors;
 import okhttp3.Call;
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -75,6 +76,12 @@ public class BeaconBlobFetcher {
      * @param beaconArchiverUrl L1 beacon archiver client url
      */
     public BeaconBlobFetcher(String beaconUrl, String beaconArchiverUrl) {
+        if (beaconUrl.endsWith("/")) {
+            beaconUrl = beaconUrl.replaceAll("/+$", "");
+        }
+        if (beaconArchiverUrl.endsWith("/")) {
+            beaconArchiverUrl = beaconArchiverUrl.replaceAll("/+$", "");
+        }
         this.genesisMethod = GENESIS_METHOD_FORMAT.formatted(beaconUrl);
         this.specMethod = SPEC_METHOD_FORMAT.formatted(beaconUrl);
         this.sidecarsMethod = SIDECARS_METHOD_PREFIX_FORMAT.formatted(beaconUrl);
@@ -138,16 +145,21 @@ public class BeaconBlobFetcher {
             return res.getData();
         }
         if (this.archiverSidecarsMethod != null) {
-            LOGGER.debug(
-                    "blob sidecars may be pruned, try blob archiver sidecars method: blockId = {}, indices = {}",
+            LOGGER.info(
+                    "blob sidecars may be pruned, try blob archiver sidecars method: blockId = {}, indices = {}, url = {}",
                     blockId,
-                    indices);
+                    indices,
+                    "%s/%s".formatted(this.archiverSidecarsMethod, postfix));
             var archiverRes = getBlobSidecars("%s/%s".formatted(this.archiverSidecarsMethod, postfix));
+            LOGGER.info(
+                    "archiverUrl: {}; archiverRes return data: {}",
+                    this.archiverSidecarsMethod,
+                    archiverRes.getData() != null && !archiverRes.getData().isEmpty());
             if (archiverRes.getData() != null && !archiverRes.getData().isEmpty()) {
                 return archiverRes.getData();
             }
         } else {
-            LOGGER.debug(
+            LOGGER.info(
                     "blob archiver sidecars method is empty, skip retry: block Id = {}, indices = {}",
                     blockId,
                     indices);
@@ -157,7 +169,7 @@ public class BeaconBlobFetcher {
     }
 
     private BeaconApiResponse<List<BlobSidecar>> getBlobSidecars(String url) {
-        var req = new Request.Builder().get().url(url).build();
+        var req = new Request.Builder().get().url(HttpUrl.parse(url)).build();
         return this.send(req, new TypeReference<BeaconApiResponse<List<BlobSidecar>>>() {});
     }
 

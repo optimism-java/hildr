@@ -7,9 +7,13 @@ import java.util.Objects;
  *
  * @author thinkAfCod
  * @since 0.3.0
+ * @param <T> the beacon api response data type.
  */
 public class BeaconApiResponse<T> {
 
+    /**
+     * The response inner data.
+     */
     public T data;
 
     /**

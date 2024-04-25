@@ -12,13 +12,22 @@ import java.util.Objects;
  */
 public class SpecConfig {
 
+    /**
+     * The seconds per slot.
+     */
     @JsonAlias("SECONDS_PER_SLOT")
     public String secondsPerSlot;
 
+    /**
+     * The SpecConfig constructor.
+     */
     public BigInteger getSecondsPerSlot() {
         return new BigInteger(secondsPerSlot);
     }
 
+    /**
+     * The SpecConfig constructor.
+     */
     public void setSecondsPerSlot(String secondsPerSlot) {
         this.secondsPerSlot = secondsPerSlot;
     }

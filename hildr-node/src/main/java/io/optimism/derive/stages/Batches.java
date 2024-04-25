@@ -336,8 +336,11 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
 
         // check batch timestamp
         if (spanEndTimestamp.compareTo(nextTimestamp) < 0) {
-            LOGGER.warn("past batch: nextTimestamp = l2SafeHead({}) + blockTime({}), spanEndTimestamp({})",
-                    l2SafeHead.timestamp(), this.config.chainConfig().blockTime(), spanEndTimestamp);
+            LOGGER.warn(
+                    "past batch: nextTimestamp = l2SafeHead({}) + blockTime({}), spanEndTimestamp({})",
+                    l2SafeHead.timestamp(),
+                    this.config.chainConfig().blockTime(),
+                    spanEndTimestamp);
             return BatchStatus.Drop;
         }
         if (spanStartTimestamp.compareTo(nextTimestamp) > 0) {
