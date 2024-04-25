@@ -145,16 +145,11 @@ public class BeaconBlobFetcher {
             return res.getData();
         }
         if (this.archiverSidecarsMethod != null) {
-            LOGGER.info(
-                    "blob sidecars may be pruned, try blob archiver sidecars method: blockId = {}, indices = {}, url = {}",
+            LOGGER.warn(
+                    "blob sidecars may be pruned, try blob archiver sidecars method: blockId = {}, indices = {}",
                     blockId,
-                    indices,
-                    "%s/%s".formatted(this.archiverSidecarsMethod, postfix));
+                    indices);
             var archiverRes = getBlobSidecars("%s/%s".formatted(this.archiverSidecarsMethod, postfix));
-            LOGGER.info(
-                    "archiverUrl: {}; archiverRes return data: {}",
-                    this.archiverSidecarsMethod,
-                    archiverRes.getData() != null && !archiverRes.getData().isEmpty());
             if (archiverRes.getData() != null && !archiverRes.getData().isEmpty()) {
                 return archiverRes.getData();
             }
