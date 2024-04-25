@@ -180,7 +180,6 @@ public class EngineDriver<E extends Engine> {
      */
     public void handleUnsafePayload(ExecutionPayload payload) throws ExecutionException, InterruptedException {
         if (this.syncStatus == SyncStatus.WillStartEL) {
-            // todo query from l2Client
             var l2Finalized = l2Client.ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, true)
                     .sendAsync()
                     .get();
@@ -321,23 +320,29 @@ public class EngineDriver<E extends Engine> {
 
             scope.join();
             scope.throwIfFailed();
-            ForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.get().getForkChoiceUpdate();
-            Status forkChoiceUpdateStatus = forkChoiceUpdate.payloadStatus().getStatus();
-            if (this.syncModeEl) {
-                if (forkChoiceUpdateStatus == Status.VALID && this.syncStatus == SyncStatus.StartedEL) {
+
+            var forkChoiceUpdate = forkChoiceUpdateFuture.get();
+            if (forkChoiceUpdate.hasError()) {
+                throw new ForkchoiceUpdateException(
+                    "could not accept new forkchoice: %s".formatted(forkChoiceUpdate.getError()));
+            }
+            var forkChoiceUpdateStatus = forkChoiceUpdate.getForkChoiceUpdate().payloadStatus();
+            var updateStatus = forkChoiceUpdateStatus.getStatus();
+            if (this.syncStatus.isEngineSyncing()) {
+                if (updateStatus == Status.VALID && this.syncStatus == SyncStatus.StartedEL) {
                     this.syncStatus = SyncStatus.FinishedELNotFinalized;
                 }
                 // Allow SYNCING if engine P2P sync is enabled
-                if (forkChoiceUpdateStatus == Status.INVALID || forkChoiceUpdateStatus == Status.INVALID_BLOCK_HASH) {
+                if (updateStatus == Status.INVALID || forkChoiceUpdateStatus.getStatus() == Status.INVALID_BLOCK_HASH) {
                     throw new ForkchoiceUpdateException(String.format(
                             "could not accept new forkchoice: %s",
-                            forkChoiceUpdate.payloadStatus().getValidationError()));
+                        forkChoiceUpdateStatus.getValidationError()));
                 }
             } else {
-                if (forkChoiceUpdate.payloadStatus().getStatus() != Status.VALID) {
+                if (updateStatus != Status.VALID) {
                     throw new ForkchoiceUpdateException(String.format(
                             "could not accept new forkchoice: %s",
-                            forkChoiceUpdate.payloadStatus().getValidationError()));
+                        forkChoiceUpdateStatus.getValidationError()));
                 }
             }
         }

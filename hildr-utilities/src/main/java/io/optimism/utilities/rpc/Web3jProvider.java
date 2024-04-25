@@ -1,5 +1,6 @@
 package io.optimism.utilities.rpc;
 
+import ch.qos.logback.classic.Level;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import java.net.ConnectException;
 import java.util.ArrayList;
@@ -72,6 +73,11 @@ public class Web3jProvider {
             web3Srv = new HttpService(url, okHttpClient);
 
         } else if (Web3jProvider.isWs(url)) {
+            var logger = LoggerFactory.getLogger("org.web3j.protocol.websocket");
+            if (logger instanceof ch.qos.logback.classic.Logger) {
+                var level = !LOGGER.isTraceEnabled() ? Level.INFO : Level.DEBUG;
+                ((ch.qos.logback.classic.Logger) logger).setLevel(level);
+            }
             final var web3finalSrv = new WebSocketService(url, true);
             wsConnect(web3finalSrv);
             web3Srv = web3finalSrv;
