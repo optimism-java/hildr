@@ -11,7 +11,7 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +36,7 @@ public class State {
 
     private final TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs;
 
-    private final Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher;
+    private final BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher;
 
     private BlockInfo safeHead;
 
@@ -62,7 +62,7 @@ public class State {
             TreeMap<String, L1Info> l1Info,
             TreeMap<BigInteger, String> l1Hashes,
             TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs,
-            Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher,
+            BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher,
             BlockInfo safeHead,
             Epoch safeEpoch,
             BigInteger currentEpochNum,
@@ -89,7 +89,7 @@ public class State {
      */
     public static State create(
             TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> l2Refs,
-            Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher,
+            BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher,
             BlockInfo finalizedHead,
             Epoch finalizedEpoch,
             Config config) {
@@ -144,7 +144,7 @@ public class State {
             return cache;
         }
         LOGGER.warn("L2 refs cache not contains, will fetch from geth: blockNum = {}", blockNum);
-        var res = l2Fetcher.apply(blockNum);
+        var res = l2Fetcher.apply(DefaultBlockParameter.valueOf(blockNum), true);
         this.l2Refs.put(res.component1().number(), res);
         return res;
     }

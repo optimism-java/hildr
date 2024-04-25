@@ -48,6 +48,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
@@ -84,6 +85,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private List<ExecutionPayload> futureUnsafeBlocks;
 
+    private final BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher;
+
     private final AtomicReference<io.optimism.derive.State> state;
 
     private final ChainWatcher chainWatcher;
@@ -106,6 +109,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private final AtomicBoolean isP2PNetworkStarted;
 
+    private final AtomicBoolean isElsyncFinished;
+
     /**
      * Instantiates a new Driver.
      *
@@ -123,6 +128,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     public Driver(
             EngineDriver<E> engineDriver,
             Pipeline pipeline,
+            BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher,
             AtomicReference<io.optimism.derive.State> state,
             ChainWatcher chainWatcher,
             MessagePassingQueue<ExecutionPayload> unsafeBlockQueue,
@@ -133,6 +139,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.engineDriver = engineDriver;
         this.rpcServer = rpcServer;
         this.pipeline = pipeline;
+        this.l2Fetcher = l2Fetcher;
         this.state = state;
         this.chainWatcher = chainWatcher;
         this.unsafeBlockQueue = unsafeBlockQueue;
@@ -148,6 +155,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         rpcHandler.put(RpcMethod.OP_ROLLUP_CONFIG.getRpcMethodName(), unused -> this.getRollupConfig());
         this.rpcServer.register(rpcHandler);
         this.isP2PNetworkStarted = new AtomicBoolean(false);
+        this.isElsyncFinished = new AtomicBoolean(false);
     }
 
     /**
@@ -218,9 +226,9 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         } else {
             l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), l2Provider);
         }
-
+        var l2Fetcher = Driver.l2Fetcher(l2Provider);
         AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(io.optimism.derive.State.create(
-                l2Refs, Driver.l2Fetcher(l2Provider), finalizedHead, finalizedEpoch, config));
+                l2Refs, l2Fetcher, finalizedHead, finalizedEpoch, config));
 
         EngineDriver<EngineApi> engineDriver = new EngineDriver<>(finalizedHead, finalizedEpoch, l2Provider, config);
 
@@ -234,7 +242,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         l2Provider.shutdown();
         return new Driver<>(
-                engineDriver, pipeline, state, watcher, unsafeBlockQueue, rpcServer, latch, config, opStackNetwork);
+                engineDriver, pipeline, l2Fetcher, state, watcher, unsafeBlockQueue, rpcServer, latch, config, opStackNetwork);
     }
 
     /**
@@ -494,10 +502,21 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         }
 
         if (nextUnsafePayload.isPresent()) {
-            this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
+            try {
+                this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
+            } catch (ForkchoiceUpdateException e) {
+                if (!this.config.syncMode().isEl()) {
+                    throw e;
+                }
+                // Ignore fork choice update exception during EL syncing
+                LOGGER.warn("Failed to insert unsafe payload for EL sync: ", e);
+            }
             if (this.config.syncMode().isEl() && !this.engineDriver.isEngineSyncing()) {
-                LOGGER.info("execution layer syncing is done, restarting chain watcher.");
-                this.restartChainWatcher(false);
+                if (!this.isElsyncFinished.compareAndExchange(false, true)) {
+                    LOGGER.info("execution layer syncing is done, restarting chain watcher.");
+                    this.fetchAndUpdateFinalizedHead();
+                    this.restartChainWatcher();
+                }
             }
         }
     }
@@ -533,14 +552,14 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             case BlockUpdate.Reorg ignored -> {
                 LOGGER.warn("reorg detected, purging pipeline");
                 Driver.this.unfinalizedBlocks.clear();
-                Driver.this.restartChainWatcher(true);
+                Driver.this.restartChainWatcher();
             }
             case BlockUpdate.FinalityUpdate num -> Driver.this.finalizedL1BlockNumber = num.get();
             default -> throw new IllegalArgumentException("unknown block update type");
         }
     }
 
-    private void restartChainWatcher(boolean isReorg) {
+    private void restartChainWatcher() {
         Driver.this.chainWatcher.restart(
                 Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
                 Driver.this.engineDriver.getFinalizedHead().number());
@@ -550,9 +569,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             return state;
         });
         Driver.this.pipeline.purge();
-        if (isReorg) {
-            Driver.this.engineDriver.reorg();
-        }
+        Driver.this.engineDriver.reorg();
     }
 
     private void updateFinalized() {
@@ -646,11 +663,24 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 sequenceNumber);
     }
 
-    private static Function<BigInteger, Tuple2<BlockInfo, Epoch>> l2Fetcher(final Web3j l2Provider) {
-        return blockNum -> {
+    private void fetchAndUpdateFinalizedHead() {
+        DefaultBlockParameter blockParameter;
+        if (this.engineDriver.getFinalizedHead().number().compareTo(BigInteger.ZERO) == 0) {
+            blockParameter = FINALIZED;
+        } else {
+            blockParameter = DefaultBlockParameter.valueOf(this.engineDriver.getFinalizedHead().number());
+        }
+        Tuple2<BlockInfo, Epoch> finalizedHead = l2Fetcher.apply(blockParameter, true);
+        this.engineDriver.updateFinalized(finalizedHead.component1(), finalizedHead.component2());
+    }
+
+
+
+    private static BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher(final Web3j l2Provider) {
+        return (blockParameter, returnFull) -> {
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
                 StructuredTaskScope.Subtask<EthBlock> blockTask = scope.fork(TracerTaskWrapper.wrap(() -> l2Provider
-                        .ethGetBlockByNumber(DefaultBlockParameter.valueOf(blockNum), true)
+                        .ethGetBlockByNumber(blockParameter, returnFull)
                         .send()));
                 scope.join();
                 scope.throwIfFailed();
@@ -667,6 +697,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             }
         };
     }
+
+
 
     /**
      * The type Unfinalized block.
