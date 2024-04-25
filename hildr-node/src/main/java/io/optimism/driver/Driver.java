@@ -513,7 +513,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         if (nextUnsafePayload.isPresent()) {
             try {
                 this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
-            } catch (ForkchoiceUpdateException e) {
+            } catch (ForkchoiceUpdateException | InvalidExecutionPayloadException e) {
                 if (!this.config.syncMode().isEl()) {
                     throw e;
                 }
