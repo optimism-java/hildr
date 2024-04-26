@@ -486,7 +486,10 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 payload = this.unsafeBlockQueue.poll()) {
             BigInteger unsafeBlockNum = payload.blockNumber();
             BigInteger syncedBlockNum = Driver.this.engineDriver.getUnsafeHead().number();
-            if (Driver.this.config.syncMode().isEl()) {
+            if (syncedBlockNum.compareTo(BigInteger.ZERO) == 0) {
+                this.futureUnsafeBlocks.add(payload);
+                break;
+            } else if (this.engineDriver.isEngineSyncing() && unsafeBlockNum.compareTo(syncedBlockNum) > 0) {
                 this.futureUnsafeBlocks.add(payload);
             } else if (unsafeBlockNum.compareTo(syncedBlockNum) > 0
                     && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(1024L)) < 0) {
@@ -494,13 +497,12 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             }
         }
         if (this.futureUnsafeBlocks.isEmpty()) {
-            LOGGER.debug("future unsafe blocks is empty, skipping unsafe head update.");
             return;
         }
         LOGGER.debug("will handle future unsafe blocks: size={}", this.futureUnsafeBlocks.size());
         Optional<ExecutionPayload> nextUnsafePayload;
         if (Driver.this.engineDriver.isEngineSyncing()) {
-            nextUnsafePayload = Optional.of(this.futureUnsafeBlocks.getLast());
+            nextUnsafePayload = Optional.of(this.futureUnsafeBlocks.removeFirst());
         } else {
             nextUnsafePayload = Iterables.tryFind(this.futureUnsafeBlocks, input -> input.parentHash()
                             .equalsIgnoreCase(
@@ -509,7 +511,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         }
 
         if (nextUnsafePayload.isEmpty()) {
-            LOGGER.debug("next unsafe payload is emtpy.");
             return;
         }
         try {
@@ -524,7 +525,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             // Ignore fork choice update exception during EL syncing
             LOGGER.warn("Failed to insert unsafe payload for EL sync: ", e);
         }
-        if (!this.config.syncMode().isEl() || !this.engineDriver.isEngineSyncing()) {
+        if (!this.config.syncMode().isEl() || this.engineDriver.isEngineSyncing()) {
             return;
         }
         if (!this.isElsyncFinished.compareAndExchange(false, true)) {
@@ -573,6 +574,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void restartChainWatcher() {
+
         Driver.this.chainWatcher.restart(
                 Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
                 Driver.this.engineDriver.getFinalizedHead().number());

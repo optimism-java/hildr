@@ -217,6 +217,10 @@ public class EngineDriver<E extends Engine> {
 
         this.updateForkchoice();
         LOGGER.info("unsafe head updated: {} {}", this.unsafeHead.number(), this.unsafeHead.hash());
+        if (this.syncStatus == SyncStatus.FinishedELNotFinalized) {
+            this.syncStatus = SyncStatus.FinishedEL;
+            LOGGER.info("EL sync finished");
+        }
     }
 
     /**
@@ -327,8 +331,8 @@ public class EngineDriver<E extends Engine> {
 
             var forkChoiceUpdate = forkChoiceUpdateFuture.get();
             if (forkChoiceUpdate.hasError()) {
-                throw new ForkchoiceUpdateException(
-                        "could not accept new forkchoice: %s".formatted(forkChoiceUpdate.getError()));
+                throw new ForkchoiceUpdateException("could not accept new forkchoice: %s"
+                        .formatted(forkChoiceUpdate.getError().getMessage()));
             }
             var forkChoiceUpdateStatus = forkChoiceUpdate.getForkChoiceUpdate().payloadStatus();
             var updateStatus = forkChoiceUpdateStatus.getStatus();
