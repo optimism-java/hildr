@@ -243,6 +243,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 return BatchStatus.Future;
             }
             case -1 -> {
+                LOGGER.warn("invalid batch timestamp, excepted={}, actual={}", nextTimestamp, batch.getTimestamp());
                 return BatchStatus.Drop;
             }
             default -> {}

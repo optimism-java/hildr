@@ -315,6 +315,7 @@ public class EngineDriver<E extends Engine> {
             this.safeEpoch = newEpoch;
         }
         if (reorgUnsafe || this.safeHead.number().compareTo(this.unsafeHead.number()) > 0) {
+            LOGGER.info("update unsafe head number({}) to new head({})", this.unsafeHead.number(), newHead.number());
             this.unsafeHead = newHead;
         }
     }
