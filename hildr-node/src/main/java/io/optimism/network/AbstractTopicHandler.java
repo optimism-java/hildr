@@ -362,7 +362,10 @@ public abstract class AbstractTopicHandler implements NamedTopicHandler {
             case IGNORE -> LOGGER.debug("Ignoring message for topic: {}", topic);
             case SAVE_FOR_FUTURE -> LOGGER.debug("Deferring message for topic: {}", topic);
             case ACCEPT -> {
-                LOGGER.debug("Accepting message for topic: {}", topic);
+                LOGGER.debug(
+                        "Accepting message for topic: {}, number: {}",
+                        topic,
+                        blockMessage.payloadEnvelop.executionPayload().blockNumber());
                 this.unsafeBlockQueue.offer(blockMessage.payloadEnvelop.executionPayload());
             }
             default -> throw new UnsupportedOperationException(
