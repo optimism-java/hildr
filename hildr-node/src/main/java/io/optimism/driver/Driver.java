@@ -484,24 +484,22 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         for (ExecutionPayload payload = this.unsafeBlockQueue.poll();
                 payload != null;
                 payload = this.unsafeBlockQueue.poll()) {
-            this.futureUnsafeBlocks.add(payload);
+            BigInteger unsafeBlockNum = payload.blockNumber();
+            BigInteger syncedBlockNum = Driver.this.engineDriver.getUnsafeHead().number();
+            if (Driver.this.config.syncMode().isEl()) {
+                this.futureUnsafeBlocks.add(payload);
+            } else if (unsafeBlockNum.compareTo(syncedBlockNum) > 0
+                    && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(1024L)) < 0) {
+                this.futureUnsafeBlocks.add(payload);
+            }
         }
-
-        this.futureUnsafeBlocks = this.futureUnsafeBlocks.stream()
-                .filter(payload -> {
-                    BigInteger unsafeBlockNum = payload.blockNumber();
-                    BigInteger syncedBlockNum =
-                            Driver.this.engineDriver.getUnsafeHead().number();
-                    if (Driver.this.engineDriver.isEngineSyncing()) {
-                        return unsafeBlockNum.compareTo(syncedBlockNum) > 0;
-                    }
-                    return unsafeBlockNum.compareTo(syncedBlockNum) > 0
-                            && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(1024L)) < 0;
-                })
-                .collect(Collectors.toList());
-
+        if (this.futureUnsafeBlocks.isEmpty()) {
+            LOGGER.debug("future unsafe blocks is empty, skipping unsafe head update.");
+            return;
+        }
+        LOGGER.debug("will handle future unsafe blocks: size={}", this.futureUnsafeBlocks.size());
         Optional<ExecutionPayload> nextUnsafePayload;
-        if (Driver.this.engineDriver.isEngineSyncing() && !this.futureUnsafeBlocks.isEmpty()) {
+        if (Driver.this.engineDriver.isEngineSyncing()) {
             nextUnsafePayload = Optional.of(this.futureUnsafeBlocks.getLast());
         } else {
             nextUnsafePayload = Iterables.tryFind(this.futureUnsafeBlocks, input -> input.parentHash()
@@ -510,23 +508,29 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                     .toJavaUtil();
         }
 
-        if (nextUnsafePayload.isPresent()) {
-            try {
-                this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
-            } catch (ForkchoiceUpdateException | InvalidExecutionPayloadException e) {
-                if (!this.config.syncMode().isEl()) {
-                    throw e;
-                }
-                // Ignore fork choice update exception during EL syncing
-                LOGGER.warn("Failed to insert unsafe payload for EL sync: ", e);
+        if (nextUnsafePayload.isEmpty()) {
+            LOGGER.debug("next unsafe payload is emtpy.");
+            return;
+        }
+        try {
+            LOGGER.debug(
+                    "will handle unsafe payload block hash: {}",
+                    nextUnsafePayload.get().blockHash());
+            this.engineDriver.handleUnsafePayload(nextUnsafePayload.get());
+        } catch (ForkchoiceUpdateException | InvalidExecutionPayloadException e) {
+            if (!this.config.syncMode().isEl()) {
+                throw e;
             }
-            if (this.config.syncMode().isEl() && !this.engineDriver.isEngineSyncing()) {
-                if (!this.isElsyncFinished.compareAndExchange(false, true)) {
-                    LOGGER.info("execution layer syncing is done, restarting chain watcher.");
-                    this.fetchAndUpdateFinalizedHead();
-                    this.restartChainWatcher();
-                }
-            }
+            // Ignore fork choice update exception during EL syncing
+            LOGGER.warn("Failed to insert unsafe payload for EL sync: ", e);
+        }
+        if (!this.config.syncMode().isEl() || !this.engineDriver.isEngineSyncing()) {
+            return;
+        }
+        if (!this.isElsyncFinished.compareAndExchange(false, true)) {
+            LOGGER.info("execution layer syncing is done, restarting chain watcher.");
+            this.fetchAndUpdateFinalizedHead();
+            this.restartChainWatcher();
         }
     }
 
