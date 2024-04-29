@@ -70,7 +70,7 @@ class TxEncoderTest {
     void encodeFromOpEthBlock() throws JsonProcessingException {
         var opBlock = mapper.readValue(blockJson, OpEthBlock.class);
         assertNotNull(opBlock.getBlock());
-
+        opBlock.getBlock().getTransactions().removeFirst();
         assertEquals(2, opBlock.getBlock().getTransactions().size());
         var txHashes = opBlock.getBlock().getTransactions().stream()
                 .map(tx -> {

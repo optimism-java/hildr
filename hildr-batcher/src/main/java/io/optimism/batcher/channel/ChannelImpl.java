@@ -8,6 +8,7 @@ import io.optimism.type.BlockId;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.utilities.derive.stages.Frame;
 import io.optimism.utilities.derive.stages.SingularBatch;
+import io.optimism.utilities.encoding.TxEncoder;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
@@ -304,7 +305,7 @@ public class ChannelImpl implements Channel {
             if (DEPOSIT_TX_TYPE.equalsIgnoreCase(txObj.getType())) {
                 continue;
             }
-            txDataList.add(txObj.getInput());
+            txDataList.add(Numeric.toHexString(TxEncoder.encode(txObj)));
         }
         return new Tuple2(
                 l1Info,

@@ -7,13 +7,15 @@ import io.optimism.type.DepositTransaction;
 import io.optimism.type.Epoch;
 import io.optimism.type.L1BlockInfo;
 import io.optimism.type.L2BlockRef;
-import io.optimism.utilities.TxDecoder;
+import io.optimism.type.enums.TxType;
+import io.optimism.utilities.encoding.TxDecoder;
+import io.optimism.utilities.encoding.TxEncoder;
+import io.optimism.utilities.rpc.response.OpEthBlock;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.StringUtils;
 import org.web3j.protocol.core.methods.response.EthBlock;
-import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 import org.web3j.utils.Numeric;
 
 /**
@@ -167,12 +169,20 @@ public record ExecutionPayload(
     /**
      * From execution payload.
      *
-     * @param block the block
+     * @param block the L2 block
      * @return the execution payload
      */
-    public static ExecutionPayload from(EthBlock.Block block) {
+    public static ExecutionPayload fromL2Block(OpEthBlock.Block block, Config.ChainConfig config) {
+        boolean isSystemTx = block.getTimestamp().compareTo(config.regolithTime()) < 0;
         List<String> encodedTxs = block.getTransactions().stream()
-                .map(tx -> ((TransactionObject) tx).getInput())
+                .map(tx -> {
+                    var txObj = ((OpEthBlock.TransactionObject) tx);
+                    if (TxType.OPTIMISM_DEPOSIT.is(txObj.getType())) {
+                        return Numeric.toHexString(TxEncoder.encodeDepositTx(txObj, isSystemTx));
+                    } else {
+                        return Numeric.toHexString(TxEncoder.encode(txObj.toWeb3j()));
+                    }
+                })
                 .collect(Collectors.toList());
 
         return new ExecutionPayload(

@@ -1,10 +1,16 @@
 package io.optimism.type;
 
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import org.apache.commons.lang3.StringUtils;
+import org.web3j.rlp.RlpEncoder;
+import org.web3j.rlp.RlpList;
 import org.web3j.rlp.RlpString;
 import org.web3j.rlp.RlpType;
+import org.web3j.utils.Numeric;
 
 /**
  * Class of DepositTransaction.
@@ -168,16 +174,49 @@ public class DepositTransaction {
      *
      * @return the list
      */
-    public List<RlpType> asRlpValues() {
+    public byte[] encode() {
         List<RlpType> result = new ArrayList<>();
-        result.add(RlpString.create(getSourceHash()));
-        result.add(RlpString.create(getFrom()));
-        result.add(RlpString.create(getTo()));
-        result.add(RlpString.create(getMint()));
-        result.add(RlpString.create(getValue()));
-        result.add(RlpString.create(getGas()));
-        result.add(RlpString.create(isSystemTransaction() ? 1 : 0));
-        result.add(RlpString.create(getData()));
-        return result;
+
+        result.add(RlpString.create(Numeric.hexStringToByteArray(this.sourceHash)));
+        result.add(RlpString.create(Numeric.hexStringToByteArray(this.from)));
+
+        if (StringUtils.isNotEmpty(this.to)) {
+            result.add(RlpString.create(Numeric.hexStringToByteArray(this.to)));
+        } else {
+            result.add(RlpString.create(""));
+        }
+
+        result.add(RlpString.create(this.mint));
+        result.add(RlpString.create(this.value));
+        result.add(RlpString.create(this.gas));
+        result.add(RlpString.create(this.isSystemTransaction ? 1L : 0L));
+        result.add(RlpString.create(Numeric.hexStringToByteArray(this.data)));
+
+        RlpList rlpList = new RlpList(result);
+        byte[] encoded = RlpEncoder.encode(rlpList);
+
+        return ByteBuffer.allocate(encoded.length + 1)
+                .put((byte) 0x7e)
+                .put(encoded)
+                .array();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DepositTransaction that)) return false;
+        return isSystemTransaction == that.isSystemTransaction
+                && Objects.equals(sourceHash, that.sourceHash)
+                && Objects.equals(from, that.from)
+                && Objects.equals(to, that.to)
+                && Objects.equals(mint, that.mint)
+                && Objects.equals(value, that.value)
+                && Objects.equals(gas, that.gas)
+                && Objects.equals(data, that.data);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(sourceHash, from, to, mint, value, gas, isSystemTransaction, data);
     }
 }

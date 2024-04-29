@@ -14,10 +14,13 @@ import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
+import io.optimism.utilities.rpc.Web3jProvider;
+import io.optimism.utilities.rpc.response.OpEthBlock;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -28,10 +31,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.DefaultBlockParameter;
+import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.response.BooleanResponse;
 import org.web3j.protocol.core.methods.response.EthBlock;
-import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
+import org.web3j.protocol.core.methods.response.EthBlockNumber;
 import org.web3j.protocol.http.HttpService;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
@@ -106,7 +111,6 @@ public class Runner extends AbstractExecutionThreadService {
                 Thread.sleep(Duration.ofSeconds(3L));
             }
         }
-        this.driver = Driver.from(this.config, this.latch);
     }
 
     /**
@@ -148,12 +152,13 @@ public class Runner extends AbstractExecutionThreadService {
      *
      * @throws InterruptedException the interrupted exception
      */
-    public void fullSync() throws InterruptedException {
+    public void fullSync() throws InterruptedException, ExecutionException {
         LOGGER.info("starting full sync");
         waitDriverRunning();
     }
 
-    private void waitDriverRunning() throws InterruptedException {
+    private void waitDriverRunning() throws InterruptedException, ExecutionException {
+        this.driver = Driver.from(this.config, this.latch);
         this.startDriver();
     }
 
@@ -168,11 +173,12 @@ public class Runner extends AbstractExecutionThreadService {
         if (StringUtils.isEmpty(this.config.checkpointSyncUrl())) {
             throw new SyncUrlMissingException("a checkpoint sync rpc url is required for checkpoint sync");
         }
-        Web3j checkpointSyncUrl = Web3j.build(new HttpService(this.config.checkpointSyncUrl()));
+        Web3jService checkpointSyncUrl =
+                Web3jProvider.create(this.config.checkpointSyncUrl()).component2();
 
-        EthBlock checkpointBlock = null;
+        OpEthBlock checkpointBlock = null;
         if (StringUtils.isNotEmpty(this.checkpointHash)) {
-            Tuple2<Boolean, EthBlock> isEpochBoundary = isEpochBoundary(this.checkpointHash, checkpointSyncUrl);
+            Tuple2<Boolean, OpEthBlock> isEpochBoundary = isEpochBoundary(this.checkpointHash, checkpointSyncUrl);
             if (isEpochBoundary.component1()) {
                 checkpointBlock = isEpochBoundary.component2();
                 if (checkpointBlock == null) {
@@ -187,15 +193,21 @@ public class Runner extends AbstractExecutionThreadService {
             LOGGER.info("finding the latest epoch boundary to use as checkpoint");
             BigInteger blockNumber;
             try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                StructuredTaskScope.Subtask<BigInteger> blockNumberFuture = scope.fork(TracerTaskWrapper.wrap(
-                        () -> checkpointSyncUrl.ethBlockNumber().send().getBlockNumber()));
+                StructuredTaskScope.Subtask<BigInteger> blockNumberFuture =
+                        scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
+                                        "eth_blockNumber",
+                                        Collections.<String>emptyList(),
+                                        checkpointSyncUrl,
+                                        EthBlockNumber.class)
+                                .send()
+                                .getBlockNumber()));
                 scope.join();
                 scope.throwIfFailed();
                 blockNumber = blockNumberFuture.get();
             }
 
             while (isRunning() && !this.isShutdownTriggered) {
-                Tuple2<Boolean, EthBlock> isEpochBoundary =
+                Tuple2<Boolean, OpEthBlock> isEpochBoundary =
                         isEpochBoundary(DefaultBlockParameter.valueOf(blockNumber), checkpointSyncUrl);
                 if (isEpochBoundary.component1()) {
                     checkpointBlock = isEpochBoundary.component2();
@@ -224,7 +236,7 @@ public class Runner extends AbstractExecutionThreadService {
             scope.throwIfFailed();
             l2CheckpointBlock = l2CheckpointBlockFuture.get();
         }
-        if (l2CheckpointBlock != null) {
+        if (l2CheckpointBlock != null && l2CheckpointBlock.getBlock() != null) {
             LOGGER.warn("finalized head is above the checkpoint block");
             this.startDriver();
             return;
@@ -244,7 +256,8 @@ public class Runner extends AbstractExecutionThreadService {
             }
         }
 
-        ExecutionPayload checkpointPayload = ExecutionPayload.from(checkpointBlock.getBlock());
+        ExecutionPayload checkpointPayload =
+                ExecutionPayload.fromL2Block(checkpointBlock.getBlock(), this.config.chainConfig());
 
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
             StructuredTaskScope.Subtask<OpEthPayloadStatus> payloadStatusFuture =
@@ -303,7 +316,7 @@ public class Runner extends AbstractExecutionThreadService {
      *
      * @throws InterruptedException the interrupted exception
      */
-    public void executionLayerSync() throws InterruptedException {
+    public void executionLayerSync() throws InterruptedException, ExecutionException {
         LOGGER.info("execution layer sync");
         waitDriverRunning();
     }
@@ -313,12 +326,13 @@ public class Runner extends AbstractExecutionThreadService {
         latch.await();
     }
 
-    private Tuple2<Boolean, EthBlock> isEpochBoundary(String blockHash, Web3j checkpointSyncUrl)
+    private Tuple2<Boolean, OpEthBlock> isEpochBoundary(String blockHash, Web3jService checkpointSyncUrl)
             throws InterruptedException, ExecutionException {
-        EthBlock block;
+        OpEthBlock block;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            StructuredTaskScope.Subtask<EthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(
-                    () -> checkpointSyncUrl.ethGetBlockByHash(blockHash, true).send()));
+            StructuredTaskScope.Subtask<OpEthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
+                            "eth_getBlockByHash", Arrays.asList(blockHash, true), checkpointSyncUrl, OpEthBlock.class)
+                    .send()));
             scope.join();
             scope.throwIfFailed();
             block = blockFuture.get();
@@ -330,12 +344,17 @@ public class Runner extends AbstractExecutionThreadService {
         return isBlockBoundary(block);
     }
 
-    private Tuple2<Boolean, EthBlock> isEpochBoundary(DefaultBlockParameter blockParameter, Web3j checkpointSyncUrl)
+    private Tuple2<Boolean, OpEthBlock> isEpochBoundary(
+            DefaultBlockParameter blockParameter, Web3jService checkpointSyncUrl)
             throws InterruptedException, ExecutionException {
-        EthBlock block;
+        OpEthBlock block;
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            StructuredTaskScope.Subtask<EthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(() ->
-                    checkpointSyncUrl.ethGetBlockByNumber(blockParameter, true).send()));
+            StructuredTaskScope.Subtask<OpEthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
+                            "eth_getBlockByNumber",
+                            Arrays.asList(blockParameter.getValue(), true),
+                            checkpointSyncUrl,
+                            OpEthBlock.class)
+                    .send()));
             scope.join();
             scope.throwIfFailed();
             block = blockFuture.get();
@@ -347,9 +366,9 @@ public class Runner extends AbstractExecutionThreadService {
         return isBlockBoundary(block);
     }
 
-    @NotNull private Tuple2<Boolean, EthBlock> isBlockBoundary(EthBlock block) {
-        String txInput = ((TransactionObject) block.getBlock().getTransactions().stream()
-                        .filter(transactionResult -> ((TransactionObject) transactionResult)
+    @NotNull private Tuple2<Boolean, OpEthBlock> isBlockBoundary(OpEthBlock block) {
+        String txInput = ((OpEthBlock.TransactionObject) block.getBlock().getTransactions().stream()
+                        .filter(transactionResult -> ((OpEthBlock.TransactionObject) transactionResult)
                                 .getTo()
                                 .equalsIgnoreCase(
                                         SystemAccounts.defaultSystemAccounts().attributesPreDeploy()))
@@ -357,8 +376,15 @@ public class Runner extends AbstractExecutionThreadService {
                         .orElseThrow(() -> new TransactionNotFoundException(
                                 "could not find setL1BlockValues tx in the epoch boundary" + " search")))
                 .getInput();
-        byte[] sequenceNumber = ArrayUtils.subarray(Numeric.hexStringToByteArray(txInput), 132, 164);
-        if (Arrays.equals(sequenceNumber, new byte[32])) {
+        byte[] sequenceNumber;
+        if (block.getBlock().getTimestamp().compareTo(this.config.chainConfig().ecotoneTime()) >= 0) {
+            // this is ecotone block, read sequence number from 12 to 20
+            sequenceNumber = ArrayUtils.subarray(Numeric.hexStringToByteArray(txInput), 12, 20);
+        } else {
+            // this is ecotone block, read sequence number from 132 to 164
+            sequenceNumber = ArrayUtils.subarray(Numeric.hexStringToByteArray(txInput), 132, 164);
+        }
+        if (Arrays.equals(sequenceNumber, new byte[32]) || Arrays.equals(sequenceNumber, new byte[8])) {
             return new Tuple2<>(true, block);
         } else {
             return new Tuple2<>(false, null);
