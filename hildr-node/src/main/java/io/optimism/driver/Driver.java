@@ -30,7 +30,7 @@ import io.optimism.type.L1BlockInfo;
 import io.optimism.type.L2BlockRef;
 import io.optimism.type.RollupConfigResult;
 import io.optimism.type.SystemConfig;
-import io.optimism.utilities.TxDecoder;
+import io.optimism.utilities.encoding.TxDecoder;
 import io.optimism.utilities.rpc.Web3jProvider;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
@@ -574,7 +574,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void restartChainWatcher() {
-
         Driver.this.chainWatcher.restart(
                 Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
                 Driver.this.engineDriver.getFinalizedHead().number());

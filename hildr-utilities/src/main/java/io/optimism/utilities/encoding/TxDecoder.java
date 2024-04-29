@@ -14,7 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-package io.optimism.utilities;
+package io.optimism.utilities.encoding;
 
 import io.optimism.type.DepositTransaction;
 import java.math.BigInteger;
