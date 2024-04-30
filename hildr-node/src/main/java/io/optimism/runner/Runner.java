@@ -191,20 +191,7 @@ public class Runner extends AbstractExecutionThreadService {
             }
         } else {
             LOGGER.info("finding the latest epoch boundary to use as checkpoint");
-            BigInteger blockNumber;
-            try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-                StructuredTaskScope.Subtask<BigInteger> blockNumberFuture =
-                        scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
-                                        "eth_blockNumber",
-                                        Collections.<String>emptyList(),
-                                        checkpointSyncUrl,
-                                        EthBlockNumber.class)
-                                .send()
-                                .getBlockNumber()));
-                scope.join();
-                scope.throwIfFailed();
-                blockNumber = blockNumberFuture.get();
-            }
+            BigInteger blockNumber = getEthBlockNumber(checkpointSyncUrl);
 
             while (isRunning() && !this.isShutdownTriggered) {
                 Tuple2<Boolean, OpEthBlock> isEpochBoundary =
@@ -238,56 +225,21 @@ public class Runner extends AbstractExecutionThreadService {
         }
         if (l2CheckpointBlock != null && l2CheckpointBlock.getBlock() != null) {
             LOGGER.warn("finalized head is above the checkpoint block");
-            this.startDriver();
+            ForkchoiceState forkchoiceState = ForkchoiceState.fromSingleHead(checkpointHash);
+            updateForkChoiceState(forkchoiceState);
+            waitDriverRunning();
             return;
         }
 
         // this is a temporary fix to allow execution layer peering to work
-        // TODO: use a list of whitelisted bootnodes instead
-        LOGGER.info("adding trusted peer to the execution layer");
-        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            StructuredTaskScope.Subtask<BooleanResponse> isPeerAddedFuture = scope.fork(TracerTaskWrapper.wrap(
-                    () -> l2Provider.adminAddPeer(TRUSTED_PEER_ENODE).send()));
-            scope.join();
-            scope.throwIfFailed();
-            BooleanResponse isPeerAdded = isPeerAddedFuture.get();
-            if (!isPeerAdded.success()) {
-                throw new TrustedPeerAddedException("could not add peer");
-            }
-        }
+        addTrustedPeerToL2Engine(l2Provider);
 
         ExecutionPayload checkpointPayload =
                 ExecutionPayload.fromL2Block(checkpointBlock.getBlock(), this.config.chainConfig());
-
-        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            StructuredTaskScope.Subtask<OpEthPayloadStatus> payloadStatusFuture =
-                    scope.fork(TracerTaskWrapper.wrap(() -> engineApi.newPayload(checkpointPayload)));
-            scope.join();
-            scope.throwIfFailed();
-            OpEthPayloadStatus payloadStatus = payloadStatusFuture.get();
-            if (payloadStatus.getPayloadStatus().getStatus() == Status.INVALID
-                    || payloadStatus.getPayloadStatus().getStatus() == Status.INVALID_BLOCK_HASH) {
-                LOGGER.error("the provided checkpoint payload is invalid, exiting");
-                throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
-            }
-        }
-
         ForkchoiceState forkchoiceState = ForkchoiceState.fromSingleHead(checkpointHash);
-        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            StructuredTaskScope.Subtask<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
-                    scope.fork(TracerTaskWrapper.wrap(() -> engineApi.forkchoiceUpdated(forkchoiceState, null)));
 
-            scope.join();
-            scope.throwIfFailed();
-            OpEthForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.get();
-
-            if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus() == Status.INVALID
-                    || forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
-                            == Status.INVALID_BLOCK_HASH) {
-                LOGGER.error("could not accept forkchoice, exiting");
-                throw new ForkchoiceUpdateException("could not accept forkchoice, exiting");
-            }
-        }
+        newPayloadToCheckpoint(checkpointPayload);
+        updateForkChoiceState(forkchoiceState);
 
         LOGGER.info("syncing execution client to the checkpoint block...");
         while (isRunning() && !this.isShutdownTriggered) {
@@ -307,8 +259,25 @@ public class Runner extends AbstractExecutionThreadService {
             }
         }
 
+        // after syncing to the checkpoint block, update the forkchoice state
+        updateForkChoiceState(forkchoiceState);
         LOGGER.info("execution client successfully synced to the checkpoint block");
         waitDriverRunning();
+    }
+
+    private static void addTrustedPeerToL2Engine(Web3j l2Provider) throws InterruptedException, ExecutionException {
+        // TODO: use a list of whitelisted bootnodes instead
+        LOGGER.info("adding trusted peer to the execution layer");
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            StructuredTaskScope.Subtask<BooleanResponse> isPeerAddedFuture = scope.fork(TracerTaskWrapper.wrap(
+                    () -> l2Provider.adminAddPeer(TRUSTED_PEER_ENODE).send()));
+            scope.join();
+            scope.throwIfFailed();
+            BooleanResponse isPeerAdded = isPeerAddedFuture.get();
+            if (!isPeerAdded.success()) {
+                throw new TrustedPeerAddedException("could not add peer");
+            }
+        }
     }
 
     /**
@@ -324,6 +293,57 @@ public class Runner extends AbstractExecutionThreadService {
     private void startDriver() throws InterruptedException {
         driver.startAsync().awaitRunning();
         latch.await();
+    }
+
+    private BigInteger getEthBlockNumber(Web3jService web3jService) throws InterruptedException, ExecutionException {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            StructuredTaskScope.Subtask<BigInteger> blockNumberFuture =
+                    scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
+                                    "eth_blockNumber",
+                                    Collections.<String>emptyList(),
+                                    web3jService,
+                                    EthBlockNumber.class)
+                            .send()
+                            .getBlockNumber()));
+            scope.join();
+            scope.throwIfFailed();
+            return blockNumberFuture.get();
+        }
+    }
+
+    private void newPayloadToCheckpoint(ExecutionPayload checkpointPayload)
+            throws InterruptedException, ExecutionException {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            StructuredTaskScope.Subtask<OpEthPayloadStatus> payloadStatusFuture =
+                    scope.fork(TracerTaskWrapper.wrap(() -> engineApi.newPayload(checkpointPayload)));
+            scope.join();
+            scope.throwIfFailed();
+            OpEthPayloadStatus payloadStatus = payloadStatusFuture.get();
+            if (payloadStatus.getPayloadStatus().getStatus() == Status.INVALID
+                    || payloadStatus.getPayloadStatus().getStatus() == Status.INVALID_BLOCK_HASH) {
+                LOGGER.error("the provided checkpoint payload is invalid, exiting");
+                throw new InvalidExecutionPayloadException("the provided checkpoint payload is invalid");
+            }
+        }
+    }
+
+    private void updateForkChoiceState(ForkchoiceState forkchoiceState)
+            throws InterruptedException, ExecutionException {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            StructuredTaskScope.Subtask<OpEthForkChoiceUpdate> forkChoiceUpdateFuture =
+                    scope.fork(TracerTaskWrapper.wrap(() -> engineApi.forkchoiceUpdated(forkchoiceState, null)));
+
+            scope.join();
+            scope.throwIfFailed();
+            OpEthForkChoiceUpdate forkChoiceUpdate = forkChoiceUpdateFuture.get();
+
+            if (forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus() == Status.INVALID
+                    || forkChoiceUpdate.getForkChoiceUpdate().payloadStatus().getStatus()
+                            == Status.INVALID_BLOCK_HASH) {
+                LOGGER.error("could not accept forkchoice, exiting");
+                throw new ForkchoiceUpdateException("could not accept forkchoice, exiting");
+            }
+        }
     }
 
     private Tuple2<Boolean, OpEthBlock> isEpochBoundary(String blockHash, Web3jService checkpointSyncUrl)
