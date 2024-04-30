@@ -1,10 +1,10 @@
-FROM ghcr.io/graalvm/graalvm-community:21 as builder
+FROM ghcr.io/graalvm/graalvm-community:22 as builder
 
 WORKDIR /root/hildr
 COPY . .
 RUN ./gradlew clean buildJarForDocker
 
-FROM ghcr.io/graalvm/graalvm-community:21
+FROM ghcr.io/graalvm/graalvm-community:22
 
 WORKDIR /usr/local/bin
 COPY --from=builder /root/hildr/hildr-node/build/docker/hildr-node.jar .

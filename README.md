@@ -7,7 +7,7 @@
 
 This work is supported by an [Optimism governance grant](https://app.charmverse.io/op-grants/proposals?id=e5613e76-a26f-41e4-9f0d-4e2dbfccf5b8).
 
-Hildr is an OP Stack rollup client written in Java 21 with GraalVM native.
+Hildr is an OP Stack rollup client written in Java 22 with GraalVM native.
 
 Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/specs/rollup-node.md)
 
@@ -15,7 +15,7 @@ Follow the [spec](https://github.com/ethereum-optimism/optimism/blob/develop/spe
 - [Go](https://github.com/ethereum-optimism/optimism/tree/develop/op-node)
 
 ## System requirements
-To run a `hildr-node` and `op-geth` node, at least 4C8G and 100GB of disk is required, as well as the installation of Java version 21 and Go version 1.20.8, must be lower than v1.21.
+To run a `hildr-node` and `op-geth` node, at least 4C8G and 100GB of disk is required, as well as the installation of Java version 22 and Go version 1.20.8, must be lower than v1.21.
 
 ## Running `hildr-node`
 

@@ -31,7 +31,7 @@ repositories {
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
+		languageVersion = JavaLanguageVersion.of(22)
 	}
 }
 
@@ -58,8 +58,8 @@ dependencies {
 	api 'com.github.rholder:guava-retrying:2.0.0'
 	api 'org.apache.commons:commons-lang3:3.12.0'
 
-	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
-	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.9")
+	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
+	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 	api('org.web3j:core:4.11.2') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
@@ -80,14 +80,14 @@ dependencies {
 	implementation 'com.fasterxml.jackson:jackson-bom:2.15.2'
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 
-	implementation 'ch.qos.logback:logback-core:1.4.12'
-	implementation 'ch.qos.logback:logback-classic:1.4.14'
+	implementation 'ch.qos.logback:logback-core:1.5.6'
+	implementation 'ch.qos.logback:logback-classic:1.5.6'
+	implementation 'org.slf4j:slf4j-api:2.1.0-alpha1'
 
 	implementation 'com.google.protobuf:protobuf-java:3.25.1'
 	implementation 'io.tmio:tuweni-units:2.4.2'
 	implementation 'io.tmio:tuweni-rlp:2.4.2'
 	implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
-	implementation 'org.slf4j:slf4j-api:2.0.7'
 	implementation 'io.libp2p:jvm-libp2p:1.0.1-RELEASE'
 	implementation('org.hyperledger.besu.internal:core:23.10.2')
 	implementation('org.hyperledger.besu.internal:algorithms:23.10.2')
@@ -196,7 +196,7 @@ javadoc {
 		options.addBooleanOption('html5', true)
 	}
 	options.addBooleanOption('-enable-preview', true)
-	options.addStringOption('-release', '21')
+	options.addStringOption('-release', '22')
 //	options.addStringOption('-add-modules', 'jdk.incubator.concurrent')
 }
 
