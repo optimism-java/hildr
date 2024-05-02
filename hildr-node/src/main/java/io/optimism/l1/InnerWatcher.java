@@ -345,6 +345,13 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             throw new DepositsNotFoundException(
                     "blobSidecards is empty, and excepted to be %d".formatted(indices.size()));
         }
+        for (int i = 0; i < indexedBlobs.size(); i++) {
+            Tuple3<Integer, BigInteger, String> indexedBlob = indexedBlobs.get(i);
+            BlobSidecar blobRes = blobsRes.get(i);
+            if (!BeaconBlobFetcher.verifyBlobSidecar(blobRes, indexedBlob.component3())) {
+                throw new IllegalStateException("blob verification failed");
+            }
+        }
         int blobsResIndex = 0;
         for (int i = 0; i < data.size(); i++) {
             if (blobsResIndex >= blobsRes.size()) {
@@ -580,7 +587,8 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 Thread.currentThread().interrupt();
                 throw new HildrServiceExecutionException(e);
             } catch (Exception e) {
-                LOGGER.error(String.format("excepted error while fetching L1 data for block %d", currentBlock), e);
+                LOGGER.error(String.format("unexcepted error while fetching L1 data for block %d", currentBlock), e);
+                throw new HildrServiceExecutionException(e);
             } finally {
                 span.end();
             }

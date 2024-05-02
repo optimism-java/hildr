@@ -486,14 +486,21 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                 payload = this.unsafeBlockQueue.poll()) {
             BigInteger unsafeBlockNum = payload.blockNumber();
             BigInteger syncedBlockNum = Driver.this.engineDriver.getUnsafeHead().number();
-            if (syncedBlockNum.compareTo(BigInteger.ZERO) == 0) {
+
+            if (this.engineDriver.isEngineSyncing()
+                    && (syncedBlockNum.compareTo(BigInteger.ZERO) == 0
+                            || unsafeBlockNum.compareTo(syncedBlockNum) > 0)) {
                 this.futureUnsafeBlocks.add(payload);
-                break;
-            } else if (this.engineDriver.isEngineSyncing() && unsafeBlockNum.compareTo(syncedBlockNum) > 0) {
-                this.futureUnsafeBlocks.add(payload);
-            } else if (unsafeBlockNum.compareTo(syncedBlockNum) > 0
-                    && unsafeBlockNum.subtract(syncedBlockNum).compareTo(BigInteger.valueOf(1024L)) < 0) {
-                this.futureUnsafeBlocks.add(payload);
+            } else {
+                this.futureUnsafeBlocks = this.futureUnsafeBlocks.stream()
+                        .filter(executionPayload ->
+                                executionPayload.blockNumber().compareTo(syncedBlockNum) > 0
+                                        && executionPayload
+                                                        .blockNumber()
+                                                        .subtract(syncedBlockNum)
+                                                        .compareTo(BigInteger.valueOf(1024L))
+                                                < 0)
+                        .toList();
             }
         }
         if (this.futureUnsafeBlocks.isEmpty()) {

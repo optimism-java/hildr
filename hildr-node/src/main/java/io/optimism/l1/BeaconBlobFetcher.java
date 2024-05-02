@@ -168,7 +168,7 @@ public class BeaconBlobFetcher {
         return this.send(req, new TypeReference<BeaconApiResponse<List<BlobSidecar>>>() {});
     }
 
-    static boolean verifyBlobSidecar(List<BlobSidecar> blobSidecars, List<String> versionedHashes) {
+    static boolean verifyBlobSidecars(List<BlobSidecar> blobSidecars, List<String> versionedHashes) {
         if (blobSidecars == null || versionedHashes == null) {
             return false;
         }
@@ -180,18 +180,22 @@ public class BeaconBlobFetcher {
         for (int i = 0; i < blobSidecars.size(); i++) {
             var blobSidecar = blobSidecars.get(i);
             var versionedHash = versionedHashes.get(i);
-            if (!blobSidecar.getVersionedHash().equals(versionedHash)) {
-                return false;
-            }
-            if (!CKZG4844JNI.verifyBlobKzgProof(
-                    Numeric.hexStringToByteArray(blobSidecar.getBlob()),
-                    Numeric.hexStringToByteArray(blobSidecar.getKzgCommitment()),
-                    Numeric.hexStringToByteArray(blobSidecar.getKzgProof()))) {
+            if (!verifyBlobSidecar(blobSidecar, versionedHash)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    static boolean verifyBlobSidecar(BlobSidecar blobSidecar, String versionedHash) {
+        if (!blobSidecar.getVersionedHash().equals(versionedHash)) {
+            return false;
+        }
+        return CKZG4844JNI.verifyBlobKzgProof(
+                Numeric.hexStringToByteArray(blobSidecar.getBlob()),
+                Numeric.hexStringToByteArray(blobSidecar.getKzgCommitment()),
+                Numeric.hexStringToByteArray(blobSidecar.getKzgProof()));
     }
 
     private <T> T send(final Request req, final TypeReference<T> typeRef) {

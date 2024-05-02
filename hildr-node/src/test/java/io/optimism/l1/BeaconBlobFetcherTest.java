@@ -75,6 +75,6 @@ class BeaconBlobFetcherTest {
                 null);
         List<BlobSidecar> blobSidecars = List.of(blobSidecar);
         List<String> versionedHashes = List.of("0x0117c47bf5c7f09ff5bf881d102ed3896050fdd3eccda6f46d94698d77b20331");
-        assertTrue(BeaconBlobFetcher.verifyBlobSidecar(blobSidecars, versionedHashes));
+        assertTrue(BeaconBlobFetcher.verifyBlobSidecars(blobSidecars, versionedHashes));
     }
 }
