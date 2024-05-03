@@ -9535,36 +9535,6 @@
     "allPublicFields": true
   },
   {
-    "name": "io.optimism.utilities.derive.stages.Batch",
-    "queryAllDeclaredConstructors": true,
-    "queryAllPublicConstructors": true,
-    "queryAllDeclaredMethods": true,
-    "queryAllPublicMethods": true,
-    "allDeclaredClasses": true,
-    "allPublicClasses": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredFields": true,
-    "allPublicFields": true
-  },
-  {
-    "name": "io.optimism.utilities.derive.stages.Frame",
-    "queryAllDeclaredConstructors": true,
-    "queryAllPublicConstructors": true,
-    "queryAllDeclaredMethods": true,
-    "queryAllPublicMethods": true,
-    "allDeclaredClasses": true,
-    "allPublicClasses": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredFields": true,
-    "allPublicFields": true
-  },
-  {
     "name": "org.web3j.protocol.core.methods.response.EthSubscribe",
     "queryAllDeclaredConstructors": true,
     "queryAllPublicConstructors": true,
@@ -9581,21 +9551,6 @@
   },
   {
     "name": "org.web3j.protocol.websocket.events.NewHeadsNotification",
-    "queryAllDeclaredConstructors": true,
-    "queryAllPublicConstructors": true,
-    "queryAllDeclaredMethods": true,
-    "queryAllPublicMethods": true,
-    "allDeclaredClasses": true,
-    "allPublicClasses": true,
-    "allPublicMethods": true,
-    "allDeclaredMethods": true,
-    "allDeclaredConstructors": true,
-    "allPublicConstructors": true,
-    "allDeclaredFields": true,
-    "allPublicFields": true
-  },
-  {
-    "name": "org.web3j.protocol.websocket.events.Notification",
     "queryAllDeclaredConstructors": true,
     "queryAllPublicConstructors": true,
     "queryAllDeclaredMethods": true,
@@ -9863,5 +9818,582 @@
     "allPublicFields": true,
     "queryAllPublicMethods": true,
     "allPublicClasses": true
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpEthBlock",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "queryAllPublicMethods": true,
+    "allPublicClasses": true
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpEthBlock$Block",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "queryAllPublicMethods": true,
+    "allPublicClasses": true
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpEthBlock$ResponseDeserialiser",
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpEthBlock$ResultTransactionDeserialiser",
+    "methods":[{"name":"<init>","parameterTypes":[] }]
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpEthBlock$TransactionObject",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "queryAllPublicMethods": true,
+    "allPublicClasses": true
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpEthBlock$TransactionResult",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "queryAllPublicMethods": true,
+    "allPublicClasses": true
+  },
+  {
+    "name":"io.optimism.utilities.rpc.response.OpTransaction",
+    "allDeclaredClasses": true,
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "queryAllPublicMethods": true,
+    "allPublicClasses": true
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.InstantDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.FloatDecoder"
+  },
+  {
+    "name": "com.sun.jna.Structure$FFIType$size_t",
+    "methods": [{"name": "<init>", "parameterTypes": []}]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.IntegerDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.ProxyDecoder"
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.Falcon$Mappings",
+    "methods": [{"name": "<init>","parameterTypes": []}]
+  },
+  {
+    "name": "io.optimism.type.Epoch",
+    "methods": [{"name": "<init>","parameterTypes": ["java.math.BigInteger","java.lang.String","java.math.BigInteger","java.math.BigInteger"]}]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.DurationDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.PatternDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.ListDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.OptionalLongDecoder"
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.NTRU$Mappings",
+    "methods": [{"name": "<init>","parameterTypes": []}]
+  },
+  {
+    "name": "org.github.gestalt.config.post.process.transform.TransformerPostProcessor"
+  },
+  {
+    "name": "org.github.gestalt.config.path.mapper.StandardPathMapper"
+  },
+  {
+    "name": "io.jsonwebtoken.jackson.io.JacksonSerializer"
+  },
+  {
+    "name": "java.lang.reflect.Method",
+    "methods": [{"name": "isVarArgs","parameterTypes": []}]
+  },
+  {
+    "name": "com.fasterxml.jackson.datatype.jdk8.Jdk8Module"
+  },
+  {
+    "name": "com.sun.jna.ptr.IntByReference",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ],
+    "methods": [{"name": "<init>","parameterTypes": []}]
+  },
+  {
+    "name": "sun.security.ssl.SSLContextImpl$TLS12Context",
+    "methods": [{"name": "<init>","parameterTypes": []}]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.PathDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.LocalDateTimeDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.BigIntegerDecoder"
+  },
+  {
+    "name": "android.os.Build$VERSION"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.CharDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.MapDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.post.process.transform.EnvironmentVariablesTransformer"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.ShortDecoder"
+  },
+  {
+    "name": "com.sun.jna.Pointer",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.ObjectDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.LocalDateDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.post.process.transform.EnvironmentVariablesTransformerOld"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.OptionalIntDecoder"
+  },
+  {
+    "name": "io.netty.util.internal.NativeLibraryUtil",
+    "methods": [{"name": "loadLibrary","parameterTypes": ["java.lang.String","boolean"]}]
+  },
+  {
+    "name": "void",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.post.process.transform.SystemPropertiesTransformer"
+  },
+  {
+    "name": "reactor.util.context.ReactorContextAccessor"
+  },
+  {
+    "name": "[Lcom.fasterxml.jackson.databind.deser.BeanDeserializerModifier;"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.DoubleDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.StringDecoder"
+  },
+  {
+    "name": "com.sun.jna.ptr.LongByReference",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ],
+    "methods": [{"name": "<init>","parameterTypes": []}]
+  },
+  {
+    "name": "com.sun.jna.Structure$FFIType",
+    "allDeclaredFields": true,
+    "queryAllPublicConstructors": true,
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.DateDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.BooleanDecoder"
+  },
+  {
+    "name": "java.util.concurrent.atomic.Striped64$Cell",
+    "fields": [
+      {
+        "name": "value"
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.LongDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.OptionalDecoder"
+  },
+  {
+    "name": "org.hyperledger.besu.nativelib.secp256k1.LibSecp256k1",
+    "queryAllDeclaredMethods": true
+  },
+  {
+    "name": "long",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
+  },
+  {
+    "name": "sun.security.provider.NativePRNG$Blocking",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      },
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "java.security.SecureRandomParameters"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.RecordDecoder"
+  },
+  {
+    "name": "org.apache.logging.log4j.util.EnvironmentPropertySource"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.ByteDecoder"
+  },
+  {
+    "name": "okhttp3.internal.connection.RealConnectionPool",
+    "fields": [
+      {
+        "name": "addressStates"
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.FileDecoder"
+  },
+  {
+    "name": "org.bouncycastle.jcajce.provider.asymmetric.Dilithium$Mappings",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "io.netty.resolver.dns.macos.MacOSDnsServerAddressStreamProvider",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.apache.logging.log4j.util.SystemPropertiesPropertySource"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.BigDecimalDecoder"
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.ArrayDecoder"
+  },
+  {
+    "name": "org.apache.logging.log4j.util.LazyUtil$ReleaseAcquireLazy",
+    "fields": [
+      {
+        "name": "value"
+      }
+    ]
+  },
+  {
+    "name": "java.sql.Date",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": [
+          "long"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.SetDecoder"
+  },
+  {
+    "name": "java.lang.System",
+    "methods": [
+      {
+        "name": "console",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.post.process.transform.RandomTransformer"
+  },
+  {
+    "name": "org.github.gestalt.config.post.process.transform.NodeTransformer"
+  },
+  {
+    "name": "io.micrometer.observation.contextpropagation.ObservationThreadLocalAccessor"
+  },
+  {
+    "name": "java.lang.Throwable",
+    "methods": [
+      {
+        "name": "addSuppressed",
+        "parameterTypes": [
+          "java.lang.Throwable"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.UUIDDecoder"
+  },
+  {
+    "name": "ch.qos.logback.classic.util.DefaultJoranConfigurator",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.apache.logging.slf4j.SLF4JProvider"
+  },
+  {
+    "name": "sun.security.provider.JavaKeyStore$DualFormatJKS",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "ch.qos.logback.classic.joran.SerializedModelConfigurator",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.jctools.queues.atomic.SpscAtomicArrayQueueConsumerIndexField",
+    "fields": [
+      {
+        "name": "consumerIndex"
+      }
+    ]
+  },
+  {
+    "name": "java.lang.Enum",
+    "methods": [
+      {
+        "name": "name",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.EnumDecoder"
+  },
+  {
+    "name": "com.sun.jna.ptr.PointerByReference",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ],
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.jctools.queues.atomic.SpscAtomicArrayQueueProducerIndexFields",
+    "fields": [
+      {
+        "name": "producerIndex"
+      }
+    ]
+  },
+  {
+    "name": "ch.qos.logback.classic.spi.LogbackServiceProvider"
+  },
+  {
+    "name": "org.github.gestalt.config.path.mapper.CamelCasePathMapper"
+  },
+  {
+    "name": "com.sun.jna.CallbackProxy",
+    "methods": [
+      {
+        "name": "callback",
+        "parameterTypes": [
+          "java.lang.Object[]"
+        ]
+      }
+    ]
+  },
+  {
+    "name": "sun.security.provider.JavaKeyStore$JKS",
+    "methods": [
+      {
+        "name": "<init>",
+        "parameterTypes": []
+      }
+    ]
+  },
+  {
+    "name": "org.github.gestalt.config.decoder.OptionalDoubleDecoder"
+  },
+  {
+    "name": "int",
+    "fields": [
+      {
+        "name": "OPTIONS"
+      },
+      {
+        "name": "STRING_ENCODING"
+      },
+      {
+        "name": "STRUCTURE_ALIGNMENT"
+      },
+      {
+        "name": "TYPE_MAPPER"
+      }
+    ]
   }
 ]

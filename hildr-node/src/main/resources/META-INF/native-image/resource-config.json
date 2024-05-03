@@ -4,14 +4,14 @@
       "pattern":"\\QMETA-INF/log4j-provider.properties\\E"
     }, {
       "pattern":"\\QMETA-INF/maven/org.xerial.snappy/snappy-java/pom.properties\\E"
-    },{
+    }, {
+      "pattern":"\\QMETA-INF/native/libnetty_resolver_dns_native_macos_aarch_64.dylib\\E"
+    }, {
+      "pattern":"\\QMETA-INF/native/libnetty_resolver_dns_native_macos_aarch_64.jnilib\\E"
+    }, {
+      "pattern":"\\QMETA-INF/native/libnetty_resolver_dns_native_macos_x86_64.jnilib\\E"
+    }, {
       "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
-    },{
-      "pattern":"\\QMETA-INF/services/com.fasterxml.jackson.databind.Module\\E"
-    },{
-      "pattern":"\\QMETA-INF/org/apache/logging/log4j/core/config/plugins/Log4j2Plugins.dat\\E"
-    },{
-      "pattern":"\\QMETA-INF/services/io.jsonwebtoken.io.Serializer\\E"
     }, {
       "pattern":"\\QMETA-INF/services/com.fasterxml.jackson.databind.Module\\E"
     }, {
@@ -20,14 +20,12 @@
       "pattern":"\\QMETA-INF/services/io.micrometer.context.ContextAccessor\\E"
     }, {
       "pattern":"\\QMETA-INF/services/io.micrometer.context.ThreadLocalAccessor\\E"
-    },{
+    }, {
       "pattern":"\\QMETA-INF/services/io.opentelemetry.context.ContextStorageProvider\\E"
-    },  {
+    }, {
       "pattern":"\\QMETA-INF/services/io.vertx.core.spi.VerticleFactory\\E"
     }, {
       "pattern":"\\QMETA-INF/services/io.vertx.core.spi.VertxServiceProvider\\E"
-    },{
-      "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.core.util.ContextDataProvider\\E"
     }, {
       "pattern":"\\QMETA-INF/services/java.lang.System$LoggerFinder\\E"
     }, {
@@ -40,7 +38,7 @@
       "pattern":"\\QMETA-INF/services/java.time.zone.ZoneRulesProvider\\E"
     }, {
       "pattern":"\\QMETA-INF/services/javax.xml.parsers.SAXParserFactory\\E"
-    },{
+    }, {
       "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.spi.Provider\\E"
     }, {
       "pattern":"\\QMETA-INF/services/org.apache.logging.log4j.util.PropertySource\\E"
@@ -54,8 +52,36 @@
       "pattern":"\\QMETA-INF/services/org.github.gestalt.config.post.process.transform.Transformer\\E"
     }, {
       "pattern":"\\QMETA-INF/services/org.slf4j.spi.SLF4JServiceProvider\\E"
-    },{
+    }, {
+      "pattern":"\\QMETA-INF/services/org/jline/terminal/provider/jansi\\E"
+    }, {
+      "pattern":"\\Qcom/sun/jna/darwin-aarch64/libjnidispatch.jnilib\\E"
+    }, {
+      "pattern":"\\Qcom/sun/jna/darwin-x86-64/libjnidispatch.jnilib\\E"
+    }, {
+      "pattern":"\\Qcom/sun/jna/linux-aarch64/libjnidispatch.so\\E"
+    }, {
+      "pattern":"\\Qcom/sun/jna/linux-x86-64/libjnidispatch.jnilib\\E"
+    }, {
+      "pattern":"\\Qcom/sun/jna/win32-aarch64/jnidispatch.dll\\E"
+    }, {
+      "pattern":"\\Qcom/sun/jna/win32-x86-64/jnidispatch.dll\\E"
+    }, {
+      "pattern":"\\Qdarwin-aarch64/libsecp256k1.dylib\\E"
+    }, {
+      "pattern":"\\Qlinux-x86-64/libsecp256k1.so\\E"
+    }, {
+      "pattern":"\\Qethereum/ckzg4844/lib/aarch64/libckzg4844jni.dylib\\E"
+    }, {
+      "pattern":"\\Qethereum/ckzg4844/lib/aarch64/libckzg4844jni.so\\E"
+    }, {
+      "pattern":"\\Qethereum/ckzg4844/lib/amd64/libckzg4844jni.dll\\E"
+    }, {
+      "pattern":"\\Qethereum/ckzg4844/lib/amd64/libckzg4844jni.so\\E"
+    }, {
       "pattern":"\\Qjndi.properties\\E"
+    }, {
+      "pattern":"\\Qkzg-trusted-setups/mainnet.txt\\E"
     }, {
       "pattern":"\\Qlog4j2.StatusLogger.json\\E"
     }, {
@@ -69,25 +95,55 @@
     }, {
       "pattern":"\\Qlog4j2.system.properties\\E"
     }, {
+      "pattern":"\\Qlogback-test.scmo\\E"
+    }, {
       "pattern":"\\Qlogback-test.xml\\E"
     }, {
-      "pattern":"\\Qlogback.xml\\E"
+      "pattern":"\\Qlogback.scmo\\E"
     }, {
-      "pattern":"\\Qorg/apache/logging/log4j/core\\E"
+      "pattern":"\\Qlogback.xml\\E"
     }, {
       "pattern":"\\Qorg-xerial-snappy.properties\\E"
     }, {
       "pattern":"\\Qorg/xerial/snappy/VERSION\\E"
     }, {
+      "pattern":"\\Qorg/xerial/snappy/native/Mac/aarch64/libsnappyjava.dylib\\E"
+    }, {
+      "pattern":"\\Qorg/xerial/snappy/native/Linux/aarch64/libsnappyjava.so\\E"
+    }, {
       "pattern":"\\Qorg/xerial/snappy/native/Linux/x86_64/libsnappyjava.so\\E"
     }, {
-      "pattern":"\\Qvertx-default-jul-logging.properties\\E"
-    },{
-      "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/nfkc.nrm\\E"
+      "pattern":"\\Qorg/xerial/snappy/native/Windows/x86/snappyjava.dll\\E"
     }, {
-      "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt72b/uprops.icu\\E"
+      "pattern":"\\Qorg/xerial/snappy/native/Windows/x86_64/snappyjava.dll\\E"
+    }, {
+      "pattern":"\\Qvertx-default-jul-logging.properties\\E"
+    }, {
+      "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt74b/nfc.nrm\\E"
+    }, {
+      "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt74b/nfkc.nrm\\E"
+    }, {
+      "pattern":"java.base:\\Qjdk/internal/icu/impl/data/icudt74b/uprops.icu\\E"
     }, {
       "pattern":"java.base:\\Qsun/net/idn/uidna.spp\\E"
+    }, {
+      "pattern":"java.logging:\\Qsun/util/logging/resources/logging_zh.properties\\E"
+    }, {
+      "pattern":"java.logging:\\Qsun/util/logging/resources/logging_zh_Hans.properties\\E"
+    }, {
+      "pattern":"java.logging:\\Qsun/util/logging/resources/logging_zh_Hans_CN.properties\\E"
+    }, {
+      "pattern":"java.xml:\\Qjdk/xml/internal/jdkcatalog/JDKCatalog.xml\\E"
+    }, {
+      "pattern":"jdk.internal.le:\\Qjdk/internal/org/jline/utils/capabilities.txt\\E"
+    }, {
+      "pattern":"jdk.internal.le:\\Qjdk/internal/org/jline/utils/screen-256color.caps\\E"
     }]},
-  "bundles":[]
+  "bundles":[{
+    "name":"sun.text.resources.cldr.FormatData",
+    "locales":["en", "en-US", "und", "zh", "zh-CN", "zh-Hans", "zh-Hans-CN"]
+  }, {
+    "name":"sun.util.resources.cldr.CalendarData",
+    "locales":["und"]
+  }]
 }
