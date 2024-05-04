@@ -1,7 +1,7 @@
 FROM ubuntu:latest as builder
 RUN apt-get update && apt-get install -y wget curl tar build-essential libz-dev zlib1g-dev musl-tools
-ENV JAVA_PKG=https://download.oracle.com/graalvm/21/latest/graalvm-jdk-21_linux-x64_bin.tar.gz \
-JAVA_HOME=/usr/java/jdk-21
+ENV JAVA_PKG=https://download.oracle.com/graalvm/22/latest/graalvm-jdk-22_linux-x64_bin.tar.gz \
+JAVA_HOME=/usr/java/jdk-22
 #RUN curl --output /tmp/jdk.tgz $JAVA_PKG
 RUN wget -c $JAVA_PKG -O /tmp/jdk.tar.gz
 RUN mkdir -p $JAVA_HOME
