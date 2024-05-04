@@ -149,41 +149,41 @@ jobs:
             hildr-node/build/binary/hildr-node.jar
           if-no-files-found: error
 
-  native-build-musl:
-    name: GraalVM + musl static image
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: 🛎️ Check out repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: ☕ Setup GraalVM Build
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: '21'
-          distribution: 'graalvm'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          cache: 'gradle'
-          native-image-musl: 'true'
-          native-image-job-reports: 'true'
-          set-java-home: 'true'
-
-      - name: 🏗️ Build static image with musl libc
-        id: native-build
-        run: |
-          ./gradlew buildBinaryStatic
-          mv hildr-node/build/binary/hildr-node hildr-node/build/binary/hildr-node-static
-          ls -ltrh hildr-node/build/binary/hildr-node-static
-
-      - name: 📤 Upload static binary
-        uses: actions/upload-artifact@v3
-        with:
-          name: hildr-node-static
-          path: |
-            hildr-node/build/binary/hildr-node-static
-          if-no-files-found: error
+#  native-build-musl:
+#    name: GraalVM + musl static image
+#    runs-on: ubuntu-latest
+#
+#    steps:
+#      - name: 🛎️ Check out repository
+#        uses: actions/checkout@v3
+#        with:
+#          fetch-depth: 0
+#
+#      - name: ☕ Setup GraalVM Build
+#        uses: graalvm/setup-graalvm@v1
+#        with:
+#          java-version: '21'
+#          distribution: 'graalvm'
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          cache: 'gradle'
+#          native-image-musl: 'true'
+#          native-image-job-reports: 'true'
+#          set-java-home: 'true'
+#
+#      - name: 🏗️ Build static image with musl libc
+#        id: native-build
+#        run: |
+#          ./gradlew buildBinaryStatic
+#          mv hildr-node/build/binary/hildr-node hildr-node/build/binary/hildr-node-static
+#          ls -ltrh hildr-node/build/binary/hildr-node-static
+#
+#      - name: 📤 Upload static binary
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: hildr-node-static
+#          path: |
+#            hildr-node/build/binary/hildr-node-static
+#          if-no-files-found: error
 
   push_image_to_github:
     name: Push Docker image to Github
@@ -252,7 +252,7 @@ jobs:
 
   release:
     name: 🚰 Release new version.
-    needs: [ native-build-osx, native-build-musl, native-build-linux, native-build-windows, push_image_to_github ]
+    needs: [ native-build-osx, native-build-linux, native-build-windows, push_image_to_github, push_native_image_to_github ]
     runs-on: ubuntu-latest
 
     steps:
