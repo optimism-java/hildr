@@ -23,7 +23,7 @@ plugins {
 }
 
 group 'me.grapebaba'
-version '0.2.5'
+version '0.4.0'
 
 repositories {
 	// Use Maven Central for resolving dependencies.

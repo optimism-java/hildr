@@ -170,6 +170,7 @@ public record ExecutionPayload(
      * From execution payload.
      *
      * @param block the L2 block
+     * @param config the chain config
      * @return the execution payload
      */
     public static ExecutionPayload fromL2Block(OpEthBlock.Block block, Config.ChainConfig config) {
