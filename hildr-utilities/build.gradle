@@ -58,8 +58,8 @@ dependencies {
 	api 'com.github.rholder:guava-retrying:2.0.0'
 	api 'org.apache.commons:commons-lang3:3.12.0'
 
-	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
-	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.9")
+	api("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
+	api("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 	api('org.web3j:core:4.11.2') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'

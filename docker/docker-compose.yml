@@ -48,7 +48,7 @@ services:
     env_file:
       - .env
     ports:
-      - 9200:9200
+      - "9200:9200"
       - "${RPC_PORT}:${RPC_PORT}"
     volumes:
       - ./:/scripts
@@ -106,7 +106,7 @@ services:
     env_file:
       - .env
     ports:
-      - 9201:9201
+      - "9201:9201"
     volumes:
       - ./:/scripts
       - data:/data
@@ -118,7 +118,7 @@ services:
     profiles:
       - metrics
     ports:
-      - 9090:9090
+      - "9090:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:

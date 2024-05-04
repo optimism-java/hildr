@@ -71,8 +71,8 @@ dependencies {
 	implementation 'com.github.rholder:guava-retrying:2.0.0'
 
 	// define any required OkHttp artifacts without version
-	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.9")
-	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.9")
+	implementation("com.squareup.okhttp3:okhttp:5.0.0-alpha.14")
+	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 
 	implementation('org.web3j:core:4.11.2') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
@@ -166,7 +166,7 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-reporting:1.9.1'
 
 	testImplementation 'org.mockito:mockito-junit-jupiter:2.19.0'
-	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.9")
+	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.14")
 }
 
 // Apply a specific Java toolchain to ease working on different environments.
