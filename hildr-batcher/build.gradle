@@ -8,8 +8,8 @@ plugins {
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-group = 'io.optimism'
-version = '0.2.5'
+group = 'me.grapebaba'
+version = '0.4.0'
 
 repositories {
 	// Use Maven Central for resolving dependencies.

@@ -151,6 +151,7 @@ public class Runner extends AbstractExecutionThreadService {
      * Full sync.
      *
      * @throws InterruptedException the interrupted exception
+     * @throws ExecutionException the execution exception
      */
     public void fullSync() throws InterruptedException, ExecutionException {
         LOGGER.info("starting full sync");
@@ -284,6 +285,7 @@ public class Runner extends AbstractExecutionThreadService {
      * snap sync.
      *
      * @throws InterruptedException the interrupted exception
+     * @throws ExecutionException the execution exception
      */
     public void executionLayerSync() throws InterruptedException, ExecutionException {
         LOGGER.info("execution layer sync");

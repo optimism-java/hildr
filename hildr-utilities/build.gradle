@@ -6,8 +6,8 @@ plugins {
 	id "net.ltgt.errorprone" version "3.1.0"
 }
 
-group = 'io.optimism'
-version = '0.2.5'
+group = 'me.grapebaba'
+version = '0.4.0'
 
 repositories {
 	// Use Maven Central for resolving dependencies.

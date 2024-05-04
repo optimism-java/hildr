@@ -20,6 +20,8 @@ public class SpecConfig {
 
     /**
      * The SpecConfig constructor.
+     *
+     * @return the seconds per slot
      */
     public BigInteger getSecondsPerSlot() {
         return new BigInteger(secondsPerSlot);
@@ -27,10 +29,17 @@ public class SpecConfig {
 
     /**
      * The SpecConfig constructor.
+     *
+     * @param secondsPerSlot the seconds per slot
      */
     public void setSecondsPerSlot(String secondsPerSlot) {
         this.secondsPerSlot = secondsPerSlot;
     }
+
+    /**
+     * The SpecConfig constructor.
+     */
+    public SpecConfig() {}
 
     @Override
     public boolean equals(Object o) {

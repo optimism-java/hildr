@@ -24,16 +24,31 @@ import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.utils.Numeric;
 
+/**
+ * The type Tx encoder.
+ */
 public class TxEncoder {
 
     private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
             Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+    /**
+     * The constant REPLAY_UNPROTECTED_V_BASE.
+     */
     public static final BigInteger REPLAY_UNPROTECTED_V_BASE = BigInteger.valueOf(27);
+    /**
+     * The constant REPLAY_UNPROTECTED_V_BASE_PLUS_1.
+     */
     public static final BigInteger REPLAY_UNPROTECTED_V_BASE_PLUS_1 = BigInteger.valueOf(28);
 
+    /**
+     * The constant REPLAY_PROTECTED_V_BASE.
+     */
     public static final BigInteger REPLAY_PROTECTED_V_BASE = BigInteger.valueOf(35);
 
+    /**
+     * The constant REPLAY_PROTECTED_V_MIN.
+     */
     // The v signature parameter starts at 36 because 1 is the first valid chainId so:
     // chainId > 1 implies that 2 * chainId + V_BASE > 36.
     public static final BigInteger REPLAY_PROTECTED_V_MIN = BigInteger.valueOf(36);
@@ -44,6 +59,17 @@ public class TxEncoder {
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
+    /**
+     * Instantiates a new Tx encoder.
+     */
+    public TxEncoder() {}
+
+    /**
+     * Encode byte [ ].
+     *
+     * @param tx the tx
+     * @return the byte [ ]
+     */
     public static byte[] encode(EthBlock.TransactionObject tx) {
         if (TxType.OPTIMISM_DEPOSIT.is(tx.getType())) {
             throw new IllegalArgumentException("this method not support deposit transaction");
@@ -52,6 +78,13 @@ public class TxEncoder {
                 .toArray();
     }
 
+    /**
+     * To deposit tx deposit transaction.
+     *
+     * @param tx         the tx
+     * @param isSystemTx the is system tx
+     * @return the deposit transaction
+     */
     public static DepositTransaction toDepositTx(OpEthBlock.TransactionObject tx, boolean isSystemTx) {
         return new DepositTransaction(
                 tx.getSourceHash(),
@@ -64,6 +97,13 @@ public class TxEncoder {
                 tx.getInput());
     }
 
+    /**
+     * Encode deposit tx byte [ ].
+     *
+     * @param tx         the tx
+     * @param isSystemTx the is system tx
+     * @return the byte [ ]
+     */
     public static byte[] encodeDepositTx(OpEthBlock.TransactionObject tx, boolean isSystemTx) {
         DepositTransaction depositTx = new DepositTransaction(
                 tx.getSourceHash(),
@@ -77,6 +117,12 @@ public class TxEncoder {
         return depositTx.encode();
     }
 
+    /**
+     * Web 3 j tx to besu tx transaction.
+     *
+     * @param tx the tx
+     * @return the transaction
+     */
     public static Transaction web3jTxToBesuTx(EthBlock.TransactionObject tx) {
         if (TxType.LEGACY.is(tx.getType())) {
             return toLegacyTx(tx);
