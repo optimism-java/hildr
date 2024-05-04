@@ -9924,7 +9924,18 @@
   },
   {
     "name": "io.optimism.type.Epoch",
-    "methods": [{"name": "<init>","parameterTypes": ["java.math.BigInteger","java.lang.String","java.math.BigInteger","java.math.BigInteger"]}]
+    "allDeclaredClasses": true,
+    "queryAllDeclaredConstructors": true,
+    "queryAllPublicConstructors": true,
+    "allDeclaredConstructors": true,
+    "allPublicConstructors": true,
+    "queryAllDeclaredMethods": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true,
+    "allPublicMethods": true,
+    "allPublicFields": true,
+    "queryAllPublicMethods": true,
+    "allPublicClasses": true
   },
   {
     "name": "org.github.gestalt.config.decoder.DurationDecoder"
