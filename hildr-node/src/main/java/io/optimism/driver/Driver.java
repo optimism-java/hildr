@@ -247,7 +247,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         OpStackNetwork opStackNetwork = new OpStackNetwork(config.chainConfig(), unsafeBlockQueue);
         ISequencer sequencer = null;
         if (config.sequencerEnable()) {
-            sequencer = new Sequencer();
+            sequencer = new Sequencer(engineDriver, config.chainConfig());
         }
 
         l2Provider.shutdown();
@@ -422,7 +422,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void sequencerAction() throws InterruptedException, ExecutionException {
-        if (!this.isP2PNetworkStarted.get()) {
+        if (sequencer == null || !this.isP2PNetworkStarted.get()) {
             return;
         }
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
