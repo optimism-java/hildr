@@ -1,24 +1,19 @@
-/*
- * Copyright 2023 q315xia@163.com
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the
- * specific language governing permissions and limitations under the License.
- */
-
 package io.optimism.driver;
 
+import io.optimism.common.CriticalException;
+import io.optimism.common.ResetException;
+import io.optimism.common.SequencerException;
+import io.optimism.common.TemporaryException;
+import io.optimism.config.Config;
 import io.optimism.network.ExecutionPayloadEnvelop;
 import io.optimism.type.L2BlockRef;
+import io.optimism.type.enums.BlockInsertion;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The sequencer class.
@@ -27,34 +22,174 @@ import java.time.Duration;
  */
 public class Sequencer implements ISequencer {
 
+    private final Logger LOGGER = LoggerFactory.getLogger(Sequencer.class);
+
+    private static final long SECOND_NANO = Duration.of(1, ChronoUnit.SECONDS).toNanos();
+
+    private static final long SEALING_DURATION =
+            Duration.of(50, ChronoUnit.SECONDS).getSeconds();
+
+    private final Config.ChainConfig chainConfig;
+
+    private EngineDriver<?> engineDriver;
+
+    private AtomicLong nextActionTime;
+
+    private final long blockTime;
+
+    private final long maxSequencerDrift;
+
     /**
      * Instantiates a new Sequencer.
+     *
+     * @param engineDriver the engine driver
+     * @param chainConfig the chain config
      */
-    public Sequencer() {}
-
-    @Override
-    public void startBuildingBlock() {}
-
-    @Override
-    public ExecutionPayloadEnvelop completeBuildingBlock() {
-        return null;
-    }
-
-    @Override
-    public Duration planNextSequencerAction() {
-        return null;
+    public Sequencer(final EngineDriver<?> engineDriver, final Config.ChainConfig chainConfig) {
+        this.chainConfig = chainConfig;
+        this.engineDriver = engineDriver;
+        this.nextActionTime = new AtomicLong();
+        this.blockTime = chainConfig.blockTime().longValue();
+        this.maxSequencerDrift = chainConfig.maxSeqDrift().longValue();
+        // todo gossip broadcast
     }
 
     @Override
     public ExecutionPayloadEnvelop runNextSequencerAction() {
-        return null;
+        var now = this.nowNano();
+        if (nextActionTime.get() < now) {
+            return null;
+        }
+        // complete building block
+        // check if a payload is building
+        var buildings = this.engineDriver.buildingPayload();
+        var buildingOnto = buildings.component1();
+        var buildingId = buildings.component2();
+        var safe = buildings.component3();
+        // todo is gossiping check
+        //        var isGossiping;
+        ExecutionPayloadEnvelop envelop = null;
+        if (StringUtils.isNotEmpty(buildingId)) {
+            if (safe) {
+                this.nextActionTime.set(now + this.blockTime * SECOND_NANO);
+                return null;
+            }
+            envelop = this.completeBuildingBlock();
+        } else {
+            // start building block
+            this.startBuildingBlock();
+        }
+        // after all update next action time
+        var delay = this.planNextSequencerAction();
+        this.nextActionTime.set(this.nowNano() + delay);
+        return envelop;
+    }
+
+    @Override
+    public long planNextSequencerAction() {
+        var buildings = this.engineDriver.buildingPayload();
+        var buildingOnto = buildings.component1();
+        var buildingId = buildings.component2();
+        var safe = buildings.component3();
+        if (safe) {
+            return this.blockTime;
+        }
+        var unsafeHead = this.engineDriver.getUnsafeHead();
+        var now = this.nowNano();
+
+        var delay = this.nextActionTime.get() - this.nowNano();
+        if (delay > 0 && buildingOnto.hash().equalsIgnoreCase(unsafeHead.hash())) {
+            return delay;
+        }
+        var payloadTime = unsafeHead.timestamp().longValue() + this.blockTime;
+        var remainingTime = payloadTime - now;
+
+        if (StringUtils.isNotEmpty(buildingId) && buildingOnto.hash().equalsIgnoreCase(unsafeHead.hash())) {
+            return remainingTime < SEALING_DURATION ? 0 : remainingTime - SEALING_DURATION;
+        }
+        return remainingTime > this.blockTime ? remainingTime - this.blockTime : 0;
+    }
+
+    @Override
+    public void startBuildingBlock() {
+        try {
+            var buildings = this.engineDriver.buildingPayload();
+            LOGGER.info(
+                    "sequencer started building new block",
+                    "payload_id",
+                    buildings.component2(),
+                    "l2_parent_block",
+                    buildings.component1());
+        } catch (Exception e) {
+            this.handleStartBuildingException(e);
+        }
+    }
+
+    private void handleStartBuildingException(Exception e) {
+        if (e instanceof CriticalException) {
+            throw (CriticalException) e;
+        }
+        if (e instanceof ResetException) {
+            LOGGER.error("sequencer failed to seal new block, requiring derivation reset", e);
+            this.nextActionTime.set(this.nowNano() + this.blockTime * SECOND_NANO);
+            this.cancelBuildingBlock();
+            throw (ResetException) e;
+        } else if (e instanceof TemporaryException) {
+            LOGGER.error("sequencer temporarily failed to start building new block", e);
+            this.nextActionTime.set(this.nowNano() + SECOND_NANO);
+        } else {
+            LOGGER.error("sequencer failed to start building new block with unclassified error", e);
+            this.nextActionTime.set(this.nowNano() + SECOND_NANO);
+            this.cancelBuildingBlock();
+        }
+    }
+
+    @Override
+    public ExecutionPayloadEnvelop completeBuildingBlock() {
+        try {
+            var res = this.engineDriver.confirmBuildingPayload();
+            var envelope = res.component1();
+            var errType = res.component2();
+            if (errType != BlockInsertion.SUCCESS) {
+                throw new SequencerException("failed to complete building block: error: " + errType.name());
+            }
+            return envelope;
+        } catch (Exception e) {
+            this.handleCompleteBuildingException(e);
+            return null;
+        }
+    }
+
+    private void handleCompleteBuildingException(Exception e) {
+        if (e instanceof CriticalException) {
+            throw (CriticalException) e;
+        }
+        if (e instanceof ResetException) {
+            LOGGER.error("sequencer failed to seal new block, requiring derivation reset", e);
+            this.nextActionTime.set(this.nowNano() + this.blockTime * SECOND_NANO);
+            this.cancelBuildingBlock();
+            throw (ResetException) e;
+        } else if (e instanceof TemporaryException) {
+            LOGGER.error("sequencer failed temporarily to seal new block", e);
+            this.nextActionTime.set(this.nowNano() + SECOND_NANO);
+        } else {
+            LOGGER.error("sequencer failed to seal block with unclassified error", e);
+            this.nextActionTime.set(this.nowNano() + SECOND_NANO);
+            this.cancelBuildingBlock();
+        }
     }
 
     @Override
     public L2BlockRef buildingOnto() {
-        return null;
+        return this.engineDriver.buildingPayload().component1();
     }
 
     @Override
-    public void cancelBuildingBlock() {}
+    public void cancelBuildingBlock() {
+        this.engineDriver.cancelPayload(true);
+    }
+
+    private long nowNano() {
+        return System.nanoTime();
+    }
 }

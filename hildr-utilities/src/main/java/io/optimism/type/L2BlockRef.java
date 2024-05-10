@@ -68,4 +68,15 @@ public record L2BlockRef(
     public int hashCode() {
         return Objects.hash(hash, number, parentHash, timestamp, l1origin, sequenceNumber);
     }
+
+    @Override
+    public String toString() {
+        return "L2BlockRef{" + "hash='"
+                + hash + '\'' + ", number="
+                + number + ", parentHash='"
+                + parentHash + '\'' + ", timestamp="
+                + timestamp + ", l1origin="
+                + l1origin + ", sequenceNumber="
+                + sequenceNumber + '}';
+    }
 }

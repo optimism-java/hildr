@@ -13,8 +13,11 @@ import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthExecutionPayload;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
+import io.optimism.network.ExecutionPayloadEnvelop;
 import io.optimism.type.Epoch;
 import io.optimism.type.L2BlockRef;
+import io.optimism.type.PayloadInfo;
+import io.optimism.type.enums.BlockInsertion;
 import io.optimism.type.enums.SyncStatus;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
@@ -31,6 +34,9 @@ import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
+import org.web3j.tuples.generated.Tuple2;
+import org.web3j.tuples.generated.Tuple3;
+import org.web3j.utils.Numeric;
 
 /**
  * The type EngineDriver.
@@ -63,6 +69,13 @@ public class EngineDriver<E extends Engine> {
     private Epoch finalizedEpoch;
 
     private SyncStatus syncStatus;
+
+    // building state
+    private L2BlockRef buildingOnto;
+    private PayloadInfo buildingInfo;
+    private boolean buildingSafe;
+    private PayloadAttributes safeAttrs;
+
     /**
      * Instantiates a new Engine driver.
      *
@@ -221,6 +234,69 @@ public class EngineDriver<E extends Engine> {
             this.syncStatus = SyncStatus.FinishedEL;
             LOGGER.info("EL sync finished");
         }
+    }
+
+    /**
+     * Start building payload block insertion.
+     *
+     * @param parent the parent
+     * @param attributes the attributes
+     * @return the block insertion
+     */
+    public BlockInsertion startBuildingPayload(L2BlockRef parent, PayloadAttributes attributes) {
+        if (this.isEngineSyncing()) {
+            return BlockInsertion.TEMPORARY;
+        }
+        return BlockInsertion.SUCCESS;
+    }
+
+    /**
+     * Confirm building payload.
+     *
+     * @return ExecutionPayloadEnvelop and insertion status
+     */
+    public Tuple2<ExecutionPayloadEnvelop, BlockInsertion> confirmBuildingPayload() {
+        return null;
+    }
+
+    /**
+     * Cancel building payload.
+     * @param force if true then reset building state forcefully, otherwise throw exception
+     */
+    public void cancelPayload(boolean force) {
+        if (this.buildingInfo == null) {
+            return;
+        }
+        // e.log.Error("cancelling old block sealing job", "payload", e.buildingInfo.ID)
+        LOGGER.error("cancelling old block sealing job: payload = {}", this.buildingInfo.payloadId());
+        try {
+            this.engine.getPayload(this.buildingInfo.timestamp(), Numeric.toBigInt(this.buildingInfo.payloadId()));
+        } catch (Exception e) {
+            if (!force) {
+                throw new RuntimeException(e);
+            }
+            LOGGER.error("failed to cancel block building job: payload = {}", this.buildingInfo.payloadId(), e);
+        }
+        this.resetBuildingState();
+    }
+
+    /**
+     * Reset building state.
+     */
+    public void resetBuildingState() {
+        this.buildingInfo = null;
+        this.buildingOnto = null;
+        this.buildingSafe = false;
+        this.safeAttrs = null;
+    }
+
+    /**
+     * Gets building payload info.
+     *
+     * @return the building payload
+     */
+    public Tuple3<L2BlockRef, String, Boolean> buildingPayload() {
+        return new Tuple3<>(buildingOnto, buildingInfo.payloadId(), buildingSafe);
     }
 
     /**

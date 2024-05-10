@@ -3,13 +3,14 @@ package io.optimism.utilities.rpc.response;
 import io.optimism.type.L2BlockRef;
 
 /**
+ * Output root result.
  *
- * @param version
- * @param outputRoot
- * @param blockRef
- * @param withdrawalStorageRoot
- * @param stateRoot
- * @param syncStatus
+ * @param version the version
+ * @param outputRoot the output root
+ * @param blockRef the l2 block ref
+ * @param withdrawalStorageRoot the withdrawal storage root
+ * @param stateRoot the state root
+ * @param syncStatus the l2 sync status info
  */
 public record OutputRootResult(
         String version,
