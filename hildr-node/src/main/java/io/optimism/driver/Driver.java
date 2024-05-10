@@ -77,6 +77,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private final EngineDriver<E> engineDriver;
 
+    private final ISequencer sequencer;
+
     private final RpcServer rpcServer;
 
     private List<UnfinalizedBlock> unfinalizedBlocks;
@@ -115,6 +117,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
      * Instantiates a new Driver.
      *
      * @param engineDriver     the engine driver
+     * @param sequencer        the sequencer
      * @param pipeline         the pipeline
      * @param l2Fetcher        the L2 HeadInfo fetcher
      * @param state            the state
@@ -128,6 +131,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     @SuppressWarnings("preview")
     public Driver(
             EngineDriver<E> engineDriver,
+            ISequencer sequencer,
             Pipeline pipeline,
             BiFunction<DefaultBlockParameter, Boolean, Tuple2<BlockInfo, Epoch>> l2Fetcher,
             AtomicReference<io.optimism.derive.State> state,
@@ -138,6 +142,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             Config config,
             OpStackNetwork opStackNetwork) {
         this.engineDriver = engineDriver;
+        this.sequencer = sequencer;
         this.rpcServer = rpcServer;
         this.pipeline = pipeline;
         this.l2Fetcher = l2Fetcher;
@@ -240,10 +245,15 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
         OpStackNetwork opStackNetwork = new OpStackNetwork(config.chainConfig(), unsafeBlockQueue);
+        ISequencer sequencer = null;
+        if (config.sequencerEnable()) {
+            sequencer = new Sequencer();
+        }
 
         l2Provider.shutdown();
         return new Driver<>(
                 engineDriver,
+                sequencer,
                 pipeline,
                 l2Fetcher,
                 state,
@@ -346,6 +356,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         while (isRunning() && !isShutdownTriggered) {
             try {
                 this.advance();
+                this.sequencerAction();
             } catch (InterruptedException e) {
                 LOGGER.error("driver run interrupted", e);
                 this.latch.countDown();
@@ -407,6 +418,21 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     private void awaitEngineReady() throws InterruptedException {
         while (!this.engineDriver.engineReady()) {
             sleep(Duration.ofSeconds(1));
+        }
+    }
+
+    private void sequencerAction() throws InterruptedException, ExecutionException {
+        if (!this.isP2PNetworkStarted.get()) {
+            return;
+        }
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            var task = scope.fork(TracerTaskWrapper.wrap((Callable<Void>) () -> {
+                Driver.this.sequencer.runNextSequencerAction();
+                return null;
+            }));
+            scope.join();
+            scope.throwIfFailed();
+            task.get();
         }
     }
 

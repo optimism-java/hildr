@@ -107,6 +107,13 @@ public class Cli implements Runnable {
     Boolean devnet;
 
     @Option(
+            names = "--sequencer-enable",
+            defaultValue = "false",
+            description =
+                    "Enable sequencing of new L2 blocks. A separate batch submitter has to be deployed to publish the data for verifiers.")
+    Boolean sequencerEnable;
+
+    @Option(
             names = "--log-level",
             defaultValue = "DEBUG",
             converter = LogLevelConverter.class,
@@ -118,8 +125,11 @@ public class Cli implements Runnable {
 
     @Override
     public void run() {
-        var logger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        logger.setLevel(logLevel);
+        var logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        if (logger instanceof ch.qos.logback.classic.Logger) {
+            var logbackLogger = (ch.qos.logback.classic.Logger) logger;
+            logbackLogger.setLevel(logLevel);
+        }
         TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
         if (Boolean.TRUE.equals(metricsEnable)) {
             var metricsPort = this.metricsPort;
@@ -211,6 +221,7 @@ public class Cli implements Runnable {
                 cli.checkpointSyncUrl,
                 cli.rpcPort,
                 cli.syncMode,
+                cli.sequencerEnable,
                 cli.devnet);
     }
 }

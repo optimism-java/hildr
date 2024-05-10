@@ -6,7 +6,7 @@ plugins {
 	id "net.ltgt.errorprone" version "3.1.0"
 }
 
-group = 'me.grapebaba'
+group = 'io.optimism'
 version = '0.4.0'
 
 repositories {
@@ -77,6 +77,7 @@ dependencies {
 	api 'io.opentelemetry:opentelemetry-sdk'
 	api 'io.opentelemetry:opentelemetry-sdk-logs'
 
+	implementation 'info.picocli:picocli:4.7.3'
 	implementation 'com.fasterxml.jackson:jackson-bom:2.15.2'
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 

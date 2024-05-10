@@ -37,6 +37,7 @@ class DriverTest {
                 l2rpc,
                 null,
                 Config.SyncMode.Full,
+                false,
                 false);
 
         Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());

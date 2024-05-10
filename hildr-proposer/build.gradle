@@ -241,6 +241,21 @@ shadowJar {
 	transform(com.github.jengelman.gradle.plugins.shadow.transformers.Log4j2PluginsCacheFileTransformer)
 }
 
+task buildJarForDocker {
+	dependsOn jar
+	def buildImageDir = "build/docker"
+	def out = new ByteArrayOutputStream()
+	doFirst {
+		new File(buildImageDir).mkdirs()
+		copy {
+			from "build/libs/${project.name}-${project.version}.jar"
+			into buildImageDir
+			rename "${project.name}-${project.version}.jar", "${project.name}.jar"
+		}
+	}
+	println(out.toString())
+}
+
 nativeCompile {
 	enabled = false
 }

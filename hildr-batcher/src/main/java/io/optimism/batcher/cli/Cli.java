@@ -1,11 +1,13 @@
 package io.optimism.batcher.cli;
 
+import ch.qos.logback.classic.Level;
 import io.micrometer.tracing.Tracer;
 import io.optimism.batcher.BatcherSubmitter;
 import io.optimism.batcher.config.Config;
 import io.optimism.batcher.exception.BatcherExecutionException;
 import io.optimism.batcher.telemetry.BatcherMetricsServer;
 import io.optimism.batcher.telemetry.BatcherPrometheusMetrics;
+import io.optimism.cli.typeconverter.LogLevelConverter;
 import io.optimism.utilities.telemetry.Logging;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import org.slf4j.Logger;
@@ -43,7 +45,7 @@ public class Cli implements Runnable {
     @Option(names = "--sub-safety-margin", required = true, description = "")
     Long subSafetyMargin;
 
-    @Option(names = "--pull-interval", required = true, description = "")
+    @Option(names = "--poll-interval", required = true, description = "")
     Long pollInterval;
 
     @Option(names = "--max-l1-tx-size", required = true, description = "")
@@ -61,18 +63,26 @@ public class Cli implements Runnable {
     @Option(names = "--enable-metrics", description = "If not contains this option, will not open metrics server")
     boolean enableMetrics;
 
-    @Option(
-            names = "--metrics-port",
-            defaultValue = "9200",
-            required = true,
-            description = "The port of metrics server ")
+    @Option(names = "--metrics-port", defaultValue = "9200", description = "The port of metrics server ")
     Integer metricsPort;
+
+    @Option(
+            names = "--log-level",
+            defaultValue = "DEBUG",
+            converter = LogLevelConverter.class,
+            description = "Log level")
+    Level logLevel;
 
     /** the Cli constructor. */
     public Cli() {}
 
     @Override
     public void run() {
+        var logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        if (logger instanceof ch.qos.logback.classic.Logger) {
+            var logbackLogger = (ch.qos.logback.classic.Logger) logger;
+            logbackLogger.setLevel(logLevel);
+        }
         TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
 
         // listen close signal
