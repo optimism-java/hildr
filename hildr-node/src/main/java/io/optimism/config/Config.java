@@ -43,6 +43,7 @@ import org.web3j.utils.Numeric;
  * @param checkpointSyncUrl   The checkpoint sync url.
  * @param rpcPort             The rpc port.
  * @param devnet              The flag of devnet.
+ * @param sequencerEnable     The flag of sequencerEnable.
  * @param syncMode            The sync mode
  * @param chainConfig         The chain config.
  * @author grapebaba
@@ -59,6 +60,7 @@ public record Config(
         String checkpointSyncUrl,
         Integer rpcPort,
         Boolean devnet,
+        Boolean sequencerEnable,
         SyncMode syncMode,
         ChainConfig chainConfig) {
 
@@ -144,7 +146,8 @@ public record Config(
      * @param jwtSecret           L2 engine API jwt secret.
      * @param checkpointSyncUrl   The checkpoint sync url.
      * @param rpcPort             The rpc port.
-     * @param syncMode             The sync mode.
+     * @param syncMode            The sync mode.
+     * @param sequencerEnable     The sequencer enable flag.
      * @param devnet              The devnet flag.
      */
     public record CliConfig(
@@ -158,6 +161,7 @@ public record Config(
             String checkpointSyncUrl,
             Integer rpcPort,
             SyncMode syncMode,
+            Boolean sequencerEnable,
             Boolean devnet) {
 
         /**
@@ -197,6 +201,7 @@ public record Config(
             if (syncMode != null) {
                 map.put("config.syncMode", syncMode.toString());
             }
+            map.put("config.sequencerEnable", String.valueOf(sequencerEnable != null && sequencerEnable));
             map.put("config.devnet", String.valueOf(devnet != null && devnet));
             return map;
         }

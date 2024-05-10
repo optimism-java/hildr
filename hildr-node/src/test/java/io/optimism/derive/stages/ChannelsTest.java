@@ -117,7 +117,19 @@ class ChannelsTest {
 
     private Tuple2<Channels<BatcherTransactions>, MessagePassingQueue<BatcherTransactionMessage>> createStage() {
         Config config = new Config(
-                "", "", "", "", "", "", null, null, 9545, false, Config.SyncMode.Full, ChainConfig.optimismGoerli());
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                null,
+                null,
+                9545,
+                false,
+                false,
+                Config.SyncMode.Full,
+                ChainConfig.optimismGoerli());
         MessagePassingQueue<BatcherTransactionMessage> transactionMessageMessagePassingQueue =
                 new MpscGrowableArrayQueue<>(4096);
         Channels<BatcherTransactions> channels =

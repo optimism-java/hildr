@@ -1,8 +1,11 @@
 package io.optimism.proposer.cli;
 
+import ch.qos.logback.classic.Level;
+import io.optimism.cli.typeconverter.LogLevelConverter;
 import io.optimism.proposer.L2OutputSubmitter;
 import io.optimism.proposer.config.Config;
 import io.optimism.utilities.telemetry.Logging;
+import io.optimism.utilities.telemetry.TracerTaskWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -30,7 +33,7 @@ public class Cli implements Runnable {
     @CommandLine.Option(names = "--rollup-rpc-url", required = true, description = "The rollup node RPC URL")
     String rollupRpcUrl;
 
-    @CommandLine.Option(names = "--l2-chainId", required = true, description = "The L2 chain ID")
+    @CommandLine.Option(names = "--l2-chain-id", required = true, description = "The L2 chain ID")
     Long l2ChainId;
 
     @CommandLine.Option(names = "--l2-signer", required = true, description = "The L2 chain private key")
@@ -42,7 +45,10 @@ public class Cli implements Runnable {
     @CommandLine.Option(names = "--l2dgf-address", description = "The L2 dispute game factory contract address")
     String dgfContractAddr;
 
-    @CommandLine.Option(names = "--poll-interval", description = "How frequently to poll L2 for new blocks")
+    @CommandLine.Option(
+            names = "--poll-interval",
+            defaultValue = "300",
+            description = "How frequently to poll L2 for new blocks")
     Long pollInterval;
 
     @CommandLine.Option(
@@ -57,6 +63,13 @@ public class Cli implements Runnable {
             description = "Allow the proposer to submit proposals for L2 blocks derived from non-finalized L1 blocks")
     boolean allowNonFinalized;
 
+    @CommandLine.Option(
+            names = "--log-level",
+            defaultValue = "DEBUG",
+            converter = LogLevelConverter.class,
+            description = "Log level")
+    Level logLevel;
+
     /**
      * The proposer CLI constructor.
      */
@@ -64,6 +77,12 @@ public class Cli implements Runnable {
 
     @Override
     public void run() {
+        var logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+        if (logger instanceof ch.qos.logback.classic.Logger) {
+            var logbackLogger = (ch.qos.logback.classic.Logger) logger;
+            logbackLogger.setLevel(logLevel);
+        }
+        TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
 
         // listen close signal
         Signal.handle(new Signal("INT"), sig -> System.exit(0));

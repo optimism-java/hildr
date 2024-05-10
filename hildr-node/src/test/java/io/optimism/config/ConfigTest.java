@@ -26,8 +26,8 @@ class ConfigTest {
      */
     @Test
     void create() {
-        CliConfig cliConfig =
-                new CliConfig(null, null, null, null, null, null, "testjwt", null, null, Config.SyncMode.Full, false);
+        CliConfig cliConfig = new CliConfig(
+                null, null, null, null, null, null, "testjwt", null, null, Config.SyncMode.Full, false, false);
         Config config = Config.create(
                 Paths.get("src", "test", "resources", "test.toml"), cliConfig, ChainConfig.optimismGoerli());
         assertEquals("https://example2.com", config.l2RpcUrl());

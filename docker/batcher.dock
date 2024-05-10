@@ -1,0 +1,14 @@
+FROM ghcr.io/graalvm/graalvm-community:21 as builder
+
+WORKDIR /root/hildr
+COPY . .
+RUN ./gradlew clean hildr-batcher:buildJarForDocker
+
+FROM ghcr.io/graalvm/graalvm-community:21
+
+WORKDIR /usr/local/bin
+COPY --from=builder /root/hildr/hildr-batcher/build/docker/hildr-batcher.jar .
+ENV HILDR_BATCHER_JAR /usr/local/bin/hildr-batcher.jar
+ENV HILDR_BATCHER_MAIN_CLASS io.optimism.batcher.HildrBatcher
+
+ENTRYPOINT ["java", "--enable-preview", "-cp" , "/usr/local/bin/hildr-batcher.jar", "io.optimism.batcher.HildrBatcher"]

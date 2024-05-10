@@ -115,6 +115,7 @@ public class RpcServerTest {
                 null,
                 9545,
                 false,
+                false,
                 Config.SyncMode.Full,
                 Config.ChainConfig.optimism()));
         rpcServer.start();
