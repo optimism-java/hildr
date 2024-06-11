@@ -230,7 +230,8 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
             finalizedHead = BlockInfo.EMPTY;
             l2Refs = new TreeMap<>();
         } else {
-            l2Refs = io.optimism.derive.State.initL2Refs(finalizedHead.number(), config.chainConfig(), l2Provider);
+            l2Refs = io.optimism.derive.State.initL2Refs(
+                    finalizedHead.number(), finalizedEpoch.timestamp(), config.chainConfig(), l2Provider);
         }
         var l2Fetcher = Driver.l2Fetcher(l2Provider);
         AtomicReference<io.optimism.derive.State> state = new AtomicReference<>(

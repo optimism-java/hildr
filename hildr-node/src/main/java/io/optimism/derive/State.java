@@ -290,12 +290,10 @@ public class State {
             this.l1Hashes.pollFirstEntry();
         }
 
+        BigInteger maxSeqDrift = this.config.chainConfig().maxSequencerDrift(this.safeEpoch.timestamp());
         pruneUntil = this.safeHead
                 .number()
-                .subtract(this.config
-                        .chainConfig()
-                        .maxSeqDrift()
-                        .divide(this.config.chainConfig().blockTime()));
+                .subtract(maxSeqDrift.divide(this.config.chainConfig().blockTime()));
 
         Entry<BigInteger, Tuple2<BlockInfo, Epoch>> blockRefEntry;
         while ((blockRefEntry = this.l2Refs.firstEntry()) != null) {
@@ -312,14 +310,15 @@ public class State {
      * @param headNum the l2 head block number
      * @param chainConfig the chain config
      * @param l2Client the l2 web3j client
+     * @param l1OriginTime the l1 origin time
      * @return the L2 refs tree map.
      * @throws ExecutionException throws the ExecutionException when the Task has been failed
      * @throws InterruptedException throws the InterruptedException when the thread has been interrupted
      */
     public static TreeMap<BigInteger, Tuple2<BlockInfo, Epoch>> initL2Refs(
-            BigInteger headNum, Config.ChainConfig chainConfig, Web3j l2Client)
+            BigInteger headNum, BigInteger l1OriginTime, Config.ChainConfig chainConfig, Web3j l2Client)
             throws ExecutionException, InterruptedException {
-        final BigInteger lookback = chainConfig.maxSeqDrift().divide(chainConfig.blockTime());
+        final BigInteger lookback = chainConfig.maxSequencerDrift(l1OriginTime).divide(chainConfig.blockTime());
         BigInteger start;
         if (headNum.compareTo(lookback) < 0) {
             start = chainConfig.l2Genesis().number();

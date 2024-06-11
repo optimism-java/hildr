@@ -29,71 +29,60 @@ class ConfigTest {
         CliConfig cliConfig = new CliConfig(
                 null, null, null, null, null, null, "testjwt", null, null, Config.SyncMode.Full, false, false);
         Config config = Config.create(
-                Paths.get("src", "test", "resources", "test.toml"), cliConfig, ChainConfig.optimismGoerli());
+                Paths.get("src", "test", "resources", "test.toml"), cliConfig, ChainConfig.optimismSepolia());
         assertEquals("https://example2.com", config.l2RpcUrl());
         assertEquals("http://127.0.0.1:8551", config.l2EngineUrl());
         assertEquals("", config.l1RpcUrl());
         assertEquals("testjwt", config.jwtSecret());
         assertEquals(9545, config.rpcPort());
         assertEquals(
-                "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
+                "0x48f520cf4ddaf34c8336e6e490632ea3cf1e5e93b0b2bc6e917557e31845371b",
                 config.chainConfig().l1StartEpoch().hash());
         assertEquals(
-                BigInteger.valueOf(8300214L),
+                BigInteger.valueOf(4071408L),
                 config.chainConfig().l1StartEpoch().number());
         assertEquals(
-                BigInteger.valueOf(1673550516L),
+                BigInteger.valueOf(1691802540L),
                 config.chainConfig().l1StartEpoch().timestamp());
-        assertEquals("optimism-goerli", config.chainConfig().network());
+        assertEquals("optimism-sepolia", config.chainConfig().network());
         assertEquals(
-                "0x0f783549ea4313b784eadd9b8e8a69913b368b7366363ea814d7707ac505175f",
+                "0x102de6ffb001480cc9b8b548fd05c34cd4f46ae4aa91759393db90ea0409887d",
                 config.chainConfig().l2Genesis().hash());
+        assertEquals(BigInteger.valueOf(0L), config.chainConfig().l2Genesis().number());
         assertEquals(
-                BigInteger.valueOf(4061224L), config.chainConfig().l2Genesis().number());
-        assertEquals(
-                "0x31267a44f1422f4cab59b076548c075e79bd59e691a23fbce027f572a2a49dc9",
+                "0x0000000000000000000000000000000000000000000000000000000000000000",
                 config.chainConfig().l2Genesis().parentHash());
         assertEquals(
-                BigInteger.valueOf(1673550516L),
+                BigInteger.valueOf(1691802540L),
                 config.chainConfig().l2Genesis().timestamp());
         assertEquals(
-                "0x7431310e026b69bfc676c0013e12a1a11411eec9",
+                "0x8F23BB38F531600e5d8FDDaAEC41F13FaB46E98c",
                 config.chainConfig().systemConfig().batchSender());
         assertEquals(
-                BigInteger.valueOf(25_000_000L),
+                BigInteger.valueOf(30_000_000L),
                 config.chainConfig().systemConfig().gasLimit());
         assertEquals(
-                BigInteger.valueOf(2100), config.chainConfig().systemConfig().l1FeeOverhead());
+                BigInteger.valueOf(188), config.chainConfig().systemConfig().l1FeeOverhead());
         assertEquals(
-                BigInteger.valueOf(1000000), config.chainConfig().systemConfig().l1FeeScalar());
+                BigInteger.valueOf(684000), config.chainConfig().systemConfig().l1FeeScalar());
         assertEquals(
-                "0xff00000000000000000000000000000000000420",
+                "0xff00000000000000000000000000000011155420",
                 config.chainConfig().batchInbox());
         assertEquals(
-                "0x5b47E1A08Ea6d985D6649300584e6722Ec4B1383",
+                "0x16fc5058f25648194471939df75cf27a2fdc48bc",
                 config.chainConfig().depositContract());
         assertEquals(
-                "0xAe851f927Ee40dE99aaBb7461C00f9622ab91d60",
+                "0x034edd2a225f7f429a63e0f1d2084b9e0a93b538",
                 config.chainConfig().systemConfigContract());
         assertEquals(
-                "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a",
+                "0x4200000000000000000000000000000000000016",
                 config.chainConfig().l2Tol1MessagePasser());
-        assertEquals(BigInteger.valueOf(111_111_111L), config.chainConfig().maxChannelSize());
         assertEquals(BigInteger.valueOf(300L), config.chainConfig().channelTimeout());
-        assertEquals(BigInteger.valueOf(3600L), config.chainConfig().seqWindowSize());
+        assertEquals(BigInteger.valueOf(111111111L), config.chainConfig().seqWindowSize());
         assertEquals(BigInteger.valueOf(600L), config.chainConfig().maxSeqDrift());
-        assertEquals(BigInteger.valueOf(1679079600L), config.chainConfig().regolithTime());
+        assertEquals(BigInteger.valueOf(0L), config.chainConfig().regolithTime());
         assertEquals(BigInteger.valueOf(1699981200L), config.chainConfig().canyonTime());
         assertEquals(BigInteger.valueOf(2L), config.chainConfig().blockTime());
-    }
-
-    /**
-     * Base goerli.
-     */
-    @Test
-    void baseGoerli() {
-        ChainConfig chainConfig = ChainConfig.baseGoerli();
-        assertEquals(chainConfig.regolithTime(), BigInteger.valueOf(1683219600L));
     }
 
     /**
@@ -102,16 +91,7 @@ class ConfigTest {
     @Test
     void baseSepolia() {
         ChainConfig chainConfig = ChainConfig.baseSepolia();
-        assertEquals(chainConfig.canyonTime(), BigInteger.valueOf(-1L));
-    }
-
-    /**
-     * Base goerli.
-     */
-    @Test
-    void optimismGoerli() {
-        ChainConfig chainConfig = ChainConfig.optimismGoerli();
-        assertEquals(chainConfig.regolithTime(), new BigInteger("1679079600"));
+        assertEquals(chainConfig.canyonTime(), BigInteger.valueOf(1699981200L));
     }
 
     @Test
@@ -195,7 +175,6 @@ class ConfigTest {
         assertEquals(chain.depositContract(), "0x6900000000000000000000000000000000000001");
         assertEquals(chain.systemConfigContract(), "0x6900000000000000000000000000000000000009");
 
-        assertEquals(chain.maxChannelSize(), BigInteger.valueOf(100_000_000L));
         assertEquals(chain.channelTimeout(), BigInteger.valueOf(120L));
         assertEquals(chain.seqWindowSize(), BigInteger.valueOf(200L));
         assertEquals(chain.maxSeqDrift(), BigInteger.valueOf(300L));

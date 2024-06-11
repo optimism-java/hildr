@@ -8,13 +8,14 @@ import io.optimism.derive.State;
 import io.optimism.derive.stages.Channels.Channel;
 import io.optimism.l1.L1Info;
 import io.optimism.type.Epoch;
+import io.optimism.utilities.compression.Compressors;
 import io.optimism.utilities.derive.stages.Batch;
 import io.optimism.utilities.derive.stages.BatchType;
 import io.optimism.utilities.derive.stages.IBatch;
 import io.optimism.utilities.derive.stages.SingularBatch;
 import io.optimism.utilities.derive.stages.SpanBatch;
 import io.optimism.utilities.derive.stages.SpanBatchElement;
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,6 @@ import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.zip.DataFormatException;
-import java.util.zip.Inflater;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.jctools.queues.atomic.SpscAtomicArrayQueue;
@@ -171,7 +170,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
      * @return the list
      */
     public static List<Batch> decodeBatches(final Config.ChainConfig chainConfig, final Channel channel) {
-        byte[] channelData = decompressZlib(channel.data());
+        byte[] channelData = decompressChannelData(channel.data());
         List<RlpType> batches = RlpDecoder.decode(channelData).getValues();
         return batches.stream()
                 .map(rlpType -> {
@@ -197,23 +196,22 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 .collect(Collectors.toList());
     }
 
-    private static byte[] decompressZlib(byte[] data) {
-        try {
-            Inflater inflater = new Inflater();
-            inflater.setInput(data);
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
-            byte[] buffer = new byte[1024];
-            while (!inflater.finished()) {
-                int count = inflater.inflate(buffer);
-                if (count == 0) {
-                    break;
-                }
-                outputStream.write(buffer, 0, count);
+    private static byte[] decompressChannelData(byte[] data) {
+        byte compressType = data[0];
+        if ((compressType & 0x0F) == Compressors.ZlibCM8 || (compressType & 0x0F) == Compressors.ZlibCM15) {
+            try {
+                return Compressors.zlibDecompress(data);
+            } catch (IOException e) {
+                throw new DecompressException(e);
             }
-
-            return outputStream.toByteArray();
-        } catch (DataFormatException e) {
-            throw new DecompressZlibException(e);
+        } else if (compressType == Compressors.ChannelVersionBrotli) {
+            try {
+                return Compressors.brotliDecompress(ArrayUtils.subarray(data, 1, data.length));
+            } catch (IOException e) {
+                throw new DecompressException(e);
+            }
+        } else {
+            throw new IllegalArgumentException("invalid compress type");
         }
     }
 
@@ -284,12 +282,9 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 return BatchStatus.Drop;
             }
 
+            BigInteger maxSeqDrift = this.config.chainConfig().maxSequencerDrift(batchOrigin.timestamp());
             // handle sequencer drift
-            if (batch.timestamp()
-                            .compareTo(batchOrigin
-                                    .timestamp()
-                                    .add(this.config.chainConfig().maxSeqDrift()))
-                    > 0) {
+            if (batch.timestamp().compareTo(batchOrigin.timestamp().add(maxSeqDrift)) > 0) {
                 if (batch.transactions().isEmpty()) {
                     if (epoch.number().compareTo(batch.epochNum()) == 0) {
                         if (nextEpoch != null) {
@@ -432,10 +427,10 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
                 LOGGER.warn("block timestamp is less than L1 origin timestamp");
                 return BatchStatus.Drop;
             }
-            final var max = batchL1Origin
-                    .blockInfo()
-                    .timestamp()
-                    .add(this.config.chainConfig().maxSeqDrift());
+            BigInteger maxSeqDrift = this.config
+                    .chainConfig()
+                    .maxSequencerDrift(batchL1Origin.blockInfo().timestamp());
+            final var max = batchL1Origin.blockInfo().timestamp().add(maxSeqDrift);
             if (blockTimestamp.compareTo(max) > 0) {
                 if (!spanBatch.getBlockTransactions(i).isEmpty()) {
                     LOGGER.warn(String.format(

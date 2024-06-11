@@ -7,12 +7,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.optimism.config.Config;
 import io.optimism.config.Config.ChainConfig;
+import io.optimism.derive.State;
 import io.optimism.derive.stages.BatcherTransactions.BatcherTransactionMessage;
 import io.optimism.derive.stages.Channels.Channel;
 import io.optimism.utilities.derive.stages.Frame;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicReference;
 import org.bouncycastle.util.encoders.Hex;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;
@@ -129,11 +132,13 @@ class ChannelsTest {
                 false,
                 false,
                 Config.SyncMode.Full,
-                ChainConfig.optimismGoerli());
+                ChainConfig.optimismSepolia());
         MessagePassingQueue<BatcherTransactionMessage> transactionMessageMessagePassingQueue =
                 new MpscGrowableArrayQueue<>(4096);
+        AtomicReference<io.optimism.derive.State> state =
+                new AtomicReference<>(State.create(new TreeMap<>(), null, null, null, config));
         Channels<BatcherTransactions> channels =
-                Channels.create(new BatcherTransactions(transactionMessageMessagePassingQueue), config);
+                Channels.create(new BatcherTransactions(transactionMessageMessagePassingQueue), config, state);
         return new Tuple2<>(channels, transactionMessageMessagePassingQueue);
     }
 }
