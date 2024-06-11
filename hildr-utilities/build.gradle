@@ -114,7 +114,7 @@ dependencies {
 	implementation "com.aayushatharva.brotli4j:brotli4j:$brotliVersion"
 	runtimeOnly("""com.aayushatharva.brotli4j:native-${
 		if (operatingSystem.isWindows())
-			if (currentArchitecture.isX86_64()) "windows-x86_64"
+			if (currentArchitecture.isAmd64()) "windows-x86_64"
 			else if (currentArchitecture.isArm()) "windows-aarch64"
 			else
 				throw new IllegalStateException("Unsupported architecture: ${currentArchitecture.getName()}");
@@ -122,12 +122,8 @@ dependencies {
 			if (currentArchitecture.isArm()) "osx-aarch64"
 			else "osx-x86_64"
 		else if (operatingSystem.isLinux())
-			if (currentArchitecture.isAARCH64()) "linux-aarch64"
-			else if (currentArchitecture.isX86_64()) "linux-x86_64"
-			else if (currentArchitecture.isARM_V7()) "linux-armv7"
-			else if (currentArchitecture.isPPC64LE()) "linux-ppc64le"
-			else if (currentArchitecture.isS390X()) "linux-s390x"
-			else if (currentArchitecture.isRISCV64()) "linux-riscv64"
+			if (currentArchitecture.isArm()) "linux-aarch64"
+			else if (currentArchitecture.isAmd64()) "linux-x86_64"
 			else
 				throw new IllegalStateException("Unsupported architecture: ${currentArchitecture.getName()}");
 		else
