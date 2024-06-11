@@ -4,7 +4,7 @@ import io.optimism.common.BlockInfo;
 import io.optimism.common.BlockNotIncludedException;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemAccounts;
-import io.optimism.derive.EctoneUpgradeTransactions;
+import io.optimism.derive.ForkUpgradeTransactions;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
@@ -30,7 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.web3j.abi.TypeEncoder;
 import org.web3j.abi.datatypes.Uint;
-import org.web3j.abi.datatypes.generated.*;
+import org.web3j.abi.datatypes.generated.Bytes32;
+import org.web3j.abi.datatypes.generated.Uint256;
 import org.web3j.crypto.Hash;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthLog.LogObject;
@@ -154,7 +155,11 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
         }
 
         if (this.config.chainConfig().isEcotoneActivationBlock(batch.timestamp())) {
-            transactions.addAll(EctoneUpgradeTransactions.UPGRADE_DEPORIT_TX);
+            transactions.addAll(ForkUpgradeTransactions.ECOTONE_UPGRADE_TXS);
+        }
+
+        if (this.config.chainConfig().isFjordActivationBlock(batch.timestamp())) {
+            transactions.addAll(ForkUpgradeTransactions.FJORD_UPGRADE_TXS);
         }
 
         List<String> rest = batch.transactions();

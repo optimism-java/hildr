@@ -74,7 +74,6 @@ public class EngineDriver<E extends Engine> {
     private L2BlockRef buildingOnto;
     private PayloadInfo buildingInfo;
     private boolean buildingSafe;
-    private PayloadAttributes safeAttrs;
 
     /**
      * Instantiates a new Engine driver.
@@ -287,7 +286,6 @@ public class EngineDriver<E extends Engine> {
         this.buildingInfo = null;
         this.buildingOnto = null;
         this.buildingSafe = false;
-        this.safeAttrs = null;
     }
 
     /**

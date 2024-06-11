@@ -2,4 +2,4 @@
 l2RpcUrl = "https://example2.com"
 
 [config.chainConfig]
-maxChannelSize = 111_111_111
+seqWindowSize = 111_111_111

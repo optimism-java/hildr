@@ -40,7 +40,7 @@ class DriverTest {
                 false,
                 false);
 
-        Config config = Config.create(null, cliConfig, ChainConfig.optimismGoerli());
+        Config config = Config.create(null, cliConfig, ChainConfig.optimismSepolia());
         Web3j provider = Web3j.build(new HttpService(config.l2RpcUrl()));
         EthBlock finalizedBlock = provider.ethGetBlockByNumber(FINALIZED, true).send();
         Driver<EngineApi> driver = Driver.from(config, new CountDownLatch(1));

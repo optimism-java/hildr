@@ -59,6 +59,6 @@ public class TestConstants {
                 Config.SyncMode.Full,
                 false,
                 false);
-        return Config.create(null, cliConfig, Config.ChainConfig.optimismGoerli());
+        return Config.create(null, cliConfig, Config.ChainConfig.optimismSepolia());
     }
 }

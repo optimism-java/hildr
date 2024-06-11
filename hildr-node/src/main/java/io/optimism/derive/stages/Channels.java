@@ -3,6 +3,7 @@ package io.optimism.derive.stages;
 import com.google.common.collect.Lists;
 import io.optimism.config.Config;
 import io.optimism.derive.PurgeableIterator;
+import io.optimism.derive.State;
 import io.optimism.derive.stages.BatcherTransactions.BatcherTransaction;
 import io.optimism.derive.stages.Channels.Channel;
 import io.optimism.utilities.derive.stages.Frame;
@@ -11,6 +12,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.ArrayUtils;
 
 /**
@@ -22,28 +24,33 @@ import org.apache.commons.lang3.ArrayUtils;
  */
 public class Channels<I extends PurgeableIterator<BatcherTransaction>> implements PurgeableIterator<Channel> {
 
+    private static final long MaxChannelSizeBedrock = 100_000_000L;
+
+    private static final long MaxChannelSizeFjord = 1_000_000_000L;
+
     private final I batcherTxIterator;
 
     private final List<PendingChannel> pendingChannels;
 
     private final List<Frame> frameBank;
 
-    private final BigInteger maxChannelSize;
+    private final AtomicReference<State> state;
 
-    private final BigInteger channelTimeout;
+    private final Config config;
 
     /**
      * Instantiates a new Channels.
      *
      * @param batcherTxIterator the batcher tx iterator
-     * @param config the config
+     * @param config            the config
+     * @param state             the state
      */
-    public Channels(I batcherTxIterator, Config config) {
+    public Channels(I batcherTxIterator, Config config, AtomicReference<State> state) {
         this.batcherTxIterator = batcherTxIterator;
+        this.state = state;
+        this.config = config;
         this.pendingChannels = Lists.newArrayList();
         this.frameBank = Lists.newArrayList();
-        this.maxChannelSize = config.chainConfig().maxChannelSize();
-        this.channelTimeout = config.chainConfig().channelTimeout();
     }
 
     @Override
@@ -73,7 +80,7 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
         // Otherwise, construct a new pending channel with the frame's id
         if (existedPc.isPresent()) {
             existedPc.get().pushFrame(frame);
-            if (existedPc.get().isTimedOut(this.channelTimeout)) {
+            if (existedPc.get().isTimedOut(this.config.chainConfig().channelTimeout())) {
                 this.pendingChannels.remove(existedPc.get());
             }
         } else {
@@ -114,7 +121,7 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
             Frame frame = this.frameBank.removeFirst();
             BigInteger frameChannelId = frame.channelId();
             this.pushFrame(frame);
-            this.prune();
+            this.prune(frame);
 
             Optional<Channel> channel = this.fetchReadyChannel(frameChannelId);
             if (channel.isPresent()) {
@@ -139,8 +146,15 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
                 .reduce(0, Integer::sum);
     }
 
-    private void prune() {
-        while (this.totalSize() > this.maxChannelSize.longValue()) {
+    private void prune(Frame frame) {
+        int maxChannelSize = this.config
+                .chainConfig()
+                .maxChannelSize(this.state
+                        .get()
+                        .l1Info(frame.l1InclusionBlock())
+                        .blockInfo()
+                        .timestamp());
+        while (this.totalSize() > maxChannelSize) {
             Optional<PendingChannel> removed = this.removePendingChannel();
             if (removed.isEmpty()) {
                 throw new RuntimeException("should have removed a channel");
@@ -163,11 +177,12 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
      * @param <I> the type parameter
      * @param batcherTxIterator the batcher tx iterator
      * @param config the config
+     * @param state the state
      * @return the channels
      */
     public static <I extends PurgeableIterator<BatcherTransaction>> Channels<I> create(
-            I batcherTxIterator, Config config) {
-        return new Channels<>(batcherTxIterator, config);
+            I batcherTxIterator, Config config, AtomicReference<State> state) {
+        return new Channels<>(batcherTxIterator, config, state);
     }
 
     /**

@@ -20,7 +20,7 @@ class OpStackNetworkTest {
     @Disabled
     void start() throws InterruptedException {
         MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
-        OpStackNetwork opStackNetwork = new OpStackNetwork(Config.ChainConfig.optimismGoerli(), unsafeBlockQueue);
+        OpStackNetwork opStackNetwork = new OpStackNetwork(Config.ChainConfig.optimismSepolia(), unsafeBlockQueue);
         opStackNetwork.start();
 
         sleep(120000);

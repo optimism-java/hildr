@@ -170,10 +170,8 @@ public class Cli implements Runnable {
         Config.ChainConfig chain =
                 switch (network) {
                     case "optimism" -> Config.ChainConfig.optimism();
-                    case "optimism-goerli" -> Config.ChainConfig.optimismGoerli();
                     case "optimism-sepolia" -> Config.ChainConfig.optimismSepolia();
                     case "base" -> Config.ChainConfig.base();
-                    case "base-goerli" -> Config.ChainConfig.baseGoerli();
                     case "base-sepolia" -> Config.ChainConfig.baseSepolia();
                     default -> {
                         if (network.endsWith(".json")) {

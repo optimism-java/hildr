@@ -64,6 +64,12 @@ public record Config(
         SyncMode syncMode,
         ChainConfig chainConfig) {
 
+    private static final int MAX_CHANNEL_SIZE_BEDROCK = 100_000_000;
+
+    private static final int MAX_CHANNEL_SIZE_FJORD = 1_000_000_000;
+
+    private static final int MAX_SEQUENCER_DRIFT_FJORD = 1800;
+
     /**
      * Create Config.
      *
@@ -219,7 +225,6 @@ public record Config(
      * @param batchInbox           The batch inbox address.
      * @param depositContract      The deposit contract address.
      * @param systemConfigContract The L1 system config contract.
-     * @param maxChannelSize       The maximum byte size of all pending channels.
      * @param channelTimeout       The max timeout for a channel (as measured by the frame L1 block number).
      * @param seqWindowSize        Number of L1 blocks in a sequence window.
      * @param maxSeqDrift          Maximum timestamp drift.
@@ -227,6 +232,7 @@ public record Config(
      * @param canyonTime           Timestamp of the canyon hardfork.
      * @param deltaTime            Timestamp of the deltaTime hardfork.
      * @param ecotoneTime          Timestamp of the ecotone hardfork.
+     * @param fjordTime            Timestamp of the fjord hardfork.
      * @param blockTime            Network blocktime.
      * @param l2Tol1MessagePasser  L2 To L1 Message passer address.
      * @author grapebaba
@@ -242,7 +248,6 @@ public record Config(
             String batchInbox,
             String depositContract,
             String systemConfigContract,
-            BigInteger maxChannelSize,
             BigInteger channelTimeout,
             BigInteger seqWindowSize,
             BigInteger maxSeqDrift,
@@ -250,6 +255,7 @@ public record Config(
             BigInteger canyonTime,
             BigInteger deltaTime,
             BigInteger ecotoneTime,
+            BigInteger fjordTime,
             BigInteger blockTime,
             String l2Tol1MessagePasser) {
 
@@ -267,6 +273,7 @@ public record Config(
 
         /**
          * Check if the time is the ecotone activation block.
+         *
          * @param time the block timestamp
          * @return true if the time is the ecotone activation block, otherwise false.
          */
@@ -276,6 +283,7 @@ public record Config(
 
         /**
          * Check if the time is the ecotone activation block and not the first ecotone block.
+         *
          * @param time the block timestamp
          * @return true if the time is the ecotone activation block and not the first ecotone block, otherwise false.
          */
@@ -284,12 +292,55 @@ public record Config(
         }
 
         /**
+         * Check if the time is the fjord activation block.
+         *
+         * @param time the block timestamp
+         * @return true if the time is the fjord activation block, otherwise false.
+         */
+        public boolean isFjord(BigInteger time) {
+            return fjordTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(fjordTime) >= 0;
+        }
+
+        /**
+         * Check if the time is the fjord activation block.
+         *
+         * @param time the block timestamp
+         * @return true if the time is the fjord activation block, otherwise false.
+         */
+        public boolean isFjordActivationBlock(BigInteger time) {
+            return isFjord(time)
+                    && time.compareTo(blockTime) >= 0
+                    && time.subtract(blockTime).compareTo(fjordTime) < 0;
+        }
+
+        /**
          * Check if the time is the canyon activation block.
+         *
          * @param time the block timestamp
          * @return true if the time is the canyon activation block, otherwise false.
          */
         public boolean isCanyon(BigInteger time) {
             return canyonTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(canyonTime) >= 0;
+        }
+
+        /**
+         * Max channel size int.
+         *
+         * @param time the time
+         * @return the int
+         */
+        public int maxChannelSize(BigInteger time) {
+            return isFjord(time) ? MAX_CHANNEL_SIZE_FJORD : MAX_CHANNEL_SIZE_BEDROCK;
+        }
+
+        /**
+         * Max sequencer drift big integer.
+         *
+         * @param time the time
+         * @return the big integer
+         */
+        public BigInteger maxSequencerDrift(BigInteger time) {
+            return isFjord(time) ? BigInteger.valueOf(MAX_SEQUENCER_DRIFT_FJORD) : this.maxSeqDrift();
         }
 
         /**
@@ -321,14 +372,14 @@ public record Config(
                     "0xff00000000000000000000000000000000000010",
                     "0xbEb5Fc579115071764c7423A4f12eDde41f106Ed",
                     "0x229047fed2591dbec1eF1118d64F7aF3dB9EB290",
-                    BigInteger.valueOf(100_000_000L),
                     BigInteger.valueOf(300L),
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1704992401L),
                     BigInteger.valueOf(1708560000L),
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1710374401L),
+                    BigInteger.valueOf(1720627201L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -362,57 +413,16 @@ public record Config(
                     "0xff00000000000000000000000000000000008453",
                     "0x49048044d57e1c92a77f79988d21fa8faf74e97e",
                     "0x73a79fab69143498ed3712e519a88a918e1f4072",
-                    BigInteger.valueOf(100_000_000L),
                     BigInteger.valueOf(300L),
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
                     BigInteger.valueOf(1704992401L),
-                    BigInteger.valueOf(-1L),
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1708560000L),
+                    BigInteger.valueOf(1710374401L),
+                    BigInteger.valueOf(1720627201L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
-        }
-
-        /**
-         * Optimism goerli chain config.
-         *
-         * @return the chain config
-         */
-        public static ChainConfig optimismGoerli() {
-            return new ChainConfig(
-                    "optimism-goerli",
-                    BigInteger.valueOf(5L),
-                    BigInteger.valueOf(420L),
-                    new Epoch(
-                            BigInteger.valueOf(8300214L),
-                            "0x6ffc1bf3754c01f6bb9fe057c1578b87a8571ce2e9be5ca14bace6eccfd336c7",
-                            BigInteger.valueOf(1673550516L),
-                            BigInteger.ZERO),
-                    new BlockInfo(
-                            "0x0f783549ea4313b784eadd9b8e8a69913b368b7366363ea814d7707ac505175f",
-                            BigInteger.valueOf(4061224L),
-                            "0x31267a44f1422f4cab59b076548c075e79bd59e691a23fbce027f572a2a49dc9",
-                            BigInteger.valueOf(1673550516L)),
-                    new SystemConfig(
-                            "0x7431310e026b69bfc676c0013e12a1a11411eec9",
-                            BigInteger.valueOf(25_000_000L),
-                            BigInteger.valueOf(2100),
-                            BigInteger.valueOf(1000000),
-                            "0x715b7219D986641DF9eFd9C7Ef01218D528e19ec"),
-                    "0xff00000000000000000000000000000000000420",
-                    "0x5b47E1A08Ea6d985D6649300584e6722Ec4B1383",
-                    "0xAe851f927Ee40dE99aaBb7461C00f9622ab91d60",
-                    BigInteger.valueOf(100_000_000L),
-                    BigInteger.valueOf(300L),
-                    BigInteger.valueOf(3600L),
-                    BigInteger.valueOf(600L),
-                    BigInteger.valueOf(1679079600L),
-                    BigInteger.valueOf(1699981200L),
-                    BigInteger.valueOf(1703116800L),
-                    BigInteger.valueOf(1707238800L),
-                    BigInteger.valueOf(2L),
-                    "0xEF2ec5A5465f075E010BE70966a8667c94BCe15a");
         }
 
         /**
@@ -444,7 +454,6 @@ public record Config(
                     "0xff00000000000000000000000000000011155420",
                     "0x16fc5058f25648194471939df75cf27a2fdc48bc",
                     "0x034edd2a225f7f429a63e0f1d2084b9e0a93b538",
-                    BigInteger.valueOf(100_000_000L),
                     BigInteger.valueOf(300L),
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
@@ -452,47 +461,7 @@ public record Config(
                     BigInteger.valueOf(1699981200L),
                     BigInteger.valueOf(1703203200L),
                     BigInteger.valueOf(1708534800L),
-                    BigInteger.valueOf(2L),
-                    "0x4200000000000000000000000000000000000016");
-        }
-
-        /**
-         * Base goerli ChainConfig.
-         *
-         * @return the chain config
-         */
-        public static ChainConfig baseGoerli() {
-            return new ChainConfig(
-                    "base-goerli",
-                    BigInteger.valueOf(5L),
-                    BigInteger.valueOf(84531L),
-                    new Epoch(
-                            BigInteger.valueOf(8410981L),
-                            "0x73d89754a1e0387b89520d989d3be9c37c1f32495a88faf1ea05c61121ab0d19",
-                            BigInteger.valueOf(1675193616L),
-                            BigInteger.ZERO),
-                    new BlockInfo(
-                            "0xa3ab140f15ea7f7443a4702da64c10314eb04d488e72974e02e2d728096b4f76",
-                            BigInteger.valueOf(0L),
-                            Numeric.toHexString(new byte[32]),
-                            BigInteger.valueOf(1675193616L)),
-                    new SystemConfig(
-                            "0x2d679b567db6187c0c8323fa982cfb88b74dbcc7",
-                            BigInteger.valueOf(25_000_000L),
-                            BigInteger.valueOf(2100L),
-                            BigInteger.valueOf(1000000L),
-                            "0x32a4e99A72c11E9DD3dC159909a2D7BD86C1Bc51"),
-                    "0x8453100000000000000000000000000000000000",
-                    "0xe93c8cd0d409341205a592f8c4ac1a5fe5585cfa",
-                    "0xb15eea247ece011c68a614e4a77ad648ff495bc1",
-                    BigInteger.valueOf(100_000_000L),
-                    BigInteger.valueOf(300L),
-                    BigInteger.valueOf(3600L),
-                    BigInteger.valueOf(600L),
-                    BigInteger.valueOf(1683219600L),
-                    BigInteger.valueOf(-1L),
-                    BigInteger.valueOf(-1L),
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1716998400L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -526,14 +495,14 @@ public record Config(
                     "0xff00000000000000000000000000000000084532",
                     "0x49f53e41452C74589E85cA1677426Ba426459e85",
                     "0xf272670eb55e895584501d564AfEB048bEd26194",
-                    BigInteger.valueOf(100_000_000L),
                     BigInteger.valueOf(300L),
                     BigInteger.valueOf(3600L),
                     BigInteger.valueOf(600L),
                     BigInteger.ZERO,
-                    BigInteger.valueOf(-1L),
-                    BigInteger.valueOf(-1L),
-                    BigInteger.valueOf(-1L),
+                    BigInteger.valueOf(1699981200L),
+                    BigInteger.valueOf(1703203200L),
+                    BigInteger.valueOf(1708534800L),
+                    BigInteger.valueOf(1716998400L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -582,7 +551,6 @@ public record Config(
                     external.batchInboxAddress,
                     external.depositContractAddress,
                     external.l1SystemConfigAddress,
-                    BigInteger.valueOf(100_000_000L),
                     external.channelTimeout,
                     external.seqWindowSize,
                     external.maxSequencerDrift,
@@ -590,6 +558,7 @@ public record Config(
                     external.canyonTime == null ? BigInteger.valueOf(-1L) : external.canyonTime,
                     external.deltaTime == null ? BigInteger.valueOf(-1L) : external.deltaTime,
                     external.ecotoneTime == null ? BigInteger.valueOf(-1L) : external.ecotoneTime,
+                    external.fjordTime == null ? BigInteger.valueOf(-1L) : external.fjordTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }
@@ -636,7 +605,6 @@ public record Config(
                     entry("config.chainConfig.batchInbox", this.batchInbox),
                     entry("config.chainConfig.depositContract", this.depositContract),
                     entry("config.chainConfig.systemConfigContract", this.systemConfigContract),
-                    entry("config.chainConfig.maxChannelSize", this.maxChannelSize.toString()),
                     entry("config.chainConfig.channelTimeout", this.channelTimeout.toString()),
                     entry("config.chainConfig.seqWindowSize", this.seqWindowSize.toString()),
                     entry("config.chainConfig.maxSeqDrift", this.maxSeqDrift.toString()),
@@ -644,6 +612,7 @@ public record Config(
                     entry("config.chainConfig.canyonTime", this.canyonTime.toString()),
                     entry("config.chainConfig.deltaTime", this.deltaTime.toString()),
                     entry("config.chainConfig.ecotoneTime", this.ecotoneTime.toString()),
+                    entry("config.chainConfig.fjordTime", this.fjordTime.toString()),
                     entry("config.chainConfig.blockTime", this.blockTime.toString()),
                     entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
         }
@@ -679,6 +648,7 @@ public record Config(
 
         /**
          * is execution layer sync mode
+         *
          * @return true if execution layer sync mode, otherwise false.
          */
         public boolean isEl() {
@@ -732,10 +702,8 @@ public record Config(
      *
      * @param batchSender       batch sender address.
      * @param gasLimit          gas limit.
-     * @param l1FeeOverhead     L1 fee overhead. Pre-Ecotone this is passed as-is to engine.
-     *                          Post-Ecotone this is always zero, and not passed into the engine.
-     * @param l1FeeScalar       L1 fee scalar. Pre-Ecotone this is passed as-is to the engine.
-     *                          Post-Ecotone this encodes multiple pieces of scalar data.
+     * @param l1FeeOverhead     L1 fee overhead. Pre-Ecotone this is passed as-is to engine.                          Post-Ecotone this is always zero, and not passed into the engine.
+     * @param l1FeeScalar       L1 fee scalar. Pre-Ecotone this is passed as-is to the engine.                          Post-Ecotone this encodes multiple pieces of scalar data.
      * @param unsafeBlockSigner unsafe block signer address.
      * @author grapebaba
      * @since 0.1.0
@@ -749,9 +717,10 @@ public record Config(
 
         /**
          * Create SystemConfig from Bedrock tx input.
+         *
          * @param unsafeBlockSigner the unsafe block signer
-         * @param gasLimit l2 gas limit
-         * @param input l2 block tx input
+         * @param gasLimit          l2 gas limit
+         * @param input             l2 block tx input
          * @return the system config
          */
         public static SystemConfig fromBedrockTxInput(String unsafeBlockSigner, BigInteger gasLimit, byte[] input) {
@@ -763,9 +732,10 @@ public record Config(
 
         /**
          * Create SystemConfig from Ecotone tx input.
+         *
          * @param unsafeBlockSigner the unsafe block signer
-         * @param gasLimit l2 gas limit
-         * @param input l2 block tx input
+         * @param gasLimit          l2 gas limit
+         * @param input             l2 block tx input
          * @return the system config
          */
         public static SystemConfig fromEcotoneTxInput(String unsafeBlockSigner, BigInteger gasLimit, byte[] input) {
@@ -790,6 +760,7 @@ public record Config(
 
         /**
          * Get base fee scalar.
+         *
          * @return tuple contains blobBaseFeeScalar and baseFeeScalar
          */
         public Tuple2<BigInteger, BigInteger> ecotoneScalars() {
@@ -827,6 +798,7 @@ public record Config(
      * @param canyonTime             canyon time
      * @param deltaTime              delta time
      * @param ecotoneTime            ecotone time
+     * @param fjordTime             fjord time
      * @param batchInboxAddress      batch inbox address
      * @param depositContractAddress deposit contract address
      * @param l1SystemConfigAddress  l1 system config address
@@ -845,6 +817,7 @@ public record Config(
             BigInteger canyonTime,
             BigInteger deltaTime,
             BigInteger ecotoneTime,
+            BigInteger fjordTime,
             String batchInboxAddress,
             String depositContractAddress,
             String l1SystemConfigAddress) {}

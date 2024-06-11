@@ -39,7 +39,7 @@ public class Pipeline implements PurgeableIterator<PayloadAttributes> {
         //    batcherTransactionQueue = new MpscGrowableArrayQueue<>(1024 * 4, 1024 * 64);
         batcherTransactionQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
         BatcherTransactions batcherTransactions = new BatcherTransactions(batcherTransactionQueue);
-        Channels<BatcherTransactions> channels = Channels.create(batcherTransactions, config);
+        Channels<BatcherTransactions> channels = Channels.create(batcherTransactions, config, state);
         Batches<Channels<BatcherTransactions>> batches = Batches.create(channels, state, config);
         attributes = new Attributes<>(batches, state, config, sequenceNumber);
     }
