@@ -17,7 +17,7 @@ then
   LOG_LEVEL="INFO"
 fi
 
-if [ $SYNC_MODE = "full" ]
+if [ $SYNC_MODE = "full" ] || [ $SYNC_MODE = "execution-layer" ]
 then
     exec java --enable-preview \
         -cp $HILDR_JAR $HILDR_MAIN_CLASS \
