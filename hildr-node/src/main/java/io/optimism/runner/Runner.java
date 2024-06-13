@@ -399,7 +399,7 @@ public class Runner extends AbstractExecutionThreadService {
                                 "could not find setL1BlockValues tx in the epoch boundary" + " search")))
                 .getInput();
         byte[] sequenceNumber;
-        if (block.getBlock().getTimestamp().compareTo(this.config.chainConfig().ecotoneTime()) >= 0) {
+        if (this.config.chainConfig().isEcotone(block.getBlock().getTimestamp())) {
             // this is ecotone block, read sequence number from 12 to 20
             sequenceNumber = ArrayUtils.subarray(Numeric.hexStringToByteArray(txInput), 12, 20);
         } else {
@@ -438,7 +438,9 @@ public class Runner extends AbstractExecutionThreadService {
     @Override
     protected void shutDown() {
         LOGGER.info("runner shut down");
-        driver.stopAsync().awaitTerminated();
+        if (driver != null) {
+            driver.stopAsync().awaitTerminated();
+        }
         LOGGER.info("stopped driver");
     }
 

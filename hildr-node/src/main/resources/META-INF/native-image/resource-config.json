@@ -11,6 +11,18 @@
     }, {
       "pattern":"\\QMETA-INF/native/libnetty_resolver_dns_native_macos_x86_64.jnilib\\E"
     }, {
+      "pattern":"\\Qlib/osx-aarch64/libbrotli.dylib\\E"
+    }, {
+      "pattern":"\\Qlib/osx-x86_64/libbrotli.dylib\\E"
+    }, {
+      "pattern":"\\Qlib/linux-aarch64/libbrotli.so\\E"
+    }, {
+      "pattern":"\\Qlib/linux-x86_64/libbrotli.so\\E"
+    }, {
+      "pattern":"\\Qlib/windows-aarch64/brotli.dll\\E"
+    }, {
+      "pattern":"\\Qlib/windows-x86_64/brotli.dll\\E"
+    }, {
       "pattern":"\\QMETA-INF/services/ch.qos.logback.classic.spi.Configurator\\E"
     }, {
       "pattern":"\\QMETA-INF/services/com.fasterxml.jackson.databind.Module\\E"

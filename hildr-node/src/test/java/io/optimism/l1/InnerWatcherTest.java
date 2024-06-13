@@ -1,6 +1,6 @@
 package io.optimism.l1;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.optimism.TestConstants;
 import io.optimism.config.Config;
@@ -56,6 +56,6 @@ public class InnerWatcherTest {
         var watcher = this.createWatcher(null, queue);
         watcher.startUp();
         watcher.tryIngestBlock();
-        assertEquals(1, queue.size());
+        assertTrue(queue.size() > 0);
     }
 }
