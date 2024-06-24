@@ -245,7 +245,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         rpcServer.start();
 
         MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
-        OpStackNetwork opStackNetwork = new OpStackNetwork(config.chainConfig(), unsafeBlockQueue);
+        OpStackNetwork opStackNetwork = new OpStackNetwork(config, unsafeBlockQueue);
         ISequencer sequencer = null;
         if (config.sequencerEnable()) {
             sequencer = new Sequencer(engineDriver, config.chainConfig());

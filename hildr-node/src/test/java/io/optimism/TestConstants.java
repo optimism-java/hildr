@@ -56,6 +56,8 @@ public class TestConstants {
                 "testjwt",
                 null,
                 null,
+                null,
+                null,
                 Config.SyncMode.Full,
                 false,
                 false);

@@ -75,8 +75,8 @@ dependencies {
 	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
-	implementation 'com.github.gestalt-config:gestalt-core:0.20.4'
-	implementation 'com.github.gestalt-config:gestalt-toml:0.20.4'
+	implementation 'com.github.gestalt-config:gestalt-core:0.29.0'
+	implementation 'com.github.gestalt-config:gestalt-toml:0.29.0'
 
 	implementation 'com.fasterxml.jackson:jackson-bom:2.15.2'
 	implementation 'com.fasterxml.jackson.core:jackson-core'
