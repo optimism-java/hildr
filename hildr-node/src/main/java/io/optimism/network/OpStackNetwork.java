@@ -3,6 +3,7 @@ package io.optimism.network;
 import com.google.common.collect.ImmutableSet;
 import io.optimism.config.Config;
 import io.optimism.engine.ExecutionPayload;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
@@ -100,8 +101,8 @@ public class OpStackNetwork {
      * @param config           the config
      * @param unsafeBlockQueue the unsafe block queue
      */
-    public OpStackNetwork(Config.ChainConfig config, MessagePassingQueue<ExecutionPayload> unsafeBlockQueue) {
-        UInt64 chainId = UInt64.valueOf(config.l2ChainId());
+    public OpStackNetwork(Config config, MessagePassingQueue<ExecutionPayload> unsafeBlockQueue) {
+        UInt64 chainId = UInt64.valueOf(config.chainConfig().l2ChainId());
         final MetricsSystem metricsSystem = new PrometheusMetricsSystem(
                 ImmutableSet.<MetricCategory>builder()
                         .addAll(EnumSet.allOf(StandardMetricCategory.class))
@@ -111,9 +112,15 @@ public class OpStackNetwork {
         final PeerPools peerPools = new PeerPools();
         final ReputationManager reputationManager =
                 new DefaultReputationManager(metricsSystem, new SystemTimeProvider(), 1024, peerPools);
+        var bootNodes = new ArrayList<String>();
+        if (config.bootNodes() != null && !config.bootNodes().isEmpty()) {
+            bootNodes.addAll(config.bootNodes());
+        } else {
+            bootNodes.addAll(BOOTNODES);
+        }
         final DiscoveryConfig discoveryConfig = DiscoveryConfig.builder()
-                .listenUdpPortDefault(9876)
-                .bootnodes(BOOTNODES)
+                .listenUdpPortDefault(config.discPort())
+                .bootnodes(bootNodes)
                 .build();
         final NetworkConfig p2pConfig = NetworkConfig.builder().build();
         final KeyValueStore<String, Bytes> kvStore = new MemKeyValueStore<>();
@@ -127,19 +134,19 @@ public class OpStackNetwork {
                         new SnappyPreparedGossipMessageFactory(),
                         gossipAsyncRunner,
                         chainId,
-                        config.systemConfig().unsafeBlockSigner(),
+                        config.chainConfig().systemConfig().unsafeBlockSigner(),
                         unsafeBlockQueue),
                 new BlockV2TopicHandler(
                         new SnappyPreparedGossipMessageFactory(),
                         gossipAsyncRunner,
                         chainId,
-                        config.systemConfig().unsafeBlockSigner(),
+                        config.chainConfig().systemConfig().unsafeBlockSigner(),
                         unsafeBlockQueue),
                 new BlockV3TopicHandler(
                         new SnappyPreparedGossipMessageFactory(),
                         gossipAsyncRunner,
                         chainId,
-                        config.systemConfig().unsafeBlockSigner(),
+                        config.chainConfig().systemConfig().unsafeBlockSigner(),
                         unsafeBlockQueue));
         final AsyncRunner p2pAsyncRunner = AsyncRunnerFactory.createDefault(
                         new MetricTrackingExecutorFactory(metricsSystem))

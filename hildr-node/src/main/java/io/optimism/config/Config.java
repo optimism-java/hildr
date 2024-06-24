@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.github.gestalt.config.Gestalt;
@@ -59,6 +60,8 @@ public record Config(
         String jwtSecret,
         String checkpointSyncUrl,
         Integer rpcPort,
+        List<String> bootNodes,
+        Integer discPort,
         Boolean devnet,
         Boolean sequencerEnable,
         SyncMode syncMode,
@@ -106,6 +109,7 @@ public record Config(
                         .addSource(chainConfigSource)
                         .addSource(tomlConfigSource)
                         .addSource(cliConfigSource)
+                        .setTreatMissingValuesAsErrors(false)
                         .build();
             } else {
                 gestalt = new GestaltBuilder()
@@ -116,6 +120,7 @@ public record Config(
                         .addSource(defaultProviderConfigSource)
                         .addSource(chainConfigSource)
                         .addSource(cliConfigSource)
+                        .setTreatMissingValuesAsErrors(false)
                         .build();
             }
             gestalt.loadConfigs();
@@ -137,6 +142,7 @@ public record Config(
         defaultProvider.put("config.jwtSecret", "");
         defaultProvider.put("config.checkpointSyncUrl", "");
         defaultProvider.put("config.rpcPort", "9545");
+        defaultProvider.put("config.discPort", "9876");
         return new MapConfigSource(defaultProvider);
     }
 
@@ -152,6 +158,7 @@ public record Config(
      * @param jwtSecret           L2 engine API jwt secret.
      * @param checkpointSyncUrl   The checkpoint sync url.
      * @param rpcPort             The rpc port.
+     * @param bootNodes           The custom bootNodes.
      * @param syncMode            The sync mode.
      * @param sequencerEnable     The sequencer enable flag.
      * @param devnet              The devnet flag.
@@ -166,6 +173,8 @@ public record Config(
             String jwtSecret,
             String checkpointSyncUrl,
             Integer rpcPort,
+            List<String> bootNodes,
+            Integer discPort,
             SyncMode syncMode,
             Boolean sequencerEnable,
             Boolean devnet) {
@@ -200,6 +209,12 @@ public record Config(
             }
             if (StringUtils.isNotEmpty(checkpointSyncUrl)) {
                 map.put("config.checkpointSyncUrl", checkpointSyncUrl);
+            }
+            if (bootNodes != null && !bootNodes.isEmpty()) {
+                map.put("config.bootNodes", String.join(",", bootNodes));
+            }
+            if (discPort != null) {
+                map.put("config.discPort", discPort.toString());
             }
             if (rpcPort != null) {
                 map.put("config.rpcPort", rpcPort.toString());

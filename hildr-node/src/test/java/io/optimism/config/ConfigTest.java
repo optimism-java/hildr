@@ -2,6 +2,7 @@ package io.optimism.config;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,6 +11,7 @@ import io.optimism.config.Config.CliConfig;
 import io.optimism.config.Config.SystemConfig;
 import java.math.BigInteger;
 import java.nio.file.Paths;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.web3j.utils.Numeric;
 
@@ -27,7 +29,20 @@ class ConfigTest {
     @Test
     void create() {
         CliConfig cliConfig = new CliConfig(
-                null, null, null, null, null, null, "testjwt", null, null, Config.SyncMode.Full, false, false);
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "testjwt",
+                null,
+                null,
+                null,
+                null,
+                Config.SyncMode.Full,
+                false,
+                false);
         Config config = Config.create(
                 Paths.get("src", "test", "resources", "test.toml"), cliConfig, ChainConfig.optimismSepolia());
         assertEquals("https://example2.com", config.l2RpcUrl());
@@ -35,6 +50,29 @@ class ConfigTest {
         assertEquals("", config.l1RpcUrl());
         assertEquals("testjwt", config.jwtSecret());
         assertEquals(9545, config.rpcPort());
+        assertEquals(9876, config.discPort());
+        assertNull(config.bootNodes());
+
+        CliConfig bootCliConfig = new CliConfig(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                "testjwt",
+                null,
+                null,
+                List.of("encode://123", "encode://321"),
+                92,
+                Config.SyncMode.Full,
+                false,
+                false);
+        Config configBootNodes = Config.create(
+                Paths.get("src", "test", "resources", "test.toml"), bootCliConfig, ChainConfig.optimismSepolia());
+        assertEquals(92, configBootNodes.discPort());
+        assertEquals(List.of("encode://123", "encode://321"), configBootNodes.bootNodes());
+
         assertEquals(
                 "0x48f520cf4ddaf34c8336e6e490632ea3cf1e5e93b0b2bc6e917557e31845371b",
                 config.chainConfig().l1StartEpoch().hash());

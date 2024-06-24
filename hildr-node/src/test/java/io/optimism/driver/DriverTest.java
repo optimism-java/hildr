@@ -36,6 +36,8 @@ class DriverTest {
                 "d195a64e08587a3f1560686448867220c2727550ce3e0c95c7200d0ade0f9167",
                 l2rpc,
                 null,
+                null,
+                null,
                 Config.SyncMode.Full,
                 false,
                 false);

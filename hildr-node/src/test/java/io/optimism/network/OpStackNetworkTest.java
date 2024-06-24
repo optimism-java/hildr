@@ -20,7 +20,38 @@ class OpStackNetworkTest {
     @Disabled
     void start() throws InterruptedException {
         MpscUnboundedXaddArrayQueue<ExecutionPayload> unsafeBlockQueue = new MpscUnboundedXaddArrayQueue<>(1024 * 64);
-        OpStackNetwork opStackNetwork = new OpStackNetwork(Config.ChainConfig.optimismSepolia(), unsafeBlockQueue);
+        // String l1RpcUrl,
+        //        String l1WsRpcUrl,
+        //        String l1BeaconUrl,
+        //        String l1BeaconArchiverUrl,
+        //        String l2RpcUrl,
+        //        String l2EngineUrl,
+        //        String jwtSecret,
+        //        String checkpointSyncUrl,
+        //        Integer rpcPort,
+        //        List<String> bootNodes,
+        //        Integer discPort,
+        //        Boolean devnet,
+        //        Boolean sequencerEnable,
+        //        SyncMode syncMode,
+        //        ChainConfig chainConfig
+        Config config = new Config(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                9876,
+                null,
+                null,
+                null,
+                Config.ChainConfig.optimismSepolia());
+        OpStackNetwork opStackNetwork = new OpStackNetwork(config, unsafeBlockQueue);
         opStackNetwork.start();
 
         sleep(120000);

@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +81,8 @@ public class Cli implements Runnable {
     @Option(
             names = {"--rpc-port", "-p"},
             required = true,
-            description = "The port of RPC server")
+            description = "The port of RPC server",
+            defaultValue = "9545")
     Integer rpcPort;
 
     @Option(
@@ -102,6 +104,17 @@ public class Cli implements Runnable {
             names = {"--metrics-port"},
             description = "The port of metrics server")
     Integer metricsPort;
+
+    @Option(
+            names = {"--disc-boot-nodes"},
+            description = "The custom bootNodes")
+    List<String> bootNodes;
+
+    @Option(
+            names = {"--disc-port"},
+            description = "The port of discovery",
+            defaultValue = "9876")
+    Integer discPort;
 
     @Option(names = "--devnet", description = "Dev net flag")
     Boolean devnet;
@@ -218,6 +231,8 @@ public class Cli implements Runnable {
                 StringUtils.trim(Cli.this.getJwtSecret()),
                 cli.checkpointSyncUrl,
                 cli.rpcPort,
+                cli.bootNodes,
+                cli.discPort,
                 cli.syncMode,
                 cli.sequencerEnable,
                 cli.devnet);

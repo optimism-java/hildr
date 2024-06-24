@@ -114,6 +114,8 @@ public class RpcServerTest {
                 null,
                 null,
                 9545,
+                null,
+                null,
                 false,
                 false,
                 Config.SyncMode.Full,
