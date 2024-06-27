@@ -40,6 +40,7 @@ class ConfigTest {
                 null,
                 null,
                 null,
+                null,
                 Config.SyncMode.Full,
                 false,
                 false);
@@ -49,6 +50,7 @@ class ConfigTest {
         assertEquals("http://127.0.0.1:8551", config.l2EngineUrl());
         assertEquals("", config.l1RpcUrl());
         assertEquals("testjwt", config.jwtSecret());
+        assertEquals("0.0.0.0", config.rpcAddr());
         assertEquals(9545, config.rpcPort());
         assertEquals(9876, config.discPort());
         assertNull(config.bootNodes());
@@ -61,6 +63,7 @@ class ConfigTest {
                 null,
                 null,
                 "testjwt",
+                null,
                 null,
                 null,
                 List.of("encode://123", "encode://321"),

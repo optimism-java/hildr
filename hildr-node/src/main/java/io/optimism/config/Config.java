@@ -42,7 +42,10 @@ import org.web3j.utils.Numeric;
  * @param l2EngineUrl         L2 engine API url.
  * @param jwtSecret           L2 engine API jwt secret.
  * @param checkpointSyncUrl   The checkpoint sync url.
+ * @param rpcAddr             The rpc address.
  * @param rpcPort             The rpc port.
+ * @param bootNodes           The custom boot nodes.
+ * @param discPort            The discovery port.
  * @param devnet              The flag of devnet.
  * @param sequencerEnable     The flag of sequencerEnable.
  * @param syncMode            The sync mode
@@ -59,6 +62,7 @@ public record Config(
         String l2EngineUrl,
         String jwtSecret,
         String checkpointSyncUrl,
+        String rpcAddr,
         Integer rpcPort,
         List<String> bootNodes,
         Integer discPort,
@@ -142,6 +146,7 @@ public record Config(
         defaultProvider.put("config.jwtSecret", "");
         defaultProvider.put("config.checkpointSyncUrl", "");
         defaultProvider.put("config.rpcPort", "9545");
+        defaultProvider.put("config.rpcAddr", "0.0.0.0");
         defaultProvider.put("config.discPort", "9876");
         return new MapConfigSource(defaultProvider);
     }
@@ -157,8 +162,10 @@ public record Config(
      * @param l2EngineUrl         L2 engine API url.
      * @param jwtSecret           L2 engine API jwt secret.
      * @param checkpointSyncUrl   The checkpoint sync url.
+     * @param rpcAddr             The rpc address.
      * @param rpcPort             The rpc port.
      * @param bootNodes           The custom bootNodes.
+     * @param discPort            The custom discovery port.
      * @param syncMode            The sync mode.
      * @param sequencerEnable     The sequencer enable flag.
      * @param devnet              The devnet flag.
@@ -172,6 +179,7 @@ public record Config(
             String l2EngineUrl,
             String jwtSecret,
             String checkpointSyncUrl,
+            String rpcAddr,
             Integer rpcPort,
             List<String> bootNodes,
             Integer discPort,
@@ -215,6 +223,9 @@ public record Config(
             }
             if (discPort != null) {
                 map.put("config.discPort", discPort.toString());
+            }
+            if (StringUtils.isNotEmpty(rpcAddr)) {
+                map.put("config.rpcAddr", rpcAddr);
             }
             if (rpcPort != null) {
                 map.put("config.rpcPort", rpcPort.toString());

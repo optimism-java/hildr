@@ -133,7 +133,7 @@ public class RpcServer {
 
     private HttpServerOptions getHttpServerOptions(final Config config) {
         final HttpServerOptions httpServerOptions = new HttpServerOptions()
-                .setHost("0.0.0.0")
+                .setHost(config.rpcAddr())
                 .setPort(config.rpcPort())
                 .setHandle100ContinueAutomatically(true)
                 .setCompressionSupported(true);
