@@ -113,6 +113,7 @@ public class RpcServerTest {
                 null,
                 null,
                 null,
+                "0.0.0.0",
                 9545,
                 null,
                 null,

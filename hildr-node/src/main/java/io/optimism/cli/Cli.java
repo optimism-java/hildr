@@ -79,6 +79,13 @@ public class Cli implements Runnable {
     Boolean verbose;
 
     @Option(
+            names = {"--rpc-addr"},
+            required = false,
+            description = "The address of RPC server",
+            defaultValue = "0.0.0.0")
+    String rpcAddr;
+
+    @Option(
             names = {"--rpc-port", "-p"},
             required = true,
             description = "The port of RPC server",
@@ -230,6 +237,7 @@ public class Cli implements Runnable {
                 cli.l2EngineUrl,
                 StringUtils.trim(Cli.this.getJwtSecret()),
                 cli.checkpointSyncUrl,
+                cli.rpcAddr,
                 cli.rpcPort,
                 cli.bootNodes,
                 cli.discPort,

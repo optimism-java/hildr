@@ -128,6 +128,7 @@ class ChannelsTest {
                 "",
                 null,
                 null,
+                null,
                 9545,
                 null,
                 null,

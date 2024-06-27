@@ -36,6 +36,7 @@ class HildrTest {
                 null,
                 null,
                 null,
+                null,
                 Config.SyncMode.Full,
                 false,
                 false);
