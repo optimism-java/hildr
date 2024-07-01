@@ -12,34 +12,10 @@ services:
 #    image: ghcr.io/optimism-java/hildr:latest
     container_name: hildr-node
     build:
-      dockerfile: ./docker/jvm.dock
+      dockerfile: ./docker/node.dock
       context: ../
     profiles:
       - hildr-node
-    restart: unless-stopped
-    stop_grace_period: 3m
-    entrypoint: /scripts/start-hildr-node-java.sh
-    depends_on:
-      - op-geth
-    env_file:
-      - .env
-    ports:
-      - "9200:9200"
-      - "${ROLLUP_RPC_PORT}:${ROLLUP_RPC_PORT}"
-    volumes:
-      - ./:/scripts
-      - data:/data
-      - ${OP_ROLLUP_JSON_FILEPATH:-.}:/rollup.json
-    <<: *logging
-
-  hildr-node-native:
-    #    image: ghcr.io/optimism-java/hildr:latest
-    container_name: hildr-node
-    build:
-      dockerfile: ./docker/Dockerfile
-      context: ../
-    profiles:
-      - hildr-node-native
     restart: unless-stopped
     stop_grace_period: 3m
     entrypoint: /scripts/start-hildr-node.sh
@@ -65,7 +41,7 @@ services:
       - hildr-batcher
     restart: unless-stopped
     stop_grace_period: 3m
-    entrypoint: /scripts/start-hildr-batcher-java.sh
+    entrypoint: /scripts/start-hildr-batcher.sh
     depends_on:
       - op-geth
     env_file:
@@ -85,7 +61,7 @@ services:
       - hildr-proposer
     restart: unless-stopped
     stop_grace_period: 3m
-    entrypoint: /scripts/start-hildr-batcher-java.sh
+    entrypoint: /scripts/start-hildr-batcher.sh
     depends_on:
       - op-geth
     env_file:

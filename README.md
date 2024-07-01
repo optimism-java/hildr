@@ -154,19 +154,6 @@ You also can run a hildr-node on [devnet](./docs/devnet.md)
 ./gradlew build
 ```
 
-### Build native
-
-```shell
-# use graalvm native plugin
-./gradlew nativeCompile
-
-# use native-image directly
-./gradlew buildBinary
-
-# build static binary
-./gradlew buildBinaryStatic
-```
-
 ## Javadoc
 
 For the latest javadocs for the `main` branch, run `./gradlew javadoc` and open

@@ -1,5 +1,0 @@
-[
-  {
-    "interfaces":["ch.qos.logback.classic.spi.ILoggingEvent"]
-  }
-]
