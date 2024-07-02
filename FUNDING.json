@@ -3,5 +3,8 @@
     "ethereum": {
       "ownedBy": "0x56EdF679B0C80D528E17c5Ffe514dc9a1b254b9c"
     }
+  },
+  "opRetro": {
+    "projectId": "0x30b04f30bcf395ceef08542927732bfde38c1f7b3ab73576bca0d573a87f47fb"
   }
 }
