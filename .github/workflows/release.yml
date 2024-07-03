@@ -65,6 +65,7 @@ jobs:
     name: Push Docker image to Github
     runs-on: ubuntu-latest
     permissions: write-all
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
@@ -95,7 +96,7 @@ jobs:
 
   release:
     name: 🚰 Release new version.
-    needs: [ push_image_to_github ]
+    needs: [ push_image_to_github, build-jar ]
     runs-on: ubuntu-latest
 
     steps:
