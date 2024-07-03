@@ -21,6 +21,46 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build-jar:
+    name: GraalVM latest ${{ matrix.java-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        java-version: [ '21' ]
+        os: [ ubuntu-latest ]
+
+    outputs:
+      version: ${{ github.ref_name }}
+
+    steps:
+      - name: 🛎️ Check out repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: ☕ Setup GraalVM Build
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: ${{ matrix.java-version }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          distribution: 'graalvm'
+          cache: 'gradle'
+          set-java-home: 'true'
+
+      - name: 🏗️ Build Jar & Test
+        id: build
+        run: |
+          ./gradlew buildJarForDocker
+
+      - name: 📤 Upload ${{ matrix.os }} native image
+        uses: actions/upload-artifact@v3
+        with:
+          name: hildr-node-jar
+          path: |
+            hildr-node/build/docker/hildr-node.jar
+          if-no-files-found: error
+
   push_image_to_github:
     name: Push Docker image to Github
     runs-on: ubuntu-latest
@@ -84,6 +124,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: ${{ steps.github_release.outputs.changelog }}
+          files: |
+            ${{ github.workspace }}/release-artifacts/**
           generate_release_notes: true
           fail_on_unmatched_files: true
         env:
