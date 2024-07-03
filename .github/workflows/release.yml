@@ -84,8 +84,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           body: ${{ steps.github_release.outputs.changelog }}
-          files: |
-            ${{ github.workspace }}/release-artifacts/**
           generate_release_notes: true
           fail_on_unmatched_files: true
         env:
