@@ -21,170 +21,6 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  native-build-osx:
-    name: GraalVM latest ${{ matrix.java-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        java-version: [ '21' ]
-        os: [ macos-latest ]
-
-    outputs:
-      version: ${{ github.ref_name }}
-
-    steps:
-      - name: 🛎️ Check out repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: ☕ Setup GraalVM Build
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: ${{ matrix.java-version }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          distribution: 'graalvm'
-          cache: 'gradle'
-          set-java-home: 'true'
-          native-image-job-reports: 'true'
-
-      - name: 🏗️ Native Image Build & Test
-        id: native-build
-        run: |
-          ./gradlew buildBinary
-          mv hildr-node/build/binary/hildr-node hildr-node/build/binary/hildr-node-osx
-          ls -ltrh hildr-node/build/binary/hildr-node-osx
-
-      - name: 📤 Upload ${{ matrix.os }} native image
-        uses: actions/upload-artifact@v3
-        with:
-          name: hildr-node-osx
-          path: |
-            hildr-node/build/binary/hildr-node-osx
-          if-no-files-found: error
-
-  native-build-windows:
-    name: GraalVM latest ${{ matrix.java-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        java-version: [ '21' ]
-        os: [ windows-latest ]
-
-    outputs:
-      version: ${{ github.ref_name }}
-
-    steps:
-      - name: 🛎️ Check out repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: ☕ Setup GraalVM Build
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: ${{ matrix.java-version }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          distribution: 'graalvm'
-          cache: 'gradle'
-          set-java-home: 'true'
-          native-image-job-reports: 'true'
-
-      - name: 🏗️ Native Image Build & Test
-        id: native-build
-        run: |
-          ./gradlew buildBinaryOnWindows
-          ls -ltrh hildr-node/build/binary/hildr-node.exe
-
-      - name: 📤 Upload ${{ matrix.os }} native image
-        uses: actions/upload-artifact@v3
-        with:
-          name: hildr-node-windows
-          path: |
-            hildr-node/build/binary/hildr-node.exe
-          if-no-files-found: error
-
-  native-build-linux:
-    name: GraalVM latest ${{ matrix.java-version }} on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        java-version: [ '21' ]
-        os: [ ubuntu-latest ]
-
-    outputs:
-      version: ${{ github.ref_name }}
-
-    steps:
-      - name: 🛎️ Check out repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      - name: ☕ Setup GraalVM Build
-        uses: graalvm/setup-graalvm@v1
-        with:
-          java-version: ${{ matrix.java-version }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          distribution: 'graalvm'
-          cache: 'gradle'
-          set-java-home: 'true'
-          native-image-job-reports: 'true'
-
-      - name: 🏗️ Native Image Build & Test
-        id: native-build
-        run: |
-          ./gradlew buildBinary
-          ls -ltrh hildr-node/build/binary/hildr-node
-
-      - name: 📤 Upload ${{ matrix.os }} native image
-        uses: actions/upload-artifact@v3
-        with:
-          name: hildr-node-linux
-          path: |
-            hildr-node/build/binary/hildr-node
-            hildr-node/build/binary/hildr-node.jar
-          if-no-files-found: error
-
-#  native-build-musl:
-#    name: GraalVM + musl static image
-#    runs-on: ubuntu-latest
-#
-#    steps:
-#      - name: 🛎️ Check out repository
-#        uses: actions/checkout@v3
-#        with:
-#          fetch-depth: 0
-#
-#      - name: ☕ Setup GraalVM Build
-#        uses: graalvm/setup-graalvm@v1
-#        with:
-#          java-version: '21'
-#          distribution: 'graalvm'
-#          github-token: ${{ secrets.GITHUB_TOKEN }}
-#          cache: 'gradle'
-#          native-image-musl: 'true'
-#          native-image-job-reports: 'true'
-#          set-java-home: 'true'
-#
-#      - name: 🏗️ Build static image with musl libc
-#        id: native-build
-#        run: |
-#          ./gradlew buildBinaryStatic
-#          mv hildr-node/build/binary/hildr-node hildr-node/build/binary/hildr-node-static
-#          ls -ltrh hildr-node/build/binary/hildr-node-static
-#
-#      - name: 📤 Upload static binary
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: hildr-node-static
-#          path: |
-#            hildr-node/build/binary/hildr-node-static
-#          if-no-files-found: error
-
   push_image_to_github:
     name: Push Docker image to Github
     runs-on: ubuntu-latest
@@ -211,40 +47,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./docker/jvm.dock
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  push_native_image_to_github:
-    name: Push Docker Native image to Github
-    runs-on: ubuntu-latest
-    permissions: write-all
-    steps:
-      - name: Check out the repo
-        uses: actions/checkout@v4
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          flavor: |
-            suffix=-native,onlatest=true
-          images: ${{ env.REGISTRY }}/${{ github.repository }}
-          tags: |
-            type=semver,pattern={{raw}}
-
-      - name: Build and push graalvm native Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./docker/Dockerfile
+          file: ./docker/node.dock
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -252,7 +55,7 @@ jobs:
 
   release:
     name: 🚰 Release new version.
-    needs: [ native-build-osx, native-build-linux, native-build-windows, push_image_to_github, push_native_image_to_github ]
+    needs: [ push_image_to_github ]
     runs-on: ubuntu-latest
 
     steps:
@@ -277,7 +80,7 @@ jobs:
         with:
           path: release-artifacts
 
-      - name: ✨Github Release (version = ${{ needs.native-build-osx.outputs.version }})
+      - name: ✨Github Release (version = ${{ needs.push_image_to_github.outputs.version }})
         uses: softprops/action-gh-release@v1
         with:
           body: ${{ steps.github_release.outputs.changelog }}
