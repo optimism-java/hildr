@@ -1,0 +1,138 @@
+---
+version: "3.4"
+x-logging: &logging
+  logging:
+    driver: json-file
+    options:
+      max-size: 10m
+      max-file: "3"
+
+services:
+  hildr-node:
+#    image: ghcr.io/optimism-java/hildr:latest
+    container_name: hildr-node
+    build:
+      dockerfile: ./docker/node.dock
+      context: ./
+    profiles:
+      - hildr-node
+    restart: unless-stopped
+    stop_grace_period: 3m
+    entrypoint: /scripts/start-hildr-node.sh
+    depends_on:
+      - op-geth
+    env_file:
+      - .env
+    ports:
+      - "9200:9200"
+      - "${RPC_PORT}:${RPC_PORT}"
+    volumes:
+      - ./docker/:/scripts
+      - data:/data
+      - ${OP_ROLLUP_JSON_FILEPATH:-.}:/rollup.json
+    <<: *logging
+
+  op-geth:
+    image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101315.1
+    container_name: op-geth
+    profiles:
+      - op-geth
+    restart: unless-stopped
+    stop_grace_period: 3m
+    entrypoint: /scripts/start-op-geth.sh
+    env_file:
+      - .env
+    ports:
+      - ${EXECUTION_CLIENT_AUTH_RPC_PORT}:8551
+      - ${EXECUTION_CLIENT_RPC_PORT}:8545
+      - ${EXECUTION_CLIENT_WS_PORT}:8546
+    volumes:
+      - ./docker/:/scripts
+      - data:/data
+      - ${OP_GENESIS_JSON_FILEPATH:-.}:/genesis-l2-attached.json
+    <<: *logging
+
+  op-erigon:
+    image: testinprod/op-erigon:latest
+    container_name: op-erigon
+    profiles:
+      - op-erigon
+    restart: unless-stopped
+    stop_grace_period: 3m
+    entrypoint: /scripts/start-op-erigon.sh
+    env_file:
+      - .env
+    ports:
+      - ${EXECUTION_CLIENT_AUTH_RPC_PORT}:8551
+      - ${EXECUTION_CLIENT_RPC_PORT}:8545
+      - ${EXECUTION_CLIENT_WS_PORT}:8546
+    volumes:
+      - ./docker/:/scripts
+      - data:/data
+    <<: *logging
+
+  op-challenger:
+    image: merklefruit/op-challenger:latest
+    container_name: op-challenger
+    profiles:
+      - challenger
+    restart: unless-stopped
+    stop_grace_period: 3m
+    entrypoint: /scripts/start-op-challenger.sh
+    env_file:
+      - .env
+    ports:
+      - "9201:9201"
+    volumes:
+      - ./docker:/scripts
+      - data:/data
+    <<: *logging
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    profiles:
+      - metrics
+    ports:
+      - "9090:9090"
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    <<: *logging
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    profiles:
+      - metrics
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - --path.procfs=/host/proc
+      - --path.rootfs=/rootfs
+      - --path.sysfs=/host/sys
+      - --collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)
+    expose:
+      - 9100
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    profiles:
+      - metrics
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning/:/etc/grafana/provisioning/:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=hildr
+      - GF_SECURITY_ADMIN_PASSWORD=passw0rd
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/dashboard.json
+
+volumes:
+  scripts:
+  data:
