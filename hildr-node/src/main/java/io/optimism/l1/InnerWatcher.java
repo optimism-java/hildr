@@ -18,16 +18,12 @@ import io.optimism.utilities.BlobCodec;
 import io.optimism.utilities.rpc.Web3jProvider;
 import io.optimism.utilities.telemetry.Logging;
 import io.optimism.utilities.telemetry.TracerTaskWrapper;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.StructuredTaskScope;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -159,8 +155,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private boolean devnet = false;
 
-    private ScheduledThreadPoolExecutor scheduledExecutorService;
-
     /**
      * create a InnerWatcher instance.
      *
@@ -219,51 +213,23 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         }
     }
 
-    private Disposable subscribeL1NewHeads() {
-        if (this.wsProvider != null) {
-            this.l1HeadListener = this.wsProvider
-                    .newHeadsNotifications()
-                    .subscribe(
-                            notification -> {
-                                NewHead header = notification.getParams().getResult();
-                                String hash = header.getHash();
-                                BigInteger number = Numeric.toBigInt(header.getNumber());
-                                String parentHash = header.getParentHash();
-                                BigInteger time = Numeric.toBigInt(header.getTimestamp());
-                                l1Head = new BlockInfo(hash, number, parentHash, time);
-                            },
-                            t -> {
-                                if (t instanceof WebsocketNotConnectedException) {
-                                    this.subscribeL1NewHeads();
-                                }
-                            });
-        } else {
-            this.scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
-            this.l1HeadListener = Flowable.create(
-                            (subscriber) -> {
-                                this.scheduledExecutorService.scheduleAtFixedRate(
-                                        () -> {
-                                            EthBlock.Block block = null;
-                                            try {
-                                                block = pollBlock(
-                                                        this.provider, DefaultBlockParameterName.LATEST, false);
-                                            } catch (ExecutionException | InterruptedException e) {
-                                                LOGGER.warn("error while fetching L1 data for block", e);
-                                            }
-                                            subscriber.onNext(block);
-                                        },
-                                        0,
-                                        12,
-                                        TimeUnit.SECONDS);
-                            },
-                            BackpressureStrategy.BUFFER)
-                    .subscribe(notification -> {
-                        EthBlock.Block block = (EthBlock.Block) notification;
-                        l1Head = BlockInfo.from(block);
-                    });
-        }
-
-        return this.l1HeadListener;
+    private void subscribeL1NewHeads() {
+        this.l1HeadListener = this.wsProvider
+                .newHeadsNotifications()
+                .subscribe(
+                        notification -> {
+                            NewHead header = notification.getParams().getResult();
+                            String hash = header.getHash();
+                            BigInteger number = Numeric.toBigInt(header.getNumber());
+                            String parentHash = header.getParentHash();
+                            BigInteger time = Numeric.toBigInt(header.getTimestamp());
+                            l1Head = new BlockInfo(hash, number, parentHash, time);
+                        },
+                        t -> {
+                            if (t instanceof WebsocketNotConnectedException) {
+                                this.subscribeL1NewHeads();
+                            }
+                        });
     }
 
     /**
@@ -653,9 +619,6 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         }
         if (this.wsProvider != null) {
             this.wsProvider.shutdown();
-        }
-        if (this.scheduledExecutorService != null) {
-            this.scheduledExecutorService.shutdown();
         }
     }
 
