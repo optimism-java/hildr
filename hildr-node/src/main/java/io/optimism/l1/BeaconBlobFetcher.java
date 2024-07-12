@@ -141,7 +141,7 @@ public class BeaconBlobFetcher {
                 : Map.of("indices", indices.stream().map(BigInteger::toString).collect(Collectors.joining(",")));
         var postfix = "%s%s".formatted(blockId, prepareQueryParams(params));
         var res = getBlobSidecars("%s/%s".formatted(this.sidecarsMethod, postfix));
-        if (res.getData() != null && !res.getData().isEmpty()) {
+        if (res != null && res.getData() != null && !res.getData().isEmpty()) {
             return res.getData();
         }
         if (this.archiverSidecarsMethod != null) {
