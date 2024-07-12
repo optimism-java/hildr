@@ -304,7 +304,7 @@ public record Config(
          * @return true if the time is the ecotone activation block, otherwise false.
          */
         public boolean isEcotone(BigInteger time) {
-            return ecotoneTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(ecotoneTime) >= 0;
+            return ecotoneTime.compareTo(BigInteger.ZERO) >= 0 && time.compareTo(ecotoneTime) >= 0;
         }
 
         /**
@@ -324,7 +324,7 @@ public record Config(
          * @return true if the time is the fjord activation block, otherwise false.
          */
         public boolean isFjord(BigInteger time) {
-            return fjordTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(fjordTime) >= 0;
+            return fjordTime.compareTo(BigInteger.ZERO) >= 0 && time.compareTo(fjordTime) >= 0;
         }
 
         /**
@@ -346,7 +346,7 @@ public record Config(
          * @return true if the time is the canyon activation block, otherwise false.
          */
         public boolean isCanyon(BigInteger time) {
-            return canyonTime.compareTo(BigInteger.ZERO) > 0 && time.compareTo(canyonTime) >= 0;
+            return canyonTime.compareTo(BigInteger.ZERO) >= 0 && time.compareTo(canyonTime) >= 0;
         }
 
         /**

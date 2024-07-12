@@ -527,7 +527,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
                                                         .subtract(syncedBlockNum)
                                                         .compareTo(BigInteger.valueOf(1024L))
                                                 < 0)
-                        .toList();
+                        .collect(Collectors.toList());
             }
         }
         if (this.futureUnsafeBlocks.isEmpty()) {
