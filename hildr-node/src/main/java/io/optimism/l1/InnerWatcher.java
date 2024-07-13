@@ -381,11 +381,17 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private void updateSystemConfig(BlockInfo l1BlockInfo) throws ExecutionException, InterruptedException {
         BigInteger preLastUpdateBlock = this.systemConfigUpdate.component1();
-        if (preLastUpdateBlock.compareTo(this.currentBlock) <= 0) {
+        if (preLastUpdateBlock.compareTo(this.currentBlock) < 0 || preLastUpdateBlock.equals(BigInteger.ZERO)) {
             BigInteger fromBlock = preLastUpdateBlock.equals(BigInteger.ZERO)
                     ? BigInteger.ZERO
                     : preLastUpdateBlock.add(BigInteger.ONE);
+            if (fromBlock.compareTo(this.headBlock) > 0) {
+                fromBlock = this.headBlock;
+            }
             BigInteger toBlock = preLastUpdateBlock.add(BigInteger.valueOf(100L));
+            if (toBlock.compareTo(this.headBlock) > 0) {
+                toBlock = this.headBlock;
+            }
             LOGGER.debug(
                     "will get system update eth log: fromBlock={} -> toBlock={}; contract={}",
                     fromBlock,
@@ -423,6 +429,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                 }
             }
         }
+
         BigInteger lastUpdateBlock = this.systemConfigUpdate.component1();
         SystemConfig nextConfig = this.systemConfigUpdate.component2();
         if (lastUpdateBlock.compareTo(currentBlock) == 0 && nextConfig != null) {
@@ -443,9 +450,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
                     lastSystemConfig.l1FeeScalar(),
                     lastSystemConfig.unsafeBlockSigner());
         } else if (configUpdate instanceof SystemConfigUpdate.Fees) {
-            var ecotoneTime = this.config.chainConfig().ecotoneTime();
-            if (ecotoneTime.compareTo(BigInteger.ZERO) > 0
-                    && l1BlockInfo.timestamp().compareTo(ecotoneTime) >= 0) {
+            if (this.config.chainConfig().isEcotone(l1BlockInfo.timestamp())) {
                 updateSystemConfig = new Config.SystemConfig(
                         lastSystemConfig.batchSender(),
                         lastSystemConfig.gasLimit(),
