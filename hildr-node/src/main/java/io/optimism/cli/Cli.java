@@ -135,7 +135,7 @@ public class Cli implements Runnable {
 
     @Option(
             names = "--log-level",
-            defaultValue = "DEBUG",
+            defaultValue = "INFO",
             converter = LogLevelConverter.class,
             description = "Log level")
     Level logLevel;
