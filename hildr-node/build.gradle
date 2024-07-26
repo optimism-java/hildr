@@ -16,6 +16,7 @@ plugins {
 	id "net.ltgt.errorprone" version "3.1.0"
 	id 'org.graalvm.buildtools.native' version '0.9.28'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
+	id 'org.jetbrains.kotlin.jvm'
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
 //    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
@@ -161,6 +162,10 @@ dependencies {
 
 	testImplementation 'org.mockito:mockito-junit-jupiter:2.19.0'
 	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.14")
+	implementation 'io.vertx:vertx-core:4.5.9'
+	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+	implementation 'io.vertx:vertx-lang-kotlin-coroutines:4.5.9'
+	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1'
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

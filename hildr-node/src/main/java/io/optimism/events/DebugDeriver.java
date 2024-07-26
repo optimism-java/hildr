@@ -1,6 +1,5 @@
 package io.optimism.events;
 
-
 import com.google.common.eventbus.Subscribe;
 import org.slf4j.Logger;
 

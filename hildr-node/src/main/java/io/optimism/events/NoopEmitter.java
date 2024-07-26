@@ -1,6 +1,5 @@
 package io.optimism.events;
 
-
 /**
  * The type NoopEmitter.
  *

@@ -6,6 +6,7 @@ plugins {
 	id "net.ltgt.errorprone" version "3.1.0"
 	id 'org.graalvm.buildtools.native' version '0.9.28'
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
+	id 'org.jetbrains.kotlin.jvm'
 }
 
 group = 'io.optimism'
@@ -124,6 +125,7 @@ dependencies {
 	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.14")
 
 	errorprone("com.google.errorprone:error_prone_core:2.18.0")
+	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 // Apply a specific Java toolchain to ease working on different environments.

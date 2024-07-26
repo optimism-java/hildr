@@ -1,10 +1,9 @@
 package io.optimism.events;
 
-import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
 
 class SynchronousDeriversTest {
 
@@ -38,7 +37,6 @@ class SynchronousDeriversTest {
             res[0] += String.format("c:%s\n", event);
             return null;
         });
-
 
         SynchronousDerivers x = new SynchronousDerivers(List.of());
         x.onEvent(new TestEvent());

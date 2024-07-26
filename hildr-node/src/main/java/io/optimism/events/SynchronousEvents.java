@@ -1,12 +1,10 @@
 package io.optimism.events;
 
-import org.slf4j.Logger;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
-
+import org.slf4j.Logger;
 
 /**
  * The type SynchronousEvents.
@@ -16,9 +14,9 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class SynchronousEvents implements EventEmitter {
 
-    protected final static int SANITY_EVENT_LIMIT = 1000;
+    protected static final int SANITY_EVENT_LIMIT = 1000;
 
-    private final static Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SynchronousEvents.class);
+    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SynchronousEvents.class);
 
     private final ReentrantLock lock = new ReentrantLock();
 

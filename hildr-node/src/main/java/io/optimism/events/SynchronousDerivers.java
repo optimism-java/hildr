@@ -1,9 +1,7 @@
 package io.optimism.events;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.util.List;
-
 
 public class SynchronousDerivers implements Deriver {
 

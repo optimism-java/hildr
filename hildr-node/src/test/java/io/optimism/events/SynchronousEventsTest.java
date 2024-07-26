@@ -1,23 +1,21 @@
 package io.optimism.events;
 
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Function;
-
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import org.junit.jupiter.api.Test;
 
 class SynchronousEventsTest {
 
     @Test
     void testSynchronousEvents() {
         final int[] count = {0};
-        DeriverFunction deriver = new DeriverFunction(_ -> {
+        DeriverFunction deriver = new DeriverFunction(a -> {
             count[0]++;
             return null;
         });
@@ -54,7 +52,7 @@ class SynchronousEventsTest {
     @Test
     void testSynchronousEventsSanityLimit() {
         final int[] count = {0};
-        DeriverFunction deriver = new DeriverFunction(_ -> {
+        DeriverFunction deriver = new DeriverFunction(a -> {
             count[0]++;
             return null;
         });

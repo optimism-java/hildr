@@ -1,9 +1,7 @@
 package io.optimism.events;
 
 import com.google.common.eventbus.Subscribe;
-
 import java.util.function.Function;
-
 
 /**
  * The type DeriverFunction.
@@ -29,5 +27,4 @@ public class DeriverFunction implements Deriver {
     public void onEvent(Event event) {
         function.apply(event);
     }
-
 }
