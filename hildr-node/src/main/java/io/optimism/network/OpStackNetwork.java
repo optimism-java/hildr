@@ -122,7 +122,8 @@ public class OpStackNetwork {
                 .listenUdpPortDefault(config.discPort())
                 .bootnodes(bootNodes)
                 .build();
-        final NetworkConfig p2pConfig = NetworkConfig.builder().build();
+        final NetworkConfig p2pConfig =
+                NetworkConfig.builder().listenPort(config.discPort()).build();
         final KeyValueStore<String, Bytes> kvStore = new MemKeyValueStore<>();
         final PreparedGossipMessageFactory preparedGossipMessageFactory = new SnappyPreparedGossipMessageFactory();
 
