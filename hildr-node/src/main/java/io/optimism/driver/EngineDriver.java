@@ -199,7 +199,9 @@ public class EngineDriver<E extends Engine> {
             var l2Finalized = l2Client.ethGetBlockByNumber(DefaultBlockParameterName.FINALIZED, true)
                     .sendAsync()
                     .get();
-            if (l2Finalized.hasError() && l2Finalized.getError().getMessage().contains("block not found")) {
+            if (l2Finalized.hasError()
+                    && (l2Finalized.getError().getMessage().contains("block not found")
+                            || l2Finalized.getError().getMessage().contains("Unknown block"))) {
                 this.syncStatus = SyncStatus.StartedEL;
                 LOGGER.info("Starting EL sync");
             } else if (this.chainConfig.l2Genesis().number().compareTo(BigInteger.ZERO) != 0
