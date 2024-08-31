@@ -4,6 +4,7 @@ plugins {
 	id "jacoco"
 	id "com.diffplug.spotless" version "6.22.0"
 	id "net.ltgt.errorprone" version "3.1.0"
+	id 'org.jetbrains.kotlin.jvm'
 }
 
 group = 'io.optimism'
@@ -129,6 +130,7 @@ dependencies {
 		else
 			throw new IllegalStateException("Unsupported operating system: $operatingSystem");
 	}:$brotliVersion""")
+	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
 test {
