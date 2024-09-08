@@ -34,6 +34,10 @@ public class Cli implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Cli.class);
 
+    private static final int DEFAULT_METRICS_PORT = 9200;
+
+    private static final int MAX_PORT_NUMBER = 65535;
+
     @Option(
             names = "--network",
             defaultValue = "optimism",
@@ -49,7 +53,7 @@ public class Cli implements Runnable {
     @Option(names = "--l1-beacon-url", required = true, description = "The l1 chain beacon client RPC URL")
     String l1BeaconUrl;
 
-    @Option(names = "--l1-beacon-archiver-url", required = false, description = "The l1 beacon chain archiver RPC URL")
+    @Option(names = "--l1-beacon-archiver-url", description = "The l1 beacon chain archiver RPC URL")
     String l1BeaconArchiverUrl;
 
     @Option(names = "--l2-rpc-url", required = true, description = "The L2 engine RPC URL")
@@ -74,13 +78,7 @@ public class Cli implements Runnable {
     String jwtFile;
 
     @Option(
-            names = {"--verbose", "-v"},
-            description = "")
-    Boolean verbose;
-
-    @Option(
             names = {"--rpc-addr"},
-            required = false,
             description = "The address of RPC server",
             defaultValue = "0.0.0.0")
     String rpcAddr;
@@ -146,15 +144,14 @@ public class Cli implements Runnable {
     @Override
     public void run() {
         var logger = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
-        if (logger instanceof ch.qos.logback.classic.Logger) {
-            var logbackLogger = (ch.qos.logback.classic.Logger) logger;
+        if (logger instanceof ch.qos.logback.classic.Logger logbackLogger) {
             logbackLogger.setLevel(logLevel);
         }
         TracerTaskWrapper.setTracerSupplier(Logging.INSTANCE::getTracer);
         if (Boolean.TRUE.equals(metricsEnable)) {
             var metricsPort = this.metricsPort;
-            if (metricsPort == null || metricsPort > 65535) {
-                metricsPort = 9200;
+            if (metricsPort == null || metricsPort > MAX_PORT_NUMBER) {
+                metricsPort = DEFAULT_METRICS_PORT;
             }
             InnerMetrics.start(metricsPort);
         }
@@ -163,7 +160,6 @@ public class Cli implements Runnable {
         Signal.handle(new Signal("TERM"), sig -> System.exit(0));
 
         var syncMode = this.syncMode;
-        var unusedVerbose = this.verbose;
         var checkpointHash = this.checkpointHash;
         var config = this.toConfig();
         Runner runner = Runner.create(config).setSyncMode(syncMode).setCheckpointHash(checkpointHash);
@@ -218,12 +214,12 @@ public class Cli implements Runnable {
                 ? Paths.get(Cli.this.jwtFile)
                 : Paths.get(System.getProperty("user.dir"), "jwt.hex");
         if (!Files.exists(jwtFilePath)) {
-            throw new RuntimeException("Failed to read JWT secret from file: " + jwtFilePath);
+            throw new RuntimeException("Failed to read JWT secret from file: %s".formatted(jwtFilePath));
         }
         try {
             return Files.readString(jwtFilePath, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read JWT secret from file: " + jwtFilePath, e);
+            throw new RuntimeException("Failed to read JWT secret from file: %s".formatted(jwtFilePath), e);
         }
     }
 
