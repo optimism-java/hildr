@@ -25,8 +25,8 @@ import org.github.gestalt.config.exceptions.GestaltException;
 import org.github.gestalt.config.loader.EnvironmentVarsLoader;
 import org.github.gestalt.config.loader.MapConfigLoader;
 import org.github.gestalt.config.loader.PropertyLoader;
-import org.github.gestalt.config.source.FileConfigSource;
-import org.github.gestalt.config.source.MapConfigSource;
+import org.github.gestalt.config.source.FileConfigSourceBuilder;
+import org.github.gestalt.config.source.MapConfigSourceBuilder;
 import org.github.gestalt.config.toml.TomlLoader;
 import org.web3j.tuples.generated.Tuple2;
 import org.web3j.utils.Numeric;
@@ -93,26 +93,31 @@ public record Config(
             TomlLoader tomlLoader = new TomlLoader();
             PropertyLoader propertyLoader = new PropertyLoader();
 
-            MapConfigSource defaultProviderConfigSource = getMapConfigSource();
+            Map<String, String> defaultProvider = getDefaultConfigMap();
 
             Map<String, String> chainProvider = chainConfig.toConfigMap();
-            MapConfigSource chainConfigSource = new MapConfigSource(chainProvider);
 
             Map<String, String> cliProvider = cliConfig.toConfigMap();
-            MapConfigSource cliConfigSource = new MapConfigSource(cliProvider);
 
             Gestalt gestalt;
             if (configPath != null) {
-                FileConfigSource tomlConfigSource = new FileConfigSource(configPath);
                 gestalt = new GestaltBuilder()
                         .addConfigLoader(environmentVarsLoader)
                         .addConfigLoader(mapConfigLoader)
                         .addConfigLoader(tomlLoader)
                         .addConfigLoader(propertyLoader)
-                        .addSource(defaultProviderConfigSource)
-                        .addSource(chainConfigSource)
-                        .addSource(tomlConfigSource)
-                        .addSource(cliConfigSource)
+                        .addSource(MapConfigSourceBuilder.builder()
+                                .setCustomConfig(defaultProvider)
+                                .build())
+                        .addSource(MapConfigSourceBuilder.builder()
+                                .setCustomConfig(chainProvider)
+                                .build())
+                        .addSource(FileConfigSourceBuilder.builder()
+                                .setPath(configPath)
+                                .build())
+                        .addSource(MapConfigSourceBuilder.builder()
+                                .setCustomConfig(cliProvider)
+                                .build())
                         .setTreatMissingValuesAsErrors(false)
                         .build();
             } else {
@@ -121,9 +126,15 @@ public record Config(
                         .addConfigLoader(mapConfigLoader)
                         .addConfigLoader(tomlLoader)
                         .addConfigLoader(propertyLoader)
-                        .addSource(defaultProviderConfigSource)
-                        .addSource(chainConfigSource)
-                        .addSource(cliConfigSource)
+                        .addSource(MapConfigSourceBuilder.builder()
+                                .setCustomConfig(defaultProvider)
+                                .build())
+                        .addSource(MapConfigSourceBuilder.builder()
+                                .setCustomConfig(chainProvider)
+                                .build())
+                        .addSource(MapConfigSourceBuilder.builder()
+                                .setCustomConfig(cliProvider)
+                                .build())
                         .setTreatMissingValuesAsErrors(false)
                         .build();
             }
@@ -135,7 +146,7 @@ public record Config(
         }
     }
 
-    private static MapConfigSource getMapConfigSource() {
+    private static Map<String, String> getDefaultConfigMap() {
         Map<String, String> defaultProvider = new HashMap<>();
         defaultProvider.put("config.l2RpcUrl", "http://127.0.0.1:8545");
         defaultProvider.put("config.l2EngineUrl", "http://127.0.0.1:8551");
@@ -148,7 +159,7 @@ public record Config(
         defaultProvider.put("config.rpcPort", "9545");
         defaultProvider.put("config.rpcAddr", "0.0.0.0");
         defaultProvider.put("config.discPort", "9876");
-        return new MapConfigSource(defaultProvider);
+        return defaultProvider;
     }
 
     /**

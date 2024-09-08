@@ -15,7 +15,7 @@ public class SyncModeConverter implements CommandLine.ITypeConverter<Config.Sync
     public SyncModeConverter() {}
 
     @Override
-    public Config.SyncMode convert(String value) throws Exception {
+    public Config.SyncMode convert(String value) {
         return Config.SyncMode.from(value);
     }
 }
