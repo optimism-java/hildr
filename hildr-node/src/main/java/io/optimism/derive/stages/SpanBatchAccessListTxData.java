@@ -1,4 +1,20 @@
-package io.optimism.utilities.derive.stages;
+/*
+ * Copyright 2023 q315xia@163.com
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ */
+
+package io.optimism.derive.stages;
 
 import static org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder.writeAccessList;
 
@@ -13,22 +29,21 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 /**
- * The type SpanBatchDynamicFeeTxData.
+ * The type SpanBatchAccessListTxData.
  *
  * @param value      the value
- * @param gasTipCap  the gas tip cap
- * @param gasFeeCap  the gas fee cap
+ * @param gasPrice   the gas price
  * @param data       the data
  * @param accessList the access list
  * @author grapebaba
  * @since 0.2.4
  */
-public record SpanBatchDynamicFeeTxData(
-        Wei value, Wei gasTipCap, Wei gasFeeCap, Bytes data, List<AccessListEntry> accessList)
+public record SpanBatchAccessListTxData(Wei value, Wei gasPrice, Bytes data, List<AccessListEntry> accessList)
         implements SpanBatchTxData {
+
     @Override
     public TransactionType txType() {
-        return TransactionType.EIP1559;
+        return TransactionType.ACCESS_LIST;
     }
 
     /**
@@ -41,8 +56,7 @@ public record SpanBatchDynamicFeeTxData(
         out.writeByte(txType().getEthSerializedType());
         out.startList();
         out.writeUInt256Scalar(value());
-        out.writeUInt256Scalar(gasTipCap());
-        out.writeUInt256Scalar(gasFeeCap());
+        out.writeUInt256Scalar(gasPrice());
         out.writeBytes(data());
         writeAccessList(out, Optional.ofNullable(accessList()));
         out.endList();
@@ -50,16 +64,15 @@ public record SpanBatchDynamicFeeTxData(
     }
 
     /**
-     * Decode span batch dynamic fee tx data.
+     * Decode span batch access list tx data.
      *
      * @param input the input
-     * @return the span batch dynamic fee tx data
+     * @return the span batch access list tx data
      */
-    public static SpanBatchDynamicFeeTxData decode(RLPInput input) {
+    public static SpanBatchAccessListTxData decode(RLPInput input) {
         input.enterList();
         Wei value = Wei.of(input.readUInt256Scalar());
-        Wei gasTipCap = Wei.of(input.readUInt256Scalar());
-        Wei gasFeeCap = Wei.of(input.readUInt256Scalar());
+        Wei gasPrice = Wei.of(input.readUInt256Scalar());
         Bytes data = input.readBytes();
         List<AccessListEntry> accessList = input.readList(accessListEntryRLPInput -> {
             accessListEntryRLPInput.enterList();
@@ -69,8 +82,7 @@ public record SpanBatchDynamicFeeTxData(
             accessListEntryRLPInput.leaveList();
             return accessListEntry;
         });
-
         input.leaveList();
-        return new SpanBatchDynamicFeeTxData(value, gasTipCap, gasFeeCap, data, accessList);
+        return new SpanBatchAccessListTxData(value, gasPrice, data, accessList);
     }
 }

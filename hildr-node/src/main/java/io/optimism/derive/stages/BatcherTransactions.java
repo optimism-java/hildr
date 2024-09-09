@@ -1,7 +1,6 @@
 package io.optimism.derive.stages;
 
 import io.optimism.derive.PurgeableIterator;
-import io.optimism.utilities.derive.stages.Frame;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;

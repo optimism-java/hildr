@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.optimism.derive.stages.BatcherTransactions.BatcherTransaction;
-import io.optimism.utilities.derive.stages.Frame;
 import java.math.BigInteger;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.jupiter.api.DisplayName;
