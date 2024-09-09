@@ -16,5 +16,4 @@ pluginManagement {
 
 rootProject.name = 'hildr'
 include('hildr-node')
-include('hildr-utilities')
 
