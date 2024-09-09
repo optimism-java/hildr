@@ -2,7 +2,6 @@ package io.optimism.cli;
 
 import ch.qos.logback.classic.Level;
 import io.micrometer.tracing.Tracer;
-import io.optimism.cli.typeconverter.LogLevelConverter;
 import io.optimism.cli.typeconverter.SyncModeConverter;
 import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
