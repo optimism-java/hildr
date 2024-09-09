@@ -58,7 +58,7 @@ jobs:
         with:
           name: hildr-node-jar
           path: |
-            hildr-node/build/docker/hildr-node.jar
+            build/docker/hildr-node.jar
           if-no-files-found: error
 
   push_image_to_github:
