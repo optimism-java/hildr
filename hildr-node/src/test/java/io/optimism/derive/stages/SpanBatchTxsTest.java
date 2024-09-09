@@ -16,7 +16,7 @@
 
 package io.optimism.derive.stages;
 
-import static io.optimism.utilities.derive.stages.SpanBatchTx.SIGNATURE_ALGORITHM;
+import static io.optimism.derive.stages.SpanBatchTx.SIGNATURE_ALGORITHM;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

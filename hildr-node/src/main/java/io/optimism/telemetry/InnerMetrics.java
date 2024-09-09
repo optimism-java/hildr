@@ -1,7 +1,6 @@
 package io.optimism.telemetry;
 
 import io.micrometer.core.instrument.Gauge;
-import io.optimism.utilities.telemetry.MetricsServer;
 import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicReference;
 

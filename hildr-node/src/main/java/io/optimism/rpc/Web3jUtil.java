@@ -17,7 +17,7 @@
 package io.optimism.rpc;
 
 import io.optimism.rpc.execution.Web3jCallException;
-import io.optimism.utilities.telemetry.TracerTaskWrapper;
+import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
