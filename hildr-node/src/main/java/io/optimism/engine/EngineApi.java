@@ -6,7 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import io.optimism.config.Config;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
-import io.optimism.utilities.rpc.Web3jProvider;
+import io.optimism.rpc.Web3jProvider;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;
