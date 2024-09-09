@@ -88,14 +88,12 @@ public class MetricsServer {
             }
             if (serverFuture != null) {
                 serverFuture.cancel(true);
-            } else {
-                throw new MetricsServerException("metrics server is stopped or never start");
+                serverFuture = null;
             }
             if (httpServer != null) {
                 httpServer.stop(5);
+                httpServer = null;
             }
-            serverFuture = null;
-            httpServer = null;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new MetricsServerException("can not acquire metrics server resource", e);
@@ -110,6 +108,6 @@ public class MetricsServer {
      * @return the boolean
      */
     public static boolean isActive() {
-        return serverFuture != null && !(serverFuture.isDone() || serverFuture.isCancelled());
+        return serverFuture != null;
     }
 }
