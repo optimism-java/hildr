@@ -29,18 +29,18 @@ cd ./docker && docker compose -f docker/docker-compose.yml up op-geth
 Then, once op-geth has been started, start up the `hildr-node` in `hildr` project root directory:
 ```shell
 ./gradlew :hildr-node:build -x test \
-    && nohup java --enable-preview \
-        -cp hildr-node/build/libs/hildr-node-{version}.jar io.optimism.Hildr \
-        --network optimism-sepolia \
-        --jwt-secret $JWT_SECRET \
-        --l1-rpc-url $L1_RPC_URL \
-        --l1-ws-rpc-url $L1_WS_RPC_URL \
-        --l1-beacon-url $L1_BEACON_RPC_URL \
-        --l2-rpc-url $L2_RPC_URL \
-        --l2-engine-url $L2_AUTH_RPC_URL \
-        --rpc-port $HILDR_RPC_PORT \ # Choose any available port.
-        --log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
-        --sync-mode full >l2-hildr-node.log 2>&1 &
+	&& nohup java --enable-preview \
+		-cp hildr-node/build/libs/hildr-node-{version}.jar io.optimism.Hildr \
+		--network optimism-sepolia \
+		--jwt-secret $JWT_SECRET \
+		--l1-rpc-url $L1_RPC_URL \
+		--l1-ws-rpc-url $L1_WS_RPC_URL \
+		--l1-beacon-url $L1_BEACON_RPC_URL \
+		--l2-rpc-url $L2_RPC_URL \
+		--l2-engine-url $L2_AUTH_RPC_URL \
+		--rpc-port $HILDR_RPC_PORT \ # Choose any available port.
+		--log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
+		--sync-mode full >l2-hildr-node.log 2>&1 &
 ```
 
 ### Use docker
@@ -48,30 +48,30 @@ Then, once op-geth has been started, start up the `hildr-node` in `hildr` projec
 Running a native hildr container on optimism-sepolia network:
 ```shell
 docker run -it ghcr.io/optimism-java/hildr:latest-native \
-    --network optimism-sepolia \
-    --jwt-secret $JWT_SECRET \
-    --l1-rpc-url $L1_RPC_URL \
-    --l1-ws-rpc-url $L1_WS_RPC_URL \
-    --l1-beacon-url $L1_BEACON_RPC_URL \
-    --l2-rpc-url $L2_RPC_URL \
-    --l2-engine-url $L2_AUTH_RPC_URL \
-    --rpc-port $HILDR_RPC_PORT \
-    --log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
-    --sync-mode full
+	--network optimism-sepolia \
+	--jwt-secret $JWT_SECRET \
+	--l1-rpc-url $L1_RPC_URL \
+	--l1-ws-rpc-url $L1_WS_RPC_URL \
+	--l1-beacon-url $L1_BEACON_RPC_URL \
+	--l2-rpc-url $L2_RPC_URL \
+	--l2-engine-url $L2_AUTH_RPC_URL \
+	--rpc-port $HILDR_RPC_PORT \
+	--log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
+	--sync-mode full
 ```
 
 Running a java hildr container on optimism-sepolia network:
 ```shell
 docker run -it ghcr.io/optimism-java/hildr:latest \
-    --network optimism-sepolia \
-    --jwt-secret $JWT_SECRET \
-    --l1-rpc-url $L1_RPC_URL \
-    --l1-ws-rpc-url $L1_WS_RPC_URL \
-    --l2-rpc-url $L2_RPC_URL \
-    --l2-engine-url $L2_AUTH_RPC_URL \
-    --rpc-port $HILDR_RPC_PORT \
-    --log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
-    --sync-mode full
+	--network optimism-sepolia \
+	--jwt-secret $JWT_SECRET \
+	--l1-rpc-url $L1_RPC_URL \
+	--l1-ws-rpc-url $L1_WS_RPC_URL \
+	--l2-rpc-url $L2_RPC_URL \
+	--l2-engine-url $L2_AUTH_RPC_URL \
+	--rpc-port $HILDR_RPC_PORT \
+	--log-level $LOG_LEVEL \ # can be either: "DEBUG","TRACE","INFO","WARN","ERROR"
+	--sync-mode full
 ```
 
 ## Installing Hildr Node
@@ -83,7 +83,7 @@ Install `op-geth` via the `Makefile` in the workspace root:
 
 ```shell
 git clone git@github.com:optimism-java/hildr.git \
-  cd hildr && ./gradlew build -x test
+cd hildr && ./gradlew build -x test
 ```
 
 This command will generate the `hildr-node` jar file in `hildr/hildr-node/build/libs`
