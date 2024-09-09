@@ -56,9 +56,9 @@ jobs:
       - name: 📤 Upload ${{ matrix.os }} native image
         uses: actions/upload-artifact@v3
         with:
-          name: hildr-node-jar
+          name: hildr-jar
           path: |
-            build/docker/hildr-node.jar
+            build/docker/hildr.jar
           if-no-files-found: error
 
   push_image_to_github:
