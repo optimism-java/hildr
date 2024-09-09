@@ -6,7 +6,7 @@
     </encoder>
   </appender>
 
-  <appender name="FILE" class="io.optimism.utilities.telemetry.LazyInitRollingFileAppender">
+  <appender name="FILE" class="io.optimism.telemetry.LazyInitRollingFileAppender">
     <file>logs/app.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <fileNamePattern>app-%d{yyyy-MM-dd HH}.gz</fileNamePattern>

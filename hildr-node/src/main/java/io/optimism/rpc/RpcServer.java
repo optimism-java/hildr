@@ -11,7 +11,7 @@ import io.optimism.rpc.handler.TimeoutHandler;
 import io.optimism.rpc.methods.JsonRpcMethod;
 import io.optimism.rpc.methods.JsonRpcMethodAdapter;
 import io.optimism.rpc.methods.JsonRpcMethodsFactory;
-import io.optimism.utilities.telemetry.Logging;
+import io.optimism.telemetry.Logging;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;

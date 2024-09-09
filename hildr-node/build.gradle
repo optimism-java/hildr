@@ -71,7 +71,6 @@ def operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
 def currentArchitecture = DefaultNativePlatform.getCurrentArchitecture()
 
 dependencies {
-	implementation project(':hildr-utilities')
 	// This dependency is used by the application.
 	implementation 'com.google.guava:guava:33.0.0-jre'
 	implementation 'com.github.rholder:guava-retrying:2.0.0'
@@ -137,7 +136,7 @@ dependencies {
 	implementation('tech.pegasys.teku.internal:serviceutils:23.10.0')
 	implementation('tech.pegasys.teku.internal:unsigned:23.10.0')
 	implementation('tech.pegasys.teku.internal:statetransition:23.10.0')
-	implementation 'tech.pegasys:jc-kzg-4844'
+	implementation 'tech.pegasys:jc-kzg-4844:0.8.0'
 	implementation('org.hyperledger.besu.internal:metrics-core:23.10.2')
 	implementation('org.hyperledger.besu:plugin-api:23.10.2')
 	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE')
@@ -160,7 +159,12 @@ dependencies {
 //	implementation 'org.apache.logging.log4j:log4j-slf4j-impl:3.0.0-alpha1'
 //	implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:3.0.0-alpha1'
 	implementation 'org.apache.logging.log4j:log4j-to-slf4j:3.0.0-alpha1'
-//	implementation fileTree(dir: '../lib', include: '*.jar')
+
+	implementation('org.web3j:core:4.11.2') {
+		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
+		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
+	}
 
 	implementation "com.aayushatharva.brotli4j:brotli4j:$brotliVersion"
 	runtimeOnly("""com.aayushatharva.brotli4j:native-${

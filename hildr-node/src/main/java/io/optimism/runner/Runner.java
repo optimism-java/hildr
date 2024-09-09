@@ -16,7 +16,7 @@ import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
 import io.optimism.rpc.Web3jProvider;
 import io.optimism.rpc.response.OpEthBlock;
-import io.optimism.utilities.telemetry.TracerTaskWrapper;
+import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;

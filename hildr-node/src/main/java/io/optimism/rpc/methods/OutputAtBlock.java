@@ -8,7 +8,7 @@ import io.optimism.rpc.internal.response.JsonRpcResponse;
 import io.optimism.rpc.internal.response.JsonRpcSuccessResponse;
 import io.optimism.rpc.internal.result.EthGetProof;
 import io.optimism.rpc.internal.result.OutputRootResult;
-import io.optimism.utilities.telemetry.TracerTaskWrapper;
+import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
