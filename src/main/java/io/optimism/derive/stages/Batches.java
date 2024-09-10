@@ -1,13 +1,20 @@
 package io.optimism.derive.stages;
 
 import com.google.common.collect.Lists;
-import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.derive.stages.Channels.Channel;
+import io.optimism.exceptions.DecompressException;
 import io.optimism.l1.L1Info;
-import io.optimism.type.Epoch;
+import io.optimism.types.Batch;
+import io.optimism.types.BlockInfo;
+import io.optimism.types.Epoch;
+import io.optimism.types.IBatch;
+import io.optimism.types.SingularBatch;
+import io.optimism.types.SpanBatch;
+import io.optimism.types.SpanBatchElement;
+import io.optimism.types.enums.BatchType;
 import io.optimism.utilities.compression.Compressors;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -46,7 +53,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
 
     private final Config config;
 
-    private SpscAtomicArrayQueue<Batch> nextSingularBatches;
+    private final SpscAtomicArrayQueue<Batch> nextSingularBatches;
 
     /**
      * Instantiates a new Batches.
@@ -118,7 +125,7 @@ public class Batches<I extends PurgeableIterator<Channel>> implements PurgeableI
         Batch batch = null;
         if (derivedBatch != null) {
             List<Batch> singularBatches = this.getSingularBatches(derivedBatch.batch(), this.state.get());
-            if (singularBatches.size() != 0) {
+            if (!singularBatches.isEmpty()) {
                 this.nextSingularBatches.addAll(singularBatches);
                 return this.nextSingularBatches.poll();
             }

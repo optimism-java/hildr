@@ -1,6 +1,6 @@
 package io.optimism.utilities.encoding;
 
-import io.optimism.type.DepositTransaction;
+import io.optimism.types.DepositTransaction;
 import java.math.BigInteger;
 import java.util.Arrays;
 import org.web3j.rlp.RlpDecoder;

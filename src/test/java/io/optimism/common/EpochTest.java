@@ -2,7 +2,8 @@ package io.optimism.common;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import io.optimism.type.Epoch;
+import io.optimism.types.AttributesDepositedCall;
+import io.optimism.types.Epoch;
 import java.math.BigInteger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

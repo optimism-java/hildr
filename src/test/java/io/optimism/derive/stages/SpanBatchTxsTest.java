@@ -1,6 +1,6 @@
 package io.optimism.derive.stages;
 
-import static io.optimism.derive.stages.SpanBatchTx.SIGNATURE_ALGORITHM;
+import static io.optimism.types.SpanBatchTx.SIGNATURE_ALGORITHM;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -8,6 +8,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.netty.buffer.Unpooled;
+import io.optimism.types.SpanBatchTxs;
+import io.optimism.utilities.spanbatch.SpanBatchUtils;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URL;

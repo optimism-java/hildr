@@ -1,7 +1,7 @@
 package io.optimism.l1;
 
-import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
+import io.optimism.types.BlockInfo;
 import java.math.BigInteger;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;

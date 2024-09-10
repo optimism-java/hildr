@@ -1,6 +1,5 @@
 package io.optimism.driver;
 
-import io.optimism.common.BlockInfo;
 import io.optimism.config.Config;
 import io.optimism.engine.Engine;
 import io.optimism.engine.EngineApi;
@@ -15,11 +14,12 @@ import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
 import io.optimism.network.ExecutionPayloadEnvelop;
 import io.optimism.telemetry.TracerTaskWrapper;
-import io.optimism.type.Epoch;
-import io.optimism.type.L2BlockRef;
-import io.optimism.type.PayloadInfo;
-import io.optimism.type.enums.BlockInsertion;
-import io.optimism.type.enums.SyncStatus;
+import io.optimism.types.BlockInfo;
+import io.optimism.types.Epoch;
+import io.optimism.types.L2BlockRef;
+import io.optimism.types.PayloadInfo;
+import io.optimism.types.enums.BlockInsertion;
+import io.optimism.types.enums.SyncStatus;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.ExecutionException;

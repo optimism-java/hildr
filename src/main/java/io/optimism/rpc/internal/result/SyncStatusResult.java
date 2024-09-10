@@ -1,7 +1,7 @@
 package io.optimism.rpc.internal.result;
 
-import io.optimism.common.BlockInfo;
-import io.optimism.type.L2BlockRef;
+import io.optimism.types.BlockInfo;
+import io.optimism.types.L2BlockRef;
 
 /**
  * The SyncStatusResult type. A snapshot of the driver. Values may be zeroed if not yet initialized.

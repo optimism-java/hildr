@@ -1,15 +1,18 @@
 package io.optimism.derive.stages;
 
-import io.optimism.common.BlockInfo;
-import io.optimism.common.BlockNotIncludedException;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemAccounts;
 import io.optimism.derive.ForkUpgradeTransactions;
 import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.exceptions.BlockNotIncludedException;
+import io.optimism.exceptions.L1InfoNotFoundException;
 import io.optimism.l1.L1Info;
-import io.optimism.type.Epoch;
+import io.optimism.types.Batch;
+import io.optimism.types.BlockInfo;
+import io.optimism.types.Epoch;
+import io.optimism.types.SingularBatch;
 import io.optimism.utilities.gas.GasCalculator;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;

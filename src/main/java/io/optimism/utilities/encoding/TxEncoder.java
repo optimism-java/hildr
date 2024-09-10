@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
 import io.optimism.rpc.response.OpEthBlock;
-import io.optimism.type.DepositTransaction;
-import io.optimism.type.enums.TxType;
+import io.optimism.types.DepositTransaction;
+import io.optimism.types.enums.TxType;
 import java.math.BigInteger;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -131,7 +131,7 @@ public class TxEncoder {
         } else if (TxType.ACCESS_LIST.is(tx.getType())) {
             return toAccessListTx(tx);
         } else {
-            throw new IllegalArgumentException("Unsupported transaction type: " + tx.getType());
+            throw new IllegalArgumentException("Unsupported transaction type: %s".formatted(tx.getType()));
         }
     }
 
@@ -171,12 +171,7 @@ public class TxEncoder {
                                         .map(storageKey -> Bytes32.wrap(Numeric.hexStringToByteArray(storageKey)))
                                         .collect(Collectors.toList())))
                         .toList());
-        final byte recId = BigInteger.valueOf(tx.getV()).byteValue();
-        final BigInteger r = Numeric.toBigInt(tx.getR());
-        final BigInteger s = Numeric.toBigInt(tx.getS());
-        final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, recId);
-        builder.signature(signature);
-        return builder.build();
+        return setSignature(tx, builder);
     }
 
     private static Transaction toAccessListTx(EthBlock.TransactionObject tx) {
@@ -196,6 +191,10 @@ public class TxEncoder {
                                         .map(storageKey -> Bytes32.wrap(Numeric.hexStringToByteArray(storageKey)))
                                         .collect(Collectors.toList())))
                         .toList());
+        return setSignature(tx, builder);
+    }
+
+    private static Transaction setSignature(EthBlock.TransactionObject tx, Transaction.Builder builder) {
         final byte recId = BigInteger.valueOf(tx.getV()).byteValue();
         final BigInteger r = Numeric.toBigInt(tx.getR());
         final BigInteger s = Numeric.toBigInt(tx.getS());

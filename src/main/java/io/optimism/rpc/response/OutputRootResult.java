@@ -1,6 +1,6 @@
 package io.optimism.rpc.response;
 
-import io.optimism.type.L2BlockRef;
+import io.optimism.types.L2BlockRef;
 
 /**
  * Output root result.
