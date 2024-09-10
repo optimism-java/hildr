@@ -16,7 +16,7 @@ public class LogLevelConverter implements CommandLine.ITypeConverter<ch.qos.logb
     public LogLevelConverter() {}
 
     @Override
-    public Level convert(String value) throws Exception {
+    public Level convert(String value) {
         return StringUtils.isEmpty(value) ? Level.DEBUG : Level.valueOf(value);
     }
 }

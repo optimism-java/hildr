@@ -4,6 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import io.optimism.types.SpanBatchAccessListTxData;
+import io.optimism.types.SpanBatchDynamicFeeTxData;
+import io.optimism.types.SpanBatchLegacyTxData;
+import io.optimism.types.SpanBatchTx;
+import io.optimism.types.SpanBatchTxData;
 import java.math.BigInteger;
 import java.util.List;
 import org.apache.tuweni.bytes.Bytes;

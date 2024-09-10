@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
+import io.optimism.utilities.blob.BlobCodec;
 import java.io.IOException;
 import java.net.URL;
 import org.junit.jupiter.api.DisplayName;

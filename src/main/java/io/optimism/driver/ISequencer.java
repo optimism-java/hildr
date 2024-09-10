@@ -1,7 +1,7 @@
 package io.optimism.driver;
 
 import io.optimism.network.ExecutionPayloadEnvelop;
-import io.optimism.type.L2BlockRef;
+import io.optimism.types.L2BlockRef;
 
 /**
  * The sequencer Interface.

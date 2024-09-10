@@ -10,6 +10,7 @@ import io.optimism.config.Config.ChainConfig;
 import io.optimism.derive.State;
 import io.optimism.derive.stages.BatcherTransactions.BatcherTransactionMessage;
 import io.optimism.derive.stages.Channels.Channel;
+import io.optimism.types.Frame;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;

@@ -8,7 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.optimism.rpc.response.OpEthBlock;
-import io.optimism.type.DepositTransaction;
+import io.optimism.types.DepositTransaction;
 import java.io.IOException;
 import java.net.URL;
 import java.util.List;

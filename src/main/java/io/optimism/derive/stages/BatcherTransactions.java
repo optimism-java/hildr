@@ -1,6 +1,7 @@
 package io.optimism.derive.stages;
 
 import io.optimism.derive.PurgeableIterator;
+import io.optimism.types.Frame;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -17,9 +18,9 @@ import org.jctools.queues.MessagePassingQueue;
  * @since 0.1.0
  */
 public class BatcherTransactions implements PurgeableIterator<BatcherTransactions.BatcherTransaction> {
-    private Deque<BatcherTransaction> txs;
+    private final Deque<BatcherTransaction> txs;
 
-    private MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;
+    private final MessagePassingQueue<BatcherTransactionMessage> txMessagesQueue;
 
     /**
      * Instantiates a new Batcher transactions.
@@ -48,7 +49,7 @@ public class BatcherTransactions implements PurgeableIterator<BatcherTransaction
 
     @Override
     public void purge() {
-
+        // Drain the queue of all messages
         while (this.txMessagesQueue.poll() != null) {}
 
         this.txs.clear();

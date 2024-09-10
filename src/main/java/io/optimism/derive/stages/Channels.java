@@ -6,6 +6,7 @@ import io.optimism.derive.PurgeableIterator;
 import io.optimism.derive.State;
 import io.optimism.derive.stages.BatcherTransactions.BatcherTransaction;
 import io.optimism.derive.stages.Channels.Channel;
+import io.optimism.types.Frame;
 import java.math.BigInteger;
 import java.util.Comparator;
 import java.util.List;

@@ -1,7 +1,6 @@
 package io.optimism.runner;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
-import io.optimism.common.BlockNotIncludedException;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SyncMode;
 import io.optimism.config.Config.SystemAccounts;
@@ -14,6 +13,11 @@ import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
+import io.optimism.exceptions.BlockNotIncludedException;
+import io.optimism.exceptions.DriverInitException;
+import io.optimism.exceptions.SyncUrlMissingException;
+import io.optimism.exceptions.TransactionNotFoundException;
+import io.optimism.exceptions.TrustedPeerAddedException;
 import io.optimism.rpc.Web3jProvider;
 import io.optimism.rpc.response.OpEthBlock;
 import io.optimism.telemetry.TracerTaskWrapper;

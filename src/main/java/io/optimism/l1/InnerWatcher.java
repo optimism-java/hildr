@@ -3,21 +3,21 @@ package io.optimism.l1;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
-import io.optimism.common.BlockInfo;
-import io.optimism.common.BlockNotIncludedException;
-import io.optimism.common.HildrServiceExecutionException;
 import io.optimism.config.Config;
 import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes;
 import io.optimism.derive.stages.Attributes.UserDeposited;
 import io.optimism.driver.L1AttributesDepositedTxNotFoundException;
+import io.optimism.exceptions.BlockNotIncludedException;
+import io.optimism.exceptions.HildrServiceExecutionException;
 import io.optimism.l1.BlockUpdate.FinalityUpdate;
 import io.optimism.rpc.Web3jProvider;
 import io.optimism.telemetry.Logging;
 import io.optimism.telemetry.TracerTaskWrapper;
-import io.optimism.type.BeaconSignedBlockHeader;
-import io.optimism.type.BlobSidecar;
-import io.optimism.utilities.BlobCodec;
+import io.optimism.types.BeaconSignedBlockHeader;
+import io.optimism.types.BlobSidecar;
+import io.optimism.types.BlockInfo;
+import io.optimism.utilities.blob.BlobCodec;
 import io.reactivex.disposables.Disposable;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -91,7 +91,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
      */
     private final BeaconBlobFetcher beaconFetcher;
 
-    private BigInteger l2StartBlock;
+    private final BigInteger l2StartBlock;
 
     /**
      * Channel to send block updates.
@@ -153,7 +153,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
 
     private Disposable l1HeadListener;
 
-    private boolean devnet = false;
+    private final boolean devnet;
 
     /**
      * create a InnerWatcher instance.
@@ -301,15 +301,14 @@ public class InnerWatcher extends AbstractExecutionThreadService {
         var tuple = getBatcherTxAndBlobHeader(l1Block);
         List<String> data = tuple.component1();
         var parentBeaconRoot = l1Block.getParentBeaconBlockRoot();
-        var l1Info = L1Info.create(l1Block, userDeposits, finalized, this.systemConfig, data, parentBeaconRoot);
-        return l1Info;
+        return L1Info.create(l1Block, userDeposits, finalized, this.systemConfig, data, parentBeaconRoot);
     }
 
     private Tuple2<List<String>, BeaconSignedBlockHeader> getBatcherTxAndBlobHeader(EthBlock.Block l1Block) {
         final List<String> data = new ArrayList<>();
         List<Tuple3<Integer, BigInteger, String>> indexedBlobs = new ArrayList<>();
         int blobIndexRec = 0;
-        for (EthBlock.TransactionResult txRes : l1Block.getTransactions()) {
+        for (EthBlock.TransactionResult<?> txRes : l1Block.getTransactions()) {
             EthBlock.TransactionObject tx = (EthBlock.TransactionObject) txRes.get();
             if (!L1Info.isValidBatcherTx(
                     tx, this.systemConfig.batchSender(), config.chainConfig().batchInbox())) {
@@ -366,8 +365,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
             throw new IllegalStateException("got too many blobs");
         }
 
-        return new Tuple2<List<String>, BeaconSignedBlockHeader>(
-                data, blobsRes.get(0).getSignedBlockHeader());
+        return new Tuple2<>(data, blobsRes.getFirst().getSignedBlockHeader());
     }
 
     private void putBlockUpdate(final BlockUpdate update) {
@@ -584,7 +582,7 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() {
         if (this.l2StartBlock.equals(config.chainConfig().l2Genesis().number())) {
             this.systemConfig = config.chainConfig().systemConfig();
         } else {

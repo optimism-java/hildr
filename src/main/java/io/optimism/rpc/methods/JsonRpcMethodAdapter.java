@@ -1,6 +1,6 @@
 package io.optimism.rpc.methods;
 
-import io.optimism.common.HildrServiceExecutionException;
+import io.optimism.exceptions.HildrServiceExecutionException;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
 import io.optimism.rpc.internal.response.JsonRpcSuccessResponse;

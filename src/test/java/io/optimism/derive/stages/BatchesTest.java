@@ -4,6 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import io.optimism.config.Config;
 import io.optimism.derive.stages.Channels.Channel;
+import io.optimism.types.Batch;
+import io.optimism.types.SingularBatch;
+import io.optimism.types.SpanBatch;
 import java.math.BigInteger;
 import java.util.List;
 import org.bouncycastle.jcajce.provider.digest.Keccak;

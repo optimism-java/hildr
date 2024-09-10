@@ -16,7 +16,7 @@ import io.optimism.engine.ExecutionPayload.PayloadStatus;
 import io.optimism.engine.ExecutionPayload.Status;
 import io.optimism.engine.ForkChoiceUpdate.ForkChoiceUpdateRes;
 import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
-import io.optimism.type.Epoch;
+import io.optimism.types.Epoch;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.security.Key;

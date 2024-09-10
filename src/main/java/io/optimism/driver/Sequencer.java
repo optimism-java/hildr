@@ -1,13 +1,13 @@
 package io.optimism.driver;
 
-import io.optimism.common.CriticalException;
-import io.optimism.common.ResetException;
-import io.optimism.common.SequencerException;
-import io.optimism.common.TemporaryException;
 import io.optimism.config.Config;
+import io.optimism.exceptions.CriticalException;
+import io.optimism.exceptions.ResetException;
+import io.optimism.exceptions.SequencerException;
+import io.optimism.exceptions.TemporaryException;
 import io.optimism.network.ExecutionPayloadEnvelop;
-import io.optimism.type.L2BlockRef;
-import io.optimism.type.enums.BlockInsertion;
+import io.optimism.types.L2BlockRef;
+import io.optimism.types.enums.BlockInsertion;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.concurrent.atomic.AtomicLong;

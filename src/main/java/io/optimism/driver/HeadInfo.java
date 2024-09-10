@@ -1,8 +1,8 @@
 package io.optimism.driver;
 
-import io.optimism.common.AttributesDepositedCall;
-import io.optimism.common.BlockInfo;
-import io.optimism.type.Epoch;
+import io.optimism.types.AttributesDepositedCall;
+import io.optimism.types.BlockInfo;
+import io.optimism.types.Epoch;
 import java.math.BigInteger;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;

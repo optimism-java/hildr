@@ -1,6 +1,6 @@
 package io.optimism.rpc.methods;
 
-import io.optimism.common.HildrServiceExecutionException;
+import io.optimism.exceptions.HildrServiceExecutionException;
 import io.optimism.rpc.RpcMethod;
 import io.optimism.rpc.Web3jProvider;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
