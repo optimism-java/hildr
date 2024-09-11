@@ -54,7 +54,7 @@ jobs:
           ./gradlew buildJarForDocker
 
       - name: 📤 Upload ${{ matrix.os }} native image
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: hildr-jar
           path: |

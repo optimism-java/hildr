@@ -1,6 +1,6 @@
 package io.optimism.engine;
 
-import io.optimism.engine.ExecutionPayload.PayloadStatus;
+import io.optimism.types.ExecutionPayload.PayloadStatus;
 import org.web3j.protocol.core.Response;
 
 /** The type OpEthPayloadStatus. */

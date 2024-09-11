@@ -1,4 +1,4 @@
-package io.optimism.network;
+package io.optimism.types.enums;
 
 import java.util.Optional;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;

@@ -3,6 +3,7 @@ package io.optimism.rpc.internal.response;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import io.optimism.types.enums.JsonRpcResponseType;
 import java.util.Objects;
 
 /**

@@ -1,10 +1,10 @@
 package io.optimism.rpc.execution;
 
 import io.optimism.rpc.internal.JsonRpcRequestContext;
-import io.optimism.rpc.internal.response.JsonRpcError;
 import io.optimism.rpc.internal.response.JsonRpcErrorResponse;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
 import io.optimism.rpc.methods.JsonRpcMethod;
+import io.optimism.types.enums.JsonRpcError;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;

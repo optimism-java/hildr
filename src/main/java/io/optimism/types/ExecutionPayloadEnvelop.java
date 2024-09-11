@@ -1,6 +1,6 @@
-package io.optimism.network;
+package io.optimism.types;
 
-import io.optimism.engine.ExecutionPayload;
+import io.optimism.types.enums.BlockVersion;
 import org.apache.tuweni.bytes.Bytes;
 
 /**

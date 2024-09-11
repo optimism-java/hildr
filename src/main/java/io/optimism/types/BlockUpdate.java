@@ -1,4 +1,4 @@
-package io.optimism.l1;
+package io.optimism.types;
 
 import java.math.BigInteger;
 

@@ -1,6 +1,6 @@
 package io.optimism.rpc;
 
-import io.optimism.rpc.execution.Web3jCallException;
+import io.optimism.exceptions.Web3jCallException;
 import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
 import java.util.List;

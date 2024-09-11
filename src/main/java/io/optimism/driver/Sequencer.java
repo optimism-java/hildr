@@ -5,7 +5,7 @@ import io.optimism.exceptions.CriticalException;
 import io.optimism.exceptions.ResetException;
 import io.optimism.exceptions.SequencerException;
 import io.optimism.exceptions.TemporaryException;
-import io.optimism.network.ExecutionPayloadEnvelop;
+import io.optimism.types.ExecutionPayloadEnvelop;
 import io.optimism.types.L2BlockRef;
 import io.optimism.types.enums.BlockInsertion;
 import java.time.Duration;

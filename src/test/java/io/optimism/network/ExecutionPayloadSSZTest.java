@@ -1,5 +1,7 @@
 package io.optimism.network;
 
+import io.optimism.types.ExecutionPayloadSSZ;
+import io.optimism.types.enums.BlockVersion;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Assertions;

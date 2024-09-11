@@ -1,4 +1,4 @@
-package io.optimism.telemetry;
+package io.optimism.types.enums;
 
 import io.micrometer.tracing.Tracer;
 import io.micrometer.tracing.otel.bridge.OtelBaggageManager;

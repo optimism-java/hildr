@@ -1,4 +1,4 @@
-package io.optimism.rpc.internal.response;
+package io.optimism.types.enums;
 
 /** Various types of responses that the JSON-RPC component may produce. */
 public enum JsonRpcResponseType {

@@ -1,4 +1,4 @@
-package io.optimism.rpc.execution;
+package io.optimism.exceptions;
 
 /**
  * Web3jCallException class. Throws it when the call of web3j request task failed.

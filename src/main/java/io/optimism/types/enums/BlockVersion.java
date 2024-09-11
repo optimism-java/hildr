@@ -1,4 +1,4 @@
-package io.optimism.network;
+package io.optimism.types.enums;
 
 /**
  * The type BlockVersion.
@@ -31,7 +31,7 @@ public enum BlockVersion {
      *
      * @return the boolean
      */
-    boolean hasWithdrawals() {
+    public boolean hasWithdrawals() {
         return this == V2 || this == V3;
     }
 
@@ -40,7 +40,7 @@ public enum BlockVersion {
      *
      * @return the boolean
      */
-    boolean hasBlobProperties() {
+    public boolean hasBlobProperties() {
         return this == V3;
     }
 
@@ -49,7 +49,7 @@ public enum BlockVersion {
      *
      * @return the boolean
      */
-    boolean hasParentBeaconBlockRoot() {
+    public boolean hasParentBeaconBlockRoot() {
         return this == V3;
     }
 
@@ -58,7 +58,7 @@ public enum BlockVersion {
      *
      * @return the version
      */
-    int getVersion() {
+    public int getVersion() {
         return version;
     }
 }

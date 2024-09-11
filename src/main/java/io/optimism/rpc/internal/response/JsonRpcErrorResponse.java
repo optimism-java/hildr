@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.MoreObjects;
+import io.optimism.types.enums.JsonRpcError;
+import io.optimism.types.enums.JsonRpcResponseType;
 import java.util.Objects;
 
 /** The type Json rpc error response. */

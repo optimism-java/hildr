@@ -1,6 +1,6 @@
-package io.optimism.engine;
+package io.optimism.types;
 
-import io.optimism.engine.ExecutionPayload.PayloadStatus;
+import io.optimism.types.ExecutionPayload.PayloadStatus;
 import java.math.BigInteger;
 import org.web3j.utils.Numeric;
 

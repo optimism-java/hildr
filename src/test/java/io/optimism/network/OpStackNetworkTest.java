@@ -3,7 +3,7 @@ package io.optimism.network;
 import static java.lang.Thread.sleep;
 
 import io.optimism.config.Config;
-import io.optimism.engine.ExecutionPayload;
+import io.optimism.types.ExecutionPayload;
 import org.jctools.queues.MpscUnboundedXaddArrayQueue;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;

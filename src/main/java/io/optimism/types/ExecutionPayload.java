@@ -1,13 +1,7 @@
-package io.optimism.engine;
+package io.optimism.types;
 
 import io.optimism.config.Config;
-import io.optimism.network.ExecutionPayloadSSZ;
 import io.optimism.rpc.response.OpEthBlock;
-import io.optimism.types.BlockInfo;
-import io.optimism.types.DepositTransaction;
-import io.optimism.types.Epoch;
-import io.optimism.types.L1BlockInfo;
-import io.optimism.types.L2BlockRef;
 import io.optimism.types.enums.TxType;
 import io.optimism.utilities.encoding.TxDecoder;
 import io.optimism.utilities.encoding.TxEncoder;

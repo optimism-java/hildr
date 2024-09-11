@@ -1,4 +1,4 @@
-package io.optimism.rpc.internal.response;
+package io.optimism.types.enums;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;

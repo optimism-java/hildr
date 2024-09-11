@@ -1,6 +1,5 @@
 package io.optimism.types;
 
-import io.optimism.engine.ExecutionPayload;
 import io.optimism.exceptions.BlockNotIncludedException;
 import java.math.BigInteger;
 import java.util.Objects;

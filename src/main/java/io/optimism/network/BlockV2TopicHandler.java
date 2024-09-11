@@ -1,6 +1,7 @@
 package io.optimism.network;
 
-import io.optimism.engine.ExecutionPayload;
+import io.optimism.types.ExecutionPayload;
+import io.optimism.types.enums.BlockVersion;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.jctools.queues.MessagePassingQueue;
 import tech.pegasys.teku.infrastructure.async.AsyncRunner;

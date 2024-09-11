@@ -1,10 +1,11 @@
-package io.optimism.l1;
+package io.optimism.types;
 
 import static org.web3j.protocol.core.methods.response.EthBlock.Block;
 import static org.web3j.protocol.core.methods.response.EthBlock.TransactionObject;
 
 import io.optimism.config.Config.SystemConfig;
 import io.optimism.derive.stages.Attributes.UserDeposited;
+import io.optimism.exceptions.BlockIsPreLondonException;
 import io.optimism.exceptions.BlockNotIncludedException;
 import java.math.BigInteger;
 import java.util.List;

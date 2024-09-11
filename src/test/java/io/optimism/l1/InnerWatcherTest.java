@@ -4,8 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.optimism.TestConstants;
 import io.optimism.config.Config;
-import io.optimism.telemetry.Logging;
 import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.types.BlockUpdate;
+import io.optimism.types.enums.Logging;
 import java.math.BigInteger;
 import org.jctools.queues.MessagePassingQueue;
 import org.jctools.queues.MpscGrowableArrayQueue;

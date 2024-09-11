@@ -1,4 +1,4 @@
-package io.optimism.network;
+package io.optimism.exceptions;
 
 /**
  * The type DecodingException.

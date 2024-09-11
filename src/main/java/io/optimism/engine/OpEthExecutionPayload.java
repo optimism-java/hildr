@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import io.optimism.types.ExecutionPayload;
 import java.io.IOException;
 import java.util.Objects;
 import org.web3j.protocol.ObjectMapperFactory;

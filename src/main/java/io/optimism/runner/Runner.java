@@ -8,9 +8,6 @@ import io.optimism.driver.Driver;
 import io.optimism.driver.ForkchoiceUpdateException;
 import io.optimism.driver.InvalidExecutionPayloadException;
 import io.optimism.engine.EngineApi;
-import io.optimism.engine.ExecutionPayload;
-import io.optimism.engine.ExecutionPayload.Status;
-import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
 import io.optimism.engine.OpEthForkChoiceUpdate;
 import io.optimism.engine.OpEthPayloadStatus;
 import io.optimism.exceptions.BlockNotIncludedException;
@@ -21,6 +18,9 @@ import io.optimism.exceptions.TrustedPeerAddedException;
 import io.optimism.rpc.Web3jProvider;
 import io.optimism.rpc.response.OpEthBlock;
 import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.types.ExecutionPayload;
+import io.optimism.types.ExecutionPayload.Status;
+import io.optimism.types.ForkChoiceUpdate.ForkchoiceState;
 import java.math.BigInteger;
 import java.time.Duration;
 import java.util.Arrays;
@@ -52,20 +52,20 @@ public class Runner extends AbstractExecutionThreadService {
     private static final String TRUSTED_PEER_ENODE =
             "enode://e85ba0beec172b17f53b373b0ab72238754259aa39f1ae5290e3244e0120882f4cf95acd203661a27"
                     + "c8618b27ca014d4e193266cb3feae43655ed55358eedb06@3.86.143.120:30303?discport=21693";
-    private Config config;
+    private final Config config;
 
     private SyncMode syncMode;
 
     private String checkpointHash;
 
-    private EngineApi engineApi;
+    private final EngineApi engineApi;
     private Driver<EngineApi> driver;
 
     private boolean isShutdownTriggered = false;
 
-    private CountDownLatch latch = new CountDownLatch(1);
+    private final CountDownLatch latch = new CountDownLatch(1);
 
-    private Executor executor;
+    private final Executor executor;
 
     /**
      * Instantiates a new Runner.
@@ -184,16 +184,11 @@ public class Runner extends AbstractExecutionThreadService {
         OpEthBlock checkpointBlock = null;
         if (StringUtils.isNotEmpty(this.checkpointHash)) {
             Tuple2<Boolean, OpEthBlock> isEpochBoundary = isEpochBoundary(this.checkpointHash, checkpointSyncUrl);
-            if (isEpochBoundary.component1()) {
-                checkpointBlock = isEpochBoundary.component2();
-                if (checkpointBlock == null) {
-                    LOGGER.error("could not get checkpoint block");
-                    throw new BlockNotIncludedException("could not get checkpoint block");
-                }
-            } else {
+            if (!isEpochBoundary.component1() || isEpochBoundary.component2() == null) {
                 LOGGER.error("could not get checkpoint block");
                 throw new BlockNotIncludedException("could not get checkpoint block");
             }
+            checkpointBlock = isEpochBoundary.component2();
         } else {
             LOGGER.info("finding the latest epoch boundary to use as checkpoint");
             BigInteger blockNumber = getEthBlockNumber(checkpointSyncUrl);
