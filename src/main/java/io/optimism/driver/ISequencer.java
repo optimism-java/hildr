@@ -1,6 +1,6 @@
 package io.optimism.driver;
 
-import io.optimism.network.ExecutionPayloadEnvelop;
+import io.optimism.types.ExecutionPayloadEnvelop;
 import io.optimism.types.L2BlockRef;
 
 /**

@@ -2,7 +2,8 @@ package io.optimism.network;
 
 import com.google.common.collect.ImmutableSet;
 import io.optimism.config.Config;
-import io.optimism.engine.ExecutionPayload;
+import io.optimism.types.ExecutionPayload;
+import io.optimism.types.enums.HildrNodeMetricsCategory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;

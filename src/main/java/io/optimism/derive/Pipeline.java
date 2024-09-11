@@ -6,7 +6,7 @@ import io.optimism.derive.stages.BatcherTransactions;
 import io.optimism.derive.stages.BatcherTransactions.BatcherTransactionMessage;
 import io.optimism.derive.stages.Batches;
 import io.optimism.derive.stages.Channels;
-import io.optimism.engine.ExecutionPayload.PayloadAttributes;
+import io.optimism.types.ExecutionPayload.PayloadAttributes;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;

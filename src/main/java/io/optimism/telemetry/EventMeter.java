@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class EventMeter {
 
-    private Counter total;
+    private final Counter total;
 
-    private AtomicLong lastTime;
+    private final AtomicLong lastTime;
 
     /**
      * The EventMeter constructor.

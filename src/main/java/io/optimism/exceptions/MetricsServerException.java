@@ -1,4 +1,4 @@
-package io.optimism.telemetry;
+package io.optimism.exceptions;
 
 /**
  * MetricsServerException class.

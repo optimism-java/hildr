@@ -1,16 +1,16 @@
 package io.optimism.rpc.execution;
 
-import static io.optimism.rpc.internal.response.JsonRpcError.INVALID_REQUEST;
+import static io.optimism.types.enums.JsonRpcError.INVALID_REQUEST;
 
 import io.optimism.rpc.RpcMethod;
 import io.optimism.rpc.internal.JsonRpcRequest;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.JsonRpcRequestId;
-import io.optimism.rpc.internal.response.JsonRpcError;
 import io.optimism.rpc.internal.response.JsonRpcErrorResponse;
 import io.optimism.rpc.internal.response.JsonRpcNoResponse;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
 import io.optimism.rpc.methods.JsonRpcMethod;
+import io.optimism.types.enums.JsonRpcError;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import java.util.Map;

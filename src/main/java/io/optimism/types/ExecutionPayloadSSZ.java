@@ -1,5 +1,6 @@
-package io.optimism.network;
+package io.optimism.types;
 
+import io.optimism.types.enums.BlockVersion;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;

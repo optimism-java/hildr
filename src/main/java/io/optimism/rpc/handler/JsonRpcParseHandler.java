@@ -1,8 +1,8 @@
 package io.optimism.rpc.handler;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.optimism.rpc.internal.response.JsonRpcError;
 import io.optimism.rpc.internal.response.JsonRpcErrorResponse;
+import io.optimism.types.enums.JsonRpcError;
 import io.vertx.core.Handler;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;

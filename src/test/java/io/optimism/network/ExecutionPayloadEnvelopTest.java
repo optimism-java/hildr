@@ -2,6 +2,7 @@ package io.optimism.network;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import io.optimism.types.ExecutionPayloadEnvelop;
 import java.math.BigInteger;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;

@@ -1,6 +1,7 @@
 package io.optimism.rpc.internal.response;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import io.optimism.types.enums.JsonRpcResponseType;
 
 /** The interface Json rpc response. */
 public interface JsonRpcResponse {

@@ -1,6 +1,7 @@
 package io.optimism.engine;
 
-import io.optimism.engine.ForkChoiceUpdate.ForkChoiceUpdateRes;
+import io.optimism.types.ForkChoiceUpdate;
+import io.optimism.types.ForkChoiceUpdate.ForkChoiceUpdateRes;
 import org.web3j.protocol.core.Response;
 
 /** The type Op eth fork choice update. */

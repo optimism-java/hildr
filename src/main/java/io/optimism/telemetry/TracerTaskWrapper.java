@@ -13,8 +13,6 @@ import java.util.function.Function;
  */
 public class TracerTaskWrapper {
 
-    private static String DEFAULT_TRACER_NAME = "structure-task-scope";
-
     private static Function<String, Tracer> tracerSupplier;
 
     /**
@@ -39,6 +37,7 @@ public class TracerTaskWrapper {
      * @return the callable
      */
     public static <T> Callable<T> wrap(Callable<T> call) {
+        String DEFAULT_TRACER_NAME = "structure-task-scope";
         return TracerTaskWrapper.wrap(DEFAULT_TRACER_NAME, call);
     }
 

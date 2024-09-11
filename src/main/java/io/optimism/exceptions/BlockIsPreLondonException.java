@@ -1,4 +1,4 @@
-package io.optimism.l1;
+package io.optimism.exceptions;
 
 /**
  * The type BlockIsPreLondonException.

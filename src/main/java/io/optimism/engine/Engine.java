@@ -1,7 +1,8 @@
 package io.optimism.engine;
 
-import io.optimism.engine.ExecutionPayload.PayloadAttributes;
-import io.optimism.engine.ForkChoiceUpdate.ForkchoiceState;
+import io.optimism.types.ExecutionPayload;
+import io.optimism.types.ExecutionPayload.PayloadAttributes;
+import io.optimism.types.ForkChoiceUpdate.ForkchoiceState;
 import java.io.IOException;
 import java.math.BigInteger;
 

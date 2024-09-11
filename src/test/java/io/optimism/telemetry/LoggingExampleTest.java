@@ -2,6 +2,7 @@ package io.optimism.telemetry;
 
 import io.micrometer.tracing.Span;
 import io.micrometer.tracing.Tracer;
+import io.optimism.types.enums.Logging;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -4,6 +4,7 @@ import com.sun.net.httpserver.HttpServer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.optimism.exceptions.MetricsServerException;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;

@@ -1,5 +1,6 @@
-package io.optimism.l1;
+package io.optimism.types;
 
+import io.optimism.exceptions.InvalidSystemConfigUpdateException;
 import java.math.BigInteger;
 import java.util.Arrays;
 import org.web3j.protocol.core.methods.response.EthLog;

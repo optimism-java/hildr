@@ -3,8 +3,8 @@ package io.optimism.rpc.execution;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.response.JsonRpcErrorResponse;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
-import io.optimism.rpc.internal.response.JsonRpcResponseType;
 import io.optimism.rpc.methods.JsonRpcMethod;
+import io.optimism.types.enums.JsonRpcResponseType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

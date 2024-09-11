@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.google.common.collect.ImmutableSet;
 import io.libp2p.core.pubsub.ValidationResult;
-import io.optimism.engine.ExecutionPayload;
+import io.optimism.types.ExecutionPayload;
+import io.optimism.types.enums.BlockVersion;
+import io.optimism.types.enums.HildrNodeMetricsCategory;
 import java.util.EnumSet;
 import java.util.concurrent.ExecutionException;
 import org.apache.tuweni.bytes.Bytes;
