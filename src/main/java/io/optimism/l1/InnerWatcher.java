@@ -218,6 +218,9 @@ public class InnerWatcher extends AbstractExecutionThreadService {
     }
 
     private void subscribeL1NewHeads() {
+        if (this.wsProvider == null) {
+            return;
+        }
         this.l1HeadListener = this.wsProvider
                 .newHeadsNotifications()
                 .subscribe(

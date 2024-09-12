@@ -32,46 +32,6 @@ services:
       - ${OP_ROLLUP_JSON_FILEPATH:-.}:/rollup.json
     <<: *logging
 
-  hildr-batcher:
-    container_name: hildr-batcher
-    build:
-      dockerfile: ./docker/batcher.dock
-      context: ../
-    profiles:
-      - hildr-batcher
-    restart: unless-stopped
-    stop_grace_period: 3m
-    entrypoint: /scripts/start-hildr-batcher.sh
-    depends_on:
-      - op-geth
-    env_file:
-      - .env
-    ports:
-      - "9201:9201"
-    volumes:
-      - ./:/scripts
-    <<: *logging
-
-  hildr-proposer:
-    container_name: hildr-proposer
-    build:
-      dockerfile: ./docker/proposer.dock
-      context: ../
-    profiles:
-      - hildr-proposer
-    restart: unless-stopped
-    stop_grace_period: 3m
-    entrypoint: /scripts/start-hildr-batcher.sh
-    depends_on:
-      - op-geth
-    env_file:
-      - .env
-    ports:
-      - "9203:9203"
-    volumes:
-      - ./:/scripts
-    <<: *logging
-
   op-geth:
     image: us-docker.pkg.dev/oplabs-tools-artifacts/images/op-geth:v1.101315.1
     container_name: op-geth
