@@ -78,6 +78,8 @@ public record Config(
 
     private static final int MAX_SEQUENCER_DRIFT_FJORD = 1800;
 
+    private static final int CHANNEL_TIMEOUT_GRANITE = 50;
+
     /**
      * Create Config.
      *
@@ -271,6 +273,7 @@ public record Config(
      * @param deltaTime            Timestamp of the deltaTime hardfork.
      * @param ecotoneTime          Timestamp of the ecotone hardfork.
      * @param fjordTime            Timestamp of the fjord hardfork.
+     * @param graniteTime          Timestamp of the granite hardfork.
      * @param blockTime            Network blocktime.
      * @param l2Tol1MessagePasser  L2 To L1 Message passer address.
      * @author grapebaba
@@ -294,6 +297,7 @@ public record Config(
             BigInteger deltaTime,
             BigInteger ecotoneTime,
             BigInteger fjordTime,
+            BigInteger graniteTime,
             BigInteger blockTime,
             String l2Tol1MessagePasser) {
 
@@ -352,6 +356,28 @@ public record Config(
         }
 
         /**
+         * Check if the time is the granite activation block.
+         *
+         * @param time the block timestamp
+         * @return true if the time is the granite activation block, otherwise false.
+         */
+        public boolean isGranite(BigInteger time) {
+            return graniteTime.compareTo(BigInteger.ZERO) >= 0 && time.compareTo(graniteTime) >= 0;
+        }
+
+        /**
+         * Check if the time is the granite activation block.
+         *
+         * @param time the block timestamp
+         * @return true if the time is the granite activation block, otherwise false.
+         */
+        public boolean isGraniteActivationBlock(BigInteger time) {
+            return isFjord(time)
+                    && time.compareTo(blockTime) >= 0
+                    && time.subtract(blockTime).compareTo(fjordTime) < 0;
+        }
+
+        /**
          * Check if the time is the canyon activation block.
          *
          * @param time the block timestamp
@@ -379,6 +405,16 @@ public record Config(
          */
         public BigInteger maxSequencerDrift(BigInteger time) {
             return isFjord(time) ? BigInteger.valueOf(MAX_SEQUENCER_DRIFT_FJORD) : this.maxSeqDrift();
+        }
+
+        /**
+         * Gets Channel timeout.
+         *
+         * @param time the current block timestamp
+         * @return the channel timeout
+         */
+        public BigInteger channelTimeout(BigInteger time) {
+            return isGranite(time) ? BigInteger.valueOf(CHANNEL_TIMEOUT_GRANITE) : this.channelTimeout();
         }
 
         /**
@@ -418,6 +454,7 @@ public record Config(
                     BigInteger.valueOf(1708560000L),
                     BigInteger.valueOf(1710374401L),
                     BigInteger.valueOf(1720627201L),
+                    BigInteger.valueOf(1726070401L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -459,6 +496,7 @@ public record Config(
                     BigInteger.valueOf(1708560000L),
                     BigInteger.valueOf(1710374401L),
                     BigInteger.valueOf(1720627201L),
+                    BigInteger.valueOf(1726070401L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -500,6 +538,7 @@ public record Config(
                     BigInteger.valueOf(1703203200L),
                     BigInteger.valueOf(1708534800L),
                     BigInteger.valueOf(1716998400L),
+                    BigInteger.valueOf(1723478400L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -541,6 +580,7 @@ public record Config(
                     BigInteger.valueOf(1703203200L),
                     BigInteger.valueOf(1708534800L),
                     BigInteger.valueOf(1716998400L),
+                    BigInteger.valueOf(1723478400L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -597,6 +637,7 @@ public record Config(
                     external.deltaTime == null ? BigInteger.valueOf(-1L) : external.deltaTime,
                     external.ecotoneTime == null ? BigInteger.valueOf(-1L) : external.ecotoneTime,
                     external.fjordTime == null ? BigInteger.valueOf(-1L) : external.fjordTime,
+                    external.graniteTime == null ? BigInteger.valueOf(-1L) : external.graniteTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }
@@ -836,7 +877,8 @@ public record Config(
      * @param canyonTime             canyon time
      * @param deltaTime              delta time
      * @param ecotoneTime            ecotone time
-     * @param fjordTime             fjord time
+     * @param fjordTime              fjord time
+     * @param graniteTime            granite time
      * @param batchInboxAddress      batch inbox address
      * @param depositContractAddress deposit contract address
      * @param l1SystemConfigAddress  l1 system config address
@@ -856,6 +898,7 @@ public record Config(
             BigInteger deltaTime,
             BigInteger ecotoneTime,
             BigInteger fjordTime,
+            BigInteger graniteTime,
             String batchInboxAddress,
             String depositContractAddress,
             String l1SystemConfigAddress) {}

@@ -95,8 +95,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
     private final MessagePassingQueue<ExecutionPayload> unsafeBlockQueue;
 
-    private BigInteger channelTimeout;
-
     private final ExecutorService executor;
 
     private volatile boolean isShutdownTriggered;
@@ -154,7 +152,6 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
         this.latch = latch;
         this.config = config;
-        this.channelTimeout = config.chainConfig().channelTimeout();
         this.opStackNetwork = opStackNetwork;
         HashMap<String, Function> rpcHandler = HashMap.newHashMap(1);
         rpcHandler.put(RpcMethod.OP_SYNC_STATUS.getRpcMethodName(), unused -> this.getSyncStatus());
@@ -220,7 +217,7 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
 
         LOGGER.info("starting from head: number={}, hash={}", finalizedHead.number(), finalizedHead.hash());
         BigInteger l1StartBlock =
-                finalizedEpoch.number().subtract(config.chainConfig().channelTimeout());
+                finalizedEpoch.number().subtract(config.chainConfig().channelTimeout(finalizedEpoch.timestamp()));
         ChainWatcher watcher = new ChainWatcher(
                 l1StartBlock.compareTo(BigInteger.ZERO) < 0 ? BigInteger.ZERO : l1StartBlock,
                 finalizedHead.number(),
@@ -608,8 +605,11 @@ public class Driver<E extends Engine> extends AbstractExecutionThreadService {
     }
 
     private void restartChainWatcher() {
+        BigInteger channelTimeout = this.config
+                .chainConfig()
+                .channelTimeout(Driver.this.engineDriver.getFinalizedEpoch().timestamp());
         Driver.this.chainWatcher.restart(
-                Driver.this.engineDriver.getFinalizedEpoch().number().subtract(this.channelTimeout),
+                Driver.this.engineDriver.getFinalizedEpoch().number().subtract(channelTimeout),
                 Driver.this.engineDriver.getFinalizedHead().number());
 
         Driver.this.state.getAndUpdate(state -> {

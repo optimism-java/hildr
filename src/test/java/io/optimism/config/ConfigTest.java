@@ -156,6 +156,19 @@ class ConfigTest {
         assertTrue(systemConfig.batcherHash().contains(Numeric.cleanHexPrefix(systemConfig.batchSender())));
     }
 
+    @Test
+    void testOptimismChannelTimeout() {
+        ChainConfig chainConfig = ChainConfig.optimismSepolia();
+        BigInteger bedrockChTimeout = chainConfig.channelTimeout();
+        BigInteger fjordTimeChTimeout =
+                chainConfig.channelTimeout(chainConfig.graniteTime().subtract(BigInteger.ONE));
+        BigInteger graniteChTimeout =
+                chainConfig.channelTimeout(chainConfig.graniteTime().add(BigInteger.ONE));
+        assertEquals(bedrockChTimeout, BigInteger.valueOf(300L));
+        assertEquals(fjordTimeChTimeout, BigInteger.valueOf(300L));
+        assertEquals(graniteChTimeout, BigInteger.valueOf(50L));
+    }
+
     /**
      * Read external chain from json.
      */

@@ -80,7 +80,15 @@ public class Channels<I extends PurgeableIterator<BatcherTransaction>> implement
         // Otherwise, construct a new pending channel with the frame's id
         if (existedPc.isPresent()) {
             existedPc.get().pushFrame(frame);
-            if (existedPc.get().isTimedOut(this.config.chainConfig().channelTimeout())) {
+            var l1Info = this.state.get().l1Info(existedPc.get().highestL1Block);
+            BigInteger chTimeout;
+            if (l1Info == null) {
+                chTimeout = this.config.chainConfig().channelTimeout();
+            } else {
+                BigInteger curTime = l1Info.blockInfo().timestamp();
+                chTimeout = this.config.chainConfig().channelTimeout(curTime);
+            }
+            if (existedPc.get().isTimedOut(chTimeout)) {
                 this.pendingChannels.remove(existedPc.get());
             }
         } else {
