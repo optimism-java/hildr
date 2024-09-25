@@ -103,12 +103,16 @@ public record Config(
             Map<String, String> cliProvider = cliConfig.toConfigMap();
 
             Gestalt gestalt;
+            final GestaltBuilder gestaltBuilder = new GestaltBuilder()
+                    .addDefaultDecoders()
+                    .addDecoder(new ChainBigIntegerDecoder())
+                    .addConfigLoader(environmentVarsLoader)
+                    .addConfigLoader(mapConfigLoader)
+                    .addConfigLoader(tomlLoader)
+                    .addConfigLoader(propertyLoader)
+                    .setTreatMissingValuesAsErrors(false);
             if (configPath != null) {
-                gestalt = new GestaltBuilder()
-                        .addConfigLoader(environmentVarsLoader)
-                        .addConfigLoader(mapConfigLoader)
-                        .addConfigLoader(tomlLoader)
-                        .addConfigLoader(propertyLoader)
+                gestalt = gestaltBuilder
                         .addSource(MapConfigSourceBuilder.builder()
                                 .setCustomConfig(defaultProvider)
                                 .build())
@@ -121,14 +125,9 @@ public record Config(
                         .addSource(MapConfigSourceBuilder.builder()
                                 .setCustomConfig(cliProvider)
                                 .build())
-                        .setTreatMissingValuesAsErrors(false)
                         .build();
             } else {
-                gestalt = new GestaltBuilder()
-                        .addConfigLoader(environmentVarsLoader)
-                        .addConfigLoader(mapConfigLoader)
-                        .addConfigLoader(tomlLoader)
-                        .addConfigLoader(propertyLoader)
+                gestalt = gestaltBuilder
                         .addSource(MapConfigSourceBuilder.builder()
                                 .setCustomConfig(defaultProvider)
                                 .build())
@@ -138,7 +137,6 @@ public record Config(
                         .addSource(MapConfigSourceBuilder.builder()
                                 .setCustomConfig(cliProvider)
                                 .build())
-                        .setTreatMissingValuesAsErrors(false)
                         .build();
             }
             gestalt.loadConfigs();
