@@ -3,3 +3,6 @@ l2RpcUrl = "https://example2.com"
 
 [config.chainConfig]
 seqWindowSize = 111_111_111
+
+[config.chainConfig.systemConfig]
+l1FeeScalar = 452312848583266388373324160190187140051835877600158453279134670530344387928

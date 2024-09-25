@@ -102,29 +102,27 @@ public record Config(
             MapConfigSource cliConfigSource = new MapConfigSource(cliProvider);
 
             Gestalt gestalt;
+            final GestaltBuilder gestaltBuilder = new GestaltBuilder()
+                    .addDefaultDecoders()
+                    .addDecoder(new ChainBigIntegerDecoder())
+                    .addConfigLoader(environmentVarsLoader)
+                    .addConfigLoader(mapConfigLoader)
+                    .addConfigLoader(tomlLoader)
+                    .addConfigLoader(propertyLoader)
+                    .setTreatMissingValuesAsErrors(false);
             if (configPath != null) {
                 FileConfigSource tomlConfigSource = new FileConfigSource(configPath);
-                gestalt = new GestaltBuilder()
-                        .addConfigLoader(environmentVarsLoader)
-                        .addConfigLoader(mapConfigLoader)
-                        .addConfigLoader(tomlLoader)
-                        .addConfigLoader(propertyLoader)
+                gestalt = gestaltBuilder
                         .addSource(defaultProviderConfigSource)
                         .addSource(chainConfigSource)
                         .addSource(tomlConfigSource)
                         .addSource(cliConfigSource)
-                        .setTreatMissingValuesAsErrors(false)
                         .build();
             } else {
-                gestalt = new GestaltBuilder()
-                        .addConfigLoader(environmentVarsLoader)
-                        .addConfigLoader(mapConfigLoader)
-                        .addConfigLoader(tomlLoader)
-                        .addConfigLoader(propertyLoader)
+                gestalt = gestaltBuilder
                         .addSource(defaultProviderConfigSource)
                         .addSource(chainConfigSource)
                         .addSource(cliConfigSource)
-                        .setTreatMissingValuesAsErrors(false)
                         .build();
             }
             gestalt.loadConfigs();
