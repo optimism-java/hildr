@@ -105,7 +105,8 @@ class ConfigTest {
         assertEquals(
                 BigInteger.valueOf(188), config.chainConfig().systemConfig().l1FeeOverhead());
         assertEquals(
-                BigInteger.valueOf(684000), config.chainConfig().systemConfig().l1FeeScalar());
+                new BigInteger("452312848583266388373324160190187140051835877600158453279134670530344387928"),
+                config.chainConfig().systemConfig().l1FeeScalar());
         assertEquals(
                 "0xff00000000000000000000000000000011155420",
                 config.chainConfig().batchInbox());
