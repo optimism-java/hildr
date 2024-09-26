@@ -41,7 +41,7 @@ public class RLPEncodingHelpers {
     }
 
     /**
-     * The encoded size of the provided value.  @param value the value
+     * The encoded size of the provided value.
      *
      * @param value the value
      * @return the int
