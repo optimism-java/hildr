@@ -690,6 +690,7 @@ public record Config(
                     entry("config.chainConfig.deltaTime", this.deltaTime.toString()),
                     entry("config.chainConfig.ecotoneTime", this.ecotoneTime.toString()),
                     entry("config.chainConfig.fjordTime", this.fjordTime.toString()),
+                    entry("config.chainConfig.graniteTime", this.graniteTime.toString()),
                     entry("config.chainConfig.blockTime", this.blockTime.toString()),
                     entry("config.chainConfig.l2Tol1MessagePasser", this.l2Tol1MessagePasser));
         }
