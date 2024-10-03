@@ -210,6 +210,11 @@ dependencies {
 	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.14")
 }
 
+dependencyCheck {
+	format = 'HTML'
+	outputDirectory = 'build/reports/dependency-check-report' // Change to match expected location
+}
+
 // Apply a specific Java toolchain to ease working on different environments.
 java {
 	toolchain {
