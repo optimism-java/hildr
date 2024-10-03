@@ -1,0 +1,49 @@
+name: OWASP Dependency-Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - "*"
+
+jobs:
+  dependency-check:
+    name: Run OWASP Dependency-Check with GraalVM Java 21
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up GraalVM Java 21
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: '21'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper/
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Project
+        run: ./gradlew build --no-daemon
+
+      - name: Run OWASP Dependency-Check
+        run: ./gradlew dependencyCheckAnalyze
+
+      - name: Upload Dependency-Check Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: build/reports/dependency-check-report/dependency-check-report.html
+
+      - name: Fail if high vulnerabilities found
+        if: failure()
+        run: echo "High severity vulnerabilities found! Check the Dependency-Check report."
