@@ -296,6 +296,7 @@ public record Config(
             BigInteger ecotoneTime,
             BigInteger fjordTime,
             BigInteger graniteTime,
+            BigInteger holeceneTime,
             BigInteger blockTime,
             String l2Tol1MessagePasser) {
 
@@ -370,9 +371,31 @@ public record Config(
          * @return true if the time is the granite activation block, otherwise false.
          */
         public boolean isGraniteActivationBlock(BigInteger time) {
-            return isFjord(time)
+            return isGranite(time)
                     && time.compareTo(blockTime) >= 0
-                    && time.subtract(blockTime).compareTo(fjordTime) < 0;
+                    && time.subtract(blockTime).compareTo(graniteTime) < 0;
+        }
+
+        /**
+         * Check if the time is the holocene activation block.
+         *
+         * @param time the block timestamp
+         * @return true if the time is the holocene activation block, otherwise false.
+         */
+        public boolean isHolocene(BigInteger time) {
+            return graniteTime.compareTo(BigInteger.ZERO) >= 0 && time.compareTo(graniteTime) >= 0;
+        }
+
+        /**
+         * Check if the time is the holocene activation block.
+         *
+         * @param time the block timestamp
+         * @return true if the time is the holocene activation block, otherwise false.
+         */
+        public boolean isHoloceneActivationBlock(BigInteger time) {
+            return isHolocene(time)
+                    && time.compareTo(blockTime) >= 0
+                    && time.subtract(blockTime).compareTo(holeceneTime) < 0;
         }
 
         /**
@@ -453,6 +476,7 @@ public record Config(
                     BigInteger.valueOf(1710374401L),
                     BigInteger.valueOf(1720627201L),
                     BigInteger.valueOf(1726070401L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -495,6 +519,7 @@ public record Config(
                     BigInteger.valueOf(1710374401L),
                     BigInteger.valueOf(1720627201L),
                     BigInteger.valueOf(1726070401L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -537,6 +562,7 @@ public record Config(
                     BigInteger.valueOf(1708534800L),
                     BigInteger.valueOf(1716998400L),
                     BigInteger.valueOf(1723478400L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -579,6 +605,7 @@ public record Config(
                     BigInteger.valueOf(1708534800L),
                     BigInteger.valueOf(1716998400L),
                     BigInteger.valueOf(1723478400L),
+                    BigInteger.valueOf(-1L),
                     BigInteger.valueOf(2L),
                     "0x4200000000000000000000000000000000000016");
         }
@@ -636,6 +663,7 @@ public record Config(
                     external.ecotoneTime == null ? BigInteger.valueOf(-1L) : external.ecotoneTime,
                     external.fjordTime == null ? BigInteger.valueOf(-1L) : external.fjordTime,
                     external.graniteTime == null ? BigInteger.valueOf(-1L) : external.graniteTime,
+                    external.holoceneTime == null ? BigInteger.valueOf(-1L) : external.holoceneTime,
                     external.blockTime,
                     "0x4200000000000000000000000000000000000016");
         }
@@ -898,6 +926,7 @@ public record Config(
             BigInteger ecotoneTime,
             BigInteger fjordTime,
             BigInteger graniteTime,
+            BigInteger holoceneTime,
             String batchInboxAddress,
             String depositContractAddress,
             String l1SystemConfigAddress) {}
