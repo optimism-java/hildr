@@ -369,22 +369,14 @@ public class Attributes<I extends PurgeableIterator<Batch>> implements Purgeable
             if (input.length != 260) {
                 throw new IllegalArgumentException("bedrock deposit tx input length is not 164 bytes");
             }
-            int offset = 4;
-            BigInteger l1BlockNum = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            BigInteger l1BlockTime = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            BigInteger baseFee = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            String l1BlockHash = Numeric.toHexString(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            BigInteger seqNum = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            String batcherHash = Numeric.toHexString(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            BigInteger l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
-            offset += 32;
-            BigInteger l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, offset, offset + 32));
+            BigInteger l1BlockNum = Numeric.toBigInt(Arrays.copyOfRange(input, 28, 36));
+            BigInteger l1BlockTime = Numeric.toBigInt(Arrays.copyOfRange(input, 60, 68));
+            BigInteger baseFee = Numeric.toBigInt(Arrays.copyOfRange(input, 92, 100));
+            String l1BlockHash = Numeric.toHexString(Arrays.copyOfRange(input, 100, 132));
+            BigInteger seqNum = Numeric.toBigInt(Arrays.copyOfRange(input, 156, 164));
+            String batcherHash = Numeric.toHexString(Arrays.copyOfRange(input, 176, 196));
+            BigInteger l1FeeOverhead = Numeric.toBigInt(Arrays.copyOfRange(input, 196, 228));
+            BigInteger l1FeeScalar = Numeric.toBigInt(Arrays.copyOfRange(input, 228, 260));
             return new AttributesDeposited(
                     l1BlockNum,
                     l1BlockTime,
