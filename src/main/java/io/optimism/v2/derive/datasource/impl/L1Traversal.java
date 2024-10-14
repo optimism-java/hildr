@@ -15,6 +15,12 @@ import java.math.BigInteger;
 import java.util.List;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
+/**
+ * the L1 chain data traversal.
+ *
+ * @author thinkAfCod
+ * @since 0.4.6
+ */
 public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginAdvancer, ResettableStage {
 
     private final Config.ChainConfig rollupConfig;
@@ -58,7 +64,7 @@ public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginA
         }
 
         List<TransactionReceipt> txReceipts = this.dataSource.receiptsByHash(nextL1Origin.hash());
-        updateWithReceipts(
+        curSysConfig = curSysConfig.updateByReceipts(
                 txReceipts,
                 this.rollupConfig.systemConfigContract(),
                 this.rollupConfig.isEcotone(nextL1Origin.timestamp()));
@@ -68,8 +74,6 @@ public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginA
 
         this.rollupConfig.isHoloceneActivationBlock(nextL1Origin.timestamp());
     }
-
-    private void updateWithReceipts(List<TransactionReceipt> txReceipts, String sysConfigAddr, boolean ecotone) {}
 
     @Override
     public BlockInfo origin() {

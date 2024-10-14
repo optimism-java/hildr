@@ -88,10 +88,10 @@ public record L1BlockInfoTx(
         System.arraycopy(Numeric.toBytesPadded(this.timestamp, 32), 0, data, 36, 32);
         System.arraycopy(Numeric.toBytesPadded(this.baseFee, 32), 0, data, 68, 32);
         System.arraycopy(Numeric.hexStringToByteArray(this.blockHash), 0, data, 100, 32);
-        System.arraycopy(Numeric.toBytesPadded(this.sequenceNumber, 32), 132, data, 4, 32);
-        System.arraycopy(Numeric.hexStringToByteArray(this.batcherAddress), 164, data, 4, 32);
-        System.arraycopy(Numeric.toBytesPadded(this.l1FeeOverhead, 32), 196, data, 4, 32);
-        System.arraycopy(Numeric.toBytesPadded(this.l1FeeScalar, 32), 228, data, 4, 32);
+        System.arraycopy(Numeric.toBytesPadded(this.sequenceNumber, 32), 0, data, 132, 32);
+        System.arraycopy(Numeric.hexStringToByteArray(this.batcherAddress), 0, data, 164, 32);
+        System.arraycopy(Numeric.toBytesPadded(this.l1FeeOverhead, 32), 0, data, 196, 32);
+        System.arraycopy(Numeric.toBytesPadded(this.l1FeeScalar, 32), 0, data, 228, 32);
         return data;
     }
 

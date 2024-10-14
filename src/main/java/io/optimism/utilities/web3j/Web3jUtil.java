@@ -1,8 +1,10 @@
-package io.optimism.rpc;
+package io.optimism.utilities.web3j;
 
 import io.optimism.exceptions.Web3jCallException;
+import io.optimism.rpc.response.OpEthBlock;
 import io.optimism.telemetry.TracerTaskWrapper;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.StructuredTaskScope;
@@ -15,10 +17,13 @@ import org.web3j.crypto.Hash;
 import org.web3j.crypto.RawTransaction;
 import org.web3j.crypto.TransactionEncoder;
 import org.web3j.protocol.Web3j;
+import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.DefaultBlockParameter;
 import org.web3j.protocol.core.DefaultBlockParameterName;
+import org.web3j.protocol.core.Request;
 import org.web3j.protocol.core.methods.request.Transaction;
 import org.web3j.protocol.core.methods.response.EthBlock;
+import org.web3j.protocol.core.methods.response.EthGetBlockReceipts;
 import org.web3j.protocol.core.methods.response.EthGetTransactionReceipt;
 import org.web3j.protocol.core.methods.response.EthSendTransaction;
 import org.web3j.utils.Numeric;
@@ -75,23 +80,78 @@ public class Web3jUtil {
     }
 
     /**
+     * Get the transaction receipts of the given block num.
+     *
+     * @param client the web3j client
+     * @param blockNum the block number
+     * @return the transaction receipts
+     */
+    public static EthGetBlockReceipts getBlockReceipts(final Web3j client, final DefaultBlockParameter blockNum) {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            var receiptsFuture =
+                    scope.fork(() -> client.ethGetBlockReceipts(blockNum).send());
+            scope.join();
+            scope.throwIfFailed();
+            return receiptsFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new Web3jCallException("failed to get TxReceipt", e);
+        }
+    }
+
+    /**
      * Poll the block by the given parameter.
      * @param client the web3j client
      * @param parameter the block parameter
      * @param returnFullTransactionObjects whether to return full transaction objects
      * @return the block
      */
-    public static EthBlock pollBlock(
+    public static EthBlock pollBlockByNum(
             final Web3j client, final DefaultBlockParameter parameter, final boolean returnFullTransactionObjects) {
         try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
-            var receiptFuture = scope.fork(() -> client.ethGetBlockByNumber(parameter, returnFullTransactionObjects)
+            var blockFuture = scope.fork(() -> client.ethGetBlockByNumber(parameter, returnFullTransactionObjects)
                     .send());
             scope.join();
             scope.throwIfFailed();
-            return receiptFuture.get();
+            return blockFuture.get();
         } catch (InterruptedException | ExecutionException e) {
             Thread.currentThread().interrupt();
             throw new Web3jCallException("failed to get block by number", e);
+        }
+    }
+
+    public static EthBlock pollBlockByHash(
+            final Web3j client, final String blockHash, final boolean returnFullTransactionObjects) {
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            var blockFuture = scope.fork(() -> client.ethGetBlockByHash(blockHash, returnFullTransactionObjects)
+                    .send());
+            scope.join();
+            scope.throwIfFailed();
+            return blockFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new Web3jCallException("failed to get block by number", e);
+        }
+    }
+
+    public static OpEthBlock pollOpBlockByNum(
+            final Web3jService client,
+            final DefaultBlockParameter parameter,
+            final boolean returnFullTransactionObjects) {
+        OpEthBlock block;
+        try (var scope = new StructuredTaskScope.ShutdownOnFailure()) {
+            StructuredTaskScope.Subtask<OpEthBlock> blockFuture = scope.fork(TracerTaskWrapper.wrap(() -> new Request<>(
+                            "eth_getBlockByNumber",
+                            Arrays.asList(parameter.getValue(), returnFullTransactionObjects),
+                            client,
+                            OpEthBlock.class)
+                    .send()));
+            scope.join();
+            scope.throwIfFailed();
+            return blockFuture.get();
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            throw new Web3jCallException("failed to get optimism block by number", e);
         }
     }
 

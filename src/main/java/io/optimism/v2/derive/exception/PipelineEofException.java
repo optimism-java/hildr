@@ -2,6 +2,9 @@ package io.optimism.v2.derive.exception;
 
 /**
  * Exception thrown when there is an error in the pipeline.
+ *
+ * @author thinkAfCod
+ * @since 0.4.6
  */
 public class PipelineEofException extends RuntimeException {
     /** Constructs a PipelineEofException. */

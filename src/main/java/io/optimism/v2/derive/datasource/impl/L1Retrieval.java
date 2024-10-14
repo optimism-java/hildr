@@ -7,6 +7,12 @@ import io.optimism.v2.derive.stages.ResettableStage;
 import io.optimism.v2.derive.types.BlockInfo;
 import io.optimism.v2.derive.types.SystemConfig;
 
+/**
+ * the l1 chain data retrieval.
+ *
+ * @author thinkAfCod
+ * @since 0.4.6
+ */
 public class L1Retrieval implements FrameQueueProvider, OriginProvider, OriginAdvancer, ResettableStage {
 
     @Override

@@ -1,10 +1,10 @@
 package io.optimism.v2.derive.types;
 
 import io.optimism.exceptions.BlockNotIncludedException;
-import io.optimism.types.ExecutionPayload;
+import io.optimism.rpc.response.OpEthBlock;
 import java.math.BigInteger;
 import java.util.Objects;
-import org.web3j.protocol.core.methods.response.EthBlock.Block;
+import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.utils.Numeric;
 
 /**
@@ -25,32 +25,28 @@ public record BlockInfo(String hash, BigInteger number, String parentHash, BigIn
             Numeric.toHexString(new byte[32]), BigInteger.ZERO, Numeric.toHexString(new byte[32]), BigInteger.ZERO);
 
     /**
-     * From block info.
+     * create block info From EthBlock.Block.
      *
-     * @param block the block
+     * @param block the op block
      * @return the block info
      */
-    public static BlockInfo from(Block block) {
-        BigInteger number = block.getNumber();
-        if (number == null) {
+    public static BlockInfo from(EthBlock.Block block) {
+        if (block == null) {
             throw new BlockNotIncludedException();
         }
-
-        String hash = block.getHash();
-        if (hash == null) {
-            throw new BlockNotIncludedException();
-        }
-        return new BlockInfo(hash, number, block.getParentHash(), block.getTimestamp());
+        return new BlockInfo(block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
     }
 
     /**
-     * From block info.
-     *
-     * @param payload the payload
+     * create block info From OpEthBlock.Block.
+     * @param block the op block
      * @return the block info
      */
-    public static BlockInfo from(ExecutionPayload payload) {
-        return new BlockInfo(payload.blockHash(), payload.blockNumber(), payload.parentHash(), payload.timestamp());
+    public static BlockInfo from(OpEthBlock.Block block) {
+        if (block == null) {
+            throw new BlockNotIncludedException();
+        }
+        return new BlockInfo(block.getHash(), block.getNumber(), block.getParentHash(), block.getTimestamp());
     }
 
     @Override
