@@ -4,6 +4,9 @@ import org.hyperledger.besu.datatypes.TransactionType;
 
 /**
  * The enum Tx type.
+ *
+ * @author grapepapa
+ * @since 0.1.1
  */
 public enum TxType {
     /**

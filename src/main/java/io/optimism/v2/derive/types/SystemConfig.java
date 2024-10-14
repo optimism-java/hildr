@@ -3,6 +3,7 @@ package io.optimism.v2.derive.types;
 import com.google.common.primitives.Bytes;
 import io.optimism.config.Config;
 import io.optimism.exceptions.InvalidSystemConfigUpdateException;
+import io.optimism.rpc.response.OpEthBlock;
 import io.optimism.v2.derive.types.enums.TxType;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -70,7 +71,7 @@ public record SystemConfig(
         throw new IllegalStateException("invalid l1FeeScalar");
     }
 
-    public static SystemConfig fromOpBlock(EthBlock.Block opBlock, Config.ChainConfig chainConfig) {
+    public static SystemConfig fromOpBlock(OpEthBlock.Block opBlock, Config.ChainConfig chainConfig) {
         if (chainConfig.l2Genesis().number().equals(opBlock.getNumber())) {
             if (!chainConfig.l2Genesis().hash().equals(opBlock.getHash())) {
                 // todo throw OpBlockConversionException InvalidGenesisHash

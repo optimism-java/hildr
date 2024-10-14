@@ -1,6 +1,8 @@
-package io.optimism.rpc;
+package io.optimism.utilities.web3j;
 
 import ch.qos.logback.classic.Level;
+import io.optimism.rpc.HttpClientProvider;
+import io.optimism.rpc.RetryRateLimitInterceptor;
 import java.net.ConnectException;
 import java.util.function.Consumer;
 import okhttp3.OkHttpClient;

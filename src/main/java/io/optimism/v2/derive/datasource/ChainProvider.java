@@ -6,6 +6,12 @@ import java.util.List;
 import org.web3j.protocol.core.methods.response.EthBlock;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
+/**
+ * the chain data provider interface.
+ *
+ * @author thinkAfCod
+ * @since 0.4.6
+ */
 public interface ChainProvider {
 
     EthBlock.Block headerByHash(String hash);

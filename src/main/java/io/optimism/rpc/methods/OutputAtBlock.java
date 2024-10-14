@@ -2,13 +2,13 @@ package io.optimism.rpc.methods;
 
 import io.optimism.exceptions.HildrServiceExecutionException;
 import io.optimism.rpc.RpcMethod;
-import io.optimism.rpc.Web3jProvider;
 import io.optimism.rpc.internal.JsonRpcRequestContext;
 import io.optimism.rpc.internal.response.JsonRpcResponse;
 import io.optimism.rpc.internal.response.JsonRpcSuccessResponse;
 import io.optimism.rpc.internal.result.EthGetProof;
 import io.optimism.rpc.internal.result.OutputRootResult;
 import io.optimism.telemetry.TracerTaskWrapper;
+import io.optimism.utilities.web3j.Web3jProvider;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Collections;
