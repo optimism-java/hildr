@@ -370,9 +370,9 @@ public record Config(
          * @return true if the time is the granite activation block, otherwise false.
          */
         public boolean isGraniteActivationBlock(BigInteger time) {
-            return isFjord(time)
+            return isGranite(time)
                     && time.compareTo(blockTime) >= 0
-                    && time.subtract(blockTime).compareTo(fjordTime) < 0;
+                    && time.subtract(blockTime).compareTo(graniteTime) < 0;
         }
 
         /**
