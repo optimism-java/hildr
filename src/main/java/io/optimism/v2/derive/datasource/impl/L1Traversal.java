@@ -6,9 +6,6 @@ import io.optimism.v2.derive.datasource.ChainProvider;
 import io.optimism.v2.derive.exception.PipelineEofException;
 import io.optimism.v2.derive.exception.PipelineProviderException;
 import io.optimism.v2.derive.stages.L1RetrievalProvider;
-import io.optimism.v2.derive.stages.OriginAdvancer;
-import io.optimism.v2.derive.stages.OriginProvider;
-import io.optimism.v2.derive.stages.ResettableStage;
 import io.optimism.v2.derive.types.BlockInfo;
 import io.optimism.v2.derive.types.SystemConfig;
 import java.math.BigInteger;
@@ -21,7 +18,7 @@ import org.web3j.protocol.core.methods.response.TransactionReceipt;
  * @author thinkAfCod
  * @since 0.4.6
  */
-public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginAdvancer, ResettableStage {
+public class L1Traversal implements L1RetrievalProvider {
 
     private final Config.ChainConfig rollupConfig;
 
@@ -40,7 +37,12 @@ public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginA
 
     @Override
     public BlockInfo nextL1Block() {
-        return this.block;
+        if (!this.done) {
+            this.done = true;
+            return this.block;
+        } else {
+            throw new PipelineEofException();
+        }
     }
 
     @Override
@@ -51,7 +53,7 @@ public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginA
     @Override
     public void advanceOrigin() {
         if (this.block == null) {
-            throw new PipelineEofException();
+            throw new PipelineEofException("Missing current block, can't advance origin with no reference.");
         }
 
         var block = this.block;
@@ -84,6 +86,5 @@ public class L1Traversal implements L1RetrievalProvider, OriginProvider, OriginA
     public void reset(BlockInfo base, SystemConfig config) {
         this.block = base;
         this.curSysConfig = config;
-        // metrics record stage reset for l1 traversal
     }
 }

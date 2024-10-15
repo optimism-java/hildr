@@ -6,7 +6,7 @@ package io.optimism.v2.derive.stages;
  * @author thinkAfCod
  * @since 0.4.6
  */
-public interface FrameQueueProvider {
+public interface FrameQueueProvider extends OriginProvider, OriginAdvancer, ResettableStage {
     /**
      * gets the bytes of the next raw frame.
      *

@@ -8,7 +8,7 @@ import io.optimism.v2.derive.types.BlockInfo;
  * @author thinkAfCod
  * @since 0.4.6
  */
-public interface L1RetrievalProvider {
+public interface L1RetrievalProvider extends OriginProvider, OriginAdvancer, ResettableStage {
     /**
      * get the next L1 block info.
      *
