@@ -8,7 +8,7 @@ import io.optimism.v2.derive.types.Frame;
  * @author thinkAfCod
  * @since 0.4.6
  */
-public interface ChannelBankProvider {
+public interface ChannelBankProvider extends OriginProvider, OriginAdvancer, ResettableStage {
     /**
      * gets the next frame in the current channel
      *
