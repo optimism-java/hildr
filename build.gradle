@@ -15,7 +15,7 @@ plugins {
 	id 'application'
 //	id "checkstyle"
 	id "jacoco"
-	id "com.diffplug.spotless" version "6.23.3"
+	id "com.diffplug.spotless" version "6.25.0"
 	id "net.ltgt.errorprone" version "3.1.0"
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'org.owasp.dependencycheck' version '10.0.4'
@@ -66,13 +66,13 @@ tasks.withType(JavaExec).configureEach {
 //	jvmArgs += ["--add-modules", "jdk.incubator.concurrent"]
 }
 
-def brotliVersion = "1.16.0"
+def brotliVersion = "1.17.0"
 def operatingSystem = DefaultNativePlatform.getCurrentOperatingSystem()
 def currentArchitecture = DefaultNativePlatform.getCurrentArchitecture()
 
 dependencies {
 	// This dependency is used by the application.
-	implementation 'com.google.guava:guava:33.0.0-jre'
+	implementation 'com.google.guava:guava:33.3.1-jre'
 	implementation 'com.github.rholder:guava-retrying:2.0.0'
 
 	// define any required OkHttp artifacts without version
@@ -80,40 +80,40 @@ dependencies {
 	implementation("com.squareup.okhttp3:logging-interceptor:5.0.0-alpha.14")
 
 	implementation('net.osslabz.evm:evm-abi-decoder:0.0.6')
-	implementation 'com.github.gestalt-config:gestalt-core:0.29.0'
-	implementation 'com.github.gestalt-config:gestalt-toml:0.29.0'
+	implementation 'com.github.gestalt-config:gestalt-core:0.34.0'
+	implementation 'com.github.gestalt-config:gestalt-toml:0.34.0'
 
-	implementation 'com.fasterxml.jackson:jackson-bom:2.15.2'
+	implementation 'com.fasterxml.jackson:jackson-bom:2.18.1'
 	implementation 'com.fasterxml.jackson.core:jackson-core'
 //	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8'
 	implementation 'com.fasterxml.jackson.dataformat:jackson-dataformat-toml'
-	implementation 'org.jctools:jctools-core:4.0.1'
+	implementation 'org.jctools:jctools-core:4.0.5'
 
-	implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	implementation 'io.jsonwebtoken:jjwt-jackson:0.11.5'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
 	//jsonrpc
-	implementation('io.vertx:vertx-auth-jwt:4.5.3') {
+	implementation('io.vertx:vertx-auth-jwt:4.5.11') {
 		exclude group: 'io.netty', module: 'netty-codec-http'
 	}
-	implementation('io.vertx:vertx-core:4.5.3')
-	implementation('io.vertx:vertx-web:4.5.3')
-	implementation('io.netty:netty-all:4.1.108.Final')
+	implementation('io.vertx:vertx-core:4.5.11')
+	implementation('io.vertx:vertx-web:4.5.11')
+	implementation('io.netty:netty-all:4.1.115.Final')
 
-	implementation 'io.micrometer:micrometer-registry-prometheus:1.11.0'
-	implementation platform('io.micrometer:micrometer-tracing-bom:1.1.1')
+	implementation 'io.micrometer:micrometer-registry-prometheus:1.14.1'
+	implementation platform('io.micrometer:micrometer-tracing-bom:1.4.0')
 	implementation 'io.micrometer:micrometer-tracing'
 	implementation 'io.micrometer:micrometer-tracing-bridge-otel'
 
 	// Logback
-	implementation 'ch.qos.logback:logback-core:1.4.12'
-	implementation 'ch.qos.logback:logback-classic:1.4.14'
-	implementation 'org.slf4j:slf4j-api:2.0.7'
+	implementation 'ch.qos.logback:logback-core:1.5.12'
+	implementation 'ch.qos.logback:logback-classic:1.5.12'
+	implementation 'org.slf4j:slf4j-api:2.0.16'
 
-	implementation platform("io.opentelemetry:opentelemetry-bom-alpha:1.26.0-alpha")
+	implementation platform("io.opentelemetry:opentelemetry-bom-alpha:1.44.1-alpha")
 	// OpenTelemetry core
-	implementation(platform("io.opentelemetry:opentelemetry-bom:1.26.0"))
+	implementation(platform("io.opentelemetry:opentelemetry-bom:1.44.1"))
 	implementation 'io.opentelemetry:opentelemetry-api'
 	implementation 'io.opentelemetry:opentelemetry-sdk'
 	implementation 'io.opentelemetry:opentelemetry-sdk-logs'
@@ -123,10 +123,10 @@ dependencies {
 	runtimeOnly 'io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0'
 
 
-	implementation 'info.picocli:picocli:4.7.3'
-	annotationProcessor 'info.picocli:picocli-codegen:4.7.3'
+	implementation 'info.picocli:picocli:4.7.6'
+	annotationProcessor 'info.picocli:picocli-codegen:4.7.6'
 
-	errorprone("com.google.errorprone:error_prone_core:2.18.0")
+	errorprone("com.google.errorprone:error_prone_core:2.36.0")
 
 //	implementation 'io.tmio:tuweni-devp2p:2.4.2'
 	implementation 'io.tmio:tuweni-ssz:2.4.2'
@@ -146,7 +146,7 @@ dependencies {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 	implementation('org.hyperledger.besu:plugin-api:23.10.2')
-	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE') {
+	implementation('io.libp2p:jvm-libp2p:1.2.1-RELEASE') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 	implementation 'io.tmio:tuweni-units:2.4.2'
@@ -197,14 +197,14 @@ dependencies {
 	}:$brotliVersion""")
 
 	// Use JUnit Jupiter for testing.
-	testImplementation 'org.junit.jupiter:junit-jupiter:5.9.1'
-	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.0'
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+	testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.11.3'
 	// https://mvnrepository.com/artifact/org.junit.platform/junit-platform-suite-api
-	testImplementation 'org.junit.platform:junit-platform-suite-api:1.9.1'
+	testImplementation 'org.junit.platform:junit-platform-suite-api:1.11.3'
 	// https://mvnrepository.com/artifact/org.junit.platform/junit-platform-suite-engine
-	testRuntimeOnly 'org.junit.platform:junit-platform-suite-engine:1.9.1'
+	testRuntimeOnly 'org.junit.platform:junit-platform-suite-engine:1.11.3'
 
-	testRuntimeOnly 'org.junit.platform:junit-platform-reporting:1.9.1'
+	testRuntimeOnly 'org.junit.platform:junit-platform-reporting:1.11.3'
 
 	testImplementation 'org.mockito:mockito-junit-jupiter:2.19.0'
 	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.14")
