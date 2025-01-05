@@ -16,9 +16,9 @@ plugins {
 //	id "checkstyle"
 	id "jacoco"
 	id "com.diffplug.spotless" version "6.23.3"
-	id "net.ltgt.errorprone" version "3.1.0"
+	id "net.ltgt.errorprone" version "4.1.0"
 	id 'com.github.johnrengelman.shadow' version '8.1.1'
-	id 'org.owasp.dependencycheck' version '10.0.4'
+	id 'org.owasp.dependencycheck' version '11.1.1'
 //    id 'org.unbroken-dome.test-sets' version '4.0.0'
 //    id 'maven-publish'
 //    id "io.github.gradle-nexus.publish-plugin" version "1.1.0"
@@ -119,7 +119,7 @@ dependencies {
 	implementation 'io.opentelemetry:opentelemetry-sdk-logs'
 
 	// OpenTelemetry log4j appenders
-	implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:1.26.0-alpha")
+	implementation platform("io.opentelemetry.instrumentation:opentelemetry-instrumentation-bom-alpha:2.11.0-alpha")
 	runtimeOnly 'io.opentelemetry.instrumentation:opentelemetry-logback-mdc-1.0'
 
 
@@ -130,22 +130,22 @@ dependencies {
 
 //	implementation 'io.tmio:tuweni-devp2p:2.4.2'
 	implementation 'io.tmio:tuweni-ssz:2.4.2'
-	implementation('tech.pegasys.teku.internal:p2p:23.10.0') {
+	implementation('tech.pegasys.teku.internal:p2p:24.12.1') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
-	implementation('tech.pegasys.teku.internal:metrics:23.10.0')
-	implementation('tech.pegasys.teku.internal:async:23.10.0')
-	implementation('tech.pegasys.teku.internal:storage:23.10.0')
-	implementation('tech.pegasys.teku.internal:time:23.10.0')
-	implementation('tech.pegasys.teku.internal:spec:23.10.0')
-	implementation('tech.pegasys.teku.internal:serviceutils:23.10.0')
-	implementation('tech.pegasys.teku.internal:unsigned:23.10.0')
-	implementation('tech.pegasys.teku.internal:statetransition:23.10.0')
-	implementation 'tech.pegasys:jc-kzg-4844:0.8.0'
-	implementation('org.hyperledger.besu.internal:metrics-core:23.10.2') {
+	implementation('tech.pegasys.teku.internal:metrics:24.12.1')
+	implementation('tech.pegasys.teku.internal:async:24.12.1')
+	implementation('tech.pegasys.teku.internal:storage:24.12.1')
+	implementation('tech.pegasys.teku.internal:time:24.12.1')
+	implementation('tech.pegasys.teku.internal:spec:24.12.1')
+	implementation('tech.pegasys.teku.internal:serviceutils:24.12.1')
+	implementation('tech.pegasys.teku.internal:unsigned:24.12.1')
+	implementation('tech.pegasys.teku.internal:statetransition:24.12.1')
+	implementation 'tech.pegasys:jc-kzg-4844:1.0.0'
+	implementation('org.hyperledger.besu.internal:metrics-core:24.12.2') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
-	implementation('org.hyperledger.besu:plugin-api:23.10.2')
+	implementation('org.hyperledger.besu:plugin-api:24.12.2')
 	implementation('io.libp2p:jvm-libp2p:1.0.1-RELEASE') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
@@ -154,13 +154,13 @@ dependencies {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 
-	implementation('org.hyperledger.besu.internal:core:23.10.2')
-	implementation('org.hyperledger.besu.internal:algorithms:23.10.2')
-	implementation('org.hyperledger.besu.internal:rlp:23.10.2')
-	implementation('org.hyperledger.besu:besu-datatypes:23.10.2')
+	implementation('org.hyperledger.besu.internal:core:24.12.2')
+	implementation('org.hyperledger.besu.internal:algorithms:24.12.2')
+	implementation('org.hyperledger.besu.internal:rlp:24.12.2')
+	implementation('org.hyperledger.besu:besu-datatypes:24.12.2')
 
 	implementation 'io.tmio:tuweni-rlp:2.4.2'
-	implementation('tech.pegasys.discovery:discovery:22.12.0') {
+	implementation('tech.pegasys.discovery:discovery:24.12.0') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 	}
 	implementation 'org.xerial.snappy:snappy-java:1.1.10.5'
@@ -171,7 +171,7 @@ dependencies {
 //	implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:3.0.0-alpha1'
 	implementation 'org.apache.logging.log4j:log4j-to-slf4j:3.0.0-alpha1'
 
-	implementation('org.web3j:core:4.11.2') {
+	implementation('org.web3j:core:5.0.0') {
 		exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
 		exclude group: 'com.squareup.okhttp3', module: 'okhttp'
 		exclude group: 'com.squareup.okhttp3', module: 'logging-interceptor'
@@ -206,7 +206,7 @@ dependencies {
 
 	testRuntimeOnly 'org.junit.platform:junit-platform-reporting:1.9.1'
 
-	testImplementation 'org.mockito:mockito-junit-jupiter:2.19.0'
+	testImplementation 'org.mockito:mockito-junit-jupiter:5.15.2'
 	testImplementation("com.squareup.okhttp3:mockwebserver:5.0.0-alpha.14")
 }
 
