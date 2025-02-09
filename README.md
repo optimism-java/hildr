@@ -128,7 +128,7 @@ L1_WS_RPC_URL=wss://eth-goerli.g.alchemy.com/v2/<Alchemy App Key>
 # JWT secret for the L2 engine API
 JWT_SECRET=bf549f5188556ce0951048ef467ec93067bc4ea21acebe46ef675cd4e8e015ff
 
-# The exeuction client Auth RPC port.
+# The execution client Auth RPC port.
 EXECUTION_CLIENT_AUTH_RPC_PORT=5551
 
 # The execution client RPC port.
