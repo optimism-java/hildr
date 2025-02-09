@@ -161,7 +161,7 @@ public record SystemConfig(
             return null;
         }
         if (log.getTopics().get(1) == null || !TOPIC_1.equals(log.getTopics().get(1))) {
-            // todo throw LogProcessingException unsuported version
+            // todo throw LogProcessingException unsupported version
             return null;
         }
 
