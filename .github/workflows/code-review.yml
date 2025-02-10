@@ -1,0 +1,41 @@
+name: Code Review Bot
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  code-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
+      - name: Run Checkstyle
+        run: ./gradlew checkstyleMain
+
+      - name: Run SpotBugs
+        run: ./gradlew spotbugsMain
+
+      - name: Install ReviewDog
+        run: |
+          curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh | sh -s -- -b $HOME/bin
+          echo "$HOME/bin" >> $GITHUB_PATH
+
+      - name: Run Checkstyle with ReviewDog
+        run: |
+          ./gradlew checkstyleMain | reviewdog -efm="%f:%l: %m" -name="Checkstyle" -reporter=github-pr-check -filter-mode=file
+
+      - name: Run SpotBugs with ReviewDog
+        run: |
+          ./gradlew spotbugsMain | reviewdog -efm="%f:%l: %m" -name="SpotBugs" -reporter=github-pr-check -filter-mode=file
